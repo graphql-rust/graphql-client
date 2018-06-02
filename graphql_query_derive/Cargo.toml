@@ -1,0 +1,14 @@
+[package]
+name = "graphql_query_derive"
+version = "0.1.0"
+authors = ["Tom Houlé <tom@tomhoule.com>"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+failure = "*"
+quote = "*"
+syn = "*"
+proc-macro2 = "*"
+graphql-parser = "*"

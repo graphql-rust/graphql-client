@@ -1,0 +1,9 @@
+[package]
+name = "graphql_query"
+version = "0.1.0"
+authors = ["Tom Houlé <tom@tomhoule.com>"]
+
+[dependencies]
+failure = "*"
+quote = "*"
+graphql-parser = "*"
