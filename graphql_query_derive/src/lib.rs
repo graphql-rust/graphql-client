@@ -77,7 +77,7 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
             type Variables = #module_name::Variables;
             type ResponseData = #module_name::ResponseData;
 
-            fn build_query(variables: &Self::Variables) -> ::graphql_query::GraphQLQueryBody<Self::Variables> {
+            fn build_query(variables: Self::Variables) -> ::graphql_query::GraphQLQueryBody<Self::Variables> {
                 ::graphql_query::GraphQLQueryBody {
                     variables,
                     query: #module_name::QUERY,

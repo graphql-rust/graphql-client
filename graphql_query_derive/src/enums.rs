@@ -22,16 +22,16 @@ impl GqlEnum {
         let name = Ident::new(&self.name, Span::call_site());
 
         quote! {
-            pub enum #name<'a> {
+            pub enum #name {
                 #(#variants,)*
-                Other(&'a str),
+                Other(String),
             }
 
             impl ::serde::Serialize for #name {
                 fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
                     ser.serialize_str(match *self {
                         #(#constructors => #variant_str,)*
-                        #name::Other(s) => s,
+                        #name::Other(s) => s.as_str(),
                     })
                 }
             }
@@ -42,7 +42,7 @@ impl GqlEnum {
 
                     match s {
                         #(#variant_str => Ok(#constructors),)*
-                        _ => #name::Other(s),
+                        _ => Ok(#name::Other(s.to_string())),
                     }
                 }
             }

@@ -15,7 +15,7 @@ pub trait GraphQLQuery<'de> {
     type ResponseData: serde::Deserialize<'de>;
 
     /// Produce a GraphQL query struct that can be JSON serialized and sent to a GraphQL API.
-    fn build_query(variables: &Self::Variables) -> GraphQLQueryBody<Self::Variables>;
+    fn build_query(variables: Self::Variables) -> GraphQLQueryBody<Self::Variables>;
 }
 
 #[derive(Serialize)]
