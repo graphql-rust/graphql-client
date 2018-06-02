@@ -10,7 +10,7 @@ extern crate graphql_query_derive;
 #[doc(hidden)]
 pub use graphql_query_derive::*;
 
-trait GraphQLQuery<'de> {
+pub trait GraphQLQuery<'de> {
     type Variables: serde::Serialize;
     type ResponseData: serde::Deserialize<'de>;
 

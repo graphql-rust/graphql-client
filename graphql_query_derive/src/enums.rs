@@ -29,8 +29,8 @@ impl GqlEnum {
 
             impl ::serde::Serialize for #name {
                 fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
-                    serializer.serialize_str(match *self {
-                        #(#constructors => #variant_str,)*,
+                    ser.serialize_str(match *self {
+                        #(#constructors => #variant_str,)*
                         #name::Other(s) => s,
                     })
                 }

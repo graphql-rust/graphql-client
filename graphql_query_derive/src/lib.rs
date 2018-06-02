@@ -68,17 +68,17 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
 
     let result = quote!(
         mod #module_name {
-            const QUERY: &'static str = #query_string;
+            pub const QUERY: &'static str = #query_string;
 
             #schema_output
         }
 
-        impl ::graphql_query::GraphQLQuery for #struct_name {
+        impl<'de> ::graphql_query::GraphQLQuery<'de> for #struct_name {
             type Variables = #module_name::Variables;
             type ResponseData = #module_name::ResponseData;
 
-            fn build_query(variables: &Self::Variables) -> ::graphql_query::GraphQLQueryBody {
-                GraphQLQueryBody {
+            fn build_query(variables: &Self::Variables) -> ::graphql_query::GraphQLQueryBody<Self::Variables> {
+                ::graphql_query::GraphQLQueryBody {
                     variables,
                     query: #module_name::QUERY,
                 }

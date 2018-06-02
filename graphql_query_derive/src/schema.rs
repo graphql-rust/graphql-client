@@ -81,15 +81,26 @@ impl Schema {
         }
 
         let enum_definitions = self.enums.values().map(|enm| enm.to_rust());
-        let variables_struct = quote!();
+        let variables_struct = quote!(#[derive(Serialize)]
+        pub struct Variables;);
         let response_data_fields = context
             .query_root
             .or(context.mutation_root)
             .or(context._subscription_root)
             .expect("no selection defined");
 
+        use proc_macro2::{Ident, Span};
+        let object_definitions = self.objects.values().map(|obj| {
+            let name = Ident::new(&obj.name, Span::call_site());
+            quote! {
+                pub struct #name;
+            }
+        });
+
         Ok(quote! {
             #(#enum_definitions)*
+
+            #(#object_definitions)*
 
             #variables_struct
 
