@@ -1,0 +1,5 @@
+query HeroQuery($ep: Episode!) {
+  hero(episode: $ep) {
+    name
+  }
+}

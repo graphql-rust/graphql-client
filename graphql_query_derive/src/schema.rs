@@ -1,8 +1,11 @@
 use enums::GqlEnum;
+use failure;
 use field_type::FieldType;
-use graphql_parser::{self, schema};
+use graphql_parser::{self, query, schema};
 use inputs::GqlInput;
 use objects::{GqlObject, GqlObjectField};
+use proc_macro2::TokenStream;
+use query::QueryContext;
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug)]
@@ -13,18 +16,95 @@ pub struct Schema {
     pub objects: BTreeMap<String, GqlObject>,
     pub scalars: BTreeSet<String>,
     pub unions: BTreeMap<String, Vec<String>>,
+    pub query_type: Option<String>,
+    pub mutation_type: Option<String>,
+    pub subscription_type: Option<String>,
 }
 
-impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
-    fn from(ast: graphql_parser::schema::Document) -> Schema {
-        let mut schema = Schema {
+impl Schema {
+    pub fn new() -> Schema {
+        Schema {
             enums: BTreeMap::new(),
             inputs: BTreeMap::new(),
             interfaces: BTreeMap::new(),
             objects: BTreeMap::new(),
             scalars: BTreeSet::new(),
             unions: BTreeMap::new(),
-        };
+            query_type: None,
+            mutation_type: None,
+            subscription_type: None,
+        }
+    }
+
+    pub fn response_for_query(
+        &self,
+        query: query::Document,
+    ) -> Result<TokenStream, failure::Error> {
+        let mut context = QueryContext::new();
+
+        for definition in query.definitions {
+            match definition {
+                query::Definition::Operation(query::OperationDefinition::Query(q)) => {
+                    let definition = self
+                        .query_type
+                        .clone()
+                        .and_then(|query_type| self.objects.get(&query_type))
+                        .expect("query type is defined");
+                    context.query_root =
+                        Some(definition.response_fields_for_selection(&context, &q.selection_set));
+                }
+                query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
+                    let definition = self
+                        .mutation_type
+                        .clone()
+                        .and_then(|mutation_type| self.objects.get(&mutation_type))
+                        .expect("mutation type is defined");
+                    context.mutation_root =
+                        Some(definition.response_fields_for_selection(&context, &q.selection_set));
+                }
+                query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
+                    let definition = self
+                        .subscription_type
+                        .clone()
+                        .and_then(|subscription_type| self.objects.get(&subscription_type))
+                        .expect("subscription type is defined");
+                    context._subscription_root =
+                        Some(definition.response_fields_for_selection(&context, &q.selection_set));
+                }
+                query::Definition::Operation(query::OperationDefinition::SelectionSet(_)) => {
+                    unimplemented!()
+                }
+                query::Definition::Fragment(fragment) => {
+                    context.fragments.insert(fragment.name, BTreeMap::new());
+                }
+            }
+        }
+
+        let enum_definitions = self.enums.values().map(|enm| enm.to_rust());
+        let variables_struct = quote!();
+        let response_data_fields = context
+            .query_root
+            .or(context.mutation_root)
+            .or(context._subscription_root)
+            .expect("no selection defined");
+
+        Ok(quote! {
+            #(#enum_definitions)*
+
+            #variables_struct
+
+            #[derive(Deserialize)]
+            pub struct ResponseData {
+                #(#response_data_fields)*,
+            }
+
+        })
+    }
+}
+
+impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
+    fn from(ast: graphql_parser::schema::Document) -> Schema {
+        let mut schema = Schema::new();
 
         // Holds which objects implement which interfaces so we can populate GqlInterface#implemented_by later.
         // It maps interface names to a vec of implementation names.
@@ -94,7 +174,11 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                 },
                 schema::Definition::DirectiveDefinition(_) => (),
                 schema::Definition::TypeExtension(_extension) => (),
-                schema::Definition::SchemaDefinition(_) => (),
+                schema::Definition::SchemaDefinition(definition) => {
+                    schema.query_type = definition.query;
+                    schema.mutation_type = definition.mutation;
+                    schema.subscription_type = definition.subscription;
+                }
             }
         }
 

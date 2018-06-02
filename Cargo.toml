@@ -6,4 +6,7 @@ authors = ["Tom Houlé <tom@tomhoule.com>"]
 [dependencies]
 failure = "*"
 quote = "*"
+graphql_query_derive = {path = "./graphql_query_derive"}
 graphql-parser = "*"
+serde = "1.0"
+serde_derive = "1.0"

@@ -16,12 +16,26 @@ pub struct GqlObjectField {
 }
 
 impl GqlObject {
-    fn response_for_selection(
+    pub fn response_for_selection(
         &self,
         query_context: &QueryContext,
         selection: &query::SelectionSet,
     ) -> TokenStream {
         let name = Ident::new(&self.name, Span::call_site());
+        let fields = self.response_fields_for_selection(query_context, selection);
+        quote! {
+            #[derive(Debug, Deserialize)]
+            pub struct #name {
+                #(#fields,)*
+            }
+        }
+    }
+
+    pub fn response_fields_for_selection(
+        &self,
+        query_context: &QueryContext,
+        selection: &query::SelectionSet,
+    ) -> Vec<TokenStream> {
         let mut fields = Vec::new();
 
         for item in selection.items.iter() {
@@ -43,12 +57,7 @@ impl GqlObject {
             }
         }
 
-        quote! {
-            #[derive(Debug, Deserialize)]
-            pub struct #name {
-                #(#fields,)*
-            }
-        }
+        fields
     }
 }
 

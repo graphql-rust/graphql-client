@@ -26,8 +26,8 @@ impl FieldType {
     pub fn inner_name_string(&self) -> String {
         match &self {
             FieldType::Named(name) => name.to_string(),
-            FieldType::Optional(inner) => (*inner).inner_name_string(),
-            FieldType::Vector(inner) => (*inner).inner_name_string(),
+            FieldType::Optional(inner) => inner.inner_name_string(),
+            FieldType::Vector(inner) => inner.inner_name_string(),
         }
     }
 
