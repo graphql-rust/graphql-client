@@ -1,7 +1,8 @@
 use enums::GqlEnum;
+use field_type::FieldType;
 use graphql_parser::{self, schema};
 use inputs::GqlInput;
-use objects::GqlObject;
+use objects::{GqlObject, GqlObjectField};
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug)]
@@ -45,7 +46,14 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                             obj.name.clone(),
                             GqlObject {
                                 name: obj.name.clone(),
-                                fields: vec![],
+                                fields: obj
+                                    .fields
+                                    .iter()
+                                    .map(|f| GqlObjectField {
+                                        name: f.name.clone(),
+                                        type_: FieldType::from(f.field_type.clone()),
+                                    })
+                                    .collect(),
                             },
                         );
                     }
@@ -69,7 +77,14 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                             interface.name.clone(),
                             GqlObject {
                                 name: interface.name,
-                                fields: vec![],
+                                fields: interface
+                                    .fields
+                                    .iter()
+                                    .map(|f| GqlObjectField {
+                                        name: f.name.clone(),
+                                        type_: FieldType::from(f.field_type.clone()),
+                                    })
+                                    .collect(),
                             },
                         );
                     }
@@ -90,6 +105,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proc_macro2::{Ident, Span};
 
     #[test]
     fn build_schema_works() {
@@ -100,7 +116,54 @@ mod tests {
             built.objects.get("Droid"),
             Some(&GqlObject {
                 name: "Droid".to_string(),
-                fields: vec![],
+                fields: vec![
+                    GqlObjectField {
+                        name: "id".to_string(),
+                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
+                            "ID",
+                            Span::call_site(),
+                        )))),
+                    },
+                    GqlObjectField {
+                        name: "name".to_string(),
+                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
+                            "String",
+                            Span::call_site(),
+                        )))),
+                    },
+                    GqlObjectField {
+                        name: "friends".to_string(),
+                        type_: FieldType::Optional(Box::new(FieldType::Vector(Box::new(
+                            FieldType::Optional(Box::new(FieldType::Named(Ident::new(
+                                "Character",
+                                Span::call_site(),
+                            )))),
+                        )))),
+                    },
+                    GqlObjectField {
+                        name: "friendsConnection".to_string(),
+                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
+                            "FriendsConnection",
+                            Span::call_site(),
+                        )))),
+                    },
+                    GqlObjectField {
+                        name: "appearsIn".to_string(),
+                        type_: FieldType::Optional(Box::new(FieldType::Vector(Box::new(
+                            FieldType::Optional(Box::new(FieldType::Named(Ident::new(
+                                "Episode",
+                                Span::call_site(),
+                            )))),
+                        )))),
+                    },
+                    GqlObjectField {
+                        name: "primaryFunction".to_string(),
+                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
+                            "String",
+                            Span::call_site(),
+                        )))),
+                    },
+                ],
             })
         )
     }
