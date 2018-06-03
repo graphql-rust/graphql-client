@@ -1,5 +1,6 @@
 use field_type::FieldType;
 use graphql_parser::query;
+use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 
@@ -20,15 +21,46 @@ impl GqlObject {
         &self,
         query_context: &QueryContext,
         selection: &query::SelectionSet,
+        prefix: &str,
     ) -> TokenStream {
-        let name = Ident::new(&self.name, Span::call_site());
+        let name = Ident::new(&format!("{}{}", prefix, self.name), Span::call_site());
         let fields = self.response_fields_for_selection(query_context, selection);
+        let field_impls = self.field_impls_for_selection(query_context, selection, prefix);
         quote! {
+            #(#field_impls)*
+
             #[derive(Debug, Deserialize)]
             pub struct #name {
                 #(#fields,)*
             }
         }
+    }
+
+    pub fn field_impls_for_selection(
+        &self,
+        query_context: &QueryContext,
+        selection: &query::SelectionSet,
+        prefix: &str,
+    ) -> Vec<TokenStream> {
+        let prefix = format!("{}{}", prefix, self.name);
+        selection
+            .items
+            .iter()
+            .map(|selected| {
+                if let query::Selection::Field(selected) = selected {
+                    let ty = self
+                        .fields
+                        .iter()
+                        .find(|f| f.name == selected.name)
+                        .expect("field found")
+                        .type_
+                        .inner_name_string();
+                    query_context.maybe_expand_field(&selected, &ty, &prefix)
+                } else {
+                    quote!()
+                }
+            })
+            .collect()
     }
 
     pub fn response_fields_for_selection(
@@ -52,8 +84,18 @@ impl GqlObject {
                     let ty = ty.to_rust();
                     fields.push(quote!(#name: #ty));
                 }
-                query::Selection::FragmentSpread(_) => (),
-                query::Selection::InlineFragment(_) => (),
+                query::Selection::FragmentSpread(fragment) => {
+                    let field_name =
+                        Ident::new(&fragment.fragment_name.to_snake_case(), Span::call_site());
+                    let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
+                    fields.push(quote!{
+                        #[serde(flatten)]
+                        #field_name: #type_name
+                    })
+                }
+                query::Selection::InlineFragment(_) => {
+                    unreachable!("inline fragment on object field")
+                }
             }
         }
 

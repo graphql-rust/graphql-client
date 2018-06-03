@@ -1,4 +1,5 @@
 #![recursion_limit = "128"]
+#![feature(nll)]
 
 #[macro_use]
 extern crate failure;
@@ -20,6 +21,7 @@ mod interfaces;
 mod objects;
 mod query;
 mod schema;
+mod unions;
 
 use heck::*;
 use proc_macro2::{Ident, Span};

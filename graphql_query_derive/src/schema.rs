@@ -3,19 +3,21 @@ use failure;
 use field_type::FieldType;
 use graphql_parser::{self, query, schema};
 use inputs::GqlInput;
+use interfaces::GqlInterface;
 use objects::{GqlObject, GqlObjectField};
 use proc_macro2::TokenStream;
 use query::QueryContext;
 use std::collections::{BTreeMap, BTreeSet};
+use unions::GqlUnion;
 
 #[derive(Debug)]
 pub struct Schema {
     pub enums: BTreeMap<String, GqlEnum>,
     pub inputs: BTreeMap<String, GqlInput>,
-    pub interfaces: BTreeMap<String, GqlObject>,
+    pub interfaces: BTreeMap<String, GqlInterface>,
     pub objects: BTreeMap<String, GqlObject>,
     pub scalars: BTreeSet<String>,
-    pub unions: BTreeMap<String, Vec<String>>,
+    pub unions: BTreeMap<String, GqlUnion>,
     pub query_type: Option<String>,
     pub mutation_type: Option<String>,
     pub subscription_type: Option<String>,
@@ -36,38 +38,56 @@ impl Schema {
         }
     }
 
-    pub fn response_for_query(
-        &self,
-        query: query::Document,
-    ) -> Result<TokenStream, failure::Error> {
-        let mut context = QueryContext::new();
+    pub fn response_for_query(self, query: query::Document) -> Result<TokenStream, failure::Error> {
+        let mut context = QueryContext::new(self);
+        let mut definitions = Vec::new();
 
         for definition in query.definitions {
             match definition {
                 query::Definition::Operation(query::OperationDefinition::Query(q)) => {
-                    let definition = self
+                    let definition = context
+                        .schema
                         .query_type
                         .clone()
-                        .and_then(|query_type| self.objects.get(&query_type))
+                        .and_then(|query_type| context.schema.objects.get(&query_type))
                         .expect("query type is defined");
+                    definitions.extend(definition.field_impls_for_selection(
+                        &context,
+                        &q.selection_set,
+                        "",
+                    ));
                     context.query_root =
                         Some(definition.response_fields_for_selection(&context, &q.selection_set));
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
-                    let definition = self
+                    let definition = context
+                        .schema
                         .mutation_type
                         .clone()
-                        .and_then(|mutation_type| self.objects.get(&mutation_type))
+                        .and_then(|mutation_type| context.schema.objects.get(&mutation_type))
                         .expect("mutation type is defined");
+                    definitions.extend(definition.field_impls_for_selection(
+                        &context,
+                        &q.selection_set,
+                        "",
+                    ));
                     context.mutation_root =
                         Some(definition.response_fields_for_selection(&context, &q.selection_set));
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
-                    let definition = self
+                    let definition = context
+                        .schema
                         .subscription_type
                         .clone()
-                        .and_then(|subscription_type| self.objects.get(&subscription_type))
+                        .and_then(|subscription_type| {
+                            context.schema.objects.get(&subscription_type)
+                        })
                         .expect("subscription type is defined");
+                    definitions.extend(definition.field_impls_for_selection(
+                        &context,
+                        &q.selection_set,
+                        "",
+                    ));
                     context._subscription_root =
                         Some(definition.response_fields_for_selection(&context, &q.selection_set));
                 }
@@ -80,7 +100,7 @@ impl Schema {
             }
         }
 
-        let enum_definitions = self.enums.values().map(|enm| enm.to_rust());
+        let enum_definitions = context.schema.enums.values().map(|enm| enm.to_rust());
         let variables_struct = quote!(#[derive(Serialize)]
         pub struct Variables;);
         let response_data_fields = context
@@ -90,17 +110,11 @@ impl Schema {
             .expect("no selection defined");
 
         use proc_macro2::{Ident, Span};
-        let object_definitions = self.objects.values().map(|obj| {
-            let name = Ident::new(&obj.name, Span::call_site());
-            quote! {
-                pub struct #name;
-            }
-        });
 
         Ok(quote! {
             #(#enum_definitions)*
 
-            #(#object_definitions)*
+            #(#definitions)*
 
             #variables_struct
 
@@ -161,13 +175,14 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         schema.scalars.insert(scalar.name);
                     }
                     schema::TypeDefinition::Union(union) => {
-                        schema.unions.insert(union.name, union.types);
+                        schema.unions.insert(union.name, GqlUnion(union.types));
                     }
                     schema::TypeDefinition::Interface(interface) => {
                         schema.interfaces.insert(
                             interface.name.clone(),
-                            GqlObject {
+                            GqlInterface {
                                 name: interface.name,
+                                implemented_by: Vec::new(),
                                 fields: interface
                                     .fields
                                     .iter()
