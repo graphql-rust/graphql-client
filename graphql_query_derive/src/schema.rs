@@ -51,13 +51,17 @@ impl Schema {
                         .clone()
                         .and_then(|query_type| context.schema.objects.get(&query_type))
                         .expect("query type is defined");
+                    let prefix = &q.name.expect("unnamed operation");
                     definitions.extend(definition.field_impls_for_selection(
                         &context,
                         &q.selection_set,
-                        "",
+                        prefix,
                     ));
-                    context.query_root =
-                        Some(definition.response_fields_for_selection(&context, &q.selection_set));
+                    context.query_root = Some(definition.response_fields_for_selection(
+                        &context,
+                        &q.selection_set,
+                        prefix,
+                    ));
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
                     let definition = context
@@ -66,13 +70,18 @@ impl Schema {
                         .clone()
                         .and_then(|mutation_type| context.schema.objects.get(&mutation_type))
                         .expect("mutation type is defined");
+                    let prefix = &q.name.expect("unnamed operation");
+
                     definitions.extend(definition.field_impls_for_selection(
                         &context,
                         &q.selection_set,
-                        "",
+                        prefix,
                     ));
-                    context.mutation_root =
-                        Some(definition.response_fields_for_selection(&context, &q.selection_set));
+                    context.mutation_root = Some(definition.response_fields_for_selection(
+                        &context,
+                        &q.selection_set,
+                        prefix,
+                    ));
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
                     let definition = context
@@ -83,13 +92,17 @@ impl Schema {
                             context.schema.objects.get(&subscription_type)
                         })
                         .expect("subscription type is defined");
+                    let prefix = &q.name.expect("unnamed operation");
                     definitions.extend(definition.field_impls_for_selection(
                         &context,
                         &q.selection_set,
-                        "",
+                        &prefix,
                     ));
-                    context._subscription_root =
-                        Some(definition.response_fields_for_selection(&context, &q.selection_set));
+                    context._subscription_root = Some(definition.response_fields_for_selection(
+                        &context,
+                        &q.selection_set,
+                        &prefix,
+                    ));
                 }
                 query::Definition::Operation(query::OperationDefinition::SelectionSet(_)) => {
                     unimplemented!()

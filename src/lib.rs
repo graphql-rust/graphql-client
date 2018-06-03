@@ -21,8 +21,8 @@ pub struct GraphQLQueryBody<Variables>
 where
     Variables: serde::Serialize,
 {
-    variables: Variables,
-    query: &'static str,
+    pub variables: Variables,
+    pub query: &'static str,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

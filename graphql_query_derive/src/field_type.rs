@@ -1,5 +1,6 @@
 use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
+use query::QueryContext;
 
 #[derive(Debug, PartialEq)]
 pub enum FieldType {
@@ -9,15 +10,18 @@ pub enum FieldType {
 }
 
 impl FieldType {
-    pub fn to_rust(&self) -> TokenStream {
+    pub fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
         match &self {
-            FieldType::Named(name) => quote!(#name),
+            FieldType::Named(name) => {
+                let name = Ident::new(&format!("{}{}", prefix, name), Span::call_site());
+                quote!(#name)
+            }
             FieldType::Optional(inner) => {
-                let inner = inner.to_rust();
+                let inner = inner.to_rust(context, prefix);
                 quote!( Option<#inner>)
             }
             FieldType::Vector(inner) => {
-                let inner = inner.to_rust();
+                let inner = inner.to_rust(context, prefix);
                 quote!( Vec<#inner>)
             }
         }

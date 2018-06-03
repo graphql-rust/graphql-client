@@ -24,8 +24,9 @@ impl GqlObject {
         prefix: &str,
     ) -> TokenStream {
         let name = Ident::new(&format!("{}{}", prefix, self.name), Span::call_site());
-        let fields = self.response_fields_for_selection(query_context, selection);
-        let field_impls = self.field_impls_for_selection(query_context, selection, prefix);
+        let fields = self.response_fields_for_selection(query_context, selection, prefix);
+        let prefix = format!("{}{}", prefix, self.name);
+        let field_impls = self.field_impls_for_selection(query_context, selection, &prefix);
         quote! {
             #(#field_impls)*
 
@@ -42,7 +43,6 @@ impl GqlObject {
         selection: &query::SelectionSet,
         prefix: &str,
     ) -> Vec<TokenStream> {
-        let prefix = format!("{}{}", prefix, self.name);
         selection
             .items
             .iter()
@@ -67,6 +67,7 @@ impl GqlObject {
         &self,
         query_context: &QueryContext,
         selection: &query::SelectionSet,
+        prefix: &str,
     ) -> Vec<TokenStream> {
         let mut fields = Vec::new();
 
@@ -81,7 +82,7 @@ impl GqlObject {
                         .unwrap()
                         .type_;
                     let name = Ident::new(name, Span::call_site());
-                    let ty = ty.to_rust();
+                    let ty = ty.to_rust(query_context, prefix);
                     fields.push(quote!(#name: #ty));
                 }
                 query::Selection::FragmentSpread(fragment) => {
