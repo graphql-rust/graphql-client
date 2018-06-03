@@ -27,13 +27,6 @@ use heck::*;
 use proc_macro2::{Ident, Span};
 use schema::Schema;
 
-struct DeriveContext {
-    schema: Schema,
-    structs: BTreeMap<String, TokenStream>,
-    enums: BTreeMap<String, TokenStream>,
-    inputs: BTreeMap<String, TokenStream>,
-}
-
 #[proc_macro_derive(GraphQLQuery, attributes(GraphQLQuery))]
 pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = TokenStream::from(input);

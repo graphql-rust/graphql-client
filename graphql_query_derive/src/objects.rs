@@ -23,9 +23,8 @@ impl GqlObject {
         selection: &query::SelectionSet,
         prefix: &str,
     ) -> TokenStream {
-        let name = Ident::new(&format!("{}{}", prefix, self.name), Span::call_site());
+        let name = Ident::new(prefix, Span::call_site());
         let fields = self.response_fields_for_selection(query_context, selection, prefix);
-        let prefix = format!("{}{}", prefix, self.name);
         let field_impls = self.field_impls_for_selection(query_context, selection, &prefix);
         quote! {
             #(#field_impls)*
@@ -55,6 +54,7 @@ impl GqlObject {
                         .expect("field found")
                         .type_
                         .inner_name_string();
+                    let prefix = format!("{}{}", prefix, selected.name);
                     query_context.maybe_expand_field(&selected, &ty, &prefix)
                 } else {
                     quote!()
@@ -82,7 +82,7 @@ impl GqlObject {
                         .unwrap()
                         .type_;
                     let name = Ident::new(name, Span::call_site());
-                    let ty = ty.to_rust(query_context, prefix);
+                    let ty = ty.to_rust(query_context, &format!("{}{}", prefix, name));
                     fields.push(quote!(#name: #ty));
                 }
                 query::Selection::FragmentSpread(fragment) => {

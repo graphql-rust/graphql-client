@@ -13,7 +13,7 @@ impl FieldType {
     pub fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
         match &self {
             FieldType::Named(name) => {
-                let name = Ident::new(&format!("{}{}", prefix, name), Span::call_site());
+                let name = Ident::new(prefix, Span::call_site());
                 quote!(#name)
             }
             FieldType::Optional(inner) => {

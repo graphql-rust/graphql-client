@@ -18,7 +18,7 @@ impl GqlInterface {
         selection: &query::SelectionSet,
         prefix: &str,
     ) -> TokenStream {
-        let name = Ident::new(&format!("{}{}", prefix, self.name), Span::call_site());
+        let name = Ident::new(&prefix, Span::call_site());
         quote! {
             #[derive(Debug, Deserialize)]
             pub struct #name;
