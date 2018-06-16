@@ -10,6 +10,7 @@ extern crate proc_macro2;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -27,6 +28,9 @@ mod query;
 mod schema;
 mod shared;
 mod unions;
+
+#[cfg(test)]
+mod tests;
 
 use heck::*;
 use proc_macro2::{Ident, Span};
@@ -55,11 +59,23 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
     let query = graphql_parser::parse_query(&query_string)?;
 
     // We need to qualify the schema with the path to the crate it is part of
-    let schema_path = format!("{}/{}", cargo_manifest_dir, schema_path);
+    let schema_path = ::std::path::Path::new(&cargo_manifest_dir).join(schema_path);
     let mut schema_string = String::new();
-    ::std::fs::File::open(schema_path)?.read_to_string(&mut schema_string)?;
-    let schema = graphql_parser::schema::parse_schema(&schema_string)?;
-    let schema = schema::Schema::from(schema);
+    ::std::fs::File::open(&schema_path)?.read_to_string(&mut schema_string)?;
+
+    let extension = schema_path.extension().and_then(|e| e.to_str()).unwrap_or("INVALID");
+
+    let schema = match extension {
+        "graphql" | "gql" => {
+            let s = graphql_parser::schema::parse_schema(&schema_string)?;
+            schema::Schema::from(s)
+        }
+        "json" => {
+            let parsed: introspection_response::IntrospectionResponse = ::serde_json::from_str(&schema_string)?;
+            schema::Schema::from(parsed)
+        }
+        extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
+    };
 
     let module_name = Ident::new(&input.ident.to_string().to_snake_case(), Span::call_site());
     let struct_name = &input.ident;

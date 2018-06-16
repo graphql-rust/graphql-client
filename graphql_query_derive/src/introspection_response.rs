@@ -2,13 +2,7 @@
 
 use serde;
 
-struct IntrospectionQuery;
-
 type Boolean = bool;
-
-type Float = f64;
-
-type Int = i64;
 
 #[derive(Debug)]
 pub enum __DirectiveLocation {
@@ -133,15 +127,16 @@ impl<'de> ::serde::Deserialize<'de> for __TypeKind {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullType {
-    kind: Option<__TypeKind>,
-    name: Option<String>,
-    description: Option<String>,
-    fields: Option<Vec<Option<FullTypeFields>>>,
-    inputFields: Option<Vec<Option<FullTypeInputFields>>>,
-    interfaces: Option<Vec<Option<FullTypeInterfaces>>>,
-    enumValues: Option<Vec<Option<FullTypeEnumValues>>>,
-    possible_types: Option<Vec<Option<FullTypePossibleTypes>>>,
+    pub kind: Option<__TypeKind>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub fields: Option<Vec<Option<FullTypeFields>>>,
+    pub input_fields: Option<Vec<Option<FullTypeInputFields>>>,
+    pub interfaces: Option<Vec<Option<FullTypeInterfaces>>>,
+    pub enum_values: Option<Vec<Option<FullTypeEnumValues>>>,
+    pub possible_types: Option<Vec<Option<FullTypePossibleTypes>>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -167,7 +162,7 @@ pub struct FullTypeFields {
     #[serde(rename = "type")]
     type_: Option<FullTypeFieldsType>,
     is_deprecated: Option<Boolean>,
-    deprecationReason: Option<String>,
+    deprecation_reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -184,13 +179,13 @@ pub struct FullTypeInterfaces {
     type_ref: TypeRef,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FullTypeEnumValues {
-    name: Option<String>,
-    description: Option<String>,
-    is_deprecated: Option<Boolean>,
-    deprecation_reason: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub is_deprecated: Option<Boolean>,
+    pub deprecation_reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -302,7 +297,7 @@ pub struct RustIntrospectionQuerySchemaSubscriptionType {
 #[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaTypes {
     #[serde(flatten)]
-    full_type: FullType,
+    pub full_type: FullType,
 }
 
 #[derive(Debug, Deserialize)]
@@ -324,14 +319,20 @@ pub struct RustIntrospectionQuerySchemaDirectives {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchema {
-    query_type: Option<RustIntrospectionQuerySchemaQueryType>,
-    mutation_type: Option<RustIntrospectionQuerySchemaMutationType>,
-    subscription_type: Option<RustIntrospectionQuerySchemaSubscriptionType>,
-    types: Option<Vec<Option<RustIntrospectionQuerySchemaTypes>>>,
+    pub query_type: Option<RustIntrospectionQuerySchemaQueryType>,
+    pub mutation_type: Option<RustIntrospectionQuerySchemaMutationType>,
+    pub subscription_type: Option<RustIntrospectionQuerySchemaSubscriptionType>,
+    pub types: Option<Vec<Option<RustIntrospectionQuerySchemaTypes>>>,
     directives: Option<Vec<Option<RustIntrospectionQuerySchemaDirectives>>>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Schema {
-    __Schema: Option<RustIntrospectionQuerySchema>,
+    #[serde(rename = "__schema")]
+    pub schema: Option<RustIntrospectionQuerySchema>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct IntrospectionResponse {
+    pub data: Schema
 }

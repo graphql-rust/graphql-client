@@ -13,7 +13,7 @@ use unions::GqlUnion;
 
 pub const DEFAULT_SCALARS: &[&'static str] = &["ID", "String", "Int", "Float", "Boolean"];
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Schema {
     pub enums: BTreeMap<String, GqlEnum>,
     pub inputs: BTreeMap<String, GqlInput>,
@@ -250,6 +250,35 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                     schema.mutation_type = definition.mutation;
                     schema.subscription_type = definition.subscription;
                 }
+            }
+        }
+
+        schema
+    }
+}
+
+impl ::std::convert::From<::introspection_response::IntrospectionResponse> for Schema {
+    fn from(src: ::introspection_response::IntrospectionResponse) -> Self {
+        use introspection_response::{__TypeKind};
+
+        let mut schema = Schema::new();
+        let root = src.data.schema.expect("__Schema is not null");
+
+        for ty in root.types.expect("types in schema").iter().filter_map(|t| t.as_ref().map(|t| &t.full_type)) {
+            match  ty.kind {
+                Some(__TypeKind::ENUM) => {
+                    let name = ty.name.clone().expect("enum name");
+                    let variants: Vec<String> = ty.enum_values.clone().expect("enum variants")
+                        .iter()
+                        .map(|t| t.clone().map(|t| t.name.expect("enum variant name")))
+                        .filter_map(|t| t)
+                        .collect();
+                    schema.enums.insert(name.clone(), GqlEnum {
+                        name,
+                        variants,
+                    });
+                }
+                _ => unimplemented!("unimplemented definition")
             }
         }
 
