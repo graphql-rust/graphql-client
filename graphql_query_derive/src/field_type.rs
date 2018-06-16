@@ -1,8 +1,8 @@
+use enums::ENUMS_PREFIX;
 use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use schema::DEFAULT_SCALARS;
-use enums::ENUMS_PREFIX;
 
 #[derive(Debug, PartialEq)]
 pub enum FieldType {
@@ -19,10 +19,18 @@ impl FieldType {
                 let just_the_prefix = Ident::new(prefix, Span::call_site());
                 let name_string = name.to_string();
 
-                let name = if context.schema.scalars.contains(&name_string) || DEFAULT_SCALARS.iter().find(|elem| elem == &&name_string).is_some()  {
+                let name = if context.schema.scalars.contains(&name_string)
+                    || DEFAULT_SCALARS
+                        .iter()
+                        .find(|elem| elem == &&name_string)
+                        .is_some()
+                {
                     name.clone()
                 } else if context.schema.enums.contains_key(&name_string) {
-                    Ident::new(&format!("{}{}", ENUMS_PREFIX, &name_string), Span::call_site())
+                    Ident::new(
+                        &format!("{}{}", ENUMS_PREFIX, &name_string),
+                        Span::call_site(),
+                    )
                 } else {
                     just_the_prefix
                 };

@@ -11,5 +11,7 @@ failure = "*"
 quote = "^0.6"
 syn = "*"
 proc-macro2 = { version = "*", features = ["nightly"] }
+serde = "1.0"
+serde_derive = "1.0"
 heck = "*"
 graphql-parser = "*"

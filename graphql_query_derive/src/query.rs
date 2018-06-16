@@ -1,10 +1,10 @@
 use failure;
 use field_type::FieldType;
+use fragments::GqlFragment;
 use graphql_parser::query;
 use proc_macro2::TokenStream;
 use schema::Schema;
 use std::collections::BTreeMap;
-use fragments::GqlFragment;
 
 pub struct QueryContext {
     pub _subscription_root: Option<Vec<TokenStream>>,

@@ -1,22 +1,17 @@
 use enums::GqlEnum;
 use failure;
 use field_type::FieldType;
+use fragments::GqlFragment;
 use graphql_parser::{self, query, schema};
 use inputs::GqlInput;
 use interfaces::GqlInterface;
 use objects::{GqlObject, GqlObjectField};
 use proc_macro2::TokenStream;
 use query::QueryContext;
-use fragments::GqlFragment;
 use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
 
-pub const DEFAULT_SCALARS: &[&'static str] = &[
-    "ID",
-    "String",
-    "Int",
-    "Float",
-];
+pub const DEFAULT_SCALARS: &[&'static str] = &["ID", "String", "Int", "Float", "Boolean"];
 
 #[derive(Debug)]
 pub struct Schema {
@@ -120,18 +115,25 @@ impl Schema {
                 }
                 query::Definition::Fragment(fragment) => {
                     let query::TypeCondition::On(on) = fragment.type_condition;
-                    context.fragments.insert(fragment.name.clone(), GqlFragment {
-                        name: fragment.name,
-                        selection: fragment.selection_set,
-                        on,
-                    });
+                    context.fragments.insert(
+                        fragment.name.clone(),
+                        GqlFragment {
+                            name: fragment.name,
+                            selection: fragment.selection_set,
+                            on,
+                        },
+                    );
                 }
             }
         }
 
         let enum_definitions = context.schema.enums.values().map(|enm| enm.to_rust());
-        let fragment_definitions = context.fragments.values().map(|fragment| fragment.to_rust(&context));
-        let variables_struct = quote!(#[derive(Serialize)] pub struct Variables;);
+        let fragment_definitions = context
+            .fragments
+            .values()
+            .map(|fragment| fragment.to_rust(&context));
+        let variables_struct = quote!(#[derive(Serialize)]
+        pub struct Variables;);
         let response_data_fields = context
             .query_root
             .as_ref()
@@ -146,8 +148,11 @@ impl Schema {
             quote!(type #ident = String;)
         });
 
-
         Ok(quote! {
+            type Boolean = bool;
+            type Float = f64;
+            type Int = i64;
+
             #(#scalar_definitions)*
 
             #(#enum_definitions)*

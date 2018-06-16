@@ -7,6 +7,9 @@ extern crate graphql_parser;
 extern crate heck;
 extern crate proc_macro;
 extern crate proc_macro2;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -18,9 +21,11 @@ mod field_type;
 mod fragments;
 mod inputs;
 mod interfaces;
+mod introspection_response;
 mod objects;
 mod query;
 mod schema;
+mod shared;
 mod unions;
 
 use heck::*;

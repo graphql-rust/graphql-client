@@ -4,6 +4,7 @@ use graphql_parser::query;
 use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
+use shared::render_object_field;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlObject {
@@ -55,7 +56,11 @@ impl GqlObject {
                         .ok_or_else(|| format_err!("could not find field `{}`", selected.name))?
                         .type_
                         .inner_name_string();
-                    let prefix = format!("{}{}", prefix.to_camel_case(), selected.name.to_camel_case());
+                    let prefix = format!(
+                        "{}{}",
+                        prefix.to_camel_case(),
+                        selected.name.to_camel_case()
+                    );
                     query_context.maybe_expand_field(&selected, &ty, &prefix)
                 } else {
                     Ok(quote!())
@@ -82,9 +87,11 @@ impl GqlObject {
                         .find(|field| field.name.as_str() == name.as_str())
                         .unwrap()
                         .type_;
-                    let name_ident = Ident::new(name, Span::call_site());
-                    let ty = ty.to_rust(query_context, &format!("{}{}", prefix.to_camel_case(), name.to_camel_case()));
-                    fields.push(quote!(#name_ident: #ty));
+                    let ty = ty.to_rust(
+                        query_context,
+                        &format!("{}{}", prefix.to_camel_case(), name.to_camel_case()),
+                    );
+                    fields.push(render_object_field(name, ty));
                 }
                 query::Selection::FragmentSpread(fragment) => {
                     let field_name =

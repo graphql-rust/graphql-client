@@ -9,7 +9,7 @@ impl GqlUnion {
     pub fn response_for_selection(
         &self,
         query_context: &QueryContext,
-        selection: &query::SelectionSet,
+        _selection: &query::SelectionSet,
         _prefix: &str,
     ) -> TokenStream {
         unimplemented!("union generation")
