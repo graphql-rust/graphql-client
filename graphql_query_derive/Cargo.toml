@@ -8,7 +8,8 @@ proc-macro = true
 
 [dependencies]
 failure = "*"
-quote = "*"
+log = "*"
+quote = "^0.6"
 syn = "*"
 proc-macro2 = { version = "*", features = ["nightly"] }
 heck = "*"

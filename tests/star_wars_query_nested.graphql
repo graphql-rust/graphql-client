@@ -1,0 +1,18 @@
+query FilmsQuery {
+  allFilms {
+    totalCount
+    edges {
+      node {
+        title
+        characterConnection {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}

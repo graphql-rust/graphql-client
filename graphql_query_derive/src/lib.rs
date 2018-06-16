@@ -5,6 +5,8 @@
 extern crate failure;
 extern crate graphql_parser;
 extern crate heck;
+#[macro_use]
+extern crate log;
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate syn;
@@ -82,14 +84,11 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
         }
     );
 
-    // panic!("{:?}", result.to_string());
-
     Ok(result)
 }
 
 fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failure::Error> {
     let attributes = &ast.attrs;
-    // panic!(format!("{:?}", attributes.iter().map(|attr| attr.path).collect::Vec<_>()));
     let attribute = attributes
         .iter()
         .find(|attr| {

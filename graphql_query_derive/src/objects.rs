@@ -1,6 +1,7 @@
+use failure;
 use field_type::FieldType;
 use graphql_parser::query;
-use heck::SnakeCase;
+use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 
@@ -22,18 +23,18 @@ impl GqlObject {
         query_context: &QueryContext,
         selection: &query::SelectionSet,
         prefix: &str,
-    ) -> TokenStream {
+    ) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(prefix, Span::call_site());
         let fields = self.response_fields_for_selection(query_context, selection, prefix);
-        let field_impls = self.field_impls_for_selection(query_context, selection, &prefix);
-        quote! {
+        let field_impls = self.field_impls_for_selection(query_context, selection, &prefix)?;
+        Ok(quote! {
             #(#field_impls)*
 
             #[derive(Debug, Deserialize)]
             pub struct #name {
                 #(#fields,)*
             }
-        }
+        })
     }
 
     pub fn field_impls_for_selection(
@@ -41,7 +42,7 @@ impl GqlObject {
         query_context: &QueryContext,
         selection: &query::SelectionSet,
         prefix: &str,
-    ) -> Vec<TokenStream> {
+    ) -> Result<Vec<TokenStream>, failure::Error> {
         selection
             .items
             .iter()
@@ -51,13 +52,13 @@ impl GqlObject {
                         .fields
                         .iter()
                         .find(|f| f.name == selected.name)
-                        .expect("field found")
+                        .ok_or_else(|| format_err!("could not find field `{}`", selected.name))?
                         .type_
                         .inner_name_string();
-                    let prefix = format!("{}{}", prefix, selected.name);
+                    let prefix = format!("{}{}", prefix.to_camel_case(), selected.name.to_camel_case());
                     query_context.maybe_expand_field(&selected, &ty, &prefix)
                 } else {
-                    quote!()
+                    Ok(quote!())
                 }
             })
             .collect()
@@ -81,9 +82,9 @@ impl GqlObject {
                         .find(|field| field.name.as_str() == name.as_str())
                         .unwrap()
                         .type_;
-                    let name = Ident::new(name, Span::call_site());
-                    let ty = ty.to_rust(query_context, &format!("{}{}", prefix, name));
-                    fields.push(quote!(#name: #ty));
+                    let name_ident = Ident::new(name, Span::call_site());
+                    let ty = ty.to_rust(query_context, &format!("{}{}", prefix.to_camel_case(), name.to_camel_case()));
+                    fields.push(quote!(#name_ident: #ty));
                 }
                 query::Selection::FragmentSpread(fragment) => {
                     let field_name =

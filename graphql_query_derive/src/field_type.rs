@@ -1,6 +1,8 @@
 use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
+use heck::CamelCase;
+use schema::DEFAULT_SCALARS;
 
 #[derive(Debug, PartialEq)]
 pub enum FieldType {
@@ -10,10 +12,20 @@ pub enum FieldType {
 }
 
 impl FieldType {
+    /// Takes a field type with its name
     pub fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
+        println!("converting that to rust: {:?}", self);
         match &self {
             FieldType::Named(name) => {
-                let name = Ident::new(prefix, Span::call_site());
+                let just_the_prefix = Ident::new(prefix, Span::call_site());
+                let name_string = name.to_string();
+
+                let name = if context.schema.scalars.contains(&name_string) || DEFAULT_SCALARS.iter().find(|elem| elem == &&name_string).is_some()  {
+                    name
+                } else {
+                    &just_the_prefix
+                };
+
                 quote!(#name)
             }
             FieldType::Optional(inner) => {

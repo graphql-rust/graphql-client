@@ -10,6 +10,13 @@ use query::QueryContext;
 use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
 
+pub const DEFAULT_SCALARS: &[&'static str] = &[
+    "ID",
+    "String",
+    "Int",
+    "Float",
+];
+
 #[derive(Debug)]
 pub struct Schema {
     pub enums: BTreeMap<String, GqlEnum>,
@@ -56,7 +63,7 @@ impl Schema {
                         &context,
                         &q.selection_set,
                         prefix,
-                    ));
+                    )?);
                     context.query_root = Some(definition.response_fields_for_selection(
                         &context,
                         &q.selection_set,
@@ -76,7 +83,7 @@ impl Schema {
                         &context,
                         &q.selection_set,
                         prefix,
-                    ));
+                    )?);
                     context.mutation_root = Some(definition.response_fields_for_selection(
                         &context,
                         &q.selection_set,
@@ -97,7 +104,7 @@ impl Schema {
                         &context,
                         &q.selection_set,
                         &prefix,
-                    ));
+                    )?);
                     context._subscription_root = Some(definition.response_fields_for_selection(
                         &context,
                         &q.selection_set,
@@ -124,7 +131,15 @@ impl Schema {
 
         use proc_macro2::{Ident, Span};
 
+        let scalar_definitions = context.schema.scalars.iter().map(|scalar_name| {
+            let ident = Ident::new(scalar_name, Span::call_site());
+            quote!(type #ident = String;)
+        });
+
+
         Ok(quote! {
+            #(#scalar_definitions)*
+
             #(#enum_definitions)*
 
             #(#definitions)*

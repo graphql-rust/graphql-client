@@ -10,6 +10,13 @@ extern crate serde;
 )]
 struct StarWarsQuery1;
 
+#[derive(GraphQLQuery)]
+#[GraphQLQuery(
+    query_path = "tests/star_wars_query_nested.graphql",
+    schema_path = "tests/star_wars_schema.graphql"
+)]
+struct StarWarsQueryNested;
+
 #[test]
 fn star_wars_query_1_variables() {
     // let variables = star_wars_query_1::Variables { character: "Chewbacca" };

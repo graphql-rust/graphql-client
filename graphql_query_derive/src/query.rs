@@ -1,3 +1,4 @@
+use failure;
 use field_type::FieldType;
 use graphql_parser::query;
 use proc_macro2::TokenStream;
@@ -25,17 +26,22 @@ impl QueryContext {
         }
     }
 
-    pub fn maybe_expand_field(&self, field: &query::Field, ty: &str, prefix: &str) -> TokenStream {
+    pub fn maybe_expand_field(
+        &self,
+        field: &query::Field,
+        ty: &str,
+        prefix: &str,
+    ) -> Result<TokenStream, failure::Error> {
         if let Some(enm) = self.schema.enums.get(ty) {
-            enm.to_rust()
+            Ok(enm.to_rust())
         } else if let Some(obj) = self.schema.objects.get(ty) {
             obj.response_for_selection(self, &field.selection_set, prefix)
         } else if let Some(iface) = self.schema.interfaces.get(ty) {
-            iface.response_for_selection(self, &field.selection_set, prefix)
+            Ok(iface.response_for_selection(self, &field.selection_set, prefix))
         } else if let Some(unn) = self.schema.unions.get(ty) {
-            unn.response_for_selection(self, &field.selection_set, prefix)
+            Ok(unn.response_for_selection(self, &field.selection_set, prefix))
         } else {
-            quote!()
+            Ok(quote!())
         }
     }
 }
