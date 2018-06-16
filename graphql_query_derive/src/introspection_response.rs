@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 use serde;
 
 struct IntrospectionQuery;
@@ -139,156 +141,179 @@ pub struct FullType {
     inputFields: Option<Vec<Option<FullTypeInputFields>>>,
     interfaces: Option<Vec<Option<FullTypeInterfaces>>>,
     enumValues: Option<Vec<Option<FullTypeEnumValues>>>,
-    possibleTypes: Option<Vec<Option<FullTypePossibleTypes>>>,
+    possible_types: Option<Vec<Option<FullTypePossibleTypes>>>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullTypeFieldsArgs {
     #[serde(flatten)]
     input_value: InputValue,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullTypeFieldsType {
     #[serde(flatten)]
     type_ref: TypeRef,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullTypeFields {
     name: Option<String>,
     description: Option<String>,
     args: Option<Vec<Option<FullTypeFieldsArgs>>>,
     #[serde(rename = "type")]
     type_: Option<FullTypeFieldsType>,
-    isDeprecated: Option<Boolean>,
+    is_deprecated: Option<Boolean>,
     deprecationReason: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullTypeInputFields {
     #[serde(flatten)]
     input_value: InputValue,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullTypeInterfaces {
     #[serde(flatten)]
     type_ref: TypeRef,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullTypeEnumValues {
     name: Option<String>,
     description: Option<String>,
-    isDeprecated: Option<Boolean>,
-    deprecationReason: Option<String>,
+    is_deprecated: Option<Boolean>,
+    deprecation_reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullTypePossibleTypes {
     #[serde(flatten)]
     type_ref: TypeRef,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InputValue {
     name: Option<String>,
     description: Option<String>,
     #[serde(rename = "type")]
     type_: Option<InputValueType>,
-    defaultValue: Option<String>,
+    default_value: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InputValueType {
     #[serde(flatten)]
     type_ref: TypeRef,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TypeRef {
     kind: Option<__TypeKind>,
     name: Option<String>,
-    ofType: Option<TypeRefOfType>,
+    of_type: Option<TypeRefOfType>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType {
     kind: Option<__TypeKind>,
     name: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType {
     kind: Option<__TypeKind>,
     name: Option<String>,
-    ofType: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
+    of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfType {
     kind: Option<__TypeKind>,
     name: Option<String>,
-    ofType: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
+    of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfTypeOfType {
     kind: Option<__TypeKind>,
     name: Option<String>,
-    ofType: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfType>,
+    of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfType>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfType {
     kind: Option<__TypeKind>,
     name: Option<String>,
-    ofType: Option<TypeRefOfTypeOfTypeOfTypeOfType>,
+    of_type: Option<TypeRefOfTypeOfTypeOfTypeOfType>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfType {
     kind: Option<__TypeKind>,
     name: Option<String>,
-    ofType: Option<TypeRefOfTypeOfTypeOfType>,
+    of_type: Option<TypeRefOfTypeOfTypeOfType>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TypeRefOfType {
     kind: Option<__TypeKind>,
     name: Option<String>,
-    ofType: Option<TypeRefOfTypeOfType>,
+    of_type: Option<TypeRefOfTypeOfType>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaQueryType {
     name: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaMutationType {
     name: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaSubscriptionType {
     name: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaTypes {
     #[serde(flatten)]
     full_type: FullType,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaDirectivesArgs {
     #[serde(flatten)]
     input_value: InputValue,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaDirectives {
     name: Option<String>,
     description: Option<String>,
@@ -297,10 +322,11 @@ pub struct RustIntrospectionQuerySchemaDirectives {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchema {
-    queryType: Option<RustIntrospectionQuerySchemaQueryType>,
-    mutationType: Option<RustIntrospectionQuerySchemaMutationType>,
-    subscriptionType: Option<RustIntrospectionQuerySchemaSubscriptionType>,
+    query_type: Option<RustIntrospectionQuerySchemaQueryType>,
+    mutation_type: Option<RustIntrospectionQuerySchemaMutationType>,
+    subscription_type: Option<RustIntrospectionQuerySchemaSubscriptionType>,
     types: Option<Vec<Option<RustIntrospectionQuerySchemaTypes>>>,
     directives: Option<Vec<Option<RustIntrospectionQuerySchemaDirectives>>>,
 }

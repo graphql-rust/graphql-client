@@ -67,6 +67,10 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
 
     let result = quote!(
         mod #module_name {
+            #![allow(non_camel_case_types)]
+            #![allow(non_snake_case)]
+            #![allow(dead_code)]
+
             pub const QUERY: &'static str = #query_string;
 
             #schema_output

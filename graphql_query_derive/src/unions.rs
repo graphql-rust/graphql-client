@@ -1,5 +1,5 @@
 use graphql_parser::query;
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::TokenStream;
 use query::QueryContext;
 
 #[derive(Debug)]

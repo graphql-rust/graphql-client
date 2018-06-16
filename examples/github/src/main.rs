@@ -14,6 +14,6 @@ use graphql_query::*;
 struct Query1;
 
 fn main() -> Result<(), failure::Error> {
-    let q = Query1::build_query(query1::Variables);
+    let _q = Query1::build_query(query1::Variables);
     Ok(())
 }
