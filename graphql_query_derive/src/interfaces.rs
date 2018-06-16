@@ -1,4 +1,3 @@
-use field_type::FieldType;
 use graphql_parser::query;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -14,7 +13,7 @@ pub struct GqlInterface {
 impl GqlInterface {
     pub fn response_for_selection(
         &self,
-        query_context: &QueryContext,
+        _query_context: &QueryContext,
         selection: &query::SelectionSet,
         prefix: &str,
     ) -> TokenStream {

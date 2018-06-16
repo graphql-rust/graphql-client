@@ -1,5 +1,4 @@
 use field_type::FieldType;
-use quote::ToTokens;
 use std::collections::BTreeMap;
 
 #[derive(Debug)]

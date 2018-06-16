@@ -1,5 +1,7 @@
 use proc_macro2::{Ident, Span, TokenStream};
 
+pub const ENUMS_PREFIX: &'static str = "RustEnum_";
+
 #[derive(Debug, PartialEq)]
 pub struct GqlEnum {
     pub name: String,
@@ -14,14 +16,15 @@ impl GqlEnum {
             .map(|v| Ident::new(v, Span::call_site()))
             .collect();
         let variants = &variants;
-        let name_ident = Ident::new(&self.name, Span::call_site());
+        let name_ident = Ident::new(&format!("{}{}", ENUMS_PREFIX, self.name), Span::call_site());
         let constructors: Vec<_> = variants.iter().map(|v| quote!(#name_ident::#v)).collect();
         let constructors = &constructors;
         let variant_str = &self.variants;
 
-        let name = Ident::new(&self.name, Span::call_site());
+        let name = name_ident.clone();
 
         quote! {
+            #[derive(Debug)]
             pub enum #name {
                 #(#variants,)*
                 Other(String),

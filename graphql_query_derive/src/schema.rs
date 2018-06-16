@@ -7,6 +7,7 @@ use interfaces::GqlInterface;
 use objects::{GqlObject, GqlObjectField};
 use proc_macro2::TokenStream;
 use query::QueryContext;
+use fragments::GqlFragment;
 use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
 
@@ -59,15 +60,16 @@ impl Schema {
                         .and_then(|query_type| context.schema.objects.get(&query_type))
                         .expect("query type is defined");
                     let prefix = &q.name.expect("unnamed operation");
+                    let prefix = format!("RUST_{}", prefix);
                     definitions.extend(definition.field_impls_for_selection(
                         &context,
                         &q.selection_set,
-                        prefix,
+                        &prefix,
                     )?);
                     context.query_root = Some(definition.response_fields_for_selection(
                         &context,
                         &q.selection_set,
-                        prefix,
+                        &prefix,
                     ));
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
@@ -78,16 +80,17 @@ impl Schema {
                         .and_then(|mutation_type| context.schema.objects.get(&mutation_type))
                         .expect("mutation type is defined");
                     let prefix = &q.name.expect("unnamed operation");
+                    let prefix = format!("RUST_{}", prefix);
 
                     definitions.extend(definition.field_impls_for_selection(
                         &context,
                         &q.selection_set,
-                        prefix,
+                        &prefix,
                     )?);
                     context.mutation_root = Some(definition.response_fields_for_selection(
                         &context,
                         &q.selection_set,
-                        prefix,
+                        &prefix,
                     ));
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
@@ -100,6 +103,7 @@ impl Schema {
                         })
                         .expect("subscription type is defined");
                     let prefix = &q.name.expect("unnamed operation");
+                    let prefix = format!("RUST_{}", prefix);
                     definitions.extend(definition.field_impls_for_selection(
                         &context,
                         &q.selection_set,
@@ -115,18 +119,24 @@ impl Schema {
                     unimplemented!()
                 }
                 query::Definition::Fragment(fragment) => {
-                    context.fragments.insert(fragment.name, BTreeMap::new());
+                    let query::TypeCondition::On(on) = fragment.type_condition;
+                    context.fragments.insert(fragment.name.clone(), GqlFragment {
+                        name: fragment.name,
+                        selection: fragment.selection_set,
+                        on,
+                    });
                 }
             }
         }
 
         let enum_definitions = context.schema.enums.values().map(|enm| enm.to_rust());
-        let variables_struct = quote!(#[derive(Serialize)]
-        pub struct Variables;);
+        let fragment_definitions = context.fragments.values().map(|fragment| fragment.to_rust(&context));
+        let variables_struct = quote!(#[derive(Serialize)] pub struct Variables;);
         let response_data_fields = context
             .query_root
-            .or(context.mutation_root)
-            .or(context._subscription_root)
+            .as_ref()
+            .or(context.mutation_root.as_ref())
+            .or(context._subscription_root.as_ref())
             .expect("no selection defined");
 
         use proc_macro2::{Ident, Span};
@@ -141,6 +151,8 @@ impl Schema {
             #(#scalar_definitions)*
 
             #(#enum_definitions)*
+
+            #(#fragment_definitions)*
 
             #(#definitions)*
 

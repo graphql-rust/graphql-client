@@ -5,8 +5,6 @@
 extern crate failure;
 extern crate graphql_parser;
 extern crate heck;
-#[macro_use]
-extern crate log;
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate syn;
@@ -14,10 +12,10 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro2::TokenStream;
-use std::collections::BTreeMap;
 
 mod enums;
 mod field_type;
+mod fragments;
 mod inputs;
 mod interfaces;
 mod objects;
@@ -27,7 +25,6 @@ mod unions;
 
 use heck::*;
 use proc_macro2::{Ident, Span};
-use schema::Schema;
 
 #[proc_macro_derive(GraphQLQuery, attributes(GraphQLQuery))]
 pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

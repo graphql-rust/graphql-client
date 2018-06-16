@@ -4,10 +4,11 @@ use graphql_parser::query;
 use proc_macro2::TokenStream;
 use schema::Schema;
 use std::collections::BTreeMap;
+use fragments::GqlFragment;
 
 pub struct QueryContext {
     pub _subscription_root: Option<Vec<TokenStream>>,
-    pub fragments: BTreeMap<String, BTreeMap<String, FieldType>>,
+    pub fragments: BTreeMap<String, GqlFragment>,
     pub mutation_root: Option<Vec<TokenStream>>,
     pub query_root: Option<Vec<TokenStream>>,
     pub schema: Schema,
@@ -33,7 +34,7 @@ impl QueryContext {
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         if let Some(enm) = self.schema.enums.get(ty) {
-            Ok(enm.to_rust())
+            Ok(quote!()) // we already expand enums separately
         } else if let Some(obj) = self.schema.objects.get(ty) {
             obj.response_for_selection(self, &field.selection_set, prefix)
         } else if let Some(iface) = self.schema.interfaces.get(ty) {
