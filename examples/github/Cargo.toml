@@ -5,7 +5,7 @@ authors = ["Tom Houlé <tom@tomhoule.com>"]
 
 [dependencies]
 failure = "*"
-graphql_query = { path = "../.." }
+graphql_client = { path = "../.." }
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"

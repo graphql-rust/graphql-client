@@ -1,13 +1,13 @@
 extern crate failure;
 #[macro_use]
-extern crate graphql_query;
+extern crate graphql_client;
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-use graphql_query::*;
+use graphql_client::*;
 
 #[derive(GraphQLQuery)]
 #[GraphQLQuery(schema_path = "src/schema.graphql", query_path = "src/query_1.graphql")]

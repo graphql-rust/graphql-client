@@ -95,12 +95,12 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
             #schema_output
         }
 
-        impl<'de> ::graphql_query::GraphQLQuery<'de> for #struct_name {
+        impl<'de> ::graphql_client::GraphQLQuery<'de> for #struct_name {
             type Variables = #module_name::Variables;
             type ResponseData = #module_name::ResponseData;
 
-            fn build_query(variables: Self::Variables) -> ::graphql_query::GraphQLQueryBody<Self::Variables> {
-                ::graphql_query::GraphQLQueryBody {
+            fn build_query(variables: Self::Variables) -> ::graphql_client::GraphQLQueryBody<Self::Variables> {
+                ::graphql_client::GraphQLQueryBody {
                     variables,
                     query: #module_name::QUERY,
                 }

@@ -1,6 +1,6 @@
 [package]
-name = "graphql_query"
-version = "0.1.0"
+name = "graphql_client"
+version = "0.0.1"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 
 [dependencies]
