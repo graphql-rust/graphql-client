@@ -1,9 +1,9 @@
 use enums::ENUMS_PREFIX;
 use graphql_parser::schema;
+use introspection_response;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use schema::DEFAULT_SCALARS;
-use introspection_response;
 
 #[derive(Debug, PartialEq)]
 pub enum FieldType {
@@ -98,15 +98,13 @@ fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool)
             from_json_type_inner(&inner.of_type.expect("inner type is missing"), true)
         }
         Some(__TypeKind::LIST) => {
-            from_json_type_inner(&inner.of_type.expect("inner type is missing"), false)
+            FieldType::Vector(Box::new(from_json_type_inner(&inner.of_type.expect("inner type is missing"), false)))
         }
-        Some(_) => {
-            FieldType::Named(Ident::new(&inner.name.expect("type name"), Span::call_site()))
-        }
-        None => {
-            unreachable!("non-convertible type")
-        }
-
+        Some(_) => FieldType::Named(Ident::new(
+            &inner.name.expect("type name"),
+            Span::call_site(),
+        )),
+        None => unreachable!("non-convertible type"),
     };
 
     if non_null {

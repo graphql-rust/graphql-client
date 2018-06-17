@@ -176,7 +176,7 @@ pub struct FullTypeInputFields {
 #[serde(rename_all = "camelCase")]
 pub struct FullTypeInterfaces {
     #[serde(flatten)]
-    type_ref: TypeRef,
+    pub type_ref: TypeRef,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -310,10 +310,10 @@ pub struct RustIntrospectionQuerySchemaDirectivesArgs {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaDirectives {
-    name: Option<String>,
-    description: Option<String>,
-    locations: Option<Vec<Option<__DirectiveLocation>>>,
-    args: Option<Vec<Option<RustIntrospectionQuerySchemaDirectivesArgs>>>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub locations: Option<Vec<Option<__DirectiveLocation>>>,
+    pub args: Option<Vec<Option<RustIntrospectionQuerySchemaDirectivesArgs>>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -332,7 +332,4 @@ pub struct Schema {
     pub schema: Option<RustIntrospectionQuerySchema>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct IntrospectionResponse {
-    pub data: Schema,
-}
+pub type IntrospectionResponse = Schema;
