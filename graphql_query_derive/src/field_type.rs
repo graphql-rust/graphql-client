@@ -3,6 +3,7 @@ use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use schema::DEFAULT_SCALARS;
+use introspection_response;
 
 #[derive(Debug, PartialEq)]
 pub enum FieldType {
@@ -85,5 +86,38 @@ fn from_schema_type_inner(inner: schema::Type, non_null: bool) -> FieldType {
         inner_field_type
     } else {
         FieldType::Optional(Box::new(inner_field_type))
+    }
+}
+
+fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool) -> FieldType {
+    use introspection_response::*;
+    let inner = inner.clone();
+
+    let inner_field_type = match inner.kind {
+        Some(__TypeKind::NON_NULL) => {
+            from_json_type_inner(&inner.of_type.expect("inner type is missing"), true)
+        }
+        Some(__TypeKind::LIST) => {
+            from_json_type_inner(&inner.of_type.expect("inner type is missing"), false)
+        }
+        Some(_) => {
+            FieldType::Named(Ident::new(&inner.name.expect("type name"), Span::call_site()))
+        }
+        None => {
+            unreachable!("non-convertible type")
+        }
+
+    };
+
+    if non_null {
+        inner_field_type
+    } else {
+        FieldType::Optional(Box::new(inner_field_type))
+    }
+}
+
+impl ::std::convert::From<introspection_response::FullTypeFieldsType> for FieldType {
+    fn from(schema_type: introspection_response::FullTypeFieldsType) -> FieldType {
+        from_json_type_inner(&schema_type.type_ref, false)
     }
 }

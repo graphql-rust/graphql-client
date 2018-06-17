@@ -10,6 +10,7 @@ use proc_macro2::TokenStream;
 use query::QueryContext;
 use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
+use introspection_response;
 
 pub const DEFAULT_SCALARS: &[&'static str] = &["ID", "String", "Int", "Float", "Boolean"];
 
@@ -259,26 +260,67 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
 
 impl ::std::convert::From<::introspection_response::IntrospectionResponse> for Schema {
     fn from(src: ::introspection_response::IntrospectionResponse) -> Self {
-        use introspection_response::{__TypeKind};
+        use introspection_response::__TypeKind;
 
         let mut schema = Schema::new();
         let root = src.data.schema.expect("__Schema is not null");
 
-        for ty in root.types.expect("types in schema").iter().filter_map(|t| t.as_ref().map(|t| &t.full_type)) {
-            match  ty.kind {
+        for ty in root
+            .types
+            .expect("types in schema")
+            .iter()
+            .filter_map(|t| t.as_ref().map(|t| &t.full_type))
+        {
+            let name = ty.name.clone().expect("type definition name");
+
+            match ty.kind {
                 Some(__TypeKind::ENUM) => {
-                    let name = ty.name.clone().expect("enum name");
-                    let variants: Vec<String> = ty.enum_values.clone().expect("enum variants")
+                    let variants: Vec<String> = ty
+                        .enum_values
+                        .clone()
+                        .expect("enum variants")
                         .iter()
                         .map(|t| t.clone().map(|t| t.name.expect("enum variant name")))
                         .filter_map(|t| t)
                         .collect();
-                    schema.enums.insert(name.clone(), GqlEnum {
+                    schema
+                        .enums
+                        .insert(name.clone(), GqlEnum { name, variants });
+                }
+                Some(__TypeKind::SCALAR) => {
+                    schema.scalars.insert(name);
+                }
+                Some(__TypeKind::UNION) => {
+                    let variants: Vec<String> = ty
+                        .possible_types
+                        .clone()
+                        .unwrap()
+                        .into_iter()
+                        .filter_map(|t| t.and_then(|t| t.type_ref.name.clone()))
+                        .collect();
+                    schema.unions.insert(name.clone(), GqlUnion(variants));
+                }
+                Some(__TypeKind::OBJECT) => {
+                    let fields: Vec<GqlObjectField> = ty
+                        .fields
+                        .clone()
+                        .unwrap()
+                        .into_iter()
+                        .filter_map(|t| t.map(|t| GqlObjectField {
+                            name: t.name.expect("field name"),
+                            type_: FieldType::from(t.type_.expect("field type"))
+                        }))
+                        .collect();
+                    schema.objects.insert(name.clone(), GqlObject {
                         name,
-                        variants,
+                        fields,
                     });
                 }
-                _ => unimplemented!("unimplemented definition")
+                Some(__TypeKind::INTERFACE) => {
+                },
+                Some(__TypeKind::INPUT_OBJECT) => {
+                },
+                _ => unimplemented!("unimplemented definition"),
             }
         }
 

@@ -63,7 +63,10 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
     let mut schema_string = String::new();
     ::std::fs::File::open(&schema_path)?.read_to_string(&mut schema_string)?;
 
-    let extension = schema_path.extension().and_then(|e| e.to_str()).unwrap_or("INVALID");
+    let extension = schema_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("INVALID");
 
     let schema = match extension {
         "graphql" | "gql" => {
