@@ -1,3 +1,5 @@
+NOTE: This is a WIP - I plan to write proper documentation and make a formal release soon.
+
 Derive Rust code to safely interact with queries written in the GraphQL query language.
 
 This library does not provide any networking, caching or other client functionality, it is just meant to make it easy to interact with a GraphQL query and the corresponding response in a strongly typed way. Building a client can be as simple as this:
