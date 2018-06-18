@@ -1,0 +1,10 @@
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+cache: cargo
+script:
+  - cargo test --verbose
+  - cd graphql_query_derive && cargo test --verbose
+  - cd ../examples/github && cargo build

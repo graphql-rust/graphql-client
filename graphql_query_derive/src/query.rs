@@ -33,7 +33,7 @@ impl QueryContext {
         ty: &str,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
-        if let Some(enm) = self.schema.enums.get(ty) {
+        if let Some(_enm) = self.schema.enums.get(ty) {
             Ok(quote!()) // we already expand enums separately
         } else if let Some(obj) = self.schema.objects.get(ty) {
             obj.response_for_selection(self, &field.selection_set, prefix)

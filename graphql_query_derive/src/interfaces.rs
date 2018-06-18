@@ -3,7 +3,7 @@ use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct GqlInterface {
     pub implemented_by: Vec<String>,
     pub name: String,
@@ -14,7 +14,7 @@ impl GqlInterface {
     pub fn response_for_selection(
         &self,
         _query_context: &QueryContext,
-        selection: &query::SelectionSet,
+        _selection: &query::SelectionSet,
         prefix: &str,
     ) -> TokenStream {
         let name = Ident::new(&prefix, Span::call_site());

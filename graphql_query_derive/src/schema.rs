@@ -13,7 +13,7 @@ use unions::GqlUnion;
 
 pub const DEFAULT_SCALARS: &[&'static str] = &["ID", "String", "Int", "Float", "Boolean"];
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Schema {
     pub enums: BTreeMap<String, GqlEnum>,
     pub inputs: BTreeMap<String, GqlInput>,
@@ -220,7 +220,8 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         schema.scalars.insert(scalar.name);
                     }
                     schema::TypeDefinition::Union(union) => {
-                        schema.unions.insert(union.name, GqlUnion(union.types));
+                        let tys: BTreeSet<String> = union.types.into_iter().collect();
+                        schema.unions.insert(union.name, GqlUnion(tys));
                     }
                     schema::TypeDefinition::Interface(interface) => {
                         schema.interfaces.insert(
@@ -250,6 +251,114 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                     schema.mutation_type = definition.mutation;
                     schema.subscription_type = definition.subscription;
                 }
+            }
+        }
+
+        schema
+    }
+}
+
+impl ::std::convert::From<::introspection_response::IntrospectionResponse> for Schema {
+    fn from(src: ::introspection_response::IntrospectionResponse) -> Self {
+        use introspection_response::__TypeKind;
+
+        let mut schema = Schema::new();
+        let root = src.schema.expect("__Schema is not null");
+
+        // Holds which objects implement which interfaces so we can populate GqlInterface#implemented_by later.
+        // It maps interface names to a vec of implementation names.
+        let mut interface_implementations: BTreeMap<String, Vec<String>> = BTreeMap::new();
+
+        for ty in root
+            .types
+            .expect("types in schema")
+            .iter()
+            .filter_map(|t| t.as_ref().map(|t| &t.full_type))
+        {
+            let name = ty.name.clone().expect("type definition name");
+
+            match ty.kind {
+                Some(__TypeKind::ENUM) => {
+                    let variants: Vec<String> = ty
+                        .enum_values
+                        .clone()
+                        .expect("enum variants")
+                        .iter()
+                        .map(|t| t.clone().map(|t| t.name.expect("enum variant name")))
+                        .filter_map(|t| t)
+                        .collect();
+                    schema
+                        .enums
+                        .insert(name.clone(), GqlEnum { name, variants });
+                }
+                Some(__TypeKind::SCALAR) => {
+                    if DEFAULT_SCALARS.iter().find(|s| s == &&name.as_str()).is_none() {
+                        schema.scalars.insert(name);
+                    }
+                }
+                Some(__TypeKind::UNION) => {
+                    let variants: BTreeSet<String> = ty
+                        .possible_types
+                        .clone()
+                        .unwrap()
+                        .into_iter()
+                        .filter_map(|t| t.and_then(|t| t.type_ref.name.clone()))
+                        .collect();
+                    schema.unions.insert(name.clone(), GqlUnion(variants));
+                }
+                Some(__TypeKind::OBJECT) => {
+                    for implementing in ty
+                        .interfaces
+                        .clone()
+                        .unwrap_or_else(|| Vec::new())
+                        .into_iter()
+                        .filter_map(|t| t)
+                        .map(|t| t.type_ref.name)
+                    {
+                        interface_implementations
+                            .entry(implementing.expect("interface name"))
+                            .and_modify(|objects| objects.push(name.clone()))
+                            .or_insert_with(|| vec![name.clone()]);
+                    }
+
+                    let fields: Vec<GqlObjectField> = ty
+                        .fields
+                        .clone()
+                        .unwrap()
+                        .into_iter()
+                        .filter_map(|t| {
+                            t.map(|t| GqlObjectField {
+                                name: t.name.expect("field name"),
+                                type_: FieldType::from(t.type_.expect("field type")),
+                            })
+                        })
+                        .collect();
+                    schema
+                        .objects
+                        .insert(name.clone(), GqlObject { name, fields });
+                }
+                Some(__TypeKind::INTERFACE) => {
+                    let iface = GqlInterface {
+                        name: name.clone(),
+                        implemented_by: Vec::new(),
+                        fields: ty
+                            .fields
+                            .clone()
+                            .expect("interface fields")
+                            .into_iter()
+                            .filter_map(|f| f)
+                            .map(|f| GqlObjectField {
+                                name: f.name.expect("field name"),
+                                type_: FieldType::from(f.type_.expect("field type")),
+                            })
+                            .collect(),
+                    };
+                    schema.interfaces.insert(name, iface);
+                }
+                Some(__TypeKind::INPUT_OBJECT) => {
+                    schema.inputs.insert(name, GqlInput);
+                }
+                _ => unimplemented!("unimplemented definition"),
             }
         }
 

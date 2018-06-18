@@ -13,7 +13,7 @@ struct MyQuery;
 fn perform_my_query(variables: &my_query::Variables) -> Result<(), failure::Error> {
     let body = MyQuery::expand(variables);
     let client = reqwest::Client::new();
-    let res: HttpResponse<graphql_query::Response<my_query::ResponseData>> = client.post("/graphql", body)?;
+    let res: HttpResponse<graphql_client::Response<my_query::ResponseData>> = client.post("/graphql", body)?;
     println!("{:#?}", res.body);
 }
 ```
