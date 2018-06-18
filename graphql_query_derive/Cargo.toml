@@ -10,7 +10,7 @@ proc-macro = true
 failure = "*"
 quote = "^0.6"
 syn = "*"
-proc-macro2 = { version = "*", features = ["nightly"] }
+proc-macro2 = { version = "*" }
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"

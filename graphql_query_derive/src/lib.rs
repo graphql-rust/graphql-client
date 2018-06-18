@@ -1,5 +1,4 @@
 #![recursion_limit = "128"]
-#![feature(nll)]
 
 #[macro_use]
 extern crate failure;

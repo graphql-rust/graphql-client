@@ -62,7 +62,7 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
     use reqwest::mime;
 
     // let dest_file = ::std::fs::File::open(&output)?;
-    
+
     let request_body: graphql_client::GraphQLQueryBody<()> = graphql_client::GraphQLQueryBody {
         variables: (),
         query: INTROSPECTION_QUERY,
@@ -77,9 +77,9 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
 
     if res.status().is_success() {
     } else if res.status().is_server_error() {
-            println!("server error!");
+        println!("server error!");
     } else {
-            println!("Something else happened. Status: {:?}", res.status());
+        println!("Something else happened. Status: {:?}", res.status());
     }
 
     let json: graphql_client::GraphQLResponse<introspection_query::ResponseData> = res.json()?;

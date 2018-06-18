@@ -8,7 +8,7 @@ const SCHEMA_GRAPHQL: &'static str = include_str!("github_schema.graphql");
 
 #[test]
 fn ast_from_graphql_and_json_produce_the_same_schema() {
-    use ::std::iter::FromIterator;
+    use std::iter::FromIterator;
     let json: ::introspection_response::IntrospectionResponse =
         serde_json::from_str(SCHEMA_JSON).unwrap();
     let graphql_parser_schema = graphql_parser::parse_schema(SCHEMA_GRAPHQL).unwrap();
@@ -26,7 +26,8 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     assert_eq!(json.mutation_type, gql.mutation_type);
     assert_eq!(json.subscription_type, gql.subscription_type);
     assert_eq!(json.inputs, gql.inputs);
-    for ((json_name, json_value), (gql_name, gql_value)) in json.enums.iter().zip(gql.enums.iter()) {
+    for ((json_name, json_value), (gql_name, gql_value)) in json.enums.iter().zip(gql.enums.iter())
+    {
         assert_eq!(json_name, gql_name);
         assert_eq!(
             HashSet::<&String>::from_iter(json_value.variants.iter()),
