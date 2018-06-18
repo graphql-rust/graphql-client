@@ -31,7 +31,7 @@ impl GqlObject {
         Ok(quote! {
             #(#field_impls)*
 
-            #[derive(Debug, Deserialize)]
+            #[derive(Debug, Serialize, Deserialize)]
             pub struct #name {
                 #(#fields,)*
             }

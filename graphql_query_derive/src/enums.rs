@@ -34,18 +34,18 @@ impl GqlEnum {
                 fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
                     ser.serialize_str(match *self {
                         #(#constructors => #variant_str,)*
-                        #name::Other(ref s) => s.as_str(),
+                        #name::Other(ref s) => &s,
                     })
                 }
             }
 
             impl<'de> ::serde::Deserialize<'de> for #name {
                 fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-                    let s = <&'de str>::deserialize(deserializer)?;
+                    let s = <String>::deserialize(deserializer)?;
 
-                    match s {
+                    match s.as_str() {
                         #(#variant_str => Ok(#constructors),)*
-                        _ => Ok(#name::Other(s.to_string())),
+                        _ => Ok(#name::Other(s)),
                     }
                 }
             }

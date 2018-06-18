@@ -48,67 +48,73 @@ impl Schema {
         for definition in query.definitions {
             match definition {
                 query::Definition::Operation(query::OperationDefinition::Query(q)) => {
-                    let definition = context
-                        .schema
-                        .query_type
-                        .clone()
-                        .and_then(|query_type| context.schema.objects.get(&query_type))
-                        .expect("query type is defined");
-                    let prefix = &q.name.expect("unnamed operation");
-                    let prefix = format!("RUST_{}", prefix);
-                    definitions.extend(definition.field_impls_for_selection(
-                        &context,
-                        &q.selection_set,
-                        &prefix,
-                    )?);
-                    context.query_root = Some(definition.response_fields_for_selection(
-                        &context,
-                        &q.selection_set,
-                        &prefix,
-                    ));
+                    context.query_root = {
+                        let definition = context
+                            .schema
+                            .query_type
+                            .clone()
+                            .and_then(|query_type| context.schema.objects.get(&query_type))
+                            .expect("query type is defined");
+                        let prefix = &q.name.expect("unnamed operation");
+                        let prefix = format!("RUST_{}", prefix);
+                        definitions.extend(definition.field_impls_for_selection(
+                            &context,
+                            &q.selection_set,
+                            &prefix,
+                        )?);
+                        Some(definition.response_fields_for_selection(
+                            &context,
+                            &q.selection_set,
+                            &prefix,
+                        ))
+                    };
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
-                    let definition = context
-                        .schema
-                        .mutation_type
-                        .clone()
-                        .and_then(|mutation_type| context.schema.objects.get(&mutation_type))
-                        .expect("mutation type is defined");
-                    let prefix = &q.name.expect("unnamed operation");
-                    let prefix = format!("RUST_{}", prefix);
+                    context.mutation_root = {
+                        let definition = context
+                            .schema
+                            .mutation_type
+                            .clone()
+                            .and_then(|mutation_type| context.schema.objects.get(&mutation_type))
+                            .expect("mutation type is defined");
+                        let prefix = &q.name.expect("unnamed operation");
+                        let prefix = format!("RUST_{}", prefix);
 
-                    definitions.extend(definition.field_impls_for_selection(
-                        &context,
-                        &q.selection_set,
-                        &prefix,
-                    )?);
-                    context.mutation_root = Some(definition.response_fields_for_selection(
-                        &context,
-                        &q.selection_set,
-                        &prefix,
-                    ));
+                        definitions.extend(definition.field_impls_for_selection(
+                            &context,
+                            &q.selection_set,
+                            &prefix,
+                        )?);
+                        Some(definition.response_fields_for_selection(
+                            &context,
+                            &q.selection_set,
+                            &prefix,
+                        ))
+                    };
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
-                    let definition = context
-                        .schema
-                        .subscription_type
-                        .clone()
-                        .and_then(|subscription_type| {
-                            context.schema.objects.get(&subscription_type)
-                        })
-                        .expect("subscription type is defined");
-                    let prefix = &q.name.expect("unnamed operation");
-                    let prefix = format!("RUST_{}", prefix);
-                    definitions.extend(definition.field_impls_for_selection(
-                        &context,
-                        &q.selection_set,
-                        &prefix,
-                    )?);
-                    context._subscription_root = Some(definition.response_fields_for_selection(
-                        &context,
-                        &q.selection_set,
-                        &prefix,
-                    ));
+                    context._subscription_root = {
+                        let definition = context
+                            .schema
+                            .subscription_type
+                            .clone()
+                            .and_then(|subscription_type| {
+                                context.schema.objects.get(&subscription_type)
+                            })
+                            .expect("subscription type is defined");
+                        let prefix = &q.name.expect("unnamed operation");
+                        let prefix = format!("RUST_{}", prefix);
+                        definitions.extend(definition.field_impls_for_selection(
+                            &context,
+                            &q.selection_set,
+                            &prefix,
+                        )?);
+                        Some(definition.response_fields_for_selection(
+                            &context,
+                            &q.selection_set,
+                            &prefix,
+                        ))
+                    };
                 }
                 query::Definition::Operation(query::OperationDefinition::SelectionSet(_)) => {
                     unimplemented!()
@@ -163,7 +169,7 @@ impl Schema {
 
             #variables_struct
 
-            #[derive(Deserialize)]
+            #[derive(Debug, Serialize, Deserialize)]
             pub struct ResponseData {
                 #(#response_data_fields)*,
             }
@@ -292,7 +298,11 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .insert(name.clone(), GqlEnum { name, variants });
                 }
                 Some(__TypeKind::SCALAR) => {
-                    if DEFAULT_SCALARS.iter().find(|s| s == &&name.as_str()).is_none() {
+                    if DEFAULT_SCALARS
+                        .iter()
+                        .find(|s| s == &&name.as_str())
+                        .is_none()
+                    {
                         schema.scalars.insert(name);
                     }
                 }

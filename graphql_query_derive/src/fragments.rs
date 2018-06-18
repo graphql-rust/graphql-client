@@ -19,7 +19,7 @@ impl GqlFragment {
         let fields = object.response_fields_for_selection(context, &self.selection, &self.name);
 
         quote!{
-            #[derive(Debug, Deserialize)]
+            #[derive(Debug, Deserialize, Serialize)]
             pub struct #name_ident {
                 #(#fields,)*
             }

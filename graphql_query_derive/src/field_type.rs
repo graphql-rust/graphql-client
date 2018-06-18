@@ -97,9 +97,10 @@ fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool)
         Some(__TypeKind::NON_NULL) => {
             from_json_type_inner(&inner.of_type.expect("inner type is missing"), true)
         }
-        Some(__TypeKind::LIST) => {
-            FieldType::Vector(Box::new(from_json_type_inner(&inner.of_type.expect("inner type is missing"), false)))
-        }
+        Some(__TypeKind::LIST) => FieldType::Vector(Box::new(from_json_type_inner(
+            &inner.of_type.expect("inner type is missing"),
+            false,
+        ))),
         Some(_) => FieldType::Named(Ident::new(
             &inner.name.expect("type name"),
             Span::call_site(),

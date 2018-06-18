@@ -6,5 +6,6 @@ rust:
 cache: cargo
 script:
   - cargo test --verbose
-  - cd graphql_query_derive && cargo test --verbose
-  - cd ../examples/github && cargo build
+  - cargo test --verbose --manifest-path=./graphql_query_derive/Cargo.toml
+  - cargo build --manifest-path=./examples/github/Cargo.toml
+  - cargo build --manifest-path=./graphql_client_cli/Cargo.toml

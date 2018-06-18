@@ -16,4 +16,5 @@ members = [
     ".",
     "examples/github",
     "graphql_query_derive",
+    "graphql_client_cli",
 ]
