@@ -1,0 +1,13 @@
+[package]
+name = "graphql_client_cli"
+version = "0.1.0"
+authors = ["Tom Houlé <tom@tomhoule.com>"]
+
+[dependencies]
+failure = "*"
+reqwest = "*"
+graphql_client = { path = ".." }
+structopt = "*"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
