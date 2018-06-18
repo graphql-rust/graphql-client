@@ -60,8 +60,12 @@ fn main() -> Result<(), failure::Error> {
 fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), failure::Error> {
     use reqwest::header::*;
     use reqwest::mime;
+    use std::io::Write;
 
-    // let dest_file = ::std::fs::File::open(&output)?;
+    let mut out: Box<Write> = match output {
+        Some(path) => Box::new(::std::fs::File::create(path)?),
+        None => Box::new(::std::io::stdout()),
+    };
 
     let request_body: graphql_client::GraphQLQueryBody<()> = graphql_client::GraphQLQueryBody {
         variables: (),
@@ -83,8 +87,9 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
     }
 
     let json: graphql_client::GraphQLResponse<introspection_query::ResponseData> = res.json()?;
+    let json = serde_json::to_string(&json)?;
 
-    println!("{:?}", json);
+    write!(out, "{}", json)?;
 
     Ok(())
 }

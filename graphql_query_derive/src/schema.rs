@@ -169,7 +169,7 @@ impl Schema {
 
             #variables_struct
 
-            #[derive(Debug, Deserialize)]
+            #[derive(Debug, Serialize, Deserialize)]
             pub struct ResponseData {
                 #(#response_data_fields)*,
             }
