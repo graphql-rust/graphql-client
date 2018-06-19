@@ -16,3 +16,13 @@ impl GqlUnion {
         unimplemented!("union generation")
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn union_response_for_selection_works() {
+        // unimplemented!()
+    }
+
+}

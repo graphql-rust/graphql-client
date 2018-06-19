@@ -27,6 +27,19 @@ impl QueryContext {
         }
     }
 
+    /// For testing only. creates an empty QueryContext with an empty Schema.
+    #[cfg(test)]
+    pub fn new_empty() -> QueryContext {
+        QueryContext {
+            _subscription_root: None,
+            fragments: BTreeMap::new(),
+            mutation_root: None,
+            query_root: None,
+            schema: Schema::new(),
+            variables: BTreeMap::new(),
+        }
+    }
+
     pub fn maybe_expand_field(
         &self,
         field: &query::Field,
