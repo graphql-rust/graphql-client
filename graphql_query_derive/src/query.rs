@@ -1,10 +1,10 @@
 use failure;
 use field_type::FieldType;
 use fragments::GqlFragment;
-use graphql_parser::query;
 use proc_macro2::TokenStream;
 use schema::Schema;
 use std::collections::BTreeMap;
+use selection::Selection;
 
 pub struct QueryContext {
     pub _subscription_root: Option<Vec<TokenStream>>,
@@ -42,18 +42,18 @@ impl QueryContext {
 
     pub fn maybe_expand_field(
         &self,
-        field: &query::Field,
         ty: &str,
+        selection: &Selection,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         if let Some(_enm) = self.schema.enums.get(ty) {
             Ok(quote!()) // we already expand enums separately
         } else if let Some(obj) = self.schema.objects.get(ty) {
-            obj.response_for_selection(self, &field.selection_set, prefix)
+            obj.response_for_selection(self, &selection, prefix)
         } else if let Some(iface) = self.schema.interfaces.get(ty) {
-            Ok(iface.response_for_selection(self, &field.selection_set, prefix))
+            Ok(iface.response_for_selection(self, &selection, prefix))
         } else if let Some(unn) = self.schema.unions.get(ty) {
-            Ok(unn.response_for_selection(self, &field.selection_set, prefix))
+            Ok(unn.response_for_selection(self, &selection, prefix))
         } else {
             Ok(quote!())
         }

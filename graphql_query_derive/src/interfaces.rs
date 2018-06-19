@@ -1,4 +1,4 @@
-use graphql_parser::query;
+use selection::Selection;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
@@ -14,7 +14,7 @@ impl GqlInterface {
     pub fn response_for_selection(
         &self,
         _query_context: &QueryContext,
-        _selection: &query::SelectionSet,
+        _selection: &Selection,
         prefix: &str,
     ) -> TokenStream {
         let name = Ident::new(&prefix, Span::call_site());

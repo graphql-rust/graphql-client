@@ -2,19 +2,19 @@ use graphql_parser::query::SelectionSet;
 
 #[derive(Debug, PartialEq)]
 pub struct SelectionField {
-    name: String,
-    fields: Selection,
+    pub name: String,
+    pub fields: Selection,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct SelectionFragmentSpread {
-    fragment_name: String,
+    pub fragment_name: String,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct SelectionInlineFragment {
-    on: String,
-    fields: Selection,
+    pub on: String,
+    pub fields: Selection,
 }
 
 #[derive(Debug, PartialEq)]
@@ -25,7 +25,7 @@ pub enum SelectionItem {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Selection(Vec<SelectionItem>);
+pub struct Selection(pub Vec<SelectionItem>);
 
 impl<'a> ::std::convert::From<&'a SelectionSet> for Selection {
     fn from(selection_set: &SelectionSet) -> Selection {

@@ -1,10 +1,10 @@
 use failure;
 use field_type::FieldType;
-use graphql_parser::query;
 use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use shared::render_object_field;
+use selection::*;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlObject {
@@ -22,7 +22,7 @@ impl GqlObject {
     pub fn response_for_selection(
         &self,
         query_context: &QueryContext,
-        selection: &query::SelectionSet,
+        selection: &Selection,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(prefix, Span::call_site());
@@ -41,14 +41,14 @@ impl GqlObject {
     pub fn field_impls_for_selection(
         &self,
         query_context: &QueryContext,
-        selection: &query::SelectionSet,
+        selection: &Selection,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
         selection
-            .items
+            .0
             .iter()
             .map(|selected| {
-                if let query::Selection::Field(selected) = selected {
+                if let SelectionItem::Field(selected) = selected {
                     let ty = self
                         .fields
                         .iter()
@@ -61,7 +61,7 @@ impl GqlObject {
                         prefix.to_camel_case(),
                         selected.name.to_camel_case()
                     );
-                    query_context.maybe_expand_field(&selected, &ty, &prefix)
+                    query_context.maybe_expand_field(&ty, &selected.fields, &prefix)
                 } else {
                     Ok(quote!())
                 }
@@ -72,14 +72,14 @@ impl GqlObject {
     pub fn response_fields_for_selection(
         &self,
         query_context: &QueryContext,
-        selection: &query::SelectionSet,
+        selection: &Selection,
         prefix: &str,
     ) -> Vec<TokenStream> {
         let mut fields = Vec::new();
 
-        for item in selection.items.iter() {
+        for item in selection.0.iter() {
             match item {
-                query::Selection::Field(f) => {
+                SelectionItem::Field(f) => {
                     let name = &f.name;
                     let ty = &self
                         .fields
@@ -93,7 +93,7 @@ impl GqlObject {
                     );
                     fields.push(render_object_field(name, ty));
                 }
-                query::Selection::FragmentSpread(fragment) => {
+                SelectionItem::FragmentSpread(fragment) => {
                     let field_name =
                         Ident::new(&fragment.fragment_name.to_snake_case(), Span::call_site());
                     let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
@@ -102,7 +102,7 @@ impl GqlObject {
                         #field_name: #type_name
                     })
                 }
-                query::Selection::InlineFragment(_) => {
+                SelectionItem::InlineFragment(_) => {
                     unreachable!("inline fragment on object field")
                 }
             }
