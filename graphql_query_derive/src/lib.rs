@@ -25,6 +25,7 @@ mod introspection_response;
 mod objects;
 mod query;
 mod schema;
+mod selection;
 mod shared;
 mod unions;
 
