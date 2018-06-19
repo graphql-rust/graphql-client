@@ -1,4 +1,4 @@
-use graphql_parser::query::SelectionSet;
+use selection::Selection;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 
@@ -6,7 +6,7 @@ use query::QueryContext;
 pub struct GqlFragment {
     pub name: String,
     pub on: String,
-    pub selection: SelectionSet,
+    pub selection: Selection,
 }
 
 impl GqlFragment {

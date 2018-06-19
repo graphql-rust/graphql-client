@@ -9,6 +9,7 @@ use objects::{GqlObject, GqlObjectField};
 use proc_macro2::TokenStream;
 use query::QueryContext;
 use std::collections::{BTreeMap, BTreeSet};
+use selection::Selection;
 use unions::GqlUnion;
 
 pub const DEFAULT_SCALARS: &[&'static str] = &["ID", "String", "Int", "Float", "Boolean"];
@@ -57,14 +58,16 @@ impl Schema {
                             .expect("query type is defined");
                         let prefix = &q.name.expect("unnamed operation");
                         let prefix = format!("RUST_{}", prefix);
+                        let selection = Selection::from(&q.selection_set);
+
                         definitions.extend(definition.field_impls_for_selection(
                             &context,
-                            &q.selection_set,
+                            &selection,
                             &prefix,
                         )?);
                         Some(definition.response_fields_for_selection(
                             &context,
-                            &q.selection_set,
+                            &selection,
                             &prefix,
                         ))
                     };
@@ -79,15 +82,16 @@ impl Schema {
                             .expect("mutation type is defined");
                         let prefix = &q.name.expect("unnamed operation");
                         let prefix = format!("RUST_{}", prefix);
+                        let selection = Selection::from(&q.selection_set);
 
                         definitions.extend(definition.field_impls_for_selection(
                             &context,
-                            &q.selection_set,
+                            &selection,
                             &prefix,
                         )?);
                         Some(definition.response_fields_for_selection(
                             &context,
-                            &q.selection_set,
+                            &selection,
                             &prefix,
                         ))
                     };
@@ -104,14 +108,16 @@ impl Schema {
                             .expect("subscription type is defined");
                         let prefix = &q.name.expect("unnamed operation");
                         let prefix = format!("RUST_{}", prefix);
+                        let selection = Selection::from(&q.selection_set);
+
                         definitions.extend(definition.field_impls_for_selection(
                             &context,
-                            &q.selection_set,
+                            &selection,
                             &prefix,
                         )?);
                         Some(definition.response_fields_for_selection(
                             &context,
-                            &q.selection_set,
+                            &selection,
                             &prefix,
                         ))
                     };
@@ -125,7 +131,7 @@ impl Schema {
                         fragment.name.clone(),
                         GqlFragment {
                             name: fragment.name,
-                            selection: fragment.selection_set,
+                            selection: Selection::from(&fragment.selection_set),
                             on,
                         },
                     );
