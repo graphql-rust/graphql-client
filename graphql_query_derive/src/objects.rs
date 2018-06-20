@@ -85,7 +85,7 @@ impl GqlObject {
                         .fields
                         .iter()
                         .find(|field| field.name.as_str() == name.as_str())
-                        .unwrap()
+                        .expect("could not find field")
                         .type_;
                     let ty = ty.to_rust(
                         query_context,
