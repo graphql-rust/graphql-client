@@ -3,8 +3,8 @@ use field_type::FieldType;
 use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
-use shared::render_object_field;
 use selection::*;
+use shared::render_object_field;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlObject {
@@ -47,6 +47,7 @@ impl GqlObject {
         selection
             .0
             .iter()
+            .filter(|selected| selected.name() != "__typename")
             .map(|selected| {
                 if let SelectionItem::Field(selected) = selected {
                     let ty = self
@@ -102,9 +103,7 @@ impl GqlObject {
                         #field_name: #type_name
                     })
                 }
-                SelectionItem::InlineFragment(_) => {
-                    unreachable!("inline fragment on object field")
-                }
+                SelectionItem::InlineFragment(_) => unreachable!("inline fragment on object field"),
             }
         }
 

@@ -8,8 +8,8 @@ use interfaces::GqlInterface;
 use objects::{GqlObject, GqlObjectField};
 use proc_macro2::TokenStream;
 use query::QueryContext;
-use std::collections::{BTreeMap, BTreeSet};
 use selection::Selection;
+use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
 
 pub const DEFAULT_SCALARS: &[&'static str] = &["ID", "String", "Int", "Float", "Boolean"];
@@ -60,16 +60,12 @@ impl Schema {
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
 
-                        definitions.extend(definition.field_impls_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        )?);
-                        Some(definition.response_fields_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        ))
+                        definitions.extend(
+                            definition.field_impls_for_selection(&context, &selection, &prefix)?,
+                        );
+                        Some(
+                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                        )
                     };
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
@@ -84,16 +80,12 @@ impl Schema {
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
 
-                        definitions.extend(definition.field_impls_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        )?);
-                        Some(definition.response_fields_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        ))
+                        definitions.extend(
+                            definition.field_impls_for_selection(&context, &selection, &prefix)?,
+                        );
+                        Some(
+                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                        )
                     };
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
@@ -110,16 +102,12 @@ impl Schema {
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
 
-                        definitions.extend(definition.field_impls_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        )?);
-                        Some(definition.response_fields_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        ))
+                        definitions.extend(
+                            definition.field_impls_for_selection(&context, &selection, &prefix)?,
+                        );
+                        Some(
+                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                        )
                     };
                 }
                 query::Definition::Operation(query::OperationDefinition::SelectionSet(_)) => {
