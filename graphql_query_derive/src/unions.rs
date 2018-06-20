@@ -24,19 +24,20 @@ impl GqlUnion {
     ) -> Result<TokenStream, failure::Error> {
         let struct_name = Ident::new(prefix, Span::call_site());
         let mut children_definitions: Vec<TokenStream> = Vec::new();
-        let fields: Result<Vec<TokenStream>, failure::Error> = selection.0.iter().map(|item| {
+        let variants: Result<Vec<TokenStream>, failure::Error> = selection.0.iter().map(|item| {
             match item {
                 SelectionItem::Field(_) => unreachable!("field selection on union"),
                 SelectionItem::FragmentSpread(_) => unreachable!("fragment spread on union"),
                 SelectionItem::InlineFragment(frag) => {
-                    let field_name = Ident::new(
-                        &format!("on_{}", frag.on).to_snake_case(),
+                    let variant_name = Ident::new(
+                        &frag.on,
                         Span::call_site(),
                     );
 
-                    let field_type = Ident::new(&format!("{}On{}", prefix, frag.on), Span::call_site());
-
                     let new_prefix = format!("{}On{}", prefix, frag.on);
+
+                    let variant_type = Ident::new(&new_prefix, Span::call_site());
+
 
                     let field_object_type = query_context.schema.objects.get(&frag.on)
                         .map(|f| query_context.maybe_expand_field(&frag.on, &frag.fields, &new_prefix));
@@ -52,20 +53,21 @@ impl GqlUnion {
                     };
 
                     Ok(quote! {
-                        #field_name: #field_type
+                        #variant_name(#variant_type)
                     })
                 }
             }
         }).collect();
 
-        let fields = fields?;
+        let variants = variants?;
 
         Ok(quote!{
             #(#children_definitions)*
 
             #[derive(Deserialize)]
-            pub struct #struct_name {
-                #(#fields),*
+            #[serde(tag = "__typename")]
+            pub enum #struct_name {
+                #(#variants),*
             }
         })
     }
@@ -161,7 +163,9 @@ mod tests {
                 "pub struct MeowOnUser { first_name : String , } ",
                 "# [ derive ( Debug , Serialize , Deserialize ) ] ",
                 "pub struct MeowOnOrganization { title : String , } ",
-                "# [ derive ( Deserialize ) ] pub struct Meow { on_user : MeowOnUser , on_organization : MeowOnOrganization }",
+                "# [ derive ( Deserialize ) ] ",
+                "# [ serde ( tag = \"__typename\" ) ] ",
+                "pub enum Meow { User ( MeowOnUser ) , Organization ( MeowOnOrganization ) }",
             ].into_iter().collect::<String>(),
         );
     }
