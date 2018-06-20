@@ -5,7 +5,6 @@ rust:
   - nightly
 cache: cargo
 script:
-  - cargo test --verbose
-  - cargo test --verbose --manifest-path=./graphql_query_derive/Cargo.toml
+  - cargo test --all
   - cargo build --manifest-path=./examples/github/Cargo.toml
   - cargo build --manifest-path=./graphql_client_cli/Cargo.toml
