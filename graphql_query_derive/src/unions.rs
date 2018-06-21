@@ -1,6 +1,5 @@
 use constants::*;
 use failure;
-use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::{Selection, SelectionItem};
@@ -15,7 +14,7 @@ enum UnionError {
     #[fail(display = "Unknown type: {}", ty)]
     UnknownType { ty: String },
     #[fail(display = "Missing __typename in selection for {}", union_name)]
-    MissingTypename { union_name: String }
+    MissingTypename { union_name: String },
 }
 
 impl GqlUnion {
@@ -37,7 +36,9 @@ impl GqlUnion {
         });
 
         if typename_field.is_none() {
-            Err(UnionError::MissingTypename { union_name: prefix.into() })?;
+            Err(UnionError::MissingTypename {
+                union_name: prefix.into(),
+            })?;
         }
 
         let variants: Result<Vec<TokenStream>, failure::Error> = selection
@@ -53,7 +54,7 @@ impl GqlUnion {
             })
             .map(|item| {
                 match item {
-                    SelectionItem::Field(f) => panic!("field selection on union"),
+                    SelectionItem::Field(_) => panic!("field selection on union"),
                     SelectionItem::FragmentSpread(_) => panic!("fragment spread on union"),
                     SelectionItem::InlineFragment(frag) => {
                         let variant_name = Ident::new(&frag.on, Span::call_site());
@@ -63,7 +64,7 @@ impl GqlUnion {
                         let variant_type = Ident::new(&new_prefix, Span::call_site());
 
                         let field_object_type =
-                            query_context.schema.objects.get(&frag.on).map(|f| {
+                            query_context.schema.objects.get(&frag.on).map(|_f| {
                                 query_context.maybe_expand_field(
                                     &frag.on,
                                     &frag.fields,
@@ -71,7 +72,7 @@ impl GqlUnion {
                                 )
                             });
                         let field_interface =
-                            query_context.schema.interfaces.get(&frag.on).map(|f| {
+                            query_context.schema.interfaces.get(&frag.on).map(|_f| {
                                 query_context.maybe_expand_field(
                                     &frag.on,
                                     &frag.fields,
@@ -79,7 +80,7 @@ impl GqlUnion {
                                 )
                             });
                         // nested unions, is that even a thing?
-                        let field_union_type = query_context.schema.unions.get(&frag.on).map(|f| {
+                        let field_union_type = query_context.schema.unions.get(&frag.on).map(|_f| {
                             query_context.maybe_expand_field(&frag.on, &frag.fields, &new_prefix)
                         });
 
@@ -184,7 +185,10 @@ mod tests {
 
         assert!(result.is_err());
 
-        assert_eq!(format!("{}", result.unwrap_err()), "Missing __typename in selection for Meow");
+        assert_eq!(
+            format!("{}", result.unwrap_err()),
+            "Missing __typename in selection for Meow"
+        );
     }
 
     #[test]
@@ -196,21 +200,17 @@ mod tests {
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "User".to_string(),
-                fields: Selection(vec![
-                    SelectionItem::Field(SelectionField {
-                        name: "first_name".to_string(),
-                        fields: Selection(vec![]),
-                    }),
-                ]),
+                fields: Selection(vec![SelectionItem::Field(SelectionField {
+                    name: "first_name".to_string(),
+                    fields: Selection(vec![]),
+                })]),
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "Organization".to_string(),
-                fields: Selection(vec![
-                    SelectionItem::Field(SelectionField {
-                        name: "title".to_string(),
-                        fields: Selection(vec![]),
-                    }),
-                ]),
+                fields: Selection(vec![SelectionItem::Field(SelectionField {
+                    name: "title".to_string(),
+                    fields: Selection(vec![]),
+                })]),
             }),
         ];
         let mut context = QueryContext::new_empty();
