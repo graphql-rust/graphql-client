@@ -35,27 +35,22 @@ impl GqlObject {
 
     pub fn from_graphql_parser_object(obj: ::graphql_parser::schema::ObjectType) -> Self {
         let mut item = GqlObject::new(obj.name.into());
-        item.fields.extend(obj.fields.iter()
-                                    .map(|f| GqlObjectField {
-                                        name: f.name.clone(),
-                                        type_: FieldType::from(f.field_type.clone()),
-                                    }));
+        item.fields
+            .extend(obj.fields.iter().map(|f| GqlObjectField {
+                name: f.name.clone(),
+                type_: FieldType::from(f.field_type.clone()),
+            }));
         item
     }
 
     pub fn from_introspected_schema_json(obj: &::introspection_response::FullType) -> Self {
         let mut item = GqlObject::new(obj.name.clone().expect("missing object name").into());
-        let fields = obj
-            .fields
-            .clone()
-            .unwrap()
-            .into_iter()
-            .filter_map(|t| {
-                t.map(|t| GqlObjectField {
-                    name: t.name.expect("field name"),
-                    type_: FieldType::from(t.type_.expect("field type")),
-                })
-            });
+        let fields = obj.fields.clone().unwrap().into_iter().filter_map(|t| {
+            t.map(|t| GqlObjectField {
+                name: t.name.expect("field name"),
+                type_: FieldType::from(t.type_.expect("field type")),
+            })
+        });
 
         item.fields.extend(fields);
 

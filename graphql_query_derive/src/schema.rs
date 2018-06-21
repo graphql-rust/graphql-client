@@ -192,10 +192,9 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                                 .or_insert_with(|| vec![name.clone()]);
                         }
 
-                        schema.objects.insert(
-                            obj.name.clone(),
-                            GqlObject::from_graphql_parser_object(obj),
-                        );
+                        schema
+                            .objects
+                            .insert(obj.name.clone(), GqlObject::from_graphql_parser_object(obj));
                     }
                     schema::TypeDefinition::Enum(enm) => {
                         schema.enums.insert(
@@ -350,8 +349,8 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
 
 #[cfg(test)]
 mod tests {
-    use constants::*;
     use super::*;
+    use constants::*;
     use proc_macro2::{Ident, Span};
 
     #[test]

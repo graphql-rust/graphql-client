@@ -1,3 +1,4 @@
+use constants::*;
 use failure;
 use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -13,6 +14,8 @@ pub struct GqlUnion(pub BTreeSet<String>);
 enum UnionError {
     #[fail(display = "Unknown type: {}", ty)]
     UnknownType { ty: String },
+    #[fail(display = "Missing __typename in selection for {}", union_name)]
+    MissingTypename { union_name: String }
 }
 
 impl GqlUnion {
@@ -24,13 +27,34 @@ impl GqlUnion {
     ) -> Result<TokenStream, failure::Error> {
         let struct_name = Ident::new(prefix, Span::call_site());
         let mut children_definitions: Vec<TokenStream> = Vec::new();
+
+        let typename_field = selection.0.iter().find(|f| {
+            if let SelectionItem::Field(f) = f {
+                f.name == TYPENAME_FIELD
+            } else {
+                false
+            }
+        });
+
+        if typename_field.is_none() {
+            Err(UnionError::MissingTypename { union_name: prefix.into() })?;
+        }
+
         let variants: Result<Vec<TokenStream>, failure::Error> = selection
             .0
             .iter()
+            // ignore __typename
+            .filter(|item| {
+                if let SelectionItem::Field(f) = item {
+                    f.name != TYPENAME_FIELD
+                } else {
+                    true
+                }
+            })
             .map(|item| {
                 match item {
-                    SelectionItem::Field(_) => unreachable!("field selection on union"),
-                    SelectionItem::FragmentSpread(_) => unreachable!("fragment spread on union"),
+                    SelectionItem::Field(f) => panic!("field selection on union"),
+                    SelectionItem::FragmentSpread(_) => panic!("fragment spread on union"),
                     SelectionItem::InlineFragment(frag) => {
                         let variant_name = Ident::new(&frag.on, Span::call_site());
 
@@ -160,21 +184,21 @@ mod tests {
 
         assert!(result.is_err());
 
-        assert_eq!(format!("{}", result.unwrap_err()), "");
+        assert_eq!(format!("{}", result.unwrap_err()), "Missing __typename in selection for Meow");
     }
 
     #[test]
     fn union_response_for_selection_works() {
         let fields = vec![
+            SelectionItem::Field(SelectionField {
+                name: "__typename".to_string(),
+                fields: Selection(vec![]),
+            }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "User".to_string(),
                 fields: Selection(vec![
                     SelectionItem::Field(SelectionField {
                         name: "first_name".to_string(),
-                        fields: Selection(vec![]),
-                    }),
-                    SelectionItem::Field(SelectionField {
-                        name: "__typename".to_string(),
                         fields: Selection(vec![]),
                     }),
                 ]),
@@ -184,10 +208,6 @@ mod tests {
                 fields: Selection(vec![
                     SelectionItem::Field(SelectionField {
                         name: "title".to_string(),
-                        fields: Selection(vec![]),
-                    }),
-                    SelectionItem::Field(SelectionField {
-                        name: "__typename".to_string(),
                         fields: Selection(vec![]),
                     }),
                 ]),
@@ -208,12 +228,16 @@ mod tests {
                 name: "User".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        name: "__typename".to_string(),
+                        type_: FieldType::Named(string_type()),
+                    },
+                    GqlObjectField {
                         name: "first_name".to_string(),
-                        type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
                         name: "last_name".to_string(),
-                        type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
                         name: "created_at".to_string(),
@@ -229,6 +253,10 @@ mod tests {
                 name: "Organization".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        name: "__typename".to_string(),
+                        type_: FieldType::Named(string_type()),
+                    },
+                    GqlObjectField {
                         name: "title".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
@@ -241,6 +269,8 @@ mod tests {
         );
 
         let result = union.response_for_selection(&context, &selection, &prefix);
+
+        println!("{:?}", result);
 
         assert!(result.is_ok());
 
