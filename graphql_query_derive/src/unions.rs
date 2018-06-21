@@ -71,14 +71,13 @@ impl GqlUnion {
                                     &new_prefix,
                                 )
                             });
-                        let field_interface =
-                            query_context.schema.interfaces.get(&frag.on).map(|_f| {
-                                query_context.maybe_expand_field(
-                                    &frag.on,
-                                    &frag.fields,
-                                    &new_prefix,
-                                )
-                            });
+                        let field_interface = query_context.schema.interfaces.get(&frag.on).map(|_f| {
+                            query_context.maybe_expand_field(
+                                &frag.on,
+                                &frag.fields,
+                                &new_prefix
+                            )
+                        });
                         // nested unions, is that even a thing?
                         let field_union_type = query_context.schema.unions.get(&frag.on).map(|_f| {
                             query_context.maybe_expand_field(&frag.on, &frag.fields, &new_prefix)
