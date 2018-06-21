@@ -1,0 +1,5 @@
+query VariablesQuery($msg: String = "o, hai", $reps: Int = 3) {
+  echo(message: $msg, repetitions: $reps) {
+    result
+  }
+}

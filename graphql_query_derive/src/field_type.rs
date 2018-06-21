@@ -17,7 +17,6 @@ impl FieldType {
     pub fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
         match &self {
             FieldType::Named(name) => {
-                let just_the_prefix = Ident::new(prefix, Span::call_site());
                 let name_string = name.to_string();
 
                 let name = if context.schema.scalars.contains(&name_string)
@@ -33,7 +32,7 @@ impl FieldType {
                         Span::call_site(),
                     )
                 } else {
-                    just_the_prefix
+                    Ident::new(prefix, Span::call_site())
                 };
 
                 quote!(#name)
@@ -54,6 +53,13 @@ impl FieldType {
             FieldType::Named(name) => name.to_string(),
             FieldType::Optional(inner) => inner.inner_name_string(),
             FieldType::Vector(inner) => inner.inner_name_string(),
+        }
+    }
+
+    pub fn is_optional(&self) -> bool {
+        match self {
+            FieldType::Optional(_) => true,
+            _ => false,
         }
     }
 }
