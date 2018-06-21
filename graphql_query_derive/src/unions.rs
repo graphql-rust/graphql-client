@@ -103,7 +103,7 @@ impl GqlUnion {
         Ok(quote!{
             #(#children_definitions)*
 
-            #[derive(Deserialize)]
+            #[derive(Debug, Serialize, Deserialize)]
             #[serde(tag = "__typename")]
             pub enum #struct_name {
                 #(#variants),*
@@ -278,10 +278,10 @@ mod tests {
             result.unwrap().to_string(),
             vec![
                 "# [ derive ( Debug , Serialize , Deserialize ) ] ",
-                "pub struct MeowOnUser { first_name : String , } ",
+                "pub struct MeowOnUser { pub first_name : String , } ",
                 "# [ derive ( Debug , Serialize , Deserialize ) ] ",
-                "pub struct MeowOnOrganization { title : String , } ",
-                "# [ derive ( Deserialize ) ] ",
+                "pub struct MeowOnOrganization { pub title : String , } ",
+                "# [ derive ( Debug , Serialize , Deserialize ) ] ",
                 "# [ serde ( tag = \"__typename\" ) ] ",
                 "pub enum Meow { User ( MeowOnUser ) , Organization ( MeowOnOrganization ) }",
             ].into_iter()
