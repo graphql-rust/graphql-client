@@ -1,0 +1,28 @@
+schema {
+    query: UnionQuery
+}
+
+type Person {
+    firstName: String!
+    lastName: String
+    birthday: String
+}
+
+type Organization {
+    title: String!
+    createdAt: String
+}
+
+type Dog {
+    name: String!
+    """
+    Always returns true
+    """
+    isGoodDog: Boolean!
+}
+
+union NamedThing = Person | Dog | Organization
+
+type UnionQuery {
+    names: [NamedThing!]
+}

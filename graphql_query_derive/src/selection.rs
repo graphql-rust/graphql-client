@@ -108,34 +108,32 @@ mod tests {
             Selection(vec![SelectionItem::Field(SelectionField {
                 name: "animal".to_string(),
                 fields: Selection(vec![
-                                  SelectionItem::Field(SelectionField {
-                                      name: "isCat".to_string(),
-                                      fields: Selection(Vec::new()),
-                                  }),
-                                  SelectionItem::Field(SelectionField {
-                                      name: "isHorse".to_string(),
-                                      fields: Selection(Vec::new()),
-                                  }),
-                                SelectionItem::FragmentSpread(SelectionFragmentSpread {
-                                      fragment_name: "Timestamps".to_string(),
-                                  }),
-                                  SelectionItem::Field(SelectionField {
-                                      name: "barks".to_string(),
-                                      fields: Selection(Vec::new()),
-                                  }),
-                                SelectionItem::InlineFragment(SelectionInlineFragment {
-                                      on: "Dog".to_string(),
-                                      fields: Selection(vec![
-                                  SelectionItem::Field(SelectionField {
-                                      name: "rating".to_string(),
-                                      fields: Selection(Vec::new()),
-                                  }),
-                                      ]),
-                                  }),
-                                  SelectionItem::Field(SelectionField {
-                                      name: "pawsCount".to_string(),
-                                      fields: Selection(Vec::new()),
-                                  }),
+                    SelectionItem::Field(SelectionField {
+                        name: "isCat".to_string(),
+                        fields: Selection(Vec::new()),
+                    }),
+                    SelectionItem::Field(SelectionField {
+                        name: "isHorse".to_string(),
+                        fields: Selection(Vec::new()),
+                    }),
+                    SelectionItem::FragmentSpread(SelectionFragmentSpread {
+                        fragment_name: "Timestamps".to_string(),
+                    }),
+                    SelectionItem::Field(SelectionField {
+                        name: "barks".to_string(),
+                        fields: Selection(Vec::new()),
+                    }),
+                    SelectionItem::InlineFragment(SelectionInlineFragment {
+                        on: "Dog".to_string(),
+                        fields: Selection(vec![SelectionItem::Field(SelectionField {
+                            name: "rating".to_string(),
+                            fields: Selection(Vec::new()),
+                        })]),
+                    }),
+                    SelectionItem::Field(SelectionField {
+                        name: "pawsCount".to_string(),
+                        fields: Selection(Vec::new()),
+                    }),
                 ]),
             })])
         );

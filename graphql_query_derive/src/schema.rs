@@ -8,8 +8,8 @@ use interfaces::GqlInterface;
 use objects::{GqlObject, GqlObjectField};
 use proc_macro2::TokenStream;
 use query::QueryContext;
-use std::collections::{BTreeMap, BTreeSet};
 use selection::Selection;
+use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
 
 pub const DEFAULT_SCALARS: &[&'static str] = &["ID", "String", "Int", "Float", "Boolean"];
@@ -60,16 +60,12 @@ impl Schema {
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
 
-                        definitions.extend(definition.field_impls_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        )?);
-                        Some(definition.response_fields_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        ))
+                        definitions.extend(
+                            definition.field_impls_for_selection(&context, &selection, &prefix)?,
+                        );
+                        Some(
+                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                        )
                     };
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
@@ -84,16 +80,12 @@ impl Schema {
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
 
-                        definitions.extend(definition.field_impls_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        )?);
-                        Some(definition.response_fields_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        ))
+                        definitions.extend(
+                            definition.field_impls_for_selection(&context, &selection, &prefix)?,
+                        );
+                        Some(
+                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                        )
                     };
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
@@ -110,16 +102,12 @@ impl Schema {
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
 
-                        definitions.extend(definition.field_impls_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        )?);
-                        Some(definition.response_fields_for_selection(
-                            &context,
-                            &selection,
-                            &prefix,
-                        ))
+                        definitions.extend(
+                            definition.field_impls_for_selection(&context, &selection, &prefix)?,
+                        );
+                        Some(
+                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                        )
                     };
                 }
                 query::Definition::Operation(query::OperationDefinition::SelectionSet(_)) => {
@@ -204,20 +192,9 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                                 .or_insert_with(|| vec![name.clone()]);
                         }
 
-                        schema.objects.insert(
-                            obj.name.clone(),
-                            GqlObject {
-                                name: obj.name.clone(),
-                                fields: obj
-                                    .fields
-                                    .iter()
-                                    .map(|f| GqlObjectField {
-                                        name: f.name.clone(),
-                                        type_: FieldType::from(f.field_type.clone()),
-                                    })
-                                    .collect(),
-                            },
-                        );
+                        schema
+                            .objects
+                            .insert(obj.name.clone(), GqlObject::from_graphql_parser_object(obj));
                     }
                     schema::TypeDefinition::Enum(enm) => {
                         schema.enums.insert(
@@ -337,21 +314,9 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                             .or_insert_with(|| vec![name.clone()]);
                     }
 
-                    let fields: Vec<GqlObjectField> = ty
-                        .fields
-                        .clone()
-                        .unwrap()
-                        .into_iter()
-                        .filter_map(|t| {
-                            t.map(|t| GqlObjectField {
-                                name: t.name.expect("field name"),
-                                type_: FieldType::from(t.type_.expect("field type")),
-                            })
-                        })
-                        .collect();
                     schema
                         .objects
-                        .insert(name.clone(), GqlObject { name, fields });
+                        .insert(name.clone(), GqlObject::from_introspected_schema_json(ty));
                 }
                 Some(__TypeKind::INTERFACE) => {
                     let iface = GqlInterface {
@@ -385,6 +350,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
 #[cfg(test)]
 mod tests {
     use super::*;
+    use constants::*;
     use proc_macro2::{Ident, Span};
 
     #[test]
@@ -397,6 +363,10 @@ mod tests {
             Some(&GqlObject {
                 name: "Droid".to_string(),
                 fields: vec![
+                    GqlObjectField {
+                        name: TYPENAME_FIELD.to_string(),
+                        type_: FieldType::Named(string_type()),
+                    },
                     GqlObjectField {
                         name: "id".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(

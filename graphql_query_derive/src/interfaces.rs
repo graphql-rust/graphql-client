@@ -1,7 +1,7 @@
-use selection::Selection;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
+use selection::Selection;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlInterface {

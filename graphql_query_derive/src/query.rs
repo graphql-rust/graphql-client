@@ -3,8 +3,8 @@ use field_type::FieldType;
 use fragments::GqlFragment;
 use proc_macro2::TokenStream;
 use schema::Schema;
-use std::collections::BTreeMap;
 use selection::Selection;
+use std::collections::BTreeMap;
 
 pub struct QueryContext {
     pub _subscription_root: Option<Vec<TokenStream>>,
