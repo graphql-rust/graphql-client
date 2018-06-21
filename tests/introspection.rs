@@ -9,6 +9,7 @@ extern crate serde;
     query_path = "tests/introspection_query.graphql",
     schema_path = "tests/introspection_schema.graphql"
 )]
+#[allow(dead_code)]
 struct IntrospectionQuery;
 
 #[test]

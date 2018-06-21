@@ -1,10 +1,11 @@
 use failure;
-use field_type::FieldType;
 use fragments::GqlFragment;
-use proc_macro2::TokenStream;
+use graphql_parser;
+use proc_macro2::{Ident, Span, TokenStream};
 use schema::Schema;
 use selection::Selection;
 use std::collections::BTreeMap;
+use variables::Variable;
 
 pub struct QueryContext {
     pub _subscription_root: Option<Vec<TokenStream>>,
@@ -12,7 +13,7 @@ pub struct QueryContext {
     pub mutation_root: Option<Vec<TokenStream>>,
     pub query_root: Option<Vec<TokenStream>>,
     pub schema: Schema,
-    pub variables: BTreeMap<String, FieldType>,
+    pub variables: Vec<Variable>,
 }
 
 impl QueryContext {
@@ -23,7 +24,34 @@ impl QueryContext {
             mutation_root: None,
             query_root: None,
             schema,
-            variables: BTreeMap::new(),
+            variables: Vec::new(),
+        }
+    }
+
+    pub fn register_variables(&mut self, variables: &[graphql_parser::query::VariableDefinition]) {
+        variables.iter().for_each(|variable| {
+            self.variables.push(variable.clone().into());
+        });
+    }
+
+    pub fn expand_variables(&self) -> TokenStream {
+        if self.variables.is_empty() {
+            return quote!(#[derive(Serialize)]
+            pub struct Variables;);
+        }
+
+        let fields = self.variables.iter().map(|variable| {
+            let name = &variable.name;
+            let ty = variable.ty.to_rust(self, name);
+            let name = Ident::new(name, Span::call_site());
+            quote!(pub #name: #ty)
+        });
+
+        quote! {
+            #[derive(Serialize)]
+            pub struct Variables {
+                #(#fields,)*
+            }
         }
     }
 
@@ -36,7 +64,7 @@ impl QueryContext {
             mutation_root: None,
             query_root: None,
             schema: Schema::new(),
-            variables: BTreeMap::new(),
+            variables: Vec::new(),
         }
     }
 

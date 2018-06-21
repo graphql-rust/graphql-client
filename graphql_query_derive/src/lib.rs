@@ -29,6 +29,7 @@ mod schema;
 mod selection;
 mod shared;
 mod unions;
+mod variables;
 
 #[cfg(test)]
 mod tests;
