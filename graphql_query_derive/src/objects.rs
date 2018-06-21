@@ -1,3 +1,4 @@
+use constants::*;
 use failure;
 use field_type::FieldType;
 use heck::{CamelCase, SnakeCase};
@@ -5,6 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::*;
 use shared::render_object_field;
+use std::borrow::Cow;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlObject {
@@ -19,6 +21,47 @@ pub struct GqlObjectField {
 }
 
 impl GqlObject {
+    pub fn new(name: Cow<str>) -> GqlObject {
+        GqlObject {
+            name: name.into_owned(),
+            fields: vec![GqlObjectField {
+                name: TYPENAME_FIELD.to_string(),
+                /// Non-nullable, see spec:
+                /// https://github.com/facebook/graphql/blob/master/spec/Section%204%20--%20Introspection.md
+                type_: FieldType::Named(string_type()),
+            }],
+        }
+    }
+
+    pub fn from_graphql_parser_object(obj: ::graphql_parser::schema::ObjectType) -> Self {
+        let mut item = GqlObject::new(obj.name.into());
+        item.fields.extend(obj.fields.iter()
+                                    .map(|f| GqlObjectField {
+                                        name: f.name.clone(),
+                                        type_: FieldType::from(f.field_type.clone()),
+                                    }));
+        item
+    }
+
+    pub fn from_introspected_schema_json(obj: &::introspection_response::FullType) -> Self {
+        let mut item = GqlObject::new(obj.name.clone().expect("missing object name").into());
+        let fields = obj
+            .fields
+            .clone()
+            .unwrap()
+            .into_iter()
+            .filter_map(|t| {
+                t.map(|t| GqlObjectField {
+                    name: t.name.expect("field name"),
+                    type_: FieldType::from(t.type_.expect("field type")),
+                })
+            });
+
+        item.fields.extend(fields);
+
+        item
+    }
+
     pub fn response_for_selection(
         &self,
         query_context: &QueryContext,
@@ -47,7 +90,6 @@ impl GqlObject {
         selection
             .0
             .iter()
-            .filter(|selected| selected.name() != "__typename")
             .map(|selected| {
                 if let SelectionItem::Field(selected) = selected {
                     let ty = self
@@ -82,6 +124,7 @@ impl GqlObject {
             match item {
                 SelectionItem::Field(f) => {
                     let name = &f.name;
+
                     let ty = &self
                         .fields
                         .iter()

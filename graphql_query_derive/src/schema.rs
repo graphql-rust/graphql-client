@@ -194,17 +194,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
 
                         schema.objects.insert(
                             obj.name.clone(),
-                            GqlObject {
-                                name: obj.name.clone(),
-                                fields: obj
-                                    .fields
-                                    .iter()
-                                    .map(|f| GqlObjectField {
-                                        name: f.name.clone(),
-                                        type_: FieldType::from(f.field_type.clone()),
-                                    })
-                                    .collect(),
-                            },
+                            GqlObject::from_graphql_parser_object(obj),
                         );
                     }
                     schema::TypeDefinition::Enum(enm) => {
@@ -325,21 +315,9 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                             .or_insert_with(|| vec![name.clone()]);
                     }
 
-                    let fields: Vec<GqlObjectField> = ty
-                        .fields
-                        .clone()
-                        .unwrap()
-                        .into_iter()
-                        .filter_map(|t| {
-                            t.map(|t| GqlObjectField {
-                                name: t.name.expect("field name"),
-                                type_: FieldType::from(t.type_.expect("field type")),
-                            })
-                        })
-                        .collect();
                     schema
                         .objects
-                        .insert(name.clone(), GqlObject { name, fields });
+                        .insert(name.clone(), GqlObject::from_introspected_schema_json(ty));
                 }
                 Some(__TypeKind::INTERFACE) => {
                     let iface = GqlInterface {
@@ -372,6 +350,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
 
 #[cfg(test)]
 mod tests {
+    use constants::*;
     use super::*;
     use proc_macro2::{Ident, Span};
 
@@ -385,6 +364,10 @@ mod tests {
             Some(&GqlObject {
                 name: "Droid".to_string(),
                 fields: vec![
+                    GqlObjectField {
+                        name: TYPENAME_FIELD.to_string(),
+                        type_: FieldType::Named(string_type()),
+                    },
                     GqlObjectField {
                         name: "id".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(

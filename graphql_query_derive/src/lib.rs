@@ -16,6 +16,7 @@ extern crate quote;
 
 use proc_macro2::TokenStream;
 
+mod constants;
 mod enums;
 mod field_type;
 mod fragments;
