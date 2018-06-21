@@ -42,15 +42,24 @@ impl QueryContext {
 
         let fields = self.variables.iter().map(|variable| {
             let name = &variable.name;
-            let ty = variable.ty.to_rust(self, name);
+            let ty = variable.ty.to_rust(self, "");
             let name = Ident::new(name, Span::call_site());
             quote!(pub #name: #ty)
         });
+
+        let default_constructors = self
+            .variables
+            .iter()
+            .map(|variable| variable.generate_default_value_constructor(self));
 
         quote! {
             #[derive(Serialize)]
             pub struct Variables {
                 #(#fields,)*
+            }
+
+            impl Variables {
+                #(#default_constructors)*
             }
         }
     }
