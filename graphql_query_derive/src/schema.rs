@@ -67,6 +67,8 @@ impl Schema {
                             definition.response_fields_for_selection(&context, &selection, &prefix),
                         )
                     };
+
+                    context.register_variables(&q.variable_definitions);
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
                     context.mutation_root = {
@@ -87,6 +89,8 @@ impl Schema {
                             definition.response_fields_for_selection(&context, &selection, &prefix),
                         )
                     };
+
+                    context.register_variables(&q.variable_definitions);
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
                     context._subscription_root = {
@@ -109,6 +113,8 @@ impl Schema {
                             definition.response_fields_for_selection(&context, &selection, &prefix),
                         )
                     };
+
+                    context.register_variables(&q.variable_definitions);
                 }
                 query::Definition::Operation(query::OperationDefinition::SelectionSet(_)) => {
                     unimplemented!()
@@ -132,8 +138,7 @@ impl Schema {
             .fragments
             .values()
             .map(|fragment| fragment.to_rust(&context));
-        let variables_struct = quote!(#[derive(Serialize)]
-        pub struct Variables;);
+        let variables_struct = context.expand_variables();
         let response_data_fields = context
             .query_root
             .as_ref()

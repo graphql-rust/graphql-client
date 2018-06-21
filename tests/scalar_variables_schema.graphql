@@ -1,0 +1,12 @@
+
+schema {
+    query: ScalarVariablesQuery
+}
+
+type ScalarVariablesQuery {
+    echo(message: String!, repetitions: Int): EchoResult
+}
+
+type EchoResult {
+    result: String!
+}
