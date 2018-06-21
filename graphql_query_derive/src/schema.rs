@@ -369,17 +369,11 @@ mod tests {
                     },
                     GqlObjectField {
                         name: "id".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                            "ID",
-                            Span::call_site(),
-                        )))),
+                        type_: FieldType::Named(Ident::new("ID", Span::call_site())),
                     },
                     GqlObjectField {
                         name: "name".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                            "String",
-                            Span::call_site(),
-                        )))),
+                        type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
                         name: "friends".to_string(),
@@ -392,18 +386,12 @@ mod tests {
                     },
                     GqlObjectField {
                         name: "friendsConnection".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                            "FriendsConnection",
-                            Span::call_site(),
-                        )))),
+                        type_: FieldType::Named(Ident::new("FriendsConnection", Span::call_site())),
                     },
                     GqlObjectField {
                         name: "appearsIn".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Vector(Box::new(
-                            FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                                "Episode",
-                                Span::call_site(),
-                            )))),
+                        type_: FieldType::Vector(Box::new(FieldType::Optional(Box::new(
+                            FieldType::Named(Ident::new("Episode", Span::call_site())),
                         )))),
                     },
                     GqlObjectField {
