@@ -235,7 +235,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         );
                     }
                     schema::TypeDefinition::InputObject(input) => {
-                        schema.inputs.insert(input.name, GqlInput);
+                        schema.inputs.insert(input.name.clone(), GqlInput::from(input));
                     }
                 },
                 schema::Definition::DirectiveDefinition(_) => (),
@@ -342,7 +342,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                     schema.interfaces.insert(name, iface);
                 }
                 Some(__TypeKind::INPUT_OBJECT) => {
-                    schema.inputs.insert(name, GqlInput);
+                    schema.inputs.insert(name, GqlInput::from(ty.clone()));
                 }
                 _ => unimplemented!("unimplemented definition"),
             }

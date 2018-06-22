@@ -7,6 +7,7 @@ use selection::Selection;
 use std::collections::BTreeMap;
 use variables::Variable;
 
+/// This holds all the information we need during the code generation phase.
 pub struct QueryContext {
     pub _subscription_root: Option<Vec<TokenStream>>,
     pub fragments: BTreeMap<String, GqlFragment>,
@@ -17,6 +18,7 @@ pub struct QueryContext {
 }
 
 impl QueryContext {
+    /// Create a QueryContext with the given Schema.
     pub fn new(schema: Schema) -> QueryContext {
         QueryContext {
             _subscription_root: None,
@@ -28,12 +30,14 @@ impl QueryContext {
         }
     }
 
+    /// Ingest the variable definitions for the query we are generating code for.
     pub fn register_variables(&mut self, variables: &[graphql_parser::query::VariableDefinition]) {
         variables.iter().for_each(|variable| {
             self.variables.push(variable.clone().into());
         });
     }
 
+    /// Generate the Variables struct and all the necessary supporting code.
     pub fn expand_variables(&self) -> TokenStream {
         if self.variables.is_empty() {
             return quote!(#[derive(Serialize)]
