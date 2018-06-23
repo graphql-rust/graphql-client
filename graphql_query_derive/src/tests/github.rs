@@ -25,7 +25,10 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     assert_eq!(json.query_type, gql.query_type);
     assert_eq!(json.mutation_type, gql.mutation_type);
     assert_eq!(json.subscription_type, gql.subscription_type);
-    assert_eq!(json.inputs, gql.inputs);
+    for (json, gql) in json.inputs.iter().zip(gql.inputs.iter()) {
+        assert_eq!(json, gql);
+    }
+    assert_eq!(json.inputs, gql.inputs, "inputs differ");
     for ((json_name, json_value), (gql_name, gql_value)) in json.enums.iter().zip(gql.enums.iter())
     {
         assert_eq!(json_name, gql_name);

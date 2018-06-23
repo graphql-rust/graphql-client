@@ -235,7 +235,9 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         );
                     }
                     schema::TypeDefinition::InputObject(input) => {
-                        schema.inputs.insert(input.name.clone(), GqlInput::from(input));
+                        schema
+                            .inputs
+                            .insert(input.name.clone(), GqlInput::from(input));
                     }
                 },
                 schema::Definition::DirectiveDefinition(_) => (),

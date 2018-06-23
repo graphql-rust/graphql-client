@@ -169,7 +169,7 @@ pub struct FullTypeFields {
 #[serde(rename_all = "camelCase")]
 pub struct FullTypeInputFields {
     #[serde(flatten)]
-    input_value: InputValue,
+    pub input_value: InputValue,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -198,11 +198,11 @@ pub struct FullTypePossibleTypes {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InputValue {
-    name: Option<String>,
-    description: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
     #[serde(rename = "type")]
-    type_: Option<InputValueType>,
-    default_value: Option<String>,
+    pub type_: Option<InputValueType>,
+    pub default_value: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
