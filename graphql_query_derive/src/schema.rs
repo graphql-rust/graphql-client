@@ -146,19 +146,30 @@ impl Schema {
             .or(context._subscription_root.as_ref())
             .expect("no selection defined");
 
-        use proc_macro2::{Ident, Span};
-
+        // TODO: do something smarter here
         let scalar_definitions = context.schema.scalars.iter().map(|scalar_name| {
+            use proc_macro2::{Ident, Span};
             let ident = Ident::new(scalar_name, Span::call_site());
             quote!(type #ident = String;)
         });
+
+        let input_object_definitions: Result<Vec<TokenStream>, _> = context
+            .schema
+            .inputs
+            .values()
+            .map(|i| i.to_rust(&context))
+            .collect();
+        let input_object_definitions = input_object_definitions?;
 
         Ok(quote! {
             type Boolean = bool;
             type Float = f64;
             type Int = i64;
+            type ID = String;
 
             #(#scalar_definitions)*
+
+            #(#input_object_definitions)*
 
             #(#enum_definitions)*
 

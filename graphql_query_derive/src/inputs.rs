@@ -20,7 +20,7 @@ impl GqlInput {
         let fields = fields.iter().map(|field| {
             let ty = field.type_.to_rust(&context, "");
             let name = Ident::new(&field.name, Span::call_site());
-            quote!(#name: #ty)
+            quote!(pub #name: #ty)
         });
 
         Ok(quote! {

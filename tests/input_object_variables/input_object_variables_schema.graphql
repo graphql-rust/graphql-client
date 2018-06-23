@@ -1,12 +1,33 @@
-
 schema {
-    query: ScalarVariablesQuery
+  query: InputObjectVariablesQuery
 }
 
-type ScalarVariablesQuery {
-    echo(message: String!, repetitions: Int): EchoResult
+scalar Email
+
+enum Category {
+  PROFESSIONAL
+  PERSONAL
+}
+
+input Recipient {
+  email: Email!
+  name: String
+  category: Category
+}
+
+input Message {
+  to: Recipient
+  content: String
+}
+
+input Options {
+  pgpSignature: Boolean
+}
+
+type InputObjectVariablesQuery {
+  echo(message: Message!, options: Options = { pgpSignature: true }): EchoResult
 }
 
 type EchoResult {
-    result: String!
+  result: String!
 }
