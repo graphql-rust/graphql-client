@@ -64,7 +64,8 @@ impl Schema {
                             definition.field_impls_for_selection(&context, &selection, &prefix)?,
                         );
                         Some(
-                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                            definition
+                                .response_fields_for_selection(&context, &selection, &prefix)?,
                         )
                     };
 
@@ -86,7 +87,8 @@ impl Schema {
                             definition.field_impls_for_selection(&context, &selection, &prefix)?,
                         );
                         Some(
-                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                            definition
+                                .response_fields_for_selection(&context, &selection, &prefix)?,
                         )
                     };
 
@@ -110,7 +112,8 @@ impl Schema {
                             definition.field_impls_for_selection(&context, &selection, &prefix)?,
                         );
                         Some(
-                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                            definition
+                                .response_fields_for_selection(&context, &selection, &prefix)?,
                         )
                     };
 
@@ -134,10 +137,12 @@ impl Schema {
         }
 
         let enum_definitions = context.schema.enums.values().map(|enm| enm.to_rust());
-        let fragment_definitions = context
+        let fragment_definitions: Result<Vec<TokenStream>, _> = context
             .fragments
             .values()
-            .map(|fragment| fragment.to_rust(&context));
+            .map(|fragment| fragment.to_rust(&context))
+            .collect();
+        let fragment_definitions = fragment_definitions?;
         let variables_struct = context.expand_variables();
         let response_data_fields = context
             .query_root
