@@ -125,9 +125,9 @@ mod tests {
             "# [ derive ( Debug , Serialize ) ] ",
             "# [ serde ( rename_all = \"camelCase\" ) ] ",
             "pub struct Cat { ",
-            "offsprings : Vec < Cat > , ",
-            "pawsCount : Float , ",
-            "requirements : Option < CatRequirements > , ",
+            "pub offsprings : Vec < Cat > , ",
+            "pub pawsCount : Float , ",
+            "pub requirements : Option < CatRequirements > , ",
             "}",
         ].into_iter()
             .collect();
