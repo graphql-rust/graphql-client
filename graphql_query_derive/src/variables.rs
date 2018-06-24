@@ -2,6 +2,7 @@ use field_type::FieldType;
 use graphql_parser;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
+use std::collections::BTreeMap;
 
 #[derive(Debug)]
 pub struct Variable {
@@ -16,7 +17,12 @@ impl Variable {
             Some(default) => {
                 let fn_name = Ident::new(&format!("default_{}", self.name), Span::call_site());
                 let ty = self.ty.to_rust(context, "");
-                let value = graphql_parser_value_to_literal(default, self.ty.is_optional());
+                let value = graphql_parser_value_to_literal(
+                    default,
+                    context,
+                    &self.ty,
+                    self.ty.is_optional(),
+                );
                 quote! {
                     pub fn #fn_name() -> #ty {
                         #value
@@ -41,6 +47,8 @@ impl ::std::convert::From<graphql_parser::query::VariableDefinition> for Variabl
 
 fn graphql_parser_value_to_literal(
     value: &graphql_parser::query::Value,
+    context: &QueryContext,
+    ty: &FieldType,
     is_optional: bool,
 ) -> TokenStream {
     use graphql_parser::query::Value;
@@ -63,14 +71,14 @@ fn graphql_parser_value_to_literal(
         Value::List(inner) => {
             let elements = inner
                 .iter()
-                .map(|val| graphql_parser_value_to_literal(val, false));
+                .map(|val| graphql_parser_value_to_literal(val, context, ty, false));
             quote! {
                 vec![
                     #(#elements,)*
                 ]
             }
         }
-        Value::Object(_) => unimplemented!("object literal as default for variable"),
+        Value::Object(obj) => render_object_literal(obj, ty, context),
     };
 
     if is_optional {
@@ -78,4 +86,42 @@ fn graphql_parser_value_to_literal(
     } else {
         inner
     }
+}
+
+fn render_object_literal(
+    object: &BTreeMap<String, graphql_parser::query::Value>,
+    ty: &FieldType,
+    context: &QueryContext,
+) -> TokenStream {
+    let type_name = ty.inner_name_string();
+    let constructor = Ident::new(&type_name, Span::call_site());
+    let schema_type = context
+        .schema
+        .inputs
+        .get(&type_name)
+        .expect("unknown input type");
+    let fields: Vec<TokenStream> = schema_type
+        .fields
+        .iter()
+        .map(|(name, field)| {
+            let field_name = Ident::new(&name, Span::call_site());
+            let provided_value = object.get(name);
+            match provided_value {
+                Some(default_value) => {
+                    let value = graphql_parser_value_to_literal(
+                        default_value,
+                        context,
+                        &field.type_,
+                        field.type_.is_optional(),
+                    );
+                    quote!(#field_name: #value)
+                }
+                None => quote!(#field_name: None),
+            }
+        })
+        .collect();
+
+    quote!(#constructor {
+        #(#fields,)*
+    })
 }

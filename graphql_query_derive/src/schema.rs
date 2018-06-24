@@ -146,19 +146,30 @@ impl Schema {
             .or(context._subscription_root.as_ref())
             .expect("no selection defined");
 
-        use proc_macro2::{Ident, Span};
-
+        // TODO: do something smarter here
         let scalar_definitions = context.schema.scalars.iter().map(|scalar_name| {
+            use proc_macro2::{Ident, Span};
             let ident = Ident::new(scalar_name, Span::call_site());
             quote!(type #ident = String;)
         });
+
+        let input_object_definitions: Result<Vec<TokenStream>, _> = context
+            .schema
+            .inputs
+            .values()
+            .map(|i| i.to_rust(&context))
+            .collect();
+        let input_object_definitions = input_object_definitions?;
 
         Ok(quote! {
             type Boolean = bool;
             type Float = f64;
             type Int = i64;
+            type ID = String;
 
             #(#scalar_definitions)*
+
+            #(#input_object_definitions)*
 
             #(#enum_definitions)*
 
@@ -235,7 +246,9 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         );
                     }
                     schema::TypeDefinition::InputObject(input) => {
-                        schema.inputs.insert(input.name, GqlInput);
+                        schema
+                            .inputs
+                            .insert(input.name.clone(), GqlInput::from(input));
                     }
                 },
                 schema::Definition::DirectiveDefinition(_) => (),
@@ -342,7 +355,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                     schema.interfaces.insert(name, iface);
                 }
                 Some(__TypeKind::INPUT_OBJECT) => {
-                    schema.inputs.insert(name, GqlInput);
+                    schema.inputs.insert(name, GqlInput::from(ty.clone()));
                 }
                 _ => unimplemented!("unimplemented definition"),
             }

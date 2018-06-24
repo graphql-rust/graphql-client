@@ -1,0 +1,7 @@
+query VariablesQuery(
+  $msg: Message = { to: { email: "rosa.luxemburg@example.com" } }
+) {
+  echo(message: $msg) {
+    result
+  }
+}

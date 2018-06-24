@@ -1,0 +1,5 @@
+query VariablesQuery($msg: Message) {
+  echo(message: $msg) {
+    result
+  }
+}

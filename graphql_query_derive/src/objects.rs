@@ -14,7 +14,7 @@ pub struct GqlObject {
     pub fields: Vec<GqlObjectField>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Hash)]
 pub struct GqlObjectField {
     pub name: String,
     pub type_: FieldType,

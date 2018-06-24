@@ -5,7 +5,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use schema::DEFAULT_SCALARS;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Hash)]
 pub enum FieldType {
     Named(Ident),
     Optional(Box<FieldType>),
@@ -15,6 +15,11 @@ pub enum FieldType {
 impl FieldType {
     /// Takes a field type with its name
     pub fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
+        let prefix: String = if prefix.is_empty() {
+            self.inner_name_string()
+        } else {
+            prefix.to_string()
+        };
         match &self {
             FieldType::Named(name) => {
                 let name_string = name.to_string();
@@ -32,17 +37,20 @@ impl FieldType {
                         Span::call_site(),
                     )
                 } else {
-                    Ident::new(prefix, Span::call_site())
+                    if prefix.is_empty() {
+                        panic!("Empty prefix for {:?}", self);
+                    }
+                    Ident::new(&prefix, Span::call_site())
                 };
 
                 quote!(#name)
             }
             FieldType::Optional(inner) => {
-                let inner = inner.to_rust(context, prefix);
+                let inner = inner.to_rust(context, &prefix);
                 quote!( Option<#inner>)
             }
             FieldType::Vector(inner) => {
-                let inner = inner.to_rust(context, prefix);
+                let inner = inner.to_rust(context, &prefix);
                 quote!( Vec<#inner>)
             }
         }
@@ -129,6 +137,12 @@ fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool)
 
 impl ::std::convert::From<introspection_response::FullTypeFieldsType> for FieldType {
     fn from(schema_type: introspection_response::FullTypeFieldsType) -> FieldType {
+        from_json_type_inner(&schema_type.type_ref, false)
+    }
+}
+
+impl ::std::convert::From<introspection_response::InputValueType> for FieldType {
+    fn from(schema_type: introspection_response::InputValueType) -> FieldType {
         from_json_type_inner(&schema_type.type_ref, false)
     }
 }
