@@ -5,11 +5,12 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
-const RESPONSE: &'static str = include_str!("union_query_response.json");
+const RESPONSE: &'static str = include_str!("unions/union_query_response.json");
 
 #[derive(GraphQLQuery)]
 #[GraphQLQuery(
-    query_path = "tests/union_query.graphql", schema_path = "tests/union_schema.graphql"
+    query_path = "tests/unions/union_query.graphql",
+    schema_path = "tests/unions/union_schema.graphql"
 )]
 #[allow(dead_code)]
 struct UnionQuery;

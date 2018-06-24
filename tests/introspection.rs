@@ -6,8 +6,8 @@ extern crate serde;
 
 #[derive(GraphQLQuery)]
 #[GraphQLQuery(
-    query_path = "tests/introspection_query.graphql",
-    schema_path = "tests/introspection_schema.graphql"
+    query_path = "tests/introspection/introspection_query.graphql",
+    schema_path = "tests/introspection/introspection_schema.graphql"
 )]
 #[allow(dead_code)]
 struct IntrospectionQuery;
