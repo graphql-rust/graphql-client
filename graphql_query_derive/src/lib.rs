@@ -66,8 +66,6 @@ fn read_file(
 }
 
 fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Error> {
-    use std::io::prelude::*;
-
     let cargo_manifest_dir =
         ::std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR env variable is defined");
 

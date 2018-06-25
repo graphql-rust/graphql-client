@@ -64,7 +64,8 @@ impl Schema {
                             definition.field_impls_for_selection(&context, &selection, &prefix)?,
                         );
                         Some(
-                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                            definition
+                                .response_fields_for_selection(&context, &selection, &prefix)?,
                         )
                     };
 
@@ -86,7 +87,8 @@ impl Schema {
                             definition.field_impls_for_selection(&context, &selection, &prefix)?,
                         );
                         Some(
-                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                            definition
+                                .response_fields_for_selection(&context, &selection, &prefix)?,
                         )
                     };
 
@@ -110,7 +112,8 @@ impl Schema {
                             definition.field_impls_for_selection(&context, &selection, &prefix)?,
                         );
                         Some(
-                            definition.response_fields_for_selection(&context, &selection, &prefix),
+                            definition
+                                .response_fields_for_selection(&context, &selection, &prefix)?,
                         )
                     };
 
@@ -134,10 +137,12 @@ impl Schema {
         }
 
         let enum_definitions = context.schema.enums.values().map(|enm| enm.to_rust());
-        let fragment_definitions = context
+        let fragment_definitions: Result<Vec<TokenStream>, _> = context
             .fragments
             .values()
-            .map(|fragment| fragment.to_rust(&context));
+            .map(|fragment| fragment.to_rust(&context))
+            .collect();
+        let fragment_definitions = fragment_definitions?;
         let variables_struct = context.expand_variables();
         let response_data_fields = context
             .query_root
@@ -186,6 +191,16 @@ impl Schema {
 
         })
     }
+
+    pub fn ingest_interface_implementations(&mut self, impls: BTreeMap<String, Vec<String>>) {
+        impls.into_iter().for_each(|(iface_name, implementors)| {
+            let iface = self
+                .interfaces
+                .get_mut(&iface_name)
+                .expect(&format!("interface not found: {}", iface_name));
+            iface.implemented_by = implementors.into_iter().collect();
+        });
+    }
 }
 
 impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
@@ -229,21 +244,14 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         schema.unions.insert(union.name, GqlUnion(tys));
                     }
                     schema::TypeDefinition::Interface(interface) => {
-                        schema.interfaces.insert(
-                            interface.name.clone(),
-                            GqlInterface {
-                                name: interface.name,
-                                implemented_by: Vec::new(),
-                                fields: interface
-                                    .fields
-                                    .iter()
-                                    .map(|f| GqlObjectField {
-                                        name: f.name.clone(),
-                                        type_: FieldType::from(f.field_type.clone()),
-                                    })
-                                    .collect(),
-                            },
-                        );
+                        let mut iface = GqlInterface::new(interface.name.clone().into());
+                        iface
+                            .fields
+                            .extend(interface.fields.iter().map(|f| GqlObjectField {
+                                name: f.name.clone(),
+                                type_: FieldType::from(f.field_type.clone()),
+                            }));
+                        schema.interfaces.insert(interface.name, iface);
                     }
                     schema::TypeDefinition::InputObject(input) => {
                         schema
@@ -260,6 +268,8 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                 }
             }
         }
+
+        schema.ingest_interface_implementations(interface_implementations);
 
         schema
     }
@@ -337,11 +347,9 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .insert(name.clone(), GqlObject::from_introspected_schema_json(ty));
                 }
                 Some(__TypeKind::INTERFACE) => {
-                    let iface = GqlInterface {
-                        name: name.clone(),
-                        implemented_by: Vec::new(),
-                        fields: ty
-                            .fields
+                    let mut iface = GqlInterface::new(name.clone().into());
+                    iface.fields.extend(
+                        ty.fields
                             .clone()
                             .expect("interface fields")
                             .into_iter()
@@ -349,9 +357,8 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                             .map(|f| GqlObjectField {
                                 name: f.name.expect("field name"),
                                 type_: FieldType::from(f.type_.expect("field type")),
-                            })
-                            .collect(),
-                    };
+                            }),
+                    );
                     schema.interfaces.insert(name, iface);
                 }
                 Some(__TypeKind::INPUT_OBJECT) => {
@@ -360,6 +367,8 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                 _ => unimplemented!("unimplemented definition"),
             }
         }
+
+        schema.ingest_interface_implementations(interface_implementations);
 
         schema
     }

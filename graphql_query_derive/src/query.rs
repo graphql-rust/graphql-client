@@ -92,7 +92,7 @@ impl QueryContext {
         } else if let Some(obj) = self.schema.objects.get(ty) {
             obj.response_for_selection(self, &selection, prefix)
         } else if let Some(iface) = self.schema.interfaces.get(ty) {
-            Ok(iface.response_for_selection(self, &selection, prefix))
+            iface.response_for_selection(self, &selection, prefix)
         } else if let Some(unn) = self.schema.unions.get(ty) {
             unn.response_for_selection(self, &selection, prefix)
         } else {

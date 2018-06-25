@@ -1,0 +1,12 @@
+query MyQuery {
+  everything {
+    __typename
+    name
+    ... on Person {
+      birthday
+    }
+    ... on Organization {
+      industry
+    }
+  }
+}

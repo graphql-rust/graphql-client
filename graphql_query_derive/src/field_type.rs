@@ -5,7 +5,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use schema::DEFAULT_SCALARS;
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Clone, Debug, PartialEq, Hash)]
 pub enum FieldType {
     Named(Ident),
     Optional(Box<FieldType>),

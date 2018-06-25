@@ -1,26 +1,106 @@
+use failure;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
-use selection::Selection;
+use selection::{Selection, SelectionItem};
+use shared::*;
+use std::borrow::Cow;
+use std::collections::HashSet;
+use unions::union_variants;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlInterface {
-    pub implemented_by: Vec<String>,
+    pub implemented_by: HashSet<String>,
     pub name: String,
     pub fields: Vec<GqlObjectField>,
 }
 
 impl GqlInterface {
+    pub fn new(name: Cow<str>) -> GqlInterface {
+        GqlInterface {
+            name: name.into_owned(),
+            implemented_by: HashSet::new(),
+            fields: vec![],
+        }
+    }
+
     pub fn response_for_selection(
         &self,
-        _query_context: &QueryContext,
-        _selection: &Selection,
+        query_context: &QueryContext,
+        selection: &Selection,
         prefix: &str,
-    ) -> TokenStream {
+    ) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(&prefix, Span::call_site());
-        quote! {
-            #[derive(Debug, Deserialize)]
-            pub struct #name;
-        }
+
+        selection
+            .extract_typename()
+            .ok_or_else(|| format_err!("Missing __typename in selection for {}", prefix))?;
+
+        let object_selection = Selection(
+            selection.0.iter()
+            // Only keep what we can handle
+            .filter(|f| match f {
+                SelectionItem::Field(f) => f.name != "__typename",
+                SelectionItem::FragmentSpread(_) => true,
+                SelectionItem::InlineFragment(_) => false,
+            }).map(|a| (*a).clone()).collect(),
+        );
+
+        let union_selection = Selection(
+            selection.0.iter()
+            // Only keep what we can handle
+            .filter(|f| match f {
+                SelectionItem::InlineFragment(_) => true,
+                SelectionItem::Field(_) | SelectionItem::FragmentSpread(_) => false,
+            }).map(|a| (*a).clone()).collect(),
+        );
+
+        let object_fields =
+            response_fields_for_selection(&self.fields, query_context, &object_selection, prefix)?;
+
+        let object_children =
+            field_impls_for_selection(&self.fields, query_context, &object_selection, prefix)?;
+        let (mut union_variants, union_children, used_variants) =
+            union_variants(&union_selection, query_context, prefix)?;
+
+        union_variants.extend(
+            self.implemented_by
+                .iter()
+                .filter(|obj| used_variants.iter().find(|v| v == obj).is_none())
+                .map(|v| {
+                    let v = Ident::new(v, Span::call_site());
+                    quote!(#v)
+                }),
+        );
+
+        let attached_enum_name = Ident::new(&format!("{}On", name), Span::call_site());
+        let (attached_enum, last_object_field) = if union_variants.len() > 0 {
+            let attached_enum = quote! {
+                #[derive(Deserialize, Debug, Serialize)]
+                #[serde(tag = "__typename")]
+                pub enum #attached_enum_name {
+                    #(#union_variants,)*
+                }
+            };
+            let last_object_field = quote!(#[serde(flatten)] on: #attached_enum_name,);
+            (attached_enum, last_object_field)
+        } else {
+            (quote!(), quote!())
+        };
+
+        Ok(quote! {
+
+            #(#object_children)*
+
+            #(#union_children)*
+
+            #attached_enum
+
+            #[derive(Debug, Serialize, Deserialize)]
+            pub struct #name {
+                #(#object_fields,)*
+                #last_object_field
+            }
+        })
     }
 }

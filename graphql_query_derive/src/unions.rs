@@ -17,31 +17,15 @@ enum UnionError {
     MissingTypename { union_name: String },
 }
 
-impl GqlUnion {
-    pub fn response_for_selection(
-        &self,
-        query_context: &QueryContext,
-        selection: &Selection,
-        prefix: &str,
-    ) -> Result<TokenStream, failure::Error> {
-        let struct_name = Ident::new(prefix, Span::call_site());
-        let mut children_definitions: Vec<TokenStream> = Vec::new();
+pub fn union_variants(
+    selection: &Selection,
+    query_context: &QueryContext,
+    prefix: &str,
+) -> Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<String>), failure::Error> {
+    let mut children_definitions = Vec::new();
+    let mut used_variants = Vec::with_capacity(selection.0.len());
 
-        let typename_field = selection.0.iter().find(|f| {
-            if let SelectionItem::Field(f) = f {
-                f.name == TYPENAME_FIELD
-            } else {
-                false
-            }
-        });
-
-        if typename_field.is_none() {
-            Err(UnionError::MissingTypename {
-                union_name: prefix.into(),
-            })?;
-        }
-
-        let variants: Result<Vec<TokenStream>, failure::Error> = selection
+    let variants: Result<Vec<TokenStream>, failure::Error> = selection
             .0
             .iter()
             // ignore __typename
@@ -54,10 +38,11 @@ impl GqlUnion {
             })
             .map(|item| {
                 match item {
-                    SelectionItem::Field(_) => panic!("field selection on union"),
-                    SelectionItem::FragmentSpread(_) => panic!("fragment spread on union"),
+                    SelectionItem::Field(_) => Err(format_err!("field selection on union"))?,
+                    SelectionItem::FragmentSpread(_) => Err(format_err!("fragment spread on union"))?,
                     SelectionItem::InlineFragment(frag) => {
                         let variant_name = Ident::new(&frag.on, Span::call_site());
+                        used_variants.push(frag.on.to_string());
 
                         let new_prefix = format!("{}On{}", prefix, frag.on);
 
@@ -98,7 +83,40 @@ impl GqlUnion {
             })
             .collect();
 
-        let variants = variants?;
+    let variants = variants?;
+
+    Ok((variants, children_definitions, used_variants))
+}
+
+impl GqlUnion {
+    pub fn response_for_selection(
+        &self,
+        query_context: &QueryContext,
+        selection: &Selection,
+        prefix: &str,
+    ) -> Result<TokenStream, failure::Error> {
+        let struct_name = Ident::new(prefix, Span::call_site());
+
+        let typename_field = selection.extract_typename();
+
+        if typename_field.is_none() {
+            Err(UnionError::MissingTypename {
+                union_name: prefix.into(),
+            })?;
+        }
+
+        let (mut variants, children_definitions, used_variants) =
+            union_variants(selection, query_context, prefix)?;
+
+        variants.extend(
+            self.0
+                .iter()
+                .filter(|v| used_variants.iter().find(|a| a == v).is_none())
+                .map(|v| {
+                    let v = Ident::new(v, Span::call_site());
+                    quote!(#v)
+                }),
+        );
 
         Ok(quote!{
             #(#children_definitions)*
