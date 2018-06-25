@@ -1,0 +1,35 @@
+schema {
+  query: InterfaceQuery
+}
+
+interface Named {
+  name: String!
+}
+
+type Person implements Named {
+  name: String!
+  birthday: String
+}
+
+enum Industry {
+  CHOCOLATE
+  OTHER
+}
+
+type Organization implements Named {
+  name: String
+  industry: Industry!
+  createdAt: String
+}
+
+type Dog implements Named {
+  name: String!
+  """
+  Always returns true
+  """
+  isGoodDog: Boolean!
+}
+
+type InterfaceQuery {
+  everything: [Named!]
+}

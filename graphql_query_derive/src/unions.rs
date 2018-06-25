@@ -37,8 +37,8 @@ pub fn union_variants(
             })
             .map(|item| {
                 match item {
-                    SelectionItem::Field(_) => panic!("field selection on union"),
-                    SelectionItem::FragmentSpread(_) => panic!("fragment spread on union"),
+                    SelectionItem::Field(_) => Err(format_err!("field selection on union"))?,
+                    SelectionItem::FragmentSpread(_) => Err(format_err!("fragment spread on union"))?,
                     SelectionItem::InlineFragment(frag) => {
                         let variant_name = Ident::new(&frag.on, Span::call_site());
 

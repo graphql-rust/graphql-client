@@ -82,7 +82,9 @@ pub fn response_fields_for_selection(
                     #field_name: #type_name
                 })
             }
-            SelectionItem::InlineFragment(_) => unreachable!("inline fragment on object field"),
+            SelectionItem::InlineFragment(_) => {
+                Err(format_err!("inline fragment on object field"))?
+            }
         })
         .collect()
 }

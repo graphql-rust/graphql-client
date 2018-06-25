@@ -13,7 +13,7 @@ pub struct GqlObject {
     pub fields: Vec<GqlObjectField>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Clone, Debug, PartialEq, Hash)]
 pub struct GqlObjectField {
     pub name: String,
     pub type_: FieldType,
@@ -23,12 +23,7 @@ impl GqlObject {
     pub fn new(name: Cow<str>) -> GqlObject {
         GqlObject {
             name: name.into_owned(),
-            fields: vec![GqlObjectField {
-                name: TYPENAME_FIELD.to_string(),
-                /// Non-nullable, see spec:
-                /// https://github.com/facebook/graphql/blob/master/spec/Section%204%20--%20Introspection.md
-                type_: FieldType::Named(string_type()),
-            }],
+            fields: vec![typename_field()],
         }
     }
 

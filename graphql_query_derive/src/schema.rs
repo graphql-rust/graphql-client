@@ -234,21 +234,14 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         schema.unions.insert(union.name, GqlUnion(tys));
                     }
                     schema::TypeDefinition::Interface(interface) => {
-                        schema.interfaces.insert(
-                            interface.name.clone(),
-                            GqlInterface {
-                                name: interface.name,
-                                implemented_by: Vec::new(),
-                                fields: interface
-                                    .fields
-                                    .iter()
-                                    .map(|f| GqlObjectField {
-                                        name: f.name.clone(),
-                                        type_: FieldType::from(f.field_type.clone()),
-                                    })
-                                    .collect(),
-                            },
-                        );
+                        let mut iface = GqlInterface::new(interface.name.clone().into());
+                        iface
+                            .fields
+                            .extend(interface.fields.iter().map(|f| GqlObjectField {
+                                name: f.name.clone(),
+                                type_: FieldType::from(f.field_type.clone()),
+                            }));
+                        schema.interfaces.insert(interface.name, iface);
                     }
                     schema::TypeDefinition::InputObject(input) => {
                         schema
@@ -342,11 +335,9 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .insert(name.clone(), GqlObject::from_introspected_schema_json(ty));
                 }
                 Some(__TypeKind::INTERFACE) => {
-                    let iface = GqlInterface {
-                        name: name.clone(),
-                        implemented_by: Vec::new(),
-                        fields: ty
-                            .fields
+                    let mut iface = GqlInterface::new(name.clone().into());
+                    iface.fields.extend(
+                        ty.fields
                             .clone()
                             .expect("interface fields")
                             .into_iter()
@@ -354,9 +345,8 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                             .map(|f| GqlObjectField {
                                 name: f.name.expect("field name"),
                                 type_: FieldType::from(f.type_.expect("field type")),
-                            })
-                            .collect(),
-                    };
+                            }),
+                    );
                     schema.interfaces.insert(name, iface);
                 }
                 Some(__TypeKind::INPUT_OBJECT) => {

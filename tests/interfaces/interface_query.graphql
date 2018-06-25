@@ -1,0 +1,15 @@
+query MyQuery {
+  everything {
+    __typename
+    name
+    ... on Dog {
+      isGoodDog
+    }
+    ... on Person {
+      birthday
+    }
+    ... on Organization {
+      industry
+    }
+  }
+}

@@ -1,24 +1,24 @@
 use constants::*;
 use graphql_parser::query::SelectionSet;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SelectionField {
     pub name: String,
     pub fields: Selection,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SelectionFragmentSpread {
     pub fragment_name: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SelectionInlineFragment {
     pub on: String,
     pub fields: Selection,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SelectionItem {
     Field(SelectionField),
     FragmentSpread(SelectionFragmentSpread),
@@ -36,7 +36,7 @@ impl SelectionItem {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Selection(pub Vec<SelectionItem>);
 
 impl Selection {
