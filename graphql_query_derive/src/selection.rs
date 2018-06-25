@@ -1,3 +1,4 @@
+use constants::*;
 use graphql_parser::query::SelectionSet;
 
 #[derive(Debug, PartialEq)]
@@ -24,8 +25,25 @@ pub enum SelectionItem {
     InlineFragment(SelectionInlineFragment),
 }
 
+impl SelectionItem {
+    pub fn as_typename(&self) -> Option<&SelectionField> {
+        if let SelectionItem::Field(f) = self {
+            if f.name == TYPENAME_FIELD {
+                return Some(f);
+            }
+        }
+        None
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Selection(pub Vec<SelectionItem>);
+
+impl Selection {
+    pub fn extract_typename(&self) -> Option<&SelectionField> {
+        self.0.iter().filter_map(|f| f.as_typename()).next()
+    }
+}
 
 impl<'a> ::std::convert::From<&'a SelectionSet> for Selection {
     fn from(selection_set: &SelectionSet) -> Selection {

@@ -17,31 +17,14 @@ enum UnionError {
     MissingTypename { union_name: String },
 }
 
-impl GqlUnion {
-    pub fn response_for_selection(
-        &self,
-        query_context: &QueryContext,
-        selection: &Selection,
-        prefix: &str,
-    ) -> Result<TokenStream, failure::Error> {
-        let struct_name = Ident::new(prefix, Span::call_site());
-        let mut children_definitions: Vec<TokenStream> = Vec::new();
+pub fn union_variants(
+    selection: &Selection,
+    query_context: &QueryContext,
+    prefix: &str,
+) -> Result<(Vec<TokenStream>, Vec<TokenStream>), failure::Error> {
+    let mut children_definitions = Vec::new();
 
-        let typename_field = selection.0.iter().find(|f| {
-            if let SelectionItem::Field(f) = f {
-                f.name == TYPENAME_FIELD
-            } else {
-                false
-            }
-        });
-
-        if typename_field.is_none() {
-            Err(UnionError::MissingTypename {
-                union_name: prefix.into(),
-            })?;
-        }
-
-        let variants: Result<Vec<TokenStream>, failure::Error> = selection
+    let variants: Result<Vec<TokenStream>, failure::Error> = selection
             .0
             .iter()
             // ignore __typename
@@ -98,7 +81,29 @@ impl GqlUnion {
             })
             .collect();
 
-        let variants = variants?;
+    let variants = variants?;
+
+    Ok((variants, children_definitions))
+}
+
+impl GqlUnion {
+    pub fn response_for_selection(
+        &self,
+        query_context: &QueryContext,
+        selection: &Selection,
+        prefix: &str,
+    ) -> Result<TokenStream, failure::Error> {
+        let struct_name = Ident::new(prefix, Span::call_site());
+
+        let typename_field = selection.extract_typename();
+
+        if typename_field.is_none() {
+            Err(UnionError::MissingTypename {
+                union_name: prefix.into(),
+            })?;
+        }
+
+        let (variants, children_definitions) = union_variants(selection, query_context, prefix)?;
 
         Ok(quote!{
             #(#children_definitions)*
