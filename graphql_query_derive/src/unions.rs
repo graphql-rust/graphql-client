@@ -21,8 +21,9 @@ pub fn union_variants(
     selection: &Selection,
     query_context: &QueryContext,
     prefix: &str,
-) -> Result<(Vec<TokenStream>, Vec<TokenStream>), failure::Error> {
+) -> Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<String>), failure::Error> {
     let mut children_definitions = Vec::new();
+    let mut used_variants = Vec::with_capacity(selection.0.len());
 
     let variants: Result<Vec<TokenStream>, failure::Error> = selection
             .0
@@ -41,6 +42,7 @@ pub fn union_variants(
                     SelectionItem::FragmentSpread(_) => Err(format_err!("fragment spread on union"))?,
                     SelectionItem::InlineFragment(frag) => {
                         let variant_name = Ident::new(&frag.on, Span::call_site());
+                        used_variants.push(frag.on.to_string());
 
                         let new_prefix = format!("{}On{}", prefix, frag.on);
 
@@ -83,7 +85,7 @@ pub fn union_variants(
 
     let variants = variants?;
 
-    Ok((variants, children_definitions))
+    Ok((variants, children_definitions, used_variants))
 }
 
 impl GqlUnion {
@@ -103,7 +105,18 @@ impl GqlUnion {
             })?;
         }
 
-        let (variants, children_definitions) = union_variants(selection, query_context, prefix)?;
+        let (mut variants, children_definitions, used_variants) =
+            union_variants(selection, query_context, prefix)?;
+
+        variants.extend(
+            self.0
+                .iter()
+                .filter(|v| used_variants.iter().find(|a| a == v).is_none())
+                .map(|v| {
+                    let v = Ident::new(v, Span::call_site());
+                    quote!(#v)
+                }),
+        );
 
         Ok(quote!{
             #(#children_definitions)*

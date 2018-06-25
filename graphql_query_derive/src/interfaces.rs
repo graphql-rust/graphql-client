@@ -1,4 +1,3 @@
-use constants::*;
 use failure;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -6,11 +5,12 @@ use query::QueryContext;
 use selection::{Selection, SelectionItem};
 use shared::*;
 use std::borrow::Cow;
+use std::collections::HashSet;
 use unions::union_variants;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlInterface {
-    pub implemented_by: Vec<String>,
+    pub implemented_by: HashSet<String>,
     pub name: String,
     pub fields: Vec<GqlObjectField>,
 }
@@ -19,7 +19,7 @@ impl GqlInterface {
     pub fn new(name: Cow<str>) -> GqlInterface {
         GqlInterface {
             name: name.into_owned(),
-            implemented_by: Vec::new(),
+            implemented_by: HashSet::new(),
             fields: vec![],
         }
     }
@@ -60,8 +60,18 @@ impl GqlInterface {
 
         let object_children =
             field_impls_for_selection(&self.fields, query_context, &object_selection, prefix)?;
-        let (union_variants, union_children) =
+        let (mut union_variants, union_children, used_variants) =
             union_variants(&union_selection, query_context, prefix)?;
+
+        union_variants.extend(
+            self.implemented_by
+                .iter()
+                .filter(|obj| used_variants.iter().find(|v| v == obj).is_none())
+                .map(|v| {
+                    let v = Ident::new(v, Span::call_site());
+                    quote!(#v)
+                }),
+        );
 
         let attached_enum_name = Ident::new(&format!("{}On", name), Span::call_site());
         let (attached_enum, last_object_field) = if union_variants.len() > 0 {

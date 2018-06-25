@@ -28,3 +28,29 @@ fn interface_deserialization() {
 
     assert_eq!(response_data.everything.map(|names| names.len()), Some(4));
 }
+
+#[derive(GraphQLQuery)]
+#[GraphQLQuery(
+    query_path = "tests/interfaces/interface_not_on_everything_query.graphql",
+    schema_path = "tests/interfaces/interface_schema.graphql"
+)]
+#[allow(dead_code)]
+struct InterfaceNotOnEverythingQuery;
+
+const RESPONSE_NOT_ON_EVERYTHING: &'static str =
+    include_str!("interfaces/interface_response_not_on_everything.json");
+
+#[test]
+fn interface_not_on_everything_deserialization() {
+    println!("{:?}", RESPONSE);
+    let response_data: interface_not_on_everything_query::ResponseData =
+        serde_json::from_str(RESPONSE_NOT_ON_EVERYTHING).unwrap();
+
+    println!("{:?}", response_data);
+
+    let expected = r##"ResponseData { everything: Some([RustMyQueryEverything { name: "Audrey Lorde", on: Person(RustMyQueryEverythingOnPerson { birthday: Some("1934-02-18") }) }, RustMyQueryEverything { name: "Laïka", on: Dog }, RustMyQueryEverything { name: "Mozilla", on: Organization(RustMyQueryEverythingOnOrganization { industry: OTHER }) }, RustMyQueryEverything { name: "Norbert", on: Dog }]) }"##;
+
+    assert_eq!(format!("{:?}", response_data), expected);
+
+    assert_eq!(response_data.everything.map(|names| names.len()), Some(4));
+}

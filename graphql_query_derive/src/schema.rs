@@ -191,6 +191,16 @@ impl Schema {
 
         })
     }
+
+    pub fn ingest_interface_implementations(&mut self, impls: BTreeMap<String, Vec<String>>) {
+        impls.into_iter().for_each(|(iface_name, implementors)| {
+            let iface = self
+                .interfaces
+                .get_mut(&iface_name)
+                .expect(&format!("interface not found: {}", iface_name));
+            iface.implemented_by = implementors.into_iter().collect();
+        });
+    }
 }
 
 impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
@@ -258,6 +268,8 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                 }
             }
         }
+
+        schema.ingest_interface_implementations(interface_implementations);
 
         schema
     }
@@ -355,6 +367,8 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                 _ => unimplemented!("unimplemented definition"),
             }
         }
+
+        schema.ingest_interface_implementations(interface_implementations);
 
         schema
     }
