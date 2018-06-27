@@ -10,12 +10,15 @@ extern crate serde_derive;
 
 mod requests;
 
+use graphql_client::{GraphQLQuery, GraphQLResponse};
 use yew::prelude::*;
-use yew::services::ConsoleService;
+use yew::services::{ConsoleService, FetchService};
 
 struct Model {
-    console: ConsoleService,
+    _console: ConsoleService,
+    fetch: FetchService,
     search: String,
+    response: Option<GraphQLResponse<requests::station_query::ResponseData>>,
 }
 
 enum Msg {
@@ -29,12 +32,27 @@ impl Component for Model {
 
     fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
         Model {
-            console: ConsoleService::new(),
+            _console: ConsoleService::new(),
+            fetch: FetchService::new(),
             search: String::new(),
+            response: None,
         }
     }
 
-    fn update(&mut self, _: Self::Message) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Msg::Edit(s) => self.search = s,
+            Msg::Submit => {
+                let body = serde_json::to_string(&requests::StationQuery::build_query(
+                    requests::station_query::Variables {
+                        searchTerm: self.search.clone(),
+                    },
+                )).unwrap();
+                unimplemented!();
+                self.fetch.fetch(request.into(), |res| self.response = res);
+            }
+        }
+
         true
     }
 }
@@ -60,6 +78,12 @@ impl Renderable<Model> for Model {
                         <button role="submit", onclick=|_| Msg::Submit,>{"Go!"}</button>
                     </form>
                   </p>
+                </div>
+                <div>
+                    {serde_json::to_string(&requests::StationQuery::build_query(requests::station_query::Variables {
+                        searchTerm: self.search.clone(),
+
+                    })).unwrap()}
                 </div>
             </div>
         }
