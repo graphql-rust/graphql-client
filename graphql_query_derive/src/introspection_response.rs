@@ -223,74 +223,74 @@ pub struct TypeRef {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType {
-    kind: Option<__TypeKind>,
-    name: Option<String>,
+    pub kind: Option<__TypeKind>,
+    pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType {
-    kind: Option<__TypeKind>,
-    name: Option<String>,
-    of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
+    pub kind: Option<__TypeKind>,
+    pub name: Option<String>,
+    pub of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfType {
-    kind: Option<__TypeKind>,
-    name: Option<String>,
-    of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
+    pub kind: Option<__TypeKind>,
+    pub name: Option<String>,
+    pub of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfTypeOfType {
-    kind: Option<__TypeKind>,
-    name: Option<String>,
-    of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfType>,
+    pub kind: Option<__TypeKind>,
+    pub name: Option<String>,
+    pub of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfType>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfTypeOfType {
-    kind: Option<__TypeKind>,
-    name: Option<String>,
-    of_type: Option<TypeRefOfTypeOfTypeOfTypeOfType>,
+    pub kind: Option<__TypeKind>,
+    pub name: Option<String>,
+    pub of_type: Option<TypeRefOfTypeOfTypeOfTypeOfType>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeRefOfTypeOfType {
-    kind: Option<__TypeKind>,
-    name: Option<String>,
-    of_type: Option<TypeRefOfTypeOfTypeOfType>,
+    pub kind: Option<__TypeKind>,
+    pub name: Option<String>,
+    pub of_type: Option<TypeRefOfTypeOfTypeOfType>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeRefOfType {
-    kind: Option<__TypeKind>,
-    name: Option<String>,
-    of_type: Option<TypeRefOfTypeOfType>,
+    pub kind: Option<__TypeKind>,
+    pub name: Option<String>,
+    pub of_type: Option<TypeRefOfTypeOfType>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaQueryType {
-    name: Option<String>,
+    pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaMutationType {
-    name: Option<String>,
+    pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RustIntrospectionQuerySchemaSubscriptionType {
-    name: Option<String>,
+    pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

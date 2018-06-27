@@ -103,10 +103,12 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
     let schema_output = schema.response_for_query(query)?;
 
     let result = quote!(
-        mod #module_name {
+        pub mod #module_name {
             #![allow(non_camel_case_types)]
             #![allow(non_snake_case)]
             #![allow(dead_code)]
+
+            use serde;
 
             pub const QUERY: &'static str = #query_string;
 
