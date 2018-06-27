@@ -1,0 +1,29 @@
+fragment Arrival on TrainInStation {
+  type
+  trainNumber
+  platform
+  time
+  stops
+}
+
+query StationSearch($searchTerm: String!) {
+  search(searchTerm: $searchTerm) {
+    stations {
+      name
+      stationNumber
+      location {
+        latitude
+        longitude
+      }
+      category
+      timetable {
+        nextArrivals {
+          ...Arrival
+        }
+        nextDepatures {
+          ...Arrival
+        }
+      }
+    }
+  }
+}

@@ -21,6 +21,7 @@ serde_json = "1.0"
 members = [
     ".",
     "examples/github",
+    "examples/wasm",
     "graphql_query_derive",
     "graphql_client_cli",
 ]
