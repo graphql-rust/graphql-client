@@ -51,7 +51,7 @@ impl<'a> ::std::convert::From<&'a SelectionSet> for Selection {
 
         let mut items = Vec::new();
 
-        for item in selection_set.items.iter() {
+        for item in &selection_set.items {
             let converted = match item {
                 Selection::Field(f) => SelectionItem::Field(SelectionField {
                     name: f.name.to_string(),

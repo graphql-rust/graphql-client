@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span, TokenStream};
 
-pub const ENUMS_PREFIX: &'static str = "";
+pub const ENUMS_PREFIX: &str = "";
 
 #[derive(Debug, PartialEq)]
 pub struct GqlEnum {

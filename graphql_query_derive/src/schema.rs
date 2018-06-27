@@ -12,7 +12,7 @@ use selection::Selection;
 use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
 
-pub const DEFAULT_SCALARS: &[&'static str] = &["ID", "String", "Int", "Float", "Boolean"];
+pub const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
 #[derive(Debug, PartialEq)]
 pub struct Schema {
@@ -147,8 +147,8 @@ impl Schema {
         let response_data_fields = context
             .query_root
             .as_ref()
-            .or(context.mutation_root.as_ref())
-            .or(context._subscription_root.as_ref())
+            .or_else(|| context.mutation_root.as_ref())
+            .or_else(|| context._subscription_root.as_ref())
             .expect("no selection defined");
 
         // TODO: do something smarter here
@@ -192,14 +192,21 @@ impl Schema {
         })
     }
 
-    pub fn ingest_interface_implementations(&mut self, impls: BTreeMap<String, Vec<String>>) {
-        impls.into_iter().for_each(|(iface_name, implementors)| {
-            let iface = self
-                .interfaces
-                .get_mut(&iface_name)
-                .expect(&format!("interface not found: {}", iface_name));
-            iface.implemented_by = implementors.into_iter().collect();
-        });
+    pub fn ingest_interface_implementations(
+        &mut self,
+        impls: BTreeMap<String, Vec<String>>,
+    ) -> Result<(), failure::Error> {
+        impls
+            .into_iter()
+            .map(|(iface_name, implementors)| {
+                let iface = self
+                    .interfaces
+                    .get_mut(&iface_name)
+                    .ok_or_else(|| format_err!("interface not found: {}", iface_name))?;
+                iface.implemented_by = implementors.into_iter().collect();
+                Ok(())
+            })
+            .collect()
     }
 }
 
@@ -215,7 +222,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
             match definition {
                 schema::Definition::TypeDefinition(ty_definition) => match ty_definition {
                     schema::TypeDefinition::Object(obj) => {
-                        for implementing in obj.implements_interfaces.iter() {
+                        for implementing in &obj.implements_interfaces {
                             let name = &obj.name;
                             interface_implementations
                                 .entry(implementing.to_string())
@@ -269,7 +276,9 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
             }
         }
 
-        schema.ingest_interface_implementations(interface_implementations);
+        schema
+            .ingest_interface_implementations(interface_implementations)
+            .expect("schema ingestion");
 
         schema
     }
@@ -372,7 +381,9 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
             }
         }
 
-        schema.ingest_interface_implementations(interface_implementations);
+        schema
+            .ingest_interface_implementations(interface_implementations)
+            .expect("schema ingestion");
 
         schema
     }
