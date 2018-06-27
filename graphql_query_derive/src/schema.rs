@@ -280,7 +280,11 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
         use introspection_response::__TypeKind;
 
         let mut schema = Schema::new();
-        let root = src.schema.expect("__Schema is not null");
+        let root = src.schema.expect("__schema is not null");
+
+        schema.query_type = root.query_type.and_then(|ty| ty.name);
+        schema.mutation_type = root.mutation_type.and_then(|ty| ty.name);
+        schema.subscription_type = root.subscription_type.and_then(|ty| ty.name);
 
         // Holds which objects implement which interfaces so we can populate GqlInterface#implemented_by later.
         // It maps interface names to a vec of implementation names.
