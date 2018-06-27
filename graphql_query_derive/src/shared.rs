@@ -5,7 +5,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::*;
 
-pub(crate) fn render_object_field(field_name: &str, field_type: TokenStream) -> TokenStream {
+pub(crate) fn render_object_field(field_name: &str, field_type: &TokenStream) -> TokenStream {
     if field_name == "type" {
         let name_ident = Ident::new(&format!("{}_", field_name), Span::call_site());
         return quote! {
@@ -65,13 +65,13 @@ pub fn response_fields_for_selection(
                 let ty = &schema_fields
                     .iter()
                     .find(|field| field.name.as_str() == name.as_str())
-                    .ok_or(format_err!("Could not find field: {}", name.as_str()))?
+                    .ok_or_else(|| format_err!("Could not find field: {}", name.as_str()))?
                     .type_;
                 let ty = ty.to_rust(
                     context,
                     &format!("{}{}", prefix.to_camel_case(), name.to_camel_case()),
                 );
-                Ok(render_object_field(name, ty))
+                Ok(render_object_field(name, &ty))
             }
             SelectionItem::FragmentSpread(fragment) => {
                 let field_name =

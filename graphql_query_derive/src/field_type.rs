@@ -27,8 +27,7 @@ impl FieldType {
                 let name = if context.schema.scalars.contains(&name_string)
                     || DEFAULT_SCALARS
                         .iter()
-                        .find(|elem| elem == &&name_string)
-                        .is_some()
+                        .any(|elem| elem == &name_string.as_str())
                 {
                     name.clone()
                 } else if context.schema.enums.contains_key(&name_string) {

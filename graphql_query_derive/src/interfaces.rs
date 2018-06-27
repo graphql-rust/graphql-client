@@ -74,7 +74,7 @@ impl GqlInterface {
         );
 
         let attached_enum_name = Ident::new(&format!("{}On", name), Span::call_site());
-        let (attached_enum, last_object_field) = if union_variants.len() > 0 {
+        let (attached_enum, last_object_field) = if !union_variants.is_empty() {
             let attached_enum = quote! {
                 #[derive(Deserialize, Debug, Serialize)]
                 #[serde(tag = "__typename")]

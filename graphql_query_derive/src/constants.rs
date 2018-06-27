@@ -2,12 +2,13 @@ use field_type::FieldType;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span};
 
-pub const TYPENAME_FIELD: &'static str = "__typename";
+pub const TYPENAME_FIELD: &str = "__typename";
 
 pub fn string_type() -> Ident {
     Ident::new("String", Span::call_site())
 }
 
+#[cfg(test)]
 pub fn float_type() -> Ident {
     Ident::new("Float", Span::call_site())
 }
