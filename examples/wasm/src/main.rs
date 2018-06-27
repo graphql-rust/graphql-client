@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate graphql_client;
+extern crate http;
 extern crate stdweb;
 #[macro_use]
 extern crate yew;
@@ -11,6 +12,7 @@ extern crate serde_derive;
 mod requests;
 
 use graphql_client::{GraphQLQuery, GraphQLResponse};
+use yew::format::Json;
 use yew::prelude::*;
 use yew::services::{ConsoleService, FetchService};
 
@@ -43,13 +45,15 @@ impl Component for Model {
         match msg {
             Msg::Edit(s) => self.search = s,
             Msg::Submit => {
-                let body = serde_json::to_string(&requests::StationQuery::build_query(
-                    requests::station_query::Variables {
+                let body =
+                    requests::StationQuery::build_query(requests::station_query::Variables {
                         searchTerm: self.search.clone(),
-                    },
-                )).unwrap();
-                unimplemented!();
-                self.fetch.fetch(request.into(), |res| self.response = res);
+                    });
+                let request = ::http::Request::post("https://bahnql.herokuapp.com/graphql")
+                    .header("Content-Type", "application/json")
+                    .body(Json(body))
+                    .expect("failed to build request");
+                self.fetch.fetch(request, |res| self.response = res);
             }
         }
 
