@@ -12,8 +12,6 @@ extern crate serde_json;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-const INTROSPECTION_QUERY: &'static str = include_str!("introspection_query.graphql");
-
 #[derive(GraphQLQuery)]
 #[GraphQLQuery(
     schema_path = "src/introspection_schema.graphql", query_path = "src/introspection_query.graphql"
@@ -69,7 +67,7 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
 
     let request_body: graphql_client::GraphQLQueryBody<()> = graphql_client::GraphQLQueryBody {
         variables: (),
-        query: INTROSPECTION_QUERY,
+        query: introspection_query::QUERY,
     };
 
     let client = reqwest::Client::new();
@@ -87,7 +85,7 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
     }
 
     let json: graphql_client::GraphQLResponse<introspection_query::ResponseData> = res.json()?;
-    let json = serde_json::to_string(&json)?;
+    let json = serde_json::to_string(&json.data.expect("data field"))?;
 
     write!(out, "{}", json)?;
 

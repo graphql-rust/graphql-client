@@ -20,6 +20,7 @@ serde_json = "1.0"
 [workspace]
 members = [
     ".",
+    "examples/call_from_js",
     "examples/github",
     "graphql_query_derive",
     "graphql_client_cli",
