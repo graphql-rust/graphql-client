@@ -295,8 +295,10 @@ mod tests {
             result.unwrap().to_string(),
             vec![
                 "# [ derive ( Debug , Serialize , Deserialize ) ] ",
+                "# [ serde ( rename_all = \"camelCase\" ) ] ",
                 "pub struct MeowOnUser { pub first_name : String , } ",
                 "# [ derive ( Debug , Serialize , Deserialize ) ] ",
+                "# [ serde ( rename_all = \"camelCase\" ) ] ",
                 "pub struct MeowOnOrganization { pub title : String , } ",
                 "# [ derive ( Debug , Serialize , Deserialize ) ] ",
                 "# [ serde ( tag = \"__typename\" ) ] ",

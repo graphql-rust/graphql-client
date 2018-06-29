@@ -6,7 +6,7 @@ This library does not provide any networking, caching or other client functional
 
 ```rust
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(
+#[gql(
     query = "/graphql/queries/my_query.graphql",
     schema = "/graphql/schema.graphql"
 )]

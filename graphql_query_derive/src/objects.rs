@@ -64,6 +64,7 @@ impl GqlObject {
             #(#field_impls)*
 
             #[derive(Debug, Serialize, Deserialize)]
+            #[serde(rename_all = "camelCase")]
             pub struct #name {
                 #(#fields,)*
             }

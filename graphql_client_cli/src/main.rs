@@ -13,7 +13,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(
+#[gql(
     schema_path = "src/introspection_schema.graphql", query_path = "src/introspection_query.graphql"
 )]
 struct IntrospectionQuery;

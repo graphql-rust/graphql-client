@@ -106,11 +106,11 @@ fn cb() -> Closure<Fn(String)> {
             .expect("reddit")
             .subreddit
             .expect("puppy smiles subreddit")
-            .newListings;
+            .new_listings;
 
         let new_cursor: Option<String> = listings[listings.len() - 1]
             .as_ref()
-            .map(|puppy| puppy.fullnameId.clone())
+            .map(|puppy| puppy.fullname_id.clone())
             .to_owned();
         LAST_ENTRY.lock().unwrap().replace(new_cursor);
 

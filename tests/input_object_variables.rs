@@ -6,7 +6,7 @@ extern crate serde;
 extern crate serde_json;
 
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(
+#[gql(
     query_path = "tests/input_object_variables/input_object_variables_query.graphql",
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql"
 )]
@@ -28,7 +28,7 @@ fn input_object_variables_query_variables_struct() {
 }
 
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(
+#[gql(
     query_path = "tests/input_object_variables/input_object_variables_query_defaults.graphql",
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql"
 )]
