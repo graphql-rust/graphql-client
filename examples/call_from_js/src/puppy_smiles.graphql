@@ -1,0 +1,11 @@
+query PuppySmiles($after: String) {
+  reddit {
+    subreddit(name: "puppysmiles") {
+      newListings(limit: 6, after: $after) {
+        title
+        fullnameId
+        url
+      }
+    }
+  }
+}

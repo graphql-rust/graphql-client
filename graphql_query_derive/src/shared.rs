@@ -14,7 +14,7 @@ pub(crate) fn render_object_field(field_name: &str, field_type: &TokenStream) ->
         };
     }
 
-    let name_ident = Ident::new(field_name, Span::call_site());
+    let name_ident = Ident::new(&field_name.to_snake_case(), Span::call_site());
 
     quote!(pub #name_ident: #field_type)
 }

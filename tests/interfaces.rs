@@ -8,7 +8,7 @@ extern crate serde_json;
 const RESPONSE: &'static str = include_str!("interfaces/interface_response.json");
 
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(
+#[gql(
     query_path = "tests/interfaces/interface_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql"
 )]
@@ -22,7 +22,7 @@ fn interface_deserialization() {
 
     println!("{:?}", response_data);
 
-    let expected = r##"ResponseData { everything: Some([RustMyQueryEverything { name: "Audrey Lorde", on: Person(RustMyQueryEverythingOnPerson { birthday: Some("1934-02-18") }) }, RustMyQueryEverything { name: "Laïka", on: Dog(RustMyQueryEverythingOnDog { isGoodDog: true }) }, RustMyQueryEverything { name: "Mozilla", on: Organization(RustMyQueryEverythingOnOrganization { industry: OTHER }) }, RustMyQueryEverything { name: "Norbert", on: Dog(RustMyQueryEverythingOnDog { isGoodDog: true }) }]) }"##;
+    let expected = r##"ResponseData { everything: Some([RustMyQueryEverything { name: "Audrey Lorde", on: Person(RustMyQueryEverythingOnPerson { birthday: Some("1934-02-18") }) }, RustMyQueryEverything { name: "Laïka", on: Dog(RustMyQueryEverythingOnDog { is_good_dog: true }) }, RustMyQueryEverything { name: "Mozilla", on: Organization(RustMyQueryEverythingOnOrganization { industry: OTHER }) }, RustMyQueryEverything { name: "Norbert", on: Dog(RustMyQueryEverythingOnDog { is_good_dog: true }) }]) }"##;
 
     assert_eq!(format!("{:?}", response_data), expected);
 
@@ -30,7 +30,7 @@ fn interface_deserialization() {
 }
 
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(
+#[gql(
     query_path = "tests/interfaces/interface_not_on_everything_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql"
 )]

@@ -37,7 +37,7 @@ mod tests;
 use heck::*;
 use proc_macro2::{Ident, Span};
 
-#[proc_macro_derive(GraphQLQuery, attributes(GraphQLQuery))]
+#[proc_macro_derive(GraphQLQuery, attributes(gql))]
 pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = TokenStream::from(input);
     let ast = syn::parse2(input).expect("Derive input is well formed");
@@ -138,9 +138,9 @@ fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failure::E
         .iter()
         .find(|attr| {
             let path = &attr.path;
-            quote!(#path).to_string() == "GraphQLQuery"
+            quote!(#path).to_string() == "gql"
         })
-        .ok_or_else(|| format_err!("The GraphQLQuery attribute is missing"))?;
+        .ok_or_else(|| format_err!("The gql attribute is missing"))?;
     if let syn::Meta::List(items) = &attribute
         .interpret_meta()
         .expect("Attribute is well formatted")

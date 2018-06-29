@@ -5,7 +5,7 @@ extern crate serde_derive;
 extern crate serde;
 
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(
+#[gql(
     query_path = "tests/introspection/introspection_query.graphql",
     schema_path = "tests/introspection/introspection_schema.graphql"
 )]

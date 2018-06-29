@@ -8,7 +8,7 @@ extern crate serde_json;
 const RESPONSE: &'static str = include_str!("unions/union_query_response.json");
 
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(
+#[gql(
     query_path = "tests/unions/union_query.graphql",
     schema_path = "tests/unions/union_schema.graphql"
 )]
@@ -21,7 +21,7 @@ fn union_query_deserialization() {
 
     println!("{:?}", response_data);
 
-    let expected = r##"ResponseData { names: Some([Person(RustMyQueryNamesOnPerson { firstName: "Audrey", lastName: Some("Lorde") }), Dog(RustMyQueryNamesOnDog { name: "Laïka" }), Organization(RustMyQueryNamesOnOrganization { title: "Mozilla" }), Dog(RustMyQueryNamesOnDog { name: "Norbert" })]) }"##;
+    let expected = r##"ResponseData { names: Some([Person(RustMyQueryNamesOnPerson { first_name: "Audrey", last_name: Some("Lorde") }), Dog(RustMyQueryNamesOnDog { name: "Laïka" }), Organization(RustMyQueryNamesOnOrganization { title: "Mozilla" }), Dog(RustMyQueryNamesOnDog { name: "Norbert" })]) }"##;
 
     assert_eq!(format!("{:?}", response_data), expected);
 

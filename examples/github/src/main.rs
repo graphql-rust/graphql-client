@@ -10,7 +10,7 @@ extern crate serde_derive;
 use graphql_client::*;
 
 #[derive(GraphQLQuery)]
-#[GraphQLQuery(schema_path = "src/schema.graphql", query_path = "src/query_1.graphql")]
+#[gql(schema_path = "src/schema.graphql", query_path = "src/query_1.graphql")]
 struct Query1;
 
 fn main() -> Result<(), failure::Error> {
