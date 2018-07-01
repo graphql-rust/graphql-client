@@ -13,3 +13,6 @@ serde = "1.0.67"
 serde_derive = "1.0.67"
 serde_json = "1.0.22"
 lazy_static = "1.0.1"
+
+[workspace]
+members = ["."]
