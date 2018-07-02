@@ -42,7 +42,6 @@ Integration with different HTTP libraries is planned, although building one your
 
 There is an embryonic CLI for downloading schemas - the plan is to make it something similar to `apollo-codegen`.
 
-
 ## What is generated?
 
 - A module named after the struct under derive, which contains:
@@ -61,14 +60,28 @@ See the examples directory in this project.
 Anyone who interacts with this project in any space, including but not limited to
 this GitHub repository, must follow our [code of conduct](https://github.com/tomhoule/graphql-client/blob/master/CODE_OF_CONDUCT.md).
 
+## Contributors
+
+Many thanks go to all our contributors:
+
+|                                            |              |
+| ------------------------------------------ | ------------ |
+| Alex Vlasov (@indifferentalex)             | 👀           |
+| Fausto Nuñez Alberro (@brainlessdeveloper) | 👀           |
+| Peter Gundel (@peterfication)              | 👀           |
+| Tom Houlé (@tomhoule)                      | 💻📖🐛💡🔧👀 |
+
+This project follows the [all-contributors](https://github.com/kentcdodds/all-contributors) specification.
+Contributions of any kind are welcome!
+
 ## License
 
 Licensed under either of these:
 
- * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
-   https://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or
-   https://opensource.org/licenses/MIT)
+- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
+  https://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or
+  https://opensource.org/licenses/MIT)
 
 ### Contributing
 
