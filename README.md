@@ -1,10 +1,8 @@
 # graphql_client
 
-![CI Status](https://img.shields.io/travis/tomhoule/graphql-client.svg)
-![docs](https://docs.rs/mio/badge.svg)
-![crates.io](https://img.shields.io/crates/d/graphql-client.svg)
-![license](https://img.shields.io/github/license/mashape/apistatus.svg)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+[![Build Status](https://travis-ci.org/tomhoule/graphql-client.svg?branch=master)](https://travis-ci.org/tomhoule/graphql-client)
+[![docs](https://docs.rs/graphql_client/badge.svg)](https://docs.rs/graphql_client/0.0.1/graphql_client/)
+[![crates.io](https://img.shields.io/crates/v/graphql_client.svg)](https://crates.io/crates/graphql_client)
 
 Derive Rust code to safely and ergonomically manipulate GraphQL queries.
 
