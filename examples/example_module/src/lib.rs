@@ -5,5 +5,7 @@ extern crate serde_derive;
 extern crate graphql_client;
 
 #[derive(GraphQLQuery)]
-#[gql(schema_path = "../github/src/schema.graphql", query_path = "../github/src/query_1.graphql")]
+#[graphql(
+    schema_path = "../github/src/schema.graphql", query_path = "../github/src/query_1.graphql"
+)]
 pub struct ExampleModule;

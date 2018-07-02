@@ -18,7 +18,7 @@ use graphql_client::*;
 use structopt::StructOpt;
 
 #[derive(GraphQLQuery)]
-#[gql(schema_path = "src/schema.graphql", query_path = "src/query_1.graphql")]
+#[graphql(schema_path = "src/schema.graphql", query_path = "src/query_1.graphql")]
 struct Query1;
 
 #[derive(StructOpt)]

@@ -12,7 +12,7 @@ This library does not provide any networking, caching or other client functional
 
 ```rust
 #[derive(GraphQLQuery)]
-#[gql(
+#[graphql(
     // The paths are relative to the directory where your `Cargo.toml` is located.
     query_path = "src/graphql/queries/my_query.graphql",
     schema_path = "src/graphql/schema.json"

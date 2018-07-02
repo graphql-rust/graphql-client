@@ -18,7 +18,7 @@ use wasm_bindgen::prelude::*;
 use graphql_client::*;
 
 #[derive(GraphQLQuery)]
-#[gql(schema_path = "schema.json", query_path = "src/puppy_smiles.graphql")]
+#[graphql(schema_path = "schema.json", query_path = "src/puppy_smiles.graphql")]
 struct PuppySmiles;
 
 #[wasm_bindgen]
