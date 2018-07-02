@@ -6,6 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use std::collections::HashMap;
 
+/// Represents an input object type from a GraphQL schema
 #[derive(Debug, PartialEq)]
 pub struct GqlInput {
     pub name: String,
