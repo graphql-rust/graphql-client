@@ -61,7 +61,7 @@ See the examples directory in this project.
 ## Code of conduct
 
 Anyone who interacts with this project in any space, including but not limited to
-this GitHub repository, must follow our [code of conduct](https://github.com/tomhoule/graphql-client/blob/master/CODE_OF CONDUCT.md).
+this GitHub repository, must follow our [code of conduct](https://github.com/tomhoule/graphql-client/blob/master/CODE_OF_CONDUCT.md).
 
 ## License
 
