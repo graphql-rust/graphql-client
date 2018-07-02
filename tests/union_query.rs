@@ -8,7 +8,7 @@ extern crate serde_json;
 const RESPONSE: &'static str = include_str!("unions/union_query_response.json");
 
 #[derive(GraphQLQuery)]
-#[gql(
+#[graphql(
     query_path = "tests/unions/union_query.graphql",
     schema_path = "tests/unions/union_schema.graphql"
 )]

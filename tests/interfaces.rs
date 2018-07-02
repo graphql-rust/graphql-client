@@ -8,7 +8,7 @@ extern crate serde_json;
 const RESPONSE: &'static str = include_str!("interfaces/interface_response.json");
 
 #[derive(GraphQLQuery)]
-#[gql(
+#[graphql(
     query_path = "tests/interfaces/interface_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql"
 )]
@@ -30,7 +30,7 @@ fn interface_deserialization() {
 }
 
 #[derive(GraphQLQuery)]
-#[gql(
+#[graphql(
     query_path = "tests/interfaces/interface_not_on_everything_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql"
 )]

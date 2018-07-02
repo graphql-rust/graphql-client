@@ -3,6 +3,9 @@ name = "call_from_js"
 version = "0.1.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 
+[profile.release]
+lto = "thin"
+
 [lib]
 crate-type = ["cdylib"]
 
