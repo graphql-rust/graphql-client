@@ -1,17 +1,21 @@
-query OctocatRepos {
-  repository(owner: "octocat", name: "Hello-World") {
-    issues(last: 20, states: CLOSED) {
-      edges {
-        node {
-          title
-          url
-          labels(first: 5) {
-            edges {
-              node {
-                name
-              }
-            }
-          }
+query RepoView($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    stargazers {
+      totalCount
+    }
+    issues(first: 20, states: OPEN) {
+      nodes {
+        title
+        comments {
+          totalCount
+        }
+      }
+    }
+    pullRequests(first: 20, states: OPEN) {
+      nodes {
+        title
+        commits {
+          totalCount
         }
       }
     }
