@@ -13,11 +13,14 @@ This library does not provide any networking, caching or other client functional
 ```rust
 #[derive(GraphQLQuery)]
 #[gql(
+    // The paths are relative to the directory where your `Cargo.toml` is located.
     query_path = "src/graphql/queries/my_query.graphql",
     schema_path = "src/graphql/schema.json"
 )]
 struct MyQuery;
+```
 
+```rust
 fn perform_my_query(variables: &my_query::Variables) -> Result<(), failure::Error> {
     let body = MyQuery::expand(variables);
     let client = reqwest::Client::new();
@@ -27,9 +30,7 @@ fn perform_my_query(variables: &my_query::Variables) -> Result<(), failure::Erro
 }
 ```
 
-The paths in the `gql` attribute are relative to the directory where your `Cargo.toml` is located.
-
-The GraphQL schema language and schema.json are both supported as sources for the schema.
+The GraphQL schema language (`.graphql`) and `schema.json` are both supported as sources for the schema.
 
 `serde_derive` needs to be visible in the context of the `GraphQLQuery` derive (add it as an `extern crate`).
 
@@ -56,3 +57,23 @@ See the [example generated module](https://www.tomhoule.com/docs/example_module/
 ## Examples
 
 See the examples directory in this project.
+
+## Code of conduct
+
+Anyone who interacts with this project in any space, including but not limited to
+this GitHub repository, must follow our [code of conduct](https://github.com/tomhoule/graphql-client/blob/master/CODE_OF CONDUCT.md).
+
+## License
+
+Licensed under either of these:
+
+ * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
+   https://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license ([LICENSE-MIT](LICENSE-MIT) or
+   https://opensource.org/licenses/MIT)
+
+### Contributing
+
+Unless you explicitly state otherwise, any contribution you intentionally submit
+for inclusion in the work, as defined in the Apache-2.0 license, shall be
+dual-licensed as above, without any additional terms or conditions.
