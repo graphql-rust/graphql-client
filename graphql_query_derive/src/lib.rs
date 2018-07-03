@@ -65,6 +65,11 @@ fn read_file(
     Ok(out)
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct FullResponse<T> {
+    data: T,
+}
+
 fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Error> {
     let cargo_manifest_dir =
         ::std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR env variable is defined");
@@ -92,8 +97,8 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
             schema::Schema::from(s)
         }
         "json" => {
-            let parsed: introspection_response::IntrospectionResponse = ::serde_json::from_str(&schema_string)?;
-            schema::Schema::from(parsed)
+            let parsed: FullResponse<introspection_response::IntrospectionResponse> = ::serde_json::from_str(&schema_string)?;
+            schema::Schema::from(parsed.data)
         }
         extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
     };

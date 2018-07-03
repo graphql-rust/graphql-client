@@ -85,7 +85,7 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
     }
 
     let json: graphql_client::GraphQLResponse<introspection_query::ResponseData> = res.json()?;
-    let json = serde_json::to_string(&json.data.expect("data field"))?;
+    let json = serde_json::to_string(&json)?;
 
     write!(out, "{}", json)?;
 
