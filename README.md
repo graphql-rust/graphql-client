@@ -45,12 +45,11 @@ A typed GraphQL client library for Rust.
 
   That module contains all the struct and enum definitions necessary to deserialize a response to that query.
 
-  The root type for the response is named `ResponseData`. The GraphQL response will take  the form of a `GraphQLResponse<ResponseData>` (the [GraphQLResponse](https://docs.rs/graphql_client/latest/graphql_client/struct.GraphQLResponse.html) type is always the same).
+  The root type for the response is named `ResponseData`. The GraphQL response will take the form of a `GraphQLResponse<ResponseData>` (the [GraphQLResponse](https://docs.rs/graphql_client/latest/graphql_client/struct.GraphQLResponse.html) type is always the same).
 
   The module also contains a struct called `Variables` representing the variables expected by the query.
 
-
-- We now need to create the complete payload that we are going to send to the server. For convenience, the [GraphQLQuery trait](https://docs.rs/graphql_client/latest/graphql_client/trait.GraphQLQuery.html), is implemented for the struct under derive, so a complete query body can be created this way:
+* We now need to create the complete payload that we are going to send to the server. For convenience, the [GraphQLQuery trait](https://docs.rs/graphql_client/latest/graphql_client/trait.GraphQLQuery.html), is implemented for the struct under derive, so a complete query body can be created this way:
 
   ```rust
   extern crate failure;
@@ -94,6 +93,7 @@ Many thanks go to all our contributors:
 | Alex Vlasov (@indifferentalex)             | 👀           |
 | Fausto Nuñez Alberro (@brainlessdeveloper) | 👀           |
 | Peter Gundel (@peterfication)              | 👀           |
+| Sooraj Chandran (@SoorajChandran)          | 🤔           |
 | Tom Houlé (@tomhoule)                      | 💻📖🐛💡🔧👀 |
 
 This project follows the [all-contributors](https://github.com/kentcdodds/all-contributors) specification.
