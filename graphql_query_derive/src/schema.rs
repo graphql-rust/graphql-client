@@ -14,6 +14,34 @@ use unions::GqlUnion;
 
 pub const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
+const SELECTION_SET_AT_ROOT: &str = r#"
+Operations in queries must be named.
+
+Instead of this:
+
+{
+  user {
+    name
+    repositories {
+      name
+      commits
+    }
+  }
+}
+
+Write this:
+
+query UserRepositories {
+  user {
+    name
+    repositories {
+      name
+      commits
+    }
+  }
+}
+"#;
+
 #[derive(Debug, PartialEq)]
 pub struct Schema {
     pub enums: BTreeMap<String, GqlEnum>,
@@ -120,7 +148,7 @@ impl Schema {
                     context.register_variables(&q.variable_definitions);
                 }
                 query::Definition::Operation(query::OperationDefinition::SelectionSet(_)) => {
-                    unimplemented!()
+                    panic!(SELECTION_SET_AT_ROOT)
                 }
                 query::Definition::Fragment(fragment) => {
                     let query::TypeCondition::On(on) = fragment.type_condition;
