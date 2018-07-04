@@ -1,17 +1,17 @@
 [package]
 name = "graphql_client"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Typed GraphQL requests and responses"
 repository = "https://github.com/tomhoule/graphql-client"
 license = "Apache-2.0 OR MIT"
-keywords = ["graphql", "gql", "api", "web", "webassembly", "wasm"]
+keywords = ["graphql",  "api", "web", "webassembly", "wasm"]
 categories = ["network-programming", "web-programming", "wasm"]
 
 [dependencies]
 failure = "0.1"
 quote = "0.3"
-graphql_query_derive = {path = "./graphql_query_derive", version = "0.0.1"}
+graphql_query_derive = {path = "./graphql_query_derive", version = "0.1.0"}
 graphql-parser = "0.2.0"
 serde = "1.0"
 serde_derive = "1.0"

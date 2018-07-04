@@ -10,7 +10,7 @@ lto = "thin"
 crate-type = ["cdylib"]
 
 [dependencies]
-graphql_client = { path = "../..", version = "0.0.1" }
+graphql_client = { path = "../..", version = "0.1.0" }
 wasm-bindgen = "0.2.11"
 serde = "1.0.67"
 serde_derive = "1.0.67"

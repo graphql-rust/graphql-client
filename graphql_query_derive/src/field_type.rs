@@ -55,6 +55,7 @@ impl FieldType {
         }
     }
 
+    /// Return the innermost name - we mostly use this for looking types up in our Schema struct.
     pub fn inner_name_string(&self) -> String {
         match &self {
             FieldType::Named(name) => name.to_string(),
