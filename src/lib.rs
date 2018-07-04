@@ -1,4 +1,5 @@
-///! The top-level documentation resides on the [project README](https://github.com/tomhoule/graphql-client) at the moment.
+//! The top-level documentation resides on the [project README](https://github.com/tomhoule/graphql-client) at the moment.
+
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
