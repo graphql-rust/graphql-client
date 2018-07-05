@@ -10,14 +10,16 @@ use unions::union_variants;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlInterface {
+    pub description: Option<String>,
     pub implemented_by: HashSet<String>,
     pub name: String,
     pub fields: Vec<GqlObjectField>,
 }
 
 impl GqlInterface {
-    pub fn new(name: Cow<str>) -> GqlInterface {
+    pub fn new(name: Cow<str>, description: Option<&str>) -> GqlInterface {
         GqlInterface {
+            description: description.map(|d| d.to_owned()),
             name: name.into_owned(),
             implemented_by: HashSet::new(),
             fields: vec![],

@@ -279,7 +279,10 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         schema.unions.insert(union.name, GqlUnion(tys));
                     }
                     schema::TypeDefinition::Interface(interface) => {
-                        let mut iface = GqlInterface::new(interface.name.clone().into());
+                        let mut iface = GqlInterface::new(
+                            interface.name.clone().into(),
+                            interface.description.as_ref().map(|d| d.as_str()),
+                        );
                         iface
                             .fields
                             .extend(interface.fields.iter().map(|f| GqlObjectField {
@@ -389,7 +392,10 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .insert(name.clone(), GqlObject::from_introspected_schema_json(ty));
                 }
                 Some(__TypeKind::INTERFACE) => {
-                    let mut iface = GqlInterface::new(name.clone().into());
+                    let mut iface = GqlInterface::new(
+                        name.clone().into(),
+                        ty.description.as_ref().map(|t| t.as_str()),
+                    );
                     iface.fields.extend(
                         ty.fields
                             .clone()
