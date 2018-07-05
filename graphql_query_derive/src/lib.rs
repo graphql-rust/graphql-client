@@ -25,6 +25,7 @@ mod interfaces;
 mod introspection_response;
 mod objects;
 mod query;
+mod scalars;
 mod schema;
 mod selection;
 mod shared;

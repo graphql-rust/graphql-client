@@ -24,7 +24,7 @@ impl FieldType {
             FieldType::Named(name) => {
                 let name_string = name.to_string();
 
-                let name = if context.schema.scalars.contains(&name_string)
+                let name = if context.schema.scalars.contains_key(&name_string)
                     || DEFAULT_SCALARS
                         .iter()
                         .any(|elem| elem == &name_string.as_str())

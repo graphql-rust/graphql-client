@@ -8,6 +8,7 @@ use interfaces::GqlInterface;
 use objects::{GqlObject, GqlObjectField};
 use proc_macro2::TokenStream;
 use query::QueryContext;
+use scalars::Scalar;
 use selection::Selection;
 use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
@@ -48,7 +49,7 @@ pub struct Schema {
     pub inputs: BTreeMap<String, GqlInput>,
     pub interfaces: BTreeMap<String, GqlInterface>,
     pub objects: BTreeMap<String, GqlObject>,
-    pub scalars: BTreeSet<String>,
+    pub scalars: BTreeMap<String, Scalar>,
     pub unions: BTreeMap<String, GqlUnion>,
     pub query_type: Option<String>,
     pub mutation_type: Option<String>,
@@ -62,7 +63,7 @@ impl Schema {
             inputs: BTreeMap::new(),
             interfaces: BTreeMap::new(),
             objects: BTreeMap::new(),
-            scalars: BTreeSet::new(),
+            scalars: BTreeMap::new(),
             unions: BTreeMap::new(),
             query_type: None,
             mutation_type: None,
@@ -179,13 +180,6 @@ impl Schema {
             .or_else(|| context._subscription_root.as_ref())
             .expect("no selection defined");
 
-        // TODO: do something smarter here
-        let scalar_definitions = context.schema.scalars.iter().map(|scalar_name| {
-            use proc_macro2::{Ident, Span};
-            let ident = Ident::new(scalar_name, Span::call_site());
-            quote!(type #ident = String;)
-        });
-
         let input_object_definitions: Result<Vec<TokenStream>, _> = context
             .schema
             .inputs
@@ -193,6 +187,13 @@ impl Schema {
             .map(|i| i.to_rust(&context))
             .collect();
         let input_object_definitions = input_object_definitions?;
+
+        let scalar_definitions: Vec<TokenStream> = context
+            .schema
+            .scalars
+            .values()
+            .map(|s| s.to_rust())
+            .collect();
 
         Ok(quote! {
             type Boolean = bool;
@@ -273,7 +274,13 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         );
                     }
                     schema::TypeDefinition::Scalar(scalar) => {
-                        schema.scalars.insert(scalar.name);
+                        schema.scalars.insert(
+                            scalar.name.clone(),
+                            Scalar {
+                                name: scalar.name,
+                                description: scalar.description,
+                            },
+                        );
                     }
                     schema::TypeDefinition::Union(union) => {
                         let variants: BTreeSet<String> = union.types.into_iter().collect();
@@ -369,7 +376,13 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .find(|s| s == &&name.as_str())
                         .is_none()
                     {
-                        schema.scalars.insert(name);
+                        schema.scalars.insert(
+                            name.clone(),
+                            Scalar {
+                                name,
+                                description: ty.description.as_ref().map(|d| d.clone()),
+                            },
+                        );
                     }
                 }
                 Some(__TypeKind::UNION) => {
