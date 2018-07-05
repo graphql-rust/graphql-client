@@ -283,6 +283,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         iface
                             .fields
                             .extend(interface.fields.iter().map(|f| GqlObjectField {
+                                description: f.description.as_ref().map(|s| s.to_owned()),
                                 name: f.name.clone(),
                                 type_: FieldType::from(f.field_type.clone()),
                             }));
@@ -396,6 +397,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                             .into_iter()
                             .filter_map(|f| f)
                             .map(|f| GqlObjectField {
+                                description: f.description,
                                 name: f.name.expect("field name"),
                                 type_: FieldType::from(f.type_.expect("field type")),
                             }),
@@ -431,21 +433,26 @@ mod tests {
         assert_eq!(
             built.objects.get("Droid"),
             Some(&GqlObject {
+                description: None,
                 name: "Droid".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: TYPENAME_FIELD.to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "id".to_string(),
                         type_: FieldType::Named(Ident::new("ID", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "name".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "friends".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Vector(Box::new(
                             FieldType::Optional(Box::new(FieldType::Named(Ident::new(
@@ -455,16 +462,19 @@ mod tests {
                         )))),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "friendsConnection".to_string(),
                         type_: FieldType::Named(Ident::new("FriendsConnection", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "appearsIn".to_string(),
                         type_: FieldType::Vector(Box::new(FieldType::Optional(Box::new(
                             FieldType::Named(Ident::new("Episode", Span::call_site())),
                         )))),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "primaryFunction".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
                             "String",

@@ -163,17 +163,21 @@ mod tests {
         context.schema.objects.insert(
             "User".to_string(),
             GqlObject {
+                description: None,
                 name: "User".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: "first_name".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "last_name".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
@@ -184,13 +188,16 @@ mod tests {
         context.schema.objects.insert(
             "Organization".to_string(),
             GqlObject {
+                description: None,
                 name: "Organization".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: "title".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
@@ -242,21 +249,26 @@ mod tests {
         context.schema.objects.insert(
             "User".to_string(),
             GqlObject {
+                description: None,
                 name: "User".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: "__typename".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "first_name".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "last_name".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
@@ -267,17 +279,21 @@ mod tests {
         context.schema.objects.insert(
             "Organization".to_string(),
             GqlObject {
+                description: None,
                 name: "Organization".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: "__typename".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "title".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },

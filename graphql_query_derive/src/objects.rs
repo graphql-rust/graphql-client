@@ -9,28 +9,33 @@ use std::borrow::Cow;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlObject {
-    pub name: String,
+    pub description: Option<String>,
     pub fields: Vec<GqlObjectField>,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub struct GqlObjectField {
+    pub description: Option<String>,
     pub name: String,
     pub type_: FieldType,
 }
 
 impl GqlObject {
-    pub fn new(name: Cow<str>) -> GqlObject {
+    pub fn new(name: Cow<str>, description: Option<&str>) -> GqlObject {
         GqlObject {
+            description: description.map(|s| s.to_owned()),
             name: name.into_owned(),
             fields: vec![typename_field()],
         }
     }
 
     pub fn from_graphql_parser_object(obj: ::graphql_parser::schema::ObjectType) -> Self {
-        let mut item = GqlObject::new(obj.name.into());
+        let description = obj.description.as_ref().map(|s| s.as_str());
+        let mut item = GqlObject::new(obj.name.into(), description);
         item.fields
             .extend(obj.fields.iter().map(|f| GqlObjectField {
+                description: None,
                 name: f.name.clone(),
                 type_: FieldType::from(f.field_type.clone()),
             }));
@@ -38,9 +43,14 @@ impl GqlObject {
     }
 
     pub fn from_introspected_schema_json(obj: &::introspection_response::FullType) -> Self {
-        let mut item = GqlObject::new(obj.name.clone().expect("missing object name").into());
+        let description = obj.description.as_ref().map(|s| s.as_str());
+        let mut item = GqlObject::new(
+            obj.name.clone().expect("missing object name").into(),
+            description,
+        );
         let fields = obj.fields.clone().unwrap().into_iter().filter_map(|t| {
             t.map(|t| GqlObjectField {
+                description: None,
                 name: t.name.expect("field name"),
                 type_: FieldType::from(t.type_.expect("field type")),
             })
