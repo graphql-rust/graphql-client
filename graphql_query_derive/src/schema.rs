@@ -267,6 +267,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                             enm.name.clone(),
                             GqlEnum {
                                 name: enm.name.clone(),
+                                description: enm.description,
                                 variants: enm.values.iter().map(|v| v.name.clone()).collect(),
                             },
                         );
@@ -349,9 +350,12 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .map(|t| t.clone().map(|t| t.name.expect("enum variant name")))
                         .filter_map(|t| t)
                         .collect();
-                    schema
-                        .enums
-                        .insert(name.clone(), GqlEnum { name, variants });
+                    let mut enm = GqlEnum {
+                        name: name.clone(),
+                        description: ty.description.clone(),
+                        variants,
+                    };
+                    schema.enums.insert(name, enm);
                 }
                 Some(__TypeKind::SCALAR) => {
                     if DEFAULT_SCALARS

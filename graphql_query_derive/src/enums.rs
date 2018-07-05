@@ -4,6 +4,7 @@ pub const ENUMS_PREFIX: &str = "";
 
 #[derive(Debug, PartialEq)]
 pub struct GqlEnum {
+    pub description: Option<String>,
     pub name: String,
     pub variants: Vec<String>,
 }
