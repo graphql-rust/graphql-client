@@ -9,6 +9,7 @@ use std::collections::HashMap;
 /// Represents an input object type from a GraphQL schema
 #[derive(Debug, PartialEq)]
 pub struct GqlInput {
+    pub description: Option<String>,
     pub name: String,
     pub fields: HashMap<String, GqlObjectField>,
 }
@@ -37,6 +38,7 @@ impl GqlInput {
 impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput {
     fn from(schema_input: graphql_parser::schema::InputObjectType) -> GqlInput {
         GqlInput {
+            description: schema_input.description,
             name: schema_input.name,
             fields: schema_input
                 .fields
@@ -58,6 +60,7 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
 impl ::std::convert::From<introspection_response::FullType> for GqlInput {
     fn from(schema_input: introspection_response::FullType) -> GqlInput {
         GqlInput {
+            description: schema_input.description,
             name: schema_input.name.expect("unnamed input object"),
             fields: schema_input
                 .input_fields
@@ -91,6 +94,7 @@ mod tests {
     #[test]
     fn gql_input_to_rust() {
         let cat = GqlInput {
+            description: None,
             name: "Cat".to_string(),
             fields: vec![
                 (
