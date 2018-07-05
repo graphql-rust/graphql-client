@@ -276,8 +276,14 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                         schema.scalars.insert(scalar.name);
                     }
                     schema::TypeDefinition::Union(union) => {
-                        let tys: BTreeSet<String> = union.types.into_iter().collect();
-                        schema.unions.insert(union.name, GqlUnion(tys));
+                        let variants: BTreeSet<String> = union.types.into_iter().collect();
+                        schema.unions.insert(
+                            union.name,
+                            GqlUnion {
+                                variants,
+                                description: union.description,
+                            },
+                        );
                     }
                     schema::TypeDefinition::Interface(interface) => {
                         let mut iface = GqlInterface::new(
@@ -374,7 +380,13 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .into_iter()
                         .filter_map(|t| t.and_then(|t| t.type_ref.name.clone()))
                         .collect();
-                    schema.unions.insert(name.clone(), GqlUnion(variants));
+                    schema.unions.insert(
+                        name.clone(),
+                        GqlUnion {
+                            description: ty.description.as_ref().map(|d| d.to_owned()),
+                            variants,
+                        },
+                    );
                 }
                 Some(__TypeKind::OBJECT) => {
                     for implementing in ty

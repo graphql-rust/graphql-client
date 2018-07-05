@@ -6,7 +6,10 @@ use selection::{Selection, SelectionItem};
 use std::collections::BTreeSet;
 
 #[derive(Debug, PartialEq)]
-pub struct GqlUnion(pub BTreeSet<String>);
+pub struct GqlUnion {
+    pub description: Option<String>,
+    pub variants: BTreeSet<String>,
+}
 
 #[derive(Debug, Fail)]
 #[fail(display = "UnionError")]
@@ -109,7 +112,7 @@ impl GqlUnion {
             union_variants(selection, query_context, prefix)?;
 
         variants.extend(
-            self.0
+            self.variants
                 .iter()
                 .filter(|v| used_variants.iter().find(|a| a == v).is_none())
                 .map(|v| {
@@ -158,7 +161,10 @@ mod tests {
         let mut context = QueryContext::new_empty();
         let selection = Selection(fields);
         let prefix = "Meow";
-        let union = GqlUnion(BTreeSet::new());
+        let union = GqlUnion {
+            description: None,
+            variants: BTreeSet::new(),
+        };
 
         context.schema.objects.insert(
             "User".to_string(),
@@ -240,7 +246,10 @@ mod tests {
         let mut context = QueryContext::new_empty();
         let selection = Selection(fields);
         let prefix = "Meow";
-        let union = GqlUnion(BTreeSet::new());
+        let union = GqlUnion {
+            description: None,
+            variants: BTreeSet::new(),
+        };
 
         let result = union.response_for_selection(&context, &selection, &prefix);
 
