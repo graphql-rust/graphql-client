@@ -37,8 +37,8 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     {
         assert_eq!(json_name, gql_name);
         assert_eq!(
-            HashSet::<&String>::from_iter(json_value.variants.iter()),
-            HashSet::<&String>::from_iter(gql_value.variants.iter()),
+            HashSet::<&String>::from_iter(json_value.variants.iter().map(|v| &v.name)),
+            HashSet::<&String>::from_iter(gql_value.variants.iter().map(|v| &v.name)),
         );
     }
 }

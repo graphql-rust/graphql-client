@@ -3,31 +3,46 @@ use proc_macro2::{Ident, Span, TokenStream};
 pub const ENUMS_PREFIX: &str = "";
 
 #[derive(Debug, PartialEq)]
+pub struct EnumVariant {
+    pub description: Option<String>,
+    pub name: String,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct GqlEnum {
     pub description: Option<String>,
     pub name: String,
-    pub variants: Vec<String>,
+    pub variants: Vec<EnumVariant>,
 }
 
 impl GqlEnum {
     pub fn to_rust(&self) -> TokenStream {
-        let variants: Vec<Ident> = self
+        let variant_names: Vec<TokenStream> = self
             .variants
             .iter()
-            .map(|v| Ident::new(v, Span::call_site()))
+            .map(|v| {
+                let name = Ident::new(&v.name, Span::call_site());
+                let description = &v.description;
+                let description = description.as_ref().map(|d| quote!(#[doc = #d]));
+                quote!(#description #name)
+            })
             .collect();
-        let variants = &variants;
+        let variant_names = &variant_names;
         let name_ident = Ident::new(&format!("{}{}", ENUMS_PREFIX, self.name), Span::call_site());
-        let constructors: Vec<_> = variants.iter().map(|v| quote!(#name_ident::#v)).collect();
+        let constructors: Vec<_> = variant_names
+            .iter()
+            .map(|v| quote!(#name_ident::#v))
+            .collect();
         let constructors = &constructors;
-        let variant_str = &self.variants;
+        let variant_str: Vec<String> = self.variants.iter().map(|v| v.name.clone()).collect();
+        let variant_str = &variant_str;
 
         let name = name_ident.clone();
 
         quote! {
             #[derive(Debug)]
             pub enum #name {
-                #(#variants,)*
+                #(#variant_names,)*
                 Other(String),
             }
 

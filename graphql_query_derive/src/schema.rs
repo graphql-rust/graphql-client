@@ -1,4 +1,4 @@
-use enums::GqlEnum;
+use enums::{EnumVariant, GqlEnum};
 use failure;
 use field_type::FieldType;
 use fragments::GqlFragment;
@@ -269,7 +269,14 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                             GqlEnum {
                                 name: enm.name.clone(),
                                 description: enm.description,
-                                variants: enm.values.iter().map(|v| v.name.clone()).collect(),
+                                variants: enm
+                                    .values
+                                    .iter()
+                                    .map(|v| EnumVariant {
+                                        description: v.description.clone(),
+                                        name: v.name.clone(),
+                                    })
+                                    .collect(),
                             },
                         );
                     }
@@ -355,12 +362,17 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
 
             match ty.kind {
                 Some(__TypeKind::ENUM) => {
-                    let variants: Vec<String> = ty
+                    let variants: Vec<EnumVariant> = ty
                         .enum_values
                         .clone()
                         .expect("enum variants")
                         .iter()
-                        .map(|t| t.clone().map(|t| t.name.expect("enum variant name")))
+                        .map(|t| {
+                            t.clone().map(|t| EnumVariant {
+                                description: t.description,
+                                name: t.name.expect("enum variant name"),
+                            })
+                        })
                         .filter_map(|t| t)
                         .collect();
                     let mut enm = GqlEnum {
