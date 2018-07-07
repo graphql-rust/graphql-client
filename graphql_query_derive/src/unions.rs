@@ -16,7 +16,10 @@ pub struct GqlUnion {
 enum UnionError {
     #[fail(display = "Unknown type: {}", ty)]
     UnknownType { ty: String },
-    #[fail(display = "Missing __typename in selection for {}", union_name)]
+    #[fail(
+        display = "Missing __typename in selection for {}",
+        union_name
+    )]
     MissingTypename { union_name: String },
 }
 
