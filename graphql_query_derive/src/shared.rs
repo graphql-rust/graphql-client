@@ -5,10 +5,16 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::*;
 
-pub(crate) fn render_object_field(field_name: &str, field_type: &TokenStream) -> TokenStream {
+pub(crate) fn render_object_field(
+    field_name: &str,
+    field_type: &TokenStream,
+    description: Option<&str>,
+) -> TokenStream {
+    let description = description.map(|s| quote!(#[doc = #s]));
     if field_name == "type" {
         let name_ident = Ident::new(&format!("{}_", field_name), Span::call_site());
         return quote! {
+            #description
             #[serde(rename = #field_name)]
             pub #name_ident: #field_type
         };
@@ -16,7 +22,7 @@ pub(crate) fn render_object_field(field_name: &str, field_type: &TokenStream) ->
 
     let name_ident = Ident::new(&field_name.to_snake_case(), Span::call_site());
 
-    quote!(pub #name_ident: #field_type)
+    quote!(#description pub #name_ident: #field_type)
 }
 
 pub(crate) fn field_impls_for_selection(
@@ -62,16 +68,19 @@ pub fn response_fields_for_selection(
             SelectionItem::Field(f) => {
                 let name = &f.name;
 
-                let ty = &schema_fields
+                let schema_field = &schema_fields
                     .iter()
                     .find(|field| field.name.as_str() == name.as_str())
-                    .ok_or_else(|| format_err!("Could not find field: {}", name.as_str()))?
-                    .type_;
-                let ty = ty.to_rust(
+                    .ok_or_else(|| format_err!("Could not find field: {}", name.as_str()))?;
+                let ty = schema_field.type_.to_rust(
                     context,
                     &format!("{}{}", prefix.to_camel_case(), name.to_camel_case()),
                 );
-                Ok(render_object_field(name, &ty))
+                Ok(render_object_field(
+                    name,
+                    &ty,
+                    schema_field.description.as_ref().map(|s| s.as_str()),
+                ))
             }
             SelectionItem::FragmentSpread(fragment) => {
                 let field_name =
