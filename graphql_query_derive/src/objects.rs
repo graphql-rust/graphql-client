@@ -35,7 +35,7 @@ impl GqlObject {
         let mut item = GqlObject::new(obj.name.into(), description);
         item.fields
             .extend(obj.fields.iter().map(|f| GqlObjectField {
-                description: None,
+                description: f.description.clone(),
                 name: f.name.clone(),
                 type_: FieldType::from(f.field_type.clone()),
             }));
@@ -50,7 +50,7 @@ impl GqlObject {
         );
         let fields = obj.fields.clone().unwrap().into_iter().filter_map(|t| {
             t.map(|t| GqlObjectField {
-                description: None,
+                description: t.description.clone(),
                 name: t.name.expect("field name"),
                 type_: FieldType::from(t.type_.expect("field type")),
             })
@@ -70,11 +70,13 @@ impl GqlObject {
         let name = Ident::new(prefix, Span::call_site());
         let fields = self.response_fields_for_selection(query_context, selection, prefix)?;
         let field_impls = self.field_impls_for_selection(query_context, selection, &prefix)?;
+        let description = self.description.as_ref().map(|desc| quote!(#[doc = #desc]));
         Ok(quote! {
             #(#field_impls)*
 
             #[derive(Debug, Serialize, Deserialize)]
             #[serde(rename_all = "camelCase")]
+            #description
             pub struct #name {
                 #(#fields,)*
             }

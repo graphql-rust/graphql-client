@@ -76,6 +76,7 @@ pub fn response_fields_for_selection(
                     context,
                     &format!("{}{}", prefix.to_camel_case(), name.to_camel_case()),
                 );
+
                 Ok(render_object_field(
                     name,
                     &ty,
