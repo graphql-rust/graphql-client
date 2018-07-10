@@ -17,6 +17,9 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
 
     assert_eq!(json.scalars, gql.scalars);
     for (json, gql) in json.objects.iter().zip(gql.objects.iter()) {
+        for (j, g) in json.1.fields.iter().zip(gql.1.fields.iter()) {
+            assert_eq!(j, g);
+        }
         assert_eq!(json, gql)
     }
     for (json, gql) in json.unions.iter().zip(gql.unions.iter()) {

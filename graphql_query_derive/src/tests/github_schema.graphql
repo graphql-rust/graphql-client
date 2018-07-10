@@ -319,10 +319,7 @@ type Blame {
 "Represents a range of information from a Git blame."
 type BlameRange {
   """
-  Identifies the recency of the change, from 1 (new) to 10 (old). This is
-  calculated as a 2-quantile and determines the length of distance between the
-  median age of all the changes in the file and the recency of the current
-  range's change.
+  Identifies the recency of the change, from 1 (new) to 10 (old). This is calculated as a 2-quantile and determines the length of distance between the median age of all the changes in the file and the recency of the current range's change.
   """
   age: Int!
 
@@ -1895,7 +1892,9 @@ type GpgSignature implements GitSignature {
   "GitHub user corresponding to the email signing this commit."
   signer: User
 
-  """The state of this signature. `VALID` if signature is valid and verified by GitHub, otherwise represents reason why signature is considered invalid."""
+  """
+  The state of this signature. `VALID` if signature is valid and verified by GitHub, otherwise represents reason why signature is considered invalid.
+  """
   state: GitSignatureState!
 
   "True if the signature was made with GitHub's signing key."

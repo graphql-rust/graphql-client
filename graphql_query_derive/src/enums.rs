@@ -17,7 +17,8 @@ pub struct GqlEnum {
 
 impl GqlEnum {
     pub fn to_rust(&self) -> TokenStream {
-        let variant_names: Vec<TokenStream> = self.variants
+        let variant_names: Vec<TokenStream> = self
+            .variants
             .iter()
             .map(|v| {
                 let name = Ident::new(&v.name, Span::call_site());
@@ -28,7 +29,8 @@ impl GqlEnum {
             .collect();
         let variant_names = &variant_names;
         let name_ident = Ident::new(&format!("{}{}", ENUMS_PREFIX, self.name), Span::call_site());
-        let constructors: Vec<_> = self.variants
+        let constructors: Vec<_> = self
+            .variants
             .iter()
             .map(|v| {
                 let v = Ident::new(&v.name, Span::call_site());
