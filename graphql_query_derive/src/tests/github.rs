@@ -14,11 +14,18 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     let graphql_parser_schema = graphql_parser::parse_schema(SCHEMA_GRAPHQL).unwrap();
     let json = Schema::from(json);
     let gql = Schema::from(graphql_parser_schema);
+
     assert_eq!(json.scalars, gql.scalars);
     for (json, gql) in json.objects.iter().zip(gql.objects.iter()) {
+        for (j, g) in json.1.fields.iter().zip(gql.1.fields.iter()) {
+            assert_eq!(j, g);
+        }
         assert_eq!(json, gql)
     }
     for (json, gql) in json.unions.iter().zip(gql.unions.iter()) {
+        assert_eq!(json, gql)
+    }
+    for (json, gql) in json.interfaces.iter().zip(gql.interfaces.iter()) {
         assert_eq!(json, gql)
     }
     assert_eq!(json.interfaces, gql.interfaces);
@@ -33,8 +40,8 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     {
         assert_eq!(json_name, gql_name);
         assert_eq!(
-            HashSet::<&String>::from_iter(json_value.variants.iter()),
-            HashSet::<&String>::from_iter(gql_value.variants.iter()),
+            HashSet::<&String>::from_iter(json_value.variants.iter().map(|v| &v.name)),
+            HashSet::<&String>::from_iter(gql_value.variants.iter().map(|v| &v.name)),
         );
     }
 }

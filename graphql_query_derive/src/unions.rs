@@ -6,14 +6,20 @@ use selection::{Selection, SelectionItem};
 use std::collections::BTreeSet;
 
 #[derive(Debug, PartialEq)]
-pub struct GqlUnion(pub BTreeSet<String>);
+pub struct GqlUnion {
+    pub description: Option<String>,
+    pub variants: BTreeSet<String>,
+}
 
 #[derive(Debug, Fail)]
 #[fail(display = "UnionError")]
 enum UnionError {
     #[fail(display = "Unknown type: {}", ty)]
     UnknownType { ty: String },
-    #[fail(display = "Missing __typename in selection for {}", union_name)]
+    #[fail(
+        display = "Missing __typename in selection for {}",
+        union_name
+    )]
     MissingTypename { union_name: String },
 }
 
@@ -109,7 +115,7 @@ impl GqlUnion {
             union_variants(selection, query_context, prefix)?;
 
         variants.extend(
-            self.0
+            self.variants
                 .iter()
                 .filter(|v| used_variants.iter().find(|a| a == v).is_none())
                 .map(|v| {
@@ -158,22 +164,29 @@ mod tests {
         let mut context = QueryContext::new_empty();
         let selection = Selection(fields);
         let prefix = "Meow";
-        let union = GqlUnion(BTreeSet::new());
+        let union = GqlUnion {
+            description: None,
+            variants: BTreeSet::new(),
+        };
 
         context.schema.objects.insert(
             "User".to_string(),
             GqlObject {
+                description: None,
                 name: "User".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: "first_name".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "last_name".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
@@ -184,13 +197,16 @@ mod tests {
         context.schema.objects.insert(
             "Organization".to_string(),
             GqlObject {
+                description: None,
                 name: "Organization".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: "title".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
@@ -233,7 +249,10 @@ mod tests {
         let mut context = QueryContext::new_empty();
         let selection = Selection(fields);
         let prefix = "Meow";
-        let union = GqlUnion(BTreeSet::new());
+        let union = GqlUnion {
+            description: None,
+            variants: BTreeSet::new(),
+        };
 
         let result = union.response_for_selection(&context, &selection, &prefix);
 
@@ -242,21 +261,26 @@ mod tests {
         context.schema.objects.insert(
             "User".to_string(),
             GqlObject {
+                description: None,
                 name: "User".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: "__typename".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "first_name".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "last_name".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
@@ -267,17 +291,21 @@ mod tests {
         context.schema.objects.insert(
             "Organization".to_string(),
             GqlObject {
+                description: None,
                 name: "Organization".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: "__typename".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "title".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },

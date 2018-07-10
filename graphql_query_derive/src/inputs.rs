@@ -9,6 +9,7 @@ use std::collections::HashMap;
 /// Represents an input object type from a GraphQL schema
 #[derive(Debug, PartialEq)]
 pub struct GqlInput {
+    pub description: Option<String>,
     pub name: String,
     pub fields: HashMap<String, GqlObjectField>,
 }
@@ -37,6 +38,7 @@ impl GqlInput {
 impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput {
     fn from(schema_input: graphql_parser::schema::InputObjectType) -> GqlInput {
         GqlInput {
+            description: schema_input.description,
             name: schema_input.name,
             fields: schema_input
                 .fields
@@ -44,6 +46,7 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
                 .map(|field| {
                     let name = field.name.clone();
                     let field = GqlObjectField {
+                        description: None,
                         name: field.name,
                         type_: field.value_type.into(),
                     };
@@ -57,6 +60,7 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
 impl ::std::convert::From<introspection_response::FullType> for GqlInput {
     fn from(schema_input: introspection_response::FullType) -> GqlInput {
         GqlInput {
+            description: schema_input.description,
             name: schema_input.name.expect("unnamed input object"),
             fields: schema_input
                 .input_fields
@@ -66,6 +70,7 @@ impl ::std::convert::From<introspection_response::FullType> for GqlInput {
                 .map(|f| {
                     let name = f.input_value.name.expect("unnamed input object field");
                     let field = GqlObjectField {
+                        description: None,
                         name: name.clone(),
                         type_: f
                             .input_value
@@ -89,11 +94,13 @@ mod tests {
     #[test]
     fn gql_input_to_rust() {
         let cat = GqlInput {
+            description: None,
             name: "Cat".to_string(),
             fields: vec![
                 (
                     "pawsCount".to_string(),
                     GqlObjectField {
+                        description: None,
                         name: "pawsCount".to_string(),
                         type_: FieldType::Named(float_type()),
                     },
@@ -101,6 +108,7 @@ mod tests {
                 (
                     "offsprings".to_string(),
                     GqlObjectField {
+                        description: None,
                         name: "offsprings".to_string(),
                         type_: FieldType::Vector(Box::new(FieldType::Named(Ident::new(
                             "Cat",
@@ -111,6 +119,7 @@ mod tests {
                 (
                     "requirements".to_string(),
                     GqlObjectField {
+                        description: None,
                         name: "requirements".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
                             "CatRequirements",

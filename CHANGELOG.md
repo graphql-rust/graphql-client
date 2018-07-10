@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- Copy documentation from the GraphQL schema to the generated types (including their fields) as normal Rust documentation. Documentation will show up in the generated docs as well as IDEs that support expanding derive macros (which does not include the RLS yet).
+
 ## [0.1.0] - 2018-07-04
 
 This is the initial public release in which the library is considered usable.

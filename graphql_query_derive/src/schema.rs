@@ -1,4 +1,4 @@
-use enums::GqlEnum;
+use enums::{EnumVariant, GqlEnum};
 use failure;
 use field_type::FieldType;
 use fragments::GqlFragment;
@@ -8,6 +8,7 @@ use interfaces::GqlInterface;
 use objects::{GqlObject, GqlObjectField};
 use proc_macro2::TokenStream;
 use query::QueryContext;
+use scalars::Scalar;
 use selection::Selection;
 use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
@@ -48,7 +49,7 @@ pub struct Schema {
     pub inputs: BTreeMap<String, GqlInput>,
     pub interfaces: BTreeMap<String, GqlInterface>,
     pub objects: BTreeMap<String, GqlObject>,
-    pub scalars: BTreeSet<String>,
+    pub scalars: BTreeMap<String, Scalar>,
     pub unions: BTreeMap<String, GqlUnion>,
     pub query_type: Option<String>,
     pub mutation_type: Option<String>,
@@ -62,7 +63,7 @@ impl Schema {
             inputs: BTreeMap::new(),
             interfaces: BTreeMap::new(),
             objects: BTreeMap::new(),
-            scalars: BTreeSet::new(),
+            scalars: BTreeMap::new(),
             unions: BTreeMap::new(),
             query_type: None,
             mutation_type: None,
@@ -179,13 +180,6 @@ impl Schema {
             .or_else(|| context._subscription_root.as_ref())
             .expect("no selection defined");
 
-        // TODO: do something smarter here
-        let scalar_definitions = context.schema.scalars.iter().map(|scalar_name| {
-            use proc_macro2::{Ident, Span};
-            let ident = Ident::new(scalar_name, Span::call_site());
-            quote!(type #ident = String;)
-        });
-
         let input_object_definitions: Result<Vec<TokenStream>, _> = context
             .schema
             .inputs
@@ -193,6 +187,13 @@ impl Schema {
             .map(|i| i.to_rust(&context))
             .collect();
         let input_object_definitions = input_object_definitions?;
+
+        let scalar_definitions: Vec<TokenStream> = context
+            .schema
+            .scalars
+            .values()
+            .map(|s| s.to_rust())
+            .collect();
 
         Ok(quote! {
             type Boolean = bool;
@@ -267,22 +268,46 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                             enm.name.clone(),
                             GqlEnum {
                                 name: enm.name.clone(),
-                                variants: enm.values.iter().map(|v| v.name.clone()).collect(),
+                                description: enm.description,
+                                variants: enm
+                                    .values
+                                    .iter()
+                                    .map(|v| EnumVariant {
+                                        description: v.description.clone(),
+                                        name: v.name.clone(),
+                                    })
+                                    .collect(),
                             },
                         );
                     }
                     schema::TypeDefinition::Scalar(scalar) => {
-                        schema.scalars.insert(scalar.name);
+                        schema.scalars.insert(
+                            scalar.name.clone(),
+                            Scalar {
+                                name: scalar.name,
+                                description: scalar.description,
+                            },
+                        );
                     }
                     schema::TypeDefinition::Union(union) => {
-                        let tys: BTreeSet<String> = union.types.into_iter().collect();
-                        schema.unions.insert(union.name, GqlUnion(tys));
+                        let variants: BTreeSet<String> = union.types.into_iter().collect();
+                        schema.unions.insert(
+                            union.name,
+                            GqlUnion {
+                                variants,
+                                description: union.description,
+                            },
+                        );
                     }
                     schema::TypeDefinition::Interface(interface) => {
-                        let mut iface = GqlInterface::new(interface.name.clone().into());
+                        let mut iface = GqlInterface::new(
+                            interface.name.clone().into(),
+                            interface.description.as_ref().map(|d| d.as_str()),
+                        );
                         iface
                             .fields
                             .extend(interface.fields.iter().map(|f| GqlObjectField {
+                                description: f.description.as_ref().map(|s| s.to_owned()),
                                 name: f.name.clone(),
                                 type_: FieldType::from(f.field_type.clone()),
                             }));
@@ -337,17 +362,25 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
 
             match ty.kind {
                 Some(__TypeKind::ENUM) => {
-                    let variants: Vec<String> = ty
+                    let variants: Vec<EnumVariant> = ty
                         .enum_values
                         .clone()
                         .expect("enum variants")
                         .iter()
-                        .map(|t| t.clone().map(|t| t.name.expect("enum variant name")))
+                        .map(|t| {
+                            t.clone().map(|t| EnumVariant {
+                                description: t.description,
+                                name: t.name.expect("enum variant name"),
+                            })
+                        })
                         .filter_map(|t| t)
                         .collect();
-                    schema
-                        .enums
-                        .insert(name.clone(), GqlEnum { name, variants });
+                    let mut enm = GqlEnum {
+                        name: name.clone(),
+                        description: ty.description.clone(),
+                        variants,
+                    };
+                    schema.enums.insert(name, enm);
                 }
                 Some(__TypeKind::SCALAR) => {
                     if DEFAULT_SCALARS
@@ -355,7 +388,13 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .find(|s| s == &&name.as_str())
                         .is_none()
                     {
-                        schema.scalars.insert(name);
+                        schema.scalars.insert(
+                            name.clone(),
+                            Scalar {
+                                name,
+                                description: ty.description.as_ref().map(|d| d.clone()),
+                            },
+                        );
                     }
                 }
                 Some(__TypeKind::UNION) => {
@@ -366,7 +405,13 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .into_iter()
                         .filter_map(|t| t.and_then(|t| t.type_ref.name.clone()))
                         .collect();
-                    schema.unions.insert(name.clone(), GqlUnion(variants));
+                    schema.unions.insert(
+                        name.clone(),
+                        GqlUnion {
+                            description: ty.description.as_ref().map(|d| d.to_owned()),
+                            variants,
+                        },
+                    );
                 }
                 Some(__TypeKind::OBJECT) => {
                     for implementing in ty
@@ -388,7 +433,10 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         .insert(name.clone(), GqlObject::from_introspected_schema_json(ty));
                 }
                 Some(__TypeKind::INTERFACE) => {
-                    let mut iface = GqlInterface::new(name.clone().into());
+                    let mut iface = GqlInterface::new(
+                        name.clone().into(),
+                        ty.description.as_ref().map(|t| t.as_str()),
+                    );
                     iface.fields.extend(
                         ty.fields
                             .clone()
@@ -396,6 +444,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                             .into_iter()
                             .filter_map(|f| f)
                             .map(|f| GqlObjectField {
+                                description: f.description,
                                 name: f.name.expect("field name"),
                                 type_: FieldType::from(f.type_.expect("field type")),
                             }),
@@ -431,21 +480,26 @@ mod tests {
         assert_eq!(
             built.objects.get("Droid"),
             Some(&GqlObject {
+                description: None,
                 name: "Droid".to_string(),
                 fields: vec![
                     GqlObjectField {
+                        description: None,
                         name: TYPENAME_FIELD.to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "id".to_string(),
                         type_: FieldType::Named(Ident::new("ID", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "name".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "friends".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Vector(Box::new(
                             FieldType::Optional(Box::new(FieldType::Named(Ident::new(
@@ -455,16 +509,19 @@ mod tests {
                         )))),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "friendsConnection".to_string(),
                         type_: FieldType::Named(Ident::new("FriendsConnection", Span::call_site())),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "appearsIn".to_string(),
                         type_: FieldType::Vector(Box::new(FieldType::Optional(Box::new(
                             FieldType::Named(Ident::new("Episode", Span::call_site())),
                         )))),
                     },
                     GqlObjectField {
+                        description: None,
                         name: "primaryFunction".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
                             "String",

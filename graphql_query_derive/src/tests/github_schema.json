@@ -10768,7 +10768,7 @@
           },
           {
             "name": "potentialMergeCommit",
-            "description": "The commit that GitHub automatically generated to test if this pull request could be merged. This field will not return a value if the pull request is merged, or if the test merge commit is still being generated. See the `mergeable` field for more details on the mergeability of the pull request.",
+            "description": "The commit that GitHub automatically generated to test if this pull request\ncould be merged. This field will not return a value if the pull request is\nmerged, or if the test merge commit is still being generated. See the\n`mergeable` field for more details on the mergeability of the pull request.\n",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -13698,7 +13698,7 @@
           },
           {
             "name": "tarballUrl",
-            "description": "Returns a URL to download a tarball archive for a repository.\nNote: For private repositories, these links are temporary and expire after five minutes.",
+            "description": "Returns a URL to download a tarball archive for a repository.\nNote: For private repositories, these links are temporary and expire after five minutes.\n",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -13806,7 +13806,7 @@
           },
           {
             "name": "zipballUrl",
-            "description": "Returns a URL to download a zipball archive for a repository.\nNote: For private repositories, these links are temporary and expire after five minutes.",
+            "description": "Returns a URL to download a zipball archive for a repository.\nNote: For private repositories, these links are temporary and expire after five minutes.\n",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -17702,7 +17702,7 @@
           },
           {
             "name": "isDraft",
-            "description": "Whether this listing is still an editable draft that has not been submitted for review and is not publicly visible in the Marketplace.",
+            "description": "Whether this listing is still an editable draft that has not been submitted\nfor review and is not publicly visible in the Marketplace.\n",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -18157,7 +18157,7 @@
           },
           {
             "name": "viewerHasPurchased",
-            "description": "Indicates whether the current user has an active subscription to this Marketplace listing.\n",
+            "description": "Indicates whether the current user has an active subscription to this Marketplace listing.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -18189,7 +18189,7 @@
           },
           {
             "name": "viewerIsListingAdmin",
-            "description": "Does the current viewer role allow them to administer this Marketplace listing.\n",
+            "description": "Does the current viewer role allow them to administer this Marketplace listing.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -23422,7 +23422,7 @@
         "fields": [
           {
             "name": "age",
-            "description": "Identifies the recency of the change, from 1 (new) to 10 (old). This is calculated as a 2-quantile and determines the length of distance between the median age of all the changes in the file and the recency of the current range's change.",
+            "description": "Identifies the recency of the change, from 1 (new) to 10 (old). This is calculated as a 2-quantile and determines the length of distance between the median age of all the changes in the file and the recency of the current range's change.\n",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -40393,7 +40393,7 @@
           },
           {
             "name": "state",
-            "description": "The state of this signature. `VALID` if signature is valid and verified by GitHub, otherwise represents reason why signature is considered invalid.",
+            "description": "The state of this signature. `VALID` if signature is valid and verified by GitHub, otherwise represents reason why signature is considered invalid.\n",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -40518,7 +40518,7 @@
           },
           {
             "name": "state",
-            "description": "The state of this signature. `VALID` if signature is valid and verified by GitHub, otherwise represents reason why signature is considered invalid.",
+            "description": "The state of this signature. `VALID` if signature is valid and verified by\nGitHub, otherwise represents reason why signature is considered invalid.\n",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -40817,7 +40817,7 @@
           },
           {
             "name": "state",
-            "description": "The state of this signature. `VALID` if signature is valid and verified by GitHub, otherwise represents reason why signature is considered invalid.",
+            "description": "The state of this signature. `VALID` if signature is valid and verified by GitHub, otherwise represents reason why signature is considered invalid.\n",
             "args": [],
             "type": {
               "kind": "NON_NULL",
