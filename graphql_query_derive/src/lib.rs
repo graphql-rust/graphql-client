@@ -13,6 +13,7 @@ extern crate serde_json;
 extern crate syn;
 #[macro_use]
 extern crate quote;
+extern crate graphql_config;
 
 use proc_macro2::TokenStream;
 
@@ -25,6 +26,7 @@ mod interfaces;
 mod introspection_response;
 mod objects;
 mod query;
+mod read_graphql_config;
 mod scalars;
 mod schema;
 mod selection;
@@ -71,12 +73,37 @@ pub(crate) struct FullResponse<T> {
     data: T,
 }
 
+fn find_schema_path(input: &syn::DeriveInput) -> Result<String, failure::Error> {
+    extract_attr(input, "schema_path")
+        .or_else(|_err| {
+            read_graphql_config::read_graphql_config()
+                .and_then(|config| {
+                    config
+                        .root
+                        .schema_path
+                        .ok_or_else(|| format_err!("Missing schemaPath in .graphqlconfig"))
+                })
+                .map(|path| path.to_string_lossy().into_owned())
+        })
+        .map_err(|_| {
+            format_err!(r#"
+                Could not find a schema for the {} query either from the attribute on the query or in a .graphqlconfig file at the project root.
+                "#,
+                input.ident
+            )
+        })
+}
+
 fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Error> {
     let cargo_manifest_dir =
         ::std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR env variable is defined");
 
+    let module_name = Ident::new(&input.ident.to_string().to_snake_case(), Span::call_site());
+    let struct_name = &input.ident;
+
     let query_path = extract_attr(input, "query_path")?;
-    let schema_path = extract_attr(input, "schema_path")?;
+
+    let schema_path = find_schema_path(&input)?;
 
     // We need to qualify the query with the path to the crate it is part of
     let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
@@ -104,8 +131,6 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
         extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
     };
 
-    let module_name = Ident::new(&input.ident.to_string().to_snake_case(), Span::call_site());
-    let struct_name = &input.ident;
     let schema_output = schema.response_for_query(query)?;
 
     let result = quote!(

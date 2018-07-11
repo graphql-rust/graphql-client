@@ -7,6 +7,6 @@ extern crate graphql_client;
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "../github/src/schema.graphql",
-    query_path = "../github/src/query_1.graphql"
+    query_path = "../github/src/query_one.graphql"
 )]
 pub struct ExampleModule;

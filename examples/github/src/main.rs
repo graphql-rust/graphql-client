@@ -21,11 +21,8 @@ use graphql_client::*;
 use structopt::StructOpt;
 
 #[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "src/schema.graphql",
-    query_path = "src/query_1.graphql"
-)]
-struct Query1;
+#[graphql(query_path = "src/query_one.graphql")]
+struct QueryOne;
 
 #[derive(StructOpt)]
 struct Command {
@@ -57,7 +54,7 @@ fn main() -> Result<(), failure::Error> {
     let repo = args.repo;
     let (owner, name) = parse_repo_name(&repo).unwrap_or(("tomhoule", "graphql-client"));
 
-    let q = Query1::build_query(query1::Variables {
+    let q = QueryOne::build_query(query_one::Variables {
         owner: owner.to_string(),
         name: name.to_string(),
     });
@@ -73,7 +70,7 @@ fn main() -> Result<(), failure::Error> {
         .json(&q)
         .send()?;
 
-    let response_body: GraphQLResponse<query1::ResponseData> = res.json()?;
+    let response_body: GraphQLResponse<query_one::ResponseData> = res.json()?;
     info!("{:?}", response_body);
 
     if let Some(errors) = response_body.errors {
@@ -84,7 +81,7 @@ fn main() -> Result<(), failure::Error> {
         }
     }
 
-    let response_data: query1::ResponseData = response_body.data.expect("missing response data");
+    let response_data: query_one::ResponseData = response_body.data.expect("missing response data");
 
     let stars: Option<i64> = response_data
         .repository
