@@ -78,7 +78,7 @@ impl Schema {
         for definition in query.definitions {
             match definition {
                 query::Definition::Operation(query::OperationDefinition::Query(q)) => {
-                    context.query_root = {
+                    context.root = {
                         let definition = context
                             .schema
                             .query_type
@@ -101,7 +101,7 @@ impl Schema {
                     context.register_variables(&q.variable_definitions);
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
-                    context.mutation_root = {
+                    context.root = {
                         let definition = context
                             .schema
                             .mutation_type
@@ -124,7 +124,7 @@ impl Schema {
                     context.register_variables(&q.variable_definitions);
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
-                    context._subscription_root = {
+                    context.root = {
                         let definition = context
                             .schema
                             .subscription_type
@@ -173,12 +173,7 @@ impl Schema {
             .collect();
         let fragment_definitions = fragment_definitions?;
         let variables_struct = context.expand_variables();
-        let response_data_fields = context
-            .query_root
-            .as_ref()
-            .or_else(|| context.mutation_root.as_ref())
-            .or_else(|| context._subscription_root.as_ref())
-            .expect("no selection defined");
+        let response_data_fields = context.root.as_ref().expect("no selection defined");
 
         let input_object_definitions: Result<Vec<TokenStream>, _> = context
             .schema
