@@ -137,6 +137,13 @@ impl Schema {
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
 
+                        if selection.0.len() > 0 {
+                            Err(format_err!(
+                                "{}",
+                                ::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
+                            ))?
+                        }
+
                         definitions.extend(
                             definition.field_impls_for_selection(&context, &selection, &prefix)?,
                         );
