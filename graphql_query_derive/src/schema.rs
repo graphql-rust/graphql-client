@@ -137,7 +137,7 @@ impl Schema {
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
 
-                        if selection.0.len() > 0 {
+                        if selection.0.len() > 1 {
                             Err(format_err!(
                                 "{}",
                                 ::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
@@ -216,6 +216,7 @@ impl Schema {
             #variables_struct
 
             #[derive(Debug, Serialize, Deserialize)]
+            #[serde(rename_all = "camelCase")]
             pub struct ResponseData {
                 #(#response_data_fields)*,
             }

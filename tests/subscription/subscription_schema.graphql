@@ -13,11 +13,12 @@ type SimpleMutation {
 }
 
 type SimpleSubscription {
-  newDogs: Dog
-  dogBirthdays(filter: String): DogBirthday
+  newDogs: [Dog]
+  dogBirthdays(filter: String): [DogBirthday!]
 }
 
 type DogBirthday {
+  name: String
   date: String
   age: Int
   treats: [String]
