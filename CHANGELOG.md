@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Copy documentation from the GraphQL schema to the generated types (including their fields) as normal Rust documentation. Documentation will show up in the generated docs as well as IDEs that support expanding derive macros (which does not include the RLS yet).
+- Implement and test deserializing subscription responses. We also try to provide helpful error messages when a subscription query is not valid (i.e. when it has more than one top-level field).
+
+### Fixed
+
+- The generated `ResponseData` structs did not convert between snake and camel case.
 
 ## [0.1.0] - 2018-07-04
 
