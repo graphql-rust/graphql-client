@@ -2,6 +2,8 @@
 //!
 //! The main interface to this library is the custom derive that generates modules from a GraphQL query and schema.
 
+#![deny(missing_docs)]
+
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -16,20 +18,27 @@ extern crate serde_json;
 pub use graphql_query_derive::*;
 
 /// A convenience trait that can be used to build a GraphQL request body.
+///
+/// This will be implemented for you by codegen in the normal case.
 pub trait GraphQLQuery<'de> {
+    /// The shape of the variables expected by the query. This should be a generated struct most of the time.
     type Variables: serde::Serialize;
+    /// The top-level shape of the response data (the `data` field in the GraphQL response). In practice this should be generated, since it is hard to write by hand without error.
     type ResponseData: serde::Deserialize<'de>;
 
     /// Produce a GraphQL query struct that can be JSON serialized and sent to a GraphQL API.
     fn build_query(variables: Self::Variables) -> GraphQLQueryBody<Self::Variables>;
 }
 
+/// The form in which queries are sent over HTTP in most implemnetations.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GraphQLQueryBody<Variables>
 where
     Variables: serde::Serialize,
 {
+    /// The values for the variables. They must match those declared in the queries. This should be the `Variables` struct from the generated module corresponding to the query.
     pub variables: Variables,
+    /// The GraphQL query, as a string.
     pub query: &'static str,
 }
 
@@ -44,7 +53,9 @@ pub struct Location {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum PathFragment {
+    /// A key inside an object
     Key(String),
+    /// An index inside an array
     Index(i32),
 }
 
@@ -70,7 +81,9 @@ pub struct GraphQLError {
 /// Spec: [https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GraphQLResponse<Data> {
+    /// The absent, partial or complete response data.
     pub data: Option<Data>,
+    /// The top-level errors returned by the server.
     pub errors: Option<Vec<GraphQLError>>,
 }
 
