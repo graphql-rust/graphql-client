@@ -1,6 +1,6 @@
 [package]
 name = "graphql_query_derive"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Utility crate for graphql_client"
 license = "Apache-2.0 OR MIT"
@@ -13,7 +13,7 @@ proc-macro = true
 failure = "0.1"
 quote = "^0.6"
 syn = "0.14"
-proc-macro2 = { version = "0.4" }
+proc-macro2 = { version = "0.4", features = [] }
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"

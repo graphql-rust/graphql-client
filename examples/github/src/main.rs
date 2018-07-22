@@ -4,6 +4,9 @@ extern crate envy;
 extern crate failure;
 #[macro_use]
 extern crate graphql_client;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
@@ -45,6 +48,7 @@ fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), failure::Error> {
 
 fn main() -> Result<(), failure::Error> {
     dotenv::dotenv().ok();
+    env_logger::init();
 
     let config: Env = envy::from_env()?;
 
@@ -70,6 +74,16 @@ fn main() -> Result<(), failure::Error> {
         .send()?;
 
     let response_body: GraphQLResponse<query1::ResponseData> = res.json()?;
+    info!("{:?}", response_body);
+
+    if let Some(errors) = response_body.errors {
+        println!("there are errors:");
+
+        for error in &errors {
+            println!("{:?}", error);
+        }
+    }
+
     let response_data: query1::ResponseData = response_body.data.expect("missing response data");
 
     let stars: Option<i64> = response_data
