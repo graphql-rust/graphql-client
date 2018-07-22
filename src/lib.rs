@@ -63,7 +63,7 @@ pub enum PathFragment {
 ///
 /// This tries to be as close to the spec as possible.
 ///
-/// Spec: [https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md]
+/// [Spec](https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md)
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct GraphQLError {
     /// The human-readable error message. This is the only required field.
@@ -78,7 +78,7 @@ pub struct GraphQLError {
 ///
 /// This will generally be used with the `ResponseData` struct from a derived module.
 ///
-/// Spec: [https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md]
+/// [Spec](https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md)
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GraphQLResponse<Data> {
     /// The absent, partial or complete response data.
