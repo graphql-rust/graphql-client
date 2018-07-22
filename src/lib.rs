@@ -33,12 +33,14 @@ where
     pub query: &'static str,
 }
 
+/// Represents a location inside a query string. Used in errors.
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Location {
     line: i32,
     column: i32,
 }
 
+/// Part of a path in a query. It can be an object key or an array index.
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum PathFragment {
@@ -53,8 +55,11 @@ pub enum PathFragment {
 /// Spec: [https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md]
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct GraphQLError {
+    /// The human-readable error message. This is the only required field.
     pub message: String,
+    /// Which locations in the query the error applies to.
     pub locations: Option<Vec<Location>>,
+    /// Which path in the query the error applies to, e.g. `["users", 0, "email"]`.
     pub path: Option<Vec<PathFragment>>,
 }
 
