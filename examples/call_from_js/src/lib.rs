@@ -1,4 +1,4 @@
-#![feature(proc_macro, wasm_custom_section, wasm_import_module)]
+#![feature(wasm_custom_section, wasm_import_module, use_extern_macros)]
 
 #[macro_use]
 extern crate graphql_client;
@@ -18,7 +18,10 @@ use wasm_bindgen::prelude::*;
 use graphql_client::*;
 
 #[derive(GraphQLQuery)]
-#[graphql(schema_path = "schema.json", query_path = "src/puppy_smiles.graphql")]
+#[graphql(
+    schema_path = "schema.json",
+    query_path = "src/puppy_smiles.graphql"
+)]
 struct PuppySmiles;
 
 #[wasm_bindgen]
