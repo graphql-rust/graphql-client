@@ -78,7 +78,7 @@ impl Schema {
         for definition in query.definitions {
             match definition {
                 query::Definition::Operation(query::OperationDefinition::Query(q)) => {
-                    context.query_root = {
+                    context.root = {
                         let definition = context
                             .schema
                             .query_type
@@ -101,7 +101,7 @@ impl Schema {
                     context.register_variables(&q.variable_definitions);
                 }
                 query::Definition::Operation(query::OperationDefinition::Mutation(q)) => {
-                    context.mutation_root = {
+                    context.root = {
                         let definition = context
                             .schema
                             .mutation_type
@@ -124,7 +124,7 @@ impl Schema {
                     context.register_variables(&q.variable_definitions);
                 }
                 query::Definition::Operation(query::OperationDefinition::Subscription(q)) => {
-                    context._subscription_root = {
+                    context.root = {
                         let definition = context
                             .schema
                             .subscription_type
@@ -136,6 +136,13 @@ impl Schema {
                         let prefix = &q.name.expect("unnamed operation");
                         let prefix = format!("RUST_{}", prefix);
                         let selection = Selection::from(&q.selection_set);
+
+                        if selection.0.len() > 1 {
+                            Err(format_err!(
+                                "{}",
+                                ::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
+                            ))?
+                        }
 
                         definitions.extend(
                             definition.field_impls_for_selection(&context, &selection, &prefix)?,
@@ -173,12 +180,7 @@ impl Schema {
             .collect();
         let fragment_definitions = fragment_definitions?;
         let variables_struct = context.expand_variables();
-        let response_data_fields = context
-            .query_root
-            .as_ref()
-            .or_else(|| context.mutation_root.as_ref())
-            .or_else(|| context._subscription_root.as_ref())
-            .expect("no selection defined");
+        let response_data_fields = context.root.as_ref().expect("no selection defined");
 
         let input_object_definitions: Result<Vec<TokenStream>, _> = context
             .schema
@@ -214,6 +216,7 @@ impl Schema {
             #variables_struct
 
             #[derive(Debug, Serialize, Deserialize)]
+            #[serde(rename_all = "camelCase")]
             pub struct ResponseData {
                 #(#response_data_fields)*,
             }

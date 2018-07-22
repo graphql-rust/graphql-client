@@ -1,0 +1,33 @@
+schema {
+  query: SimpleQuery
+  mutation: SimpleMutation
+  subscription: SimpleSubscription
+}
+
+type SimpleQuery {
+  dogByName(name: String): Dog
+}
+
+type SimpleMutation {
+  petDog(dogName: String): Dog
+}
+
+type SimpleSubscription {
+  newDogs: [Dog]
+  dogBirthdays(filter: String): [DogBirthday!]
+}
+
+type DogBirthday {
+  name: String
+  date: String
+  age: Int
+  treats: [String]
+}
+
+type Dog {
+  name: String!
+  """
+  Always returns true
+  """
+  isGoodDog: Boolean!
+}

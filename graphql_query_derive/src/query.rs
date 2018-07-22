@@ -9,10 +9,8 @@ use variables::Variable;
 
 /// This holds all the information we need during the code generation phase.
 pub struct QueryContext {
-    pub _subscription_root: Option<Vec<TokenStream>>,
+    pub root: Option<Vec<TokenStream>>,
     pub fragments: BTreeMap<String, GqlFragment>,
-    pub mutation_root: Option<Vec<TokenStream>>,
-    pub query_root: Option<Vec<TokenStream>>,
     pub schema: Schema,
     pub variables: Vec<Variable>,
 }
@@ -21,10 +19,8 @@ impl QueryContext {
     /// Create a QueryContext with the given Schema.
     pub fn new(schema: Schema) -> QueryContext {
         QueryContext {
-            _subscription_root: None,
+            root: None,
             fragments: BTreeMap::new(),
-            mutation_root: None,
-            query_root: None,
             schema,
             variables: Vec::new(),
         }
@@ -72,10 +68,8 @@ impl QueryContext {
     #[cfg(test)]
     pub fn new_empty() -> QueryContext {
         QueryContext {
-            _subscription_root: None,
             fragments: BTreeMap::new(),
-            mutation_root: None,
-            query_root: None,
+            root: None,
             schema: Schema::new(),
             variables: Vec::new(),
         }
