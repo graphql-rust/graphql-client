@@ -11,6 +11,7 @@ A typed GraphQL client library for Rust.
 - Precise types for query variables and responses
 - Supports GraphQL fragments, objects, unions, inputs, enums, custom scalars and input objects
 - Works in the browser (WebAssembly)
+- Subscriptions support (serialization-deserialization only at the moment)
 
 ## Getting started
 
