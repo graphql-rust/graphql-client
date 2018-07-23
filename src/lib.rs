@@ -10,12 +10,13 @@ extern crate serde_derive;
 #[macro_use]
 extern crate graphql_query_derive;
 
-#[cfg(test)]
 #[macro_use]
 extern crate serde_json;
 
 #[doc(hidden)]
 pub use graphql_query_derive::*;
+
+use std::collections::HashMap;
 
 /// A convenience trait that can be used to build a GraphQL request body.
 ///
@@ -72,6 +73,8 @@ pub struct GraphQLError {
     pub locations: Option<Vec<Location>>,
     /// Which path in the query the error applies to, e.g. `["users", 0, "email"]`.
     pub path: Option<Vec<PathFragment>>,
+    /// Additional errors. Their exact format is defined by the server.
+    pub extensions: Option<HashMap<String, serde_json::Value>>,
 }
 
 /// The generic shape taken by the responses of GraphQL APIs.
@@ -105,6 +108,7 @@ mod tests {
                 message: "I accidentally your whole query".to_string(),
                 locations: None,
                 path: None,
+                extensions: None,
             }
         )
     }
@@ -139,6 +143,51 @@ mod tests {
                     PathFragment::Index(3),
                     PathFragment::Key("rating".to_owned()),
                 ]),
+                extensions: None,
+            }
+        )
+    }
+
+    #[test]
+    fn full_graphql_error_with_extensions_deserialization() {
+        let err = json!({
+            "message": "I accidentally your whole query",
+            "locations": [{ "line": 3, "column": 13}, {"line": 56, "column": 1}],
+            "path": ["home", "alone", 3, "rating"],
+            "extensions": {
+                "code": "CAN_NOT_FETCH_BY_ID",
+                "timestamp": "Fri Feb 9 14:33:09 UTC 2018"
+            }
+        });
+
+        let deserialized_error: GraphQLError = serde_json::from_value(err).unwrap();
+
+        let mut expected_extensions = HashMap::new();
+        expected_extensions.insert("code".to_owned(), json!("CAN_NOT_FETCH_BY_ID"));
+        expected_extensions.insert("timestamp".to_owned(), json!("Fri Feb 9 14:33:09 UTC 2018"));
+        let expected_extensions = Some(expected_extensions);
+
+        assert_eq!(
+            deserialized_error,
+            GraphQLError {
+                message: "I accidentally your whole query".to_string(),
+                locations: Some(vec![
+                    Location {
+                        line: 3,
+                        column: 13,
+                    },
+                    Location {
+                        line: 56,
+                        column: 1,
+                    },
+                ]),
+                path: Some(vec![
+                    PathFragment::Key("home".to_owned()),
+                    PathFragment::Key("alone".to_owned()),
+                    PathFragment::Index(3),
+                    PathFragment::Key("rating".to_owned()),
+                ]),
+                extensions: expected_extensions,
             }
         )
     }

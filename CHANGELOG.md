@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- Implemented support for the `extensions` field on errors from the June 2018 spec (#64).
+
+
+### Changed
+
+- `serde_json` is now a dependency, because the `extensions` field on errors can be contain arbitrary JSON.
+
 ## [0.2.0] - 2018-07-22
 
 ### Added
