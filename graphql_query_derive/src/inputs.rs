@@ -1,5 +1,6 @@
 use failure;
 use graphql_parser;
+use heck::SnakeCase;
 use introspection_response;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -21,7 +22,7 @@ impl GqlInput {
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
             let ty = field.type_.to_rust(&context, "");
-            let name = Ident::new(&field.name, Span::call_site());
+            let name = Ident::new(&field.name.to_snake_case(), Span::call_site());
             quote!(pub #name: #ty)
         });
 
@@ -136,7 +137,7 @@ mod tests {
             "# [ serde ( rename_all = \"camelCase\" ) ] ",
             "pub struct Cat { ",
             "pub offsprings : Vec < Cat > , ",
-            "pub pawsCount : Float , ",
+            "pub paws_count : Float , ",
             "pub requirements : Option < CatRequirements > , ",
             "}",
         ].into_iter()

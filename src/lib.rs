@@ -1,6 +1,6 @@
 //! The top-level documentation resides on the [project README](https://github.com/tomhoule/graphql-client) at the moment.
 //!
-//! The main interface to this library is the custom derive that generates modules from a GraphQL query and schema.
+//! The main interface to this library is the custom derive that generates modules from a GraphQL query and schema. See the docs for the [`GraphQLQuery`] trait for a full example.
 
 #![deny(missing_docs)]
 
@@ -20,7 +20,52 @@ use std::collections::HashMap;
 
 /// A convenience trait that can be used to build a GraphQL request body.
 ///
-/// This will be implemented for you by codegen in the normal case.
+/// This will be implemented for you by codegen in the normal case. It is implemented on the struct you place the derive on.
+///
+/// Example:
+///
+///
+/// ```
+/// extern crate failure;
+/// #[macro_use]
+/// extern crate graphql_client;
+/// #[macro_use]
+/// extern crate serde_derive;
+/// #[macro_use]
+/// extern crate serde_json;
+/// extern crate serde;
+///
+/// #[derive(GraphQLQuery)]
+/// #[graphql(
+///   query_path = "graphql_query_derive/src/tests/star_wars_query.graphql",
+///   schema_path = "graphql_query_derive/src/tests/star_wars_schema.graphql"
+/// )]
+/// struct StarWarsQuery;
+///
+/// fn main() -> Result<(), failure::Error> {
+///     use graphql_client::GraphQLQuery;
+///
+///     let variables = star_wars_query::Variables {
+///         episode_for_hero: star_wars_query::Episode::NEWHOPE,
+///     };
+///
+///     let expected_body = json!({
+///         "query": star_wars_query::QUERY,
+///         "variables": {
+///             "episodeForHero": "NEWHOPE"
+///         },
+///     });
+///
+///     let actual_body = serde_json::to_value(
+///         StarWarsQuery::build_query(variables)
+///     )?;
+///
+///     assert_eq!(actual_body, expected_body);
+///
+///     Ok(())
+/// }
+/// ```
+/// ```
 pub trait GraphQLQuery<'de> {
     /// The shape of the variables expected by the query. This should be a generated struct most of the time.
     type Variables: serde::Serialize;
@@ -31,7 +76,7 @@ pub trait GraphQLQuery<'de> {
     fn build_query(variables: Self::Variables) -> GraphQLQueryBody<Self::Variables>;
 }
 
-/// The form in which queries are sent over HTTP in most implemnetations.
+/// The form in which queries are sent over HTTP in most implementations. This will be built using the [`GraphQLQuery`] trait normally.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GraphQLQueryBody<Variables>
 where

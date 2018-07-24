@@ -477,7 +477,7 @@ mod tests {
 
     #[test]
     fn build_schema_works() {
-        let gql_schema = include_str!("star_wars_schema.graphql");
+        let gql_schema = include_str!("tests/star_wars_schema.graphql");
         let gql_schema = graphql_parser::parse_schema(gql_schema).unwrap();
         let built = Schema::from(gql_schema);
         assert_eq!(

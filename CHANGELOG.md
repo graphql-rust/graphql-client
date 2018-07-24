@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Implemented support for the `extensions` field on errors from the June 2018 spec (#64).
 
+### Fixed
+
+- `Location` fields on errors were not public.
+- The field names on input objects were not properly converted between snake and camel case.
+
 
 ### Changed
 

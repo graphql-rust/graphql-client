@@ -1,6 +1,7 @@
 use failure;
 use fragments::GqlFragment;
 use graphql_parser;
+use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use schema::Schema;
 use selection::Selection;
@@ -43,7 +44,7 @@ impl QueryContext {
         let fields = self.variables.iter().map(|variable| {
             let name = &variable.name;
             let ty = variable.ty.to_rust(self, "");
-            let name = Ident::new(name, Span::call_site());
+            let name = Ident::new(&name.to_snake_case(), Span::call_site());
             quote!(pub #name: #ty)
         });
 
@@ -54,6 +55,7 @@ impl QueryContext {
 
         quote! {
             #[derive(Serialize)]
+            #[serde(rename_all = "camelCase")]
             pub struct Variables {
                 #(#fields,)*
             }
