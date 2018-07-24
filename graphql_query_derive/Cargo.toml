@@ -1,6 +1,6 @@
 [package]
 name = "graphql_query_derive"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Utility crate for graphql_client"
 license = "Apache-2.0 OR MIT"
