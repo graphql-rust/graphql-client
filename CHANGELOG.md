@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [0.3.0] - 2018-07-24
+
 ### Added
 
 - Implemented support for the `extensions` field on errors from the June 2018 spec (#64).
+- Improved documentation crate docs, added doctests and examples
 
+### Fixed
+
+- `Location` fields on errors were not public.
+- The field names on input objects were not properly converted between snake and camel case.
 
 ### Changed
 

@@ -1,6 +1,6 @@
 //! The top-level documentation resides on the [project README](https://github.com/tomhoule/graphql-client) at the moment.
 //!
-//! The main interface to this library is the custom derive that generates modules from a GraphQL query and schema.
+//! The main interface to this library is the custom derive that generates modules from a GraphQL query and schema. See the docs for the [`GraphQLQuery`] trait for a full example.
 
 #![deny(missing_docs)]
 
@@ -20,7 +20,52 @@ use std::collections::HashMap;
 
 /// A convenience trait that can be used to build a GraphQL request body.
 ///
-/// This will be implemented for you by codegen in the normal case.
+/// This will be implemented for you by codegen in the normal case. It is implemented on the struct you place the derive on.
+///
+/// Example:
+///
+///
+/// ```
+/// extern crate failure;
+/// #[macro_use]
+/// extern crate graphql_client;
+/// #[macro_use]
+/// extern crate serde_derive;
+/// #[macro_use]
+/// extern crate serde_json;
+/// extern crate serde;
+///
+/// #[derive(GraphQLQuery)]
+/// #[graphql(
+///   query_path = "graphql_query_derive/src/tests/star_wars_query.graphql",
+///   schema_path = "graphql_query_derive/src/tests/star_wars_schema.graphql"
+/// )]
+/// struct StarWarsQuery;
+///
+/// fn main() -> Result<(), failure::Error> {
+///     use graphql_client::GraphQLQuery;
+///
+///     let variables = star_wars_query::Variables {
+///         episode_for_hero: star_wars_query::Episode::NEWHOPE,
+///     };
+///
+///     let expected_body = json!({
+///         "query": star_wars_query::QUERY,
+///         "variables": {
+///             "episodeForHero": "NEWHOPE"
+///         },
+///     });
+///
+///     let actual_body = serde_json::to_value(
+///         StarWarsQuery::build_query(variables)
+///     )?;
+///
+///     assert_eq!(actual_body, expected_body);
+///
+///     Ok(())
+/// }
+/// ```
+/// ```
 pub trait GraphQLQuery<'de> {
     /// The shape of the variables expected by the query. This should be a generated struct most of the time.
     type Variables: serde::Serialize;
@@ -31,7 +76,7 @@ pub trait GraphQLQuery<'de> {
     fn build_query(variables: Self::Variables) -> GraphQLQueryBody<Self::Variables>;
 }
 
-/// The form in which queries are sent over HTTP in most implemnetations.
+/// The form in which queries are sent over HTTP in most implementations. This will be built using the [`GraphQLQuery`] trait normally.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GraphQLQueryBody<Variables>
 where
@@ -43,14 +88,16 @@ where
     pub query: &'static str,
 }
 
-/// Represents a location inside a query string. Used in errors.
+/// Represents a location inside a query string. Used in errors. See [`GraphQLError`].
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Location {
-    line: i32,
-    column: i32,
+    /// The line number in the query string where the error originated (starting from 1).
+    pub line: i32,
+    /// The column number in the query string where the error originated (starting from 1).
+    pub column: i32,
 }
 
-/// Part of a path in a query. It can be an object key or an array index.
+/// Part of a path in a query. It can be an object key or an array index. See [`GraphQLError`].
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum PathFragment {
@@ -65,6 +112,69 @@ pub enum PathFragment {
 /// This tries to be as close to the spec as possible.
 ///
 /// [Spec](https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md)
+///
+///
+/// ```
+/// # extern crate failure;
+/// # #[macro_use]
+/// # extern crate serde_json;
+/// # extern crate graphql_client;
+/// # #[macro_use]
+/// # extern crate serde_derive;
+/// #
+/// # #[derive(Debug, Deserialize, PartialEq)]
+/// # struct ResponseData {
+/// #     something: i32
+/// # }
+/// #
+/// # fn main() -> Result<(), failure::Error> {
+/// use graphql_client::*;
+///
+/// let body: GraphQLResponse<ResponseData> = serde_json::from_value(json!({
+///     "data": null,
+///     "errors": [
+///         {
+///             "message": "The server crashed. Sorry.",
+///             "locations": [{ "line": 1, "column": 1 }]
+///         },
+///         {
+///             "message": "Seismic activity detected",
+///             "path": ["undeground", 20]
+///         },
+///      ],
+/// }))?;
+///
+/// let expected: GraphQLResponse<ResponseData> = GraphQLResponse {
+///     data: None,
+///     errors: Some(vec![
+///         GraphQLError {
+///             message: "The server crashed. Sorry.".to_owned(),
+///             locations: Some(vec![
+///                 Location {
+///                     line: 1,
+///                     column: 1,
+///                 }
+///             ]),
+///             path: None,
+///             extensions: None,
+///         },
+///         GraphQLError {
+///             message: "Seismic activity detected".to_owned(),
+///             locations: None,
+///             path: Some(vec![
+///                 PathFragment::Key("undeground".into()),
+///                 PathFragment::Index(20),
+///             ]),
+///             extensions: None,
+///         },
+///     ]),
+/// };
+///
+/// assert_eq!(body, expected);
+///
+/// #     Ok(())
+/// # }
+/// ```
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct GraphQLError {
     /// The human-readable error message. This is the only required field.
@@ -82,7 +192,56 @@ pub struct GraphQLError {
 /// This will generally be used with the `ResponseData` struct from a derived module.
 ///
 /// [Spec](https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md)
-#[derive(Debug, Serialize, Deserialize)]
+///
+/// ```
+/// # extern crate failure;
+/// # #[macro_use]
+/// # extern crate serde_json;
+/// # extern crate graphql_client;
+/// # #[macro_use]
+/// # extern crate serde_derive;
+/// #
+/// # #[derive(Debug, Deserialize, PartialEq)]
+/// # struct User {
+/// #     id: i32,
+/// # }
+/// #
+/// # #[derive(Debug, Deserialize, PartialEq)]
+/// # struct Dog {
+/// #     name: String
+/// # }
+/// #
+/// # #[derive(Debug, Deserialize, PartialEq)]
+/// # struct ResponseData {
+/// #     users: Vec<User>,
+/// #     dogs: Vec<Dog>,
+/// # }
+/// #
+/// # fn main() -> Result<(), failure::Error> {
+/// use graphql_client::GraphQLResponse;
+///
+/// let body: GraphQLResponse<ResponseData> = serde_json::from_value(json!({
+///     "data": {
+///         "users": [{"id": 13}],
+///         "dogs": [{"name": "Strelka"}],
+///     },
+///     "errors": [],
+/// }))?;
+///
+/// let expected: GraphQLResponse<ResponseData> = GraphQLResponse {
+///     data: Some(ResponseData {
+///         users: vec![User { id: 13 }],
+///         dogs: vec![Dog { name: "Strelka".to_owned() }],
+///     }),
+///     errors: Some(vec![]),
+/// };
+///
+/// assert_eq!(body, expected);
+///
+/// #     Ok(())
+/// # }
+/// ```
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct GraphQLResponse<Data> {
     /// The absent, partial or complete response data.
     pub data: Option<Data>,
