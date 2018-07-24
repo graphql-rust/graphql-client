@@ -7,12 +7,19 @@
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+
+#[cfg(not(test))]
 #[macro_use]
 extern crate graphql_query_derive;
 
+#[cfg(not(test))]
+extern crate serde_json;
+
+#[cfg(test)]
 #[macro_use]
 extern crate serde_json;
 
+#[cfg(not(test))]
 #[doc(hidden)]
 pub use graphql_query_derive::*;
 
