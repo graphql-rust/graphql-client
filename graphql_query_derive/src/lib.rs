@@ -16,6 +16,7 @@ extern crate quote;
 
 use proc_macro2::TokenStream;
 
+mod codegen;
 mod constants;
 mod enums;
 mod field_type;
@@ -106,7 +107,7 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
 
     let module_name = Ident::new(&input.ident.to_string().to_snake_case(), Span::call_site());
     let struct_name = &input.ident;
-    let schema_output = schema.response_for_query(query)?;
+    let schema_output = codegen::response_for_query(schema, query)?;
 
     let result = quote!(
         pub mod #module_name {
