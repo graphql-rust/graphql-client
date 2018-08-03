@@ -4,7 +4,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use std::collections::BTreeMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Variable {
     pub name: String,
     pub ty: FieldType,
@@ -12,7 +12,7 @@ pub struct Variable {
 }
 
 impl Variable {
-    pub fn generate_default_value_constructor(&self, context: &QueryContext) -> TokenStream {
+    pub(crate) fn generate_default_value_constructor(&self, context: &QueryContext) -> TokenStream {
         match &self.default {
             Some(default) => {
                 let fn_name = Ident::new(&format!("default_{}", self.name), Span::call_site());
@@ -118,8 +118,7 @@ fn render_object_literal(
                 }
                 None => quote!(#field_name: None),
             }
-        })
-        .collect();
+        }).collect();
 
     quote!(#constructor {
         #(#fields,)*

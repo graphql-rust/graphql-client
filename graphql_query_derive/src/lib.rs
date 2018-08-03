@@ -25,6 +25,7 @@ mod inputs;
 mod interfaces;
 mod introspection_response;
 mod objects;
+mod operations;
 mod query;
 mod scalars;
 mod schema;
@@ -107,7 +108,7 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
 
     let module_name = Ident::new(&input.ident.to_string().to_snake_case(), Span::call_site());
     let struct_name = &input.ident;
-    let schema_output = codegen::response_for_query(schema, query)?;
+    let schema_output = codegen::response_for_query(schema, query, input.ident.to_string())?;
 
     let result = quote!(
         pub mod #module_name {
@@ -146,8 +147,7 @@ fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failure::E
         .find(|attr| {
             let path = &attr.path;
             quote!(#path).to_string() == "graphql"
-        })
-        .ok_or_else(|| format_err!("The graphql attribute is missing"))?;
+        }).ok_or_else(|| format_err!("The graphql attribute is missing"))?;
     if let syn::Meta::List(items) = &attribute
         .interpret_meta()
         .expect("Attribute is well formatted")

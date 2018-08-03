@@ -61,7 +61,7 @@ impl GqlObject {
         item
     }
 
-    pub fn response_for_selection(
+    pub(crate) fn response_for_selection(
         &self,
         query_context: &QueryContext,
         selection: &Selection,
@@ -83,7 +83,7 @@ impl GqlObject {
         })
     }
 
-    pub fn field_impls_for_selection(
+    pub(crate) fn field_impls_for_selection(
         &self,
         query_context: &QueryContext,
         selection: &Selection,
@@ -92,7 +92,7 @@ impl GqlObject {
         field_impls_for_selection(&self.fields, query_context, selection, prefix)
     }
 
-    pub fn response_fields_for_selection(
+    pub(crate) fn response_fields_for_selection(
         &self,
         query_context: &QueryContext,
         selection: &Selection,

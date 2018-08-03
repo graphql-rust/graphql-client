@@ -69,8 +69,7 @@ fn main() -> Result<(), failure::Error> {
         .header(reqwest::header::Authorization(format!(
             "bearer {}",
             config.github_api_token
-        )))
-        .json(&q)
+        ))).json(&q)
         .send()?;
 
     let response_body: GraphQLResponse<query1::ResponseData> = res.json()?;

@@ -14,7 +14,7 @@ pub enum FieldType {
 
 impl FieldType {
     /// Takes a field type with its name
-    pub fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
+    pub(crate) fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
         let prefix: String = if prefix.is_empty() {
             self.inner_name_string()
         } else {
@@ -24,10 +24,9 @@ impl FieldType {
             FieldType::Named(name) => {
                 let name_string = name.to_string();
 
-                let name = if context.schema.scalars.contains_key(&name_string)
-                    || DEFAULT_SCALARS
-                        .iter()
-                        .any(|elem| elem == &name_string.as_str())
+                let name = if context.schema.scalars.contains_key(&name_string) || DEFAULT_SCALARS
+                    .iter()
+                    .any(|elem| elem == &name_string.as_str())
                 {
                     name.clone()
                 } else if context.schema.enums.contains_key(&name_string) {

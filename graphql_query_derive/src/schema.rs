@@ -52,8 +52,7 @@ impl Schema {
                     .ok_or_else(|| format_err!("interface not found: {}", iface_name))?;
                 iface.implemented_by = implementors.into_iter().collect();
                 Ok(())
-            })
-            .collect()
+            }).collect()
     }
 }
 
@@ -93,8 +92,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                                     .map(|v| EnumVariant {
                                         description: v.description.clone(),
                                         name: v.name.clone(),
-                                    })
-                                    .collect(),
+                                    }).collect(),
                             },
                         );
                     }
@@ -190,8 +188,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                                 description: t.description,
                                 name: t.name.expect("enum variant name"),
                             })
-                        })
-                        .filter_map(|t| t)
+                        }).filter_map(|t| t)
                         .collect();
                     let mut enm = GqlEnum {
                         name: name.clone(),

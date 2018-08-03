@@ -2,82 +2,40 @@ use failure;
 use fragments::GqlFragment;
 use graphql_parser;
 use heck::SnakeCase;
+use operations::Operation;
 use proc_macro2::{Ident, Span, TokenStream};
 use schema::Schema;
 use selection::Selection;
 use std::collections::BTreeMap;
-use variables::Variable;
 
 /// This holds all the information we need during the code generation phase.
-pub struct QueryContext {
-    pub root: Option<Vec<TokenStream>>,
+pub(crate) struct QueryContext {
     pub fragments: BTreeMap<String, GqlFragment>,
     pub schema: Schema,
-    pub variables: Vec<Variable>,
+    pub selected_operation: Option<Operation>,
 }
 
 impl QueryContext {
     /// Create a QueryContext with the given Schema.
-    pub fn new(schema: Schema) -> QueryContext {
+    pub(crate) fn new(schema: Schema) -> QueryContext {
         QueryContext {
-            root: None,
             fragments: BTreeMap::new(),
             schema,
-            variables: Vec::new(),
-        }
-    }
-
-    /// Ingest the variable definitions for the query we are generating code for.
-    pub fn register_variables(&mut self, variables: &[graphql_parser::query::VariableDefinition]) {
-        variables.iter().for_each(|variable| {
-            self.variables.push(variable.clone().into());
-        });
-    }
-
-    /// Generate the Variables struct and all the necessary supporting code.
-    pub fn expand_variables(&self) -> TokenStream {
-        if self.variables.is_empty() {
-            return quote!(#[derive(Serialize)]
-            pub struct Variables;);
-        }
-
-        let fields = self.variables.iter().map(|variable| {
-            let name = &variable.name;
-            let ty = variable.ty.to_rust(self, "");
-            let name = Ident::new(&name.to_snake_case(), Span::call_site());
-            quote!(pub #name: #ty)
-        });
-
-        let default_constructors = self
-            .variables
-            .iter()
-            .map(|variable| variable.generate_default_value_constructor(self));
-
-        quote! {
-            #[derive(Serialize)]
-            #[serde(rename_all = "camelCase")]
-            pub struct Variables {
-                #(#fields,)*
-            }
-
-            impl Variables {
-                #(#default_constructors)*
-            }
+            selected_operation: None,
         }
     }
 
     /// For testing only. creates an empty QueryContext with an empty Schema.
     #[cfg(test)]
-    pub fn new_empty() -> QueryContext {
+    pub(crate) fn new_empty() -> QueryContext {
         QueryContext {
             fragments: BTreeMap::new(),
-            root: None,
             schema: Schema::new(),
-            variables: Vec::new(),
+            selected_operation: None,
         }
     }
 
-    pub fn maybe_expand_field(
+    pub(crate) fn maybe_expand_field(
         &self,
         ty: &str,
         selection: &Selection,
