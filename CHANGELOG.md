@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- Support for multi-operations documents. You can select a particular operation by naming the struct under derive after it.
+
 ## [0.3.0] - 2018-07-24
 
 ### Added
