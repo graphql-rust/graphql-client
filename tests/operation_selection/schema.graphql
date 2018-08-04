@@ -1,0 +1,9 @@
+schema {
+  query: QRoot
+}
+
+type QRoot {
+  mountainHeight(name: String!): Int
+  buildingHeight(id: Id!): Int
+  echo(msg: String!): String
+}

@@ -10,7 +10,7 @@ pub struct GqlFragment {
 }
 
 impl GqlFragment {
-    pub fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, ::failure::Error> {
+    pub(crate) fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, ::failure::Error> {
         let name_ident = Ident::new(&self.name, Span::call_site());
         let object = context.schema.objects.get(&self.on).expect("oh, noes");
         let field_impls = object.field_impls_for_selection(context, &self.selection, &self.name)?;

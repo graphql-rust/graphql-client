@@ -26,7 +26,7 @@ impl GqlInterface {
         }
     }
 
-    pub fn response_for_selection(
+    pub(crate) fn response_for_selection(
         &self,
         query_context: &QueryContext,
         selection: &Selection,

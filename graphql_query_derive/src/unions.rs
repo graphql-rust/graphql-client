@@ -23,7 +23,7 @@ enum UnionError {
     MissingTypename { union_name: String },
 }
 
-pub fn union_variants(
+pub(crate) fn union_variants(
     selection: &Selection,
     query_context: &QueryContext,
     prefix: &str,
@@ -95,7 +95,7 @@ pub fn union_variants(
 }
 
 impl GqlUnion {
-    pub fn response_for_selection(
+    pub(crate) fn response_for_selection(
         &self,
         query_context: &QueryContext,
         selection: &Selection,
@@ -332,7 +332,7 @@ mod tests {
                 "# [ serde ( tag = \"__typename\" ) ] ",
                 "pub enum Meow { User ( MeowOnUser ) , Organization ( MeowOnOrganization ) }",
             ].into_iter()
-                .collect::<String>(),
+            .collect::<String>(),
         );
     }
 }

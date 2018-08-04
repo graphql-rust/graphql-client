@@ -25,8 +25,7 @@ impl GqlEnum {
                 let description = &v.description;
                 let description = description.as_ref().map(|d| quote!(#[doc = #d]));
                 quote!(#description #name)
-            })
-            .collect();
+            }).collect();
         let variant_names = &variant_names;
         let name_ident = Ident::new(&format!("{}{}", ENUMS_PREFIX, self.name), Span::call_site());
         let constructors: Vec<_> = self
@@ -35,8 +34,7 @@ impl GqlEnum {
             .map(|v| {
                 let v = Ident::new(&v.name, Span::call_site());
                 quote!(#name_ident::#v)
-            })
-            .collect();
+            }).collect();
         let constructors = &constructors;
         let variant_str: Vec<&str> = self.variants.iter().map(|v| v.name.as_str()).collect();
         let variant_str = &variant_str;

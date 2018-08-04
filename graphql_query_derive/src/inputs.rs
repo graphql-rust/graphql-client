@@ -16,7 +16,7 @@ pub struct GqlInput {
 }
 
 impl GqlInput {
-    pub fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, failure::Error> {
+    pub(crate) fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(&self.name, Span::call_site());
         let mut fields: Vec<&GqlObjectField> = self.fields.values().collect();
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
@@ -52,8 +52,7 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
                         type_: field.value_type.into(),
                     };
                     (name, field)
-                })
-                .collect(),
+                }).collect(),
         }
     }
 }
@@ -80,8 +79,7 @@ impl ::std::convert::From<introspection_response::FullType> for GqlInput {
                             .into(),
                     };
                     (name, field)
-                })
-                .collect(),
+                }).collect(),
         }
     }
 }
@@ -129,7 +127,7 @@ mod tests {
                     },
                 ),
             ].into_iter()
-                .collect(),
+            .collect(),
         };
 
         let expected: String = vec![
@@ -141,7 +139,7 @@ mod tests {
             "pub requirements : Option < CatRequirements > , ",
             "}",
         ].into_iter()
-            .collect();
+        .collect();
 
         let mut context = QueryContext::new_empty();
         context.schema.inputs.insert(cat.name.clone(), cat);

@@ -115,8 +115,7 @@ mod tests {
                 } else {
                     None
                 }
-            })
-            .next()
+            }).next()
             .unwrap();
 
         let selection: Selection = selection_set.into();
