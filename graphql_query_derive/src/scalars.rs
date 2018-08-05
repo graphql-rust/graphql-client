@@ -15,6 +15,6 @@ impl Scalar {
             Some(d) => quote!(#[doc = #d]),
             None => quote!(),
         };
-        quote!(#description type #ident = String;)
+        quote!(#description type #ident = super::#ident;)
     }
 }
