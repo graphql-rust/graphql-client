@@ -1,5 +1,4 @@
 use constants::*;
-use graphql_parser;
 use graphql_parser::query::OperationDefinition;
 use heck::SnakeCase;
 use proc_macro2::{Span, TokenStream};

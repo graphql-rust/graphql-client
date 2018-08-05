@@ -1,9 +1,7 @@
 use failure;
 use fragments::GqlFragment;
-use graphql_parser;
-use heck::SnakeCase;
 use operations::Operation;
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::TokenStream;
 use schema::Schema;
 use selection::Selection;
 use std::collections::BTreeMap;

@@ -24,7 +24,6 @@ use std::collections::HashMap;
 ///
 /// Example:
 ///
-///
 /// ```
 /// extern crate failure;
 /// #[macro_use]
@@ -64,7 +63,6 @@ use std::collections::HashMap;
 ///
 ///     Ok(())
 /// }
-/// ```
 /// ```
 pub trait GraphQLQuery<'de> {
     /// The shape of the variables expected by the query. This should be a generated struct most of the time.
