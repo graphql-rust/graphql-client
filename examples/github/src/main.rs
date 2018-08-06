@@ -20,6 +20,15 @@ extern crate prettytable;
 use graphql_client::*;
 use structopt::StructOpt;
 
+type X509Certificate = String;
+type URI = String;
+type HTML = String;
+type GitTimestamp = String;
+type GitSSHRemote = String;
+type GitObjectID = String;
+type Date = String;
+type DateTime = String;
+
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "src/schema.graphql",

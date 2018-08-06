@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Support for multi-operations documents. You can select a particular operation by naming the struct under derive after it.
+- (breaking) Control over which types custom scalars deserialize to is given to the user: you now have to provide type aliases for the custom scalars in the scope of the struct under derive.
+- (breaking) Support for multi-operations documents. You can select a particular operation by naming the struct under derive after it. In case there is no match, we revert to the current behaviour: select the first operation.
 
 ## [0.3.0] - 2018-07-24
 

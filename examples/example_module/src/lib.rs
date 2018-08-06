@@ -4,6 +4,10 @@ extern crate serde_derive;
 #[macro_use]
 extern crate graphql_client;
 
+pub mod custom_scalars;
+
+use custom_scalars::*;
+
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "../github/src/schema.graphql",

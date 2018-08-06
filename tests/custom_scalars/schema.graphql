@@ -1,0 +1,12 @@
+schema {
+  query: QueryRoot
+}
+
+"""
+An IPv4 address
+"""
+scalar NetworkAddress
+
+type QueryRoot {
+  address: NetworkAddress
+}

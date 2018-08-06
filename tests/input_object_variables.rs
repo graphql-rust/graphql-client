@@ -27,6 +27,9 @@ fn input_object_variables_query_variables_struct() {
     };
 }
 
+// Custom scalars
+type Email = String;
+
 #[derive(GraphQLQuery)]
 #[graphql(
     query_path = "tests/input_object_variables/input_object_variables_query_defaults.graphql",
