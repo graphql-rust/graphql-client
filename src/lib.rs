@@ -65,7 +65,6 @@ use std::collections::HashMap;
 ///     Ok(())
 /// }
 /// ```
-/// ```
 pub trait GraphQLQuery<'de> {
     /// The shape of the variables expected by the query. This should be a generated struct most of the time.
     type Variables: serde::Serialize;

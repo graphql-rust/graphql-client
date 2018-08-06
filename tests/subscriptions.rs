@@ -21,6 +21,7 @@ const RESPONSE: &str = include_str!("subscription/subscription_query_response.js
     schema_path = "tests/subscription/subscription_schema.graphql",
     query_path = "tests/subscription/subscription_query.graphql",
 )]
+#[allow(dead_code)]
 struct SubscriptionQuery;
 
 #[test]
