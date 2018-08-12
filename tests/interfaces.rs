@@ -10,21 +10,47 @@ const RESPONSE: &'static str = include_str!("interfaces/interface_response.json"
 #[derive(GraphQLQuery)]
 #[graphql(
     query_path = "tests/interfaces/interface_query.graphql",
-    schema_path = "tests/interfaces/interface_schema.graphql"
+    schema_path = "tests/interfaces/interface_schema.graphql",
+    response_derives = "Debug, PartialEq",
 )]
 #[allow(dead_code)]
 struct InterfaceQuery;
 
 #[test]
 fn interface_deserialization() {
+    use interface_query::*;
+
     println!("{:?}", RESPONSE);
     let response_data: interface_query::ResponseData = serde_json::from_str(RESPONSE).unwrap();
 
     println!("{:?}", response_data);
 
-    let expected = r##"ResponseData { everything: Some([RustMyQueryEverything { name: "Audrey Lorde", on: Person(RustMyQueryEverythingOnPerson { birthday: Some("1934-02-18") }) }, RustMyQueryEverything { name: "Laïka", on: Dog(RustMyQueryEverythingOnDog { is_good_dog: true }) }, RustMyQueryEverything { name: "Mozilla", on: Organization(RustMyQueryEverythingOnOrganization { industry: OTHER }) }, RustMyQueryEverything { name: "Norbert", on: Dog(RustMyQueryEverythingOnDog { is_good_dog: true }) }]) }"##;
+    let expected = ResponseData {
+        everything: Some(vec![
+            RustMyQueryEverything {
+                name: "Audrey Lorde".to_string(),
+                on: RustMyQueryEverythingOn::Person(RustMyQueryEverythingOnPerson {
+                    birthday: Some("1934-02-18".to_string()),
+                }),
+            },
+            RustMyQueryEverything {
+                name: "Laïka".to_string(),
+                on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog { is_good_dog: true }),
+            },
+            RustMyQueryEverything {
+                name: "Mozilla".to_string(),
+                on: RustMyQueryEverythingOn::Organization(RustMyQueryEverythingOnOrganization {
+                    industry: Industry::OTHER,
+                }),
+            },
+            RustMyQueryEverything {
+                name: "Norbert".to_string(),
+                on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog { is_good_dog: true }),
+            },
+        ]),
+    };
 
-    assert_eq!(format!("{:?}", response_data), expected);
+    assert_eq!(response_data, expected);
 
     assert_eq!(response_data.everything.map(|names| names.len()), Some(4));
 }
@@ -32,7 +58,8 @@ fn interface_deserialization() {
 #[derive(GraphQLQuery)]
 #[graphql(
     query_path = "tests/interfaces/interface_not_on_everything_query.graphql",
-    schema_path = "tests/interfaces/interface_schema.graphql"
+    schema_path = "tests/interfaces/interface_schema.graphql",
+    response_derives = "Debug",
 )]
 #[allow(dead_code)]
 struct InterfaceNotOnEverythingQuery;

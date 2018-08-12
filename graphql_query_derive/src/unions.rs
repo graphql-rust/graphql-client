@@ -102,6 +102,7 @@ impl GqlUnion {
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         let struct_name = Ident::new(prefix, Span::call_site());
+        let derives = query_context.response_derives();
 
         let typename_field = selection.extract_typename();
 
@@ -127,7 +128,7 @@ impl GqlUnion {
         Ok(quote!{
             #(#children_definitions)*
 
-            #[derive(Debug, Serialize, Deserialize)]
+            #derives
             #[serde(tag = "__typename")]
             pub enum #struct_name {
                 #(#variants),*
@@ -322,13 +323,13 @@ mod tests {
         assert_eq!(
             result.unwrap().to_string(),
             vec![
-                "# [ derive ( Debug , Serialize , Deserialize ) ] ",
+                "# [ derive ( Deserialize ) ] ",
                 "# [ serde ( rename_all = \"camelCase\" ) ] ",
                 "pub struct MeowOnUser { pub first_name : String , } ",
-                "# [ derive ( Debug , Serialize , Deserialize ) ] ",
+                "# [ derive ( Deserialize ) ] ",
                 "# [ serde ( rename_all = \"camelCase\" ) ] ",
                 "pub struct MeowOnOrganization { pub title : String , } ",
-                "# [ derive ( Debug , Serialize , Deserialize ) ] ",
+                "# [ derive ( Deserialize ) ] ",
                 "# [ serde ( tag = \"__typename\" ) ] ",
                 "pub enum Meow { User ( MeowOnUser ) , Organization ( MeowOnOrganization ) }",
             ].into_iter()

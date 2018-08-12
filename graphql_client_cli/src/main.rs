@@ -15,7 +15,8 @@ use structopt::StructOpt;
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "src/introspection_schema.graphql",
-    query_path = "src/introspection_query.graphql"
+    query_path = "src/introspection_query.graphql",
+    response_derives = "Serialize",
 )]
 struct IntrospectionQuery;
 

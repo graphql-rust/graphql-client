@@ -20,6 +20,7 @@ const RESPONSE: &str = include_str!("subscription/subscription_query_response.js
 #[graphql(
     schema_path = "tests/subscription/subscription_schema.graphql",
     query_path = "tests/subscription/subscription_query.graphql",
+    response_derives = "Debug, PartialEq"
 )]
 #[allow(dead_code)]
 struct SubscriptionQuery;
@@ -28,9 +29,24 @@ struct SubscriptionQuery;
 fn subscriptions_work() {
     let response_data: subscription_query::ResponseData = serde_json::from_str(RESPONSE).unwrap();
 
-    let expected = r##"ResponseData { dog_birthdays: Some([RustBirthdaysDogBirthdays { name: Some("Maya") }, RustBirthdaysDogBirthdays { name: Some("Norbert") }, RustBirthdaysDogBirthdays { name: Some("Strelka") }, RustBirthdaysDogBirthdays { name: Some("Belka") }]) }"##;
+    let expected = subscription_query::ResponseData {
+        dog_birthdays: Some(vec![
+            subscription_query::RustBirthdaysDogBirthdays {
+                name: Some("Maya".to_string()),
+            },
+            subscription_query::RustBirthdaysDogBirthdays {
+                name: Some("Norbert".to_string()),
+            },
+            subscription_query::RustBirthdaysDogBirthdays {
+                name: Some("Strelka".to_string()),
+            },
+            subscription_query::RustBirthdaysDogBirthdays {
+                name: Some("Belka".to_string()),
+            },
+        ]),
+    };
 
-    assert_eq!(format!("{:?}", response_data), expected);
+    assert_eq!(response_data, expected);
 
     assert_eq!(
         response_data.dog_birthdays.map(|birthdays| birthdays.len()),
