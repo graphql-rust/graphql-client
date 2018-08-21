@@ -14,6 +14,8 @@ A typed GraphQL client library for Rust.
 - Subscriptions support (serialization-deserialization only at the moment)
 - Copies documentation from the GraphQL schema to the generated Rust code
 - Arbitrary derives on the generated responses
+- Arbitrary custom scalars
+- Supports multiple operations per query document
 
 ## Getting started
 
@@ -89,6 +91,16 @@ The generated response types always derive `serde::Deserialize` but you may want
 )]
 struct SearchQuery;
 ```
+
+## Custom scalars
+
+The generated code will reference the scalar types as defined in the server schema. This means you have to provide matching rust types in the scope of the struct under derive. It can be as simple as declarations like `type Email = String;`. This gives you complete freedom on how to treat custom scalars, as long as they can be deserialized.
+
+## Query documents with multiple operations
+
+You can write multiple operations in one query document (one `.graphql` file). You can then select one by naming the struct you `#[derive(GraphQLQuery)]` on with the same name as one of the operations. This is neat, as it allows sharing fragments between operations.
+
+There is an example [in the tests](./tests/operation_selection).
 
 ## Examples
 
