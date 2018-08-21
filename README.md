@@ -13,6 +13,7 @@ A typed GraphQL client library for Rust.
 - Works in the browser (WebAssembly)
 - Subscriptions support (serialization-deserialization only at the moment)
 - Copies documentation from the GraphQL schema to the generated Rust code
+- Arbitrary derives on the generated responses
 
 ## Getting started
 
@@ -73,6 +74,21 @@ A typed GraphQL client library for Rust.
   ```
 
 [A complete example using the GitHub GraphQL API is available](https://github.com/tomhoule/graphql-client/tree/master/examples/github), as well as sample [rustdoc output](https://www.tomhoule.com/docs/example_module/).
+
+## Deriving specific traits on the response
+
+The generated response types always derive `serde::Deserialize` but you may want to print them (`Debug`), compare them (`PartialEq`) or derive any other trait on it. You can achieve this with the `response_derives` option of the `graphql` attribute. Example:
+
+```rust
+#[derive(GraphQLQuery)]
+#[graphql(
+  schema_path = "src/search_schema.graphql",
+  query_path = "src/search_query.graphql"
+  query_path = "src/search_query.graphql",
+  response_derives = "Serialize,PartialEq",
+)]
+struct SearchQuery;
+```
 
 ## Examples
 
