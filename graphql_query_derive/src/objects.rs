@@ -67,6 +67,7 @@ impl GqlObject {
         selection: &Selection,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
+        let derives = query_context.response_derives();
         let name = Ident::new(prefix, Span::call_site());
         let fields = self.response_fields_for_selection(query_context, selection, prefix)?;
         let field_impls = self.field_impls_for_selection(query_context, selection, &prefix)?;
@@ -74,7 +75,7 @@ impl GqlObject {
         Ok(quote! {
             #(#field_impls)*
 
-            #[derive(Debug, Serialize, Deserialize)]
+            #derives
             #[serde(rename_all = "camelCase")]
             #description
             pub struct #name {

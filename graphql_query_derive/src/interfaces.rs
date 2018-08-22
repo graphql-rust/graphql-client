@@ -33,6 +33,7 @@ impl GqlInterface {
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(&prefix, Span::call_site());
+        let derives = query_context.response_derives();
 
         selection
             .extract_typename()
@@ -78,13 +79,13 @@ impl GqlInterface {
         let attached_enum_name = Ident::new(&format!("{}On", name), Span::call_site());
         let (attached_enum, last_object_field) = if !union_variants.is_empty() {
             let attached_enum = quote! {
-                #[derive(Deserialize, Debug, Serialize)]
+                #derives
                 #[serde(tag = "__typename")]
                 pub enum #attached_enum_name {
                     #(#union_variants,)*
                 }
             };
-            let last_object_field = quote!(#[serde(flatten)] on: #attached_enum_name,);
+            let last_object_field = quote!(#[serde(flatten)] pub on: #attached_enum_name,);
             (attached_enum, last_object_field)
         } else {
             (quote!(), quote!())
@@ -98,7 +99,7 @@ impl GqlInterface {
 
             #attached_enum
 
-            #[derive(Debug, Serialize, Deserialize)]
+            #derives
             pub struct #name {
                 #(#object_fields,)*
                 #last_object_field

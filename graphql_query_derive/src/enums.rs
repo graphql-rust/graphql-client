@@ -16,7 +16,8 @@ pub struct GqlEnum {
 }
 
 impl GqlEnum {
-    pub fn to_rust(&self) -> TokenStream {
+    pub(crate) fn to_rust(&self, query_context: &::query::QueryContext) -> TokenStream {
+        let derives = query_context.response_enum_derives();
         let variant_names: Vec<TokenStream> = self
             .variants
             .iter()
@@ -42,7 +43,7 @@ impl GqlEnum {
         let name = name_ident.clone();
 
         quote! {
-            #[derive(Debug)]
+            #derives
             pub enum #name {
                 #(#variant_names,)*
                 Other(String),

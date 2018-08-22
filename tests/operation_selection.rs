@@ -8,7 +8,8 @@ extern crate serde_json;
 #[derive(GraphQLQuery)]
 #[graphql(
     query_path = "tests/operation_selection/queries.graphql",
-    schema_path = "tests/operation_selection/schema.graphql"
+    schema_path = "tests/operation_selection/schema.graphql",
+    response_derives = "Debug",
 )]
 #[allow(dead_code)]
 struct Heights;
@@ -16,7 +17,8 @@ struct Heights;
 #[derive(GraphQLQuery)]
 #[graphql(
     query_path = "tests/operation_selection/queries.graphql",
-    schema_path = "tests/operation_selection/schema.graphql"
+    schema_path = "tests/operation_selection/schema.graphql",
+    response_derives = "Debug",
 )]
 #[allow(dead_code)]
 struct Echo;

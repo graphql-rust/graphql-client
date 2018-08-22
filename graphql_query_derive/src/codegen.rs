@@ -11,8 +11,14 @@ pub(crate) fn response_for_query(
     schema: schema::Schema,
     query: query::Document,
     selected_operation: String,
+    additional_derives: Option<String>,
 ) -> Result<TokenStream, failure::Error> {
     let mut context = QueryContext::new(schema);
+
+    if let Some(derives) = additional_derives {
+        context.ingest_additional_derives(&derives).unwrap();
+    }
+
     let mut definitions = Vec::new();
     let mut operations: Vec<Operation> = Vec::new();
 
@@ -77,7 +83,11 @@ pub(crate) fn response_for_query(
             .unwrap()
     };
 
-    let enum_definitions = context.schema.enums.values().map(|enm| enm.to_rust());
+    let enum_definitions = context
+        .schema
+        .enums
+        .values()
+        .map(|enm| enm.to_rust(&context));
     let fragment_definitions: Result<Vec<TokenStream>, _> = context
         .fragments
         .values()
@@ -101,6 +111,8 @@ pub(crate) fn response_for_query(
         .map(|s| s.to_rust())
         .collect();
 
+    let response_derives = context.response_derives();
+
     Ok(quote! {
         type Boolean = bool;
         type Float = f64;
@@ -119,7 +131,7 @@ pub(crate) fn response_for_query(
 
         #variables_struct
 
-        #[derive(Debug, Serialize, Deserialize)]
+        #response_derives
         #[serde(rename_all = "camelCase")]
         pub struct ResponseData {
             #(#response_data_fields,)*

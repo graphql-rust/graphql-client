@@ -32,7 +32,8 @@ type DateTime = String;
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "src/schema.graphql",
-    query_path = "src/query_1.graphql"
+    query_path = "src/query_1.graphql",
+    response_derives = "Debug",
 )]
 struct Query1;
 
