@@ -1,9 +1,9 @@
 schema {
-    query: Query
+  query: Query
 }
 
 type Query {
-  __Schema: __Schema
+  __schema: __Schema
 }
 
 type __Schema {
