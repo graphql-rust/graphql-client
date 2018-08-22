@@ -59,8 +59,7 @@ pub(crate) fn field_impls_for_selection(
             } else {
                 Ok(quote!())
             }
-        })
-        .collect()
+        }).collect()
 }
 
 pub(crate) fn response_fields_for_selection(
@@ -103,6 +102,5 @@ pub(crate) fn response_fields_for_selection(
             SelectionItem::InlineFragment(_) => {
                 Err(format_err!("inline fragment on object field"))?
             }
-        })
-        .collect()
+        }).collect()
 }
