@@ -132,7 +132,6 @@ pub(crate) fn response_for_query(
         #variables_struct
 
         #response_derives
-        #[serde(rename_all = "camelCase")]
         pub struct ResponseData {
             #(#response_data_fields,)*
         }

@@ -20,9 +20,17 @@ pub(crate) fn render_object_field(
         };
     }
 
-    let name_ident = Ident::new(&field_name.to_snake_case(), Span::call_site());
+    let snake_case_name = field_name.to_snake_case();
 
-    quote!(#description pub #name_ident: #field_type)
+    let rename = if snake_case_name != field_name {
+        quote!(#[serde(rename = #field_name)])
+    } else {
+        quote!()
+    };
+
+    let name_ident = Ident::new(&snake_case_name, Span::call_site());
+
+    quote!(#description #rename pub #name_ident: #field_type)
 }
 
 pub(crate) fn field_impls_for_selection(
@@ -51,7 +59,8 @@ pub(crate) fn field_impls_for_selection(
             } else {
                 Ok(quote!())
             }
-        }).collect()
+        })
+        .collect()
 }
 
 pub(crate) fn response_fields_for_selection(
@@ -94,5 +103,6 @@ pub(crate) fn response_fields_for_selection(
             SelectionItem::InlineFragment(_) => {
                 Err(format_err!("inline fragment on object field"))?
             }
-        }).collect()
+        })
+        .collect()
 }

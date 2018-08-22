@@ -50,8 +50,14 @@ impl Operation {
         let fields = variables.iter().map(|variable| {
             let name = &variable.name;
             let ty = variable.ty.to_rust(context, "");
-            let name = Ident::new(&name.to_snake_case(), Span::call_site());
-            quote!(pub #name: #ty)
+            let snake_case_name = name.to_snake_case();
+            let rename = if snake_case_name.as_str() != name.as_str() {
+                quote!(#[serde(rename = #name)])
+            } else {
+                quote!()
+            };
+            let name = Ident::new(&snake_case_name, Span::call_site());
+            quote!(#rename pub #name: #ty)
         });
 
         let default_constructors = variables
@@ -60,7 +66,6 @@ impl Operation {
 
         quote! {
             #[derive(Serialize)]
-            #[serde(rename_all = "camelCase")]
             pub struct Variables {
                 #(#fields,)*
             }

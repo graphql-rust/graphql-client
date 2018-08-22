@@ -22,13 +22,20 @@ impl GqlInput {
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
             let ty = field.type_.to_rust(&context, "");
-            let name = Ident::new(&field.name.to_snake_case(), Span::call_site());
-            quote!(pub #name: #ty)
+            let original_name = &field.name;
+            let snake_case_name = field.name.to_snake_case();
+            let rename = if snake_case_name.as_str() != original_name.as_str() {
+                quote!(#[serde(rename = #original_name)])
+            } else {
+                quote!()
+            };
+            let name = Ident::new(&snake_case_name, Span::call_site());
+
+            quote!(#rename pub #name: #ty)
         });
 
         Ok(quote! {
             #[derive(Debug, Serialize)]
-            #[serde(rename_all = "camelCase")]
             pub struct #name {
                 #(#fields,)*
             }
@@ -52,7 +59,8 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
                         type_: field.value_type.into(),
                     };
                     (name, field)
-                }).collect(),
+                })
+                .collect(),
         }
     }
 }
@@ -79,7 +87,8 @@ impl ::std::convert::From<introspection_response::FullType> for GqlInput {
                             .into(),
                     };
                     (name, field)
-                }).collect(),
+                })
+                .collect(),
         }
     }
 }
@@ -127,19 +136,19 @@ mod tests {
                     },
                 ),
             ].into_iter()
-            .collect(),
+                .collect(),
         };
 
         let expected: String = vec![
             "# [ derive ( Debug , Serialize ) ] ",
-            "# [ serde ( rename_all = \"camelCase\" ) ] ",
             "pub struct Cat { ",
             "pub offsprings : Vec < Cat > , ",
+            "# [ serde ( rename = \"pawsCount\" ) ] ",
             "pub paws_count : Float , ",
             "pub requirements : Option < CatRequirements > , ",
             "}",
         ].into_iter()
-        .collect();
+            .collect();
 
         let mut context = QueryContext::new_empty();
         context.schema.inputs.insert(cat.name.clone(), cat);
