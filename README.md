@@ -88,7 +88,6 @@ The generated response types always derive `serde::Deserialize` but you may want
 #[graphql(
   schema_path = "src/search_schema.graphql",
   query_path = "src/search_query.graphql"
-  query_path = "src/search_query.graphql",
   response_derives = "Serialize,PartialEq",
 )]
 struct SearchQuery;
