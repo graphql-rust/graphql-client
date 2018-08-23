@@ -1,6 +1,6 @@
 [package]
 name = "graphql_client"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Typed GraphQL requests and responses"
 repository = "https://github.com/tomhoule/graphql-client"
@@ -11,7 +11,7 @@ categories = ["network-programming", "web-programming", "wasm"]
 [dependencies]
 failure = "0.1"
 quote = "0.3"
-graphql_query_derive = {path = "./graphql_query_derive", version = "0.3.0"}
+graphql_query_derive = {path = "./graphql_query_derive", version = "0.4.0"}
 graphql-parser = "0.2.0"
 serde = "1.0"
 serde_derive = "1.0"
