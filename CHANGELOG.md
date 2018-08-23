@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-There are a number of breaking new features, read the `Added` section attentively if you are upgrading.
+## [0.4.0] - 2018-08-23
+
+There are a number of breaking changes due to the new features, read the `Added` section attentively if you are upgrading.
 
 ### Added
 
