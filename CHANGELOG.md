@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+There are a number of breaking new features, read the `Added` section attentively if you are upgrading.
+
 ### Added
 
 - (breaking) Control over which types custom scalars deserialize to is given to the user: you now have to provide type aliases for the custom scalars in the scope of the struct under derive.
 - (breaking) Support for multi-operations documents. You can select a particular operation by naming the struct under derive after it. In case there is no match, we revert to the current behaviour: select the first operation.
-- Support arbitrary derives on the generated response types via the `response_derives` option on the `graphql` attribute.
+- (breaking) Support arbitrary derives on the generated response types via the `response_derives` option on the `graphql` attribute. If you were relying on the `Debug` impl on generated structs before, you need to add `response_derives = "Debug"` in the `#[graphql()]` attributes in your structs.
+
+### Fixed
+
+- Fixed codegen of fields with leading underscores - they were ignored, leading to wrong derived types for deserialization.
+- Made the CLI dump introspected schemas directly without trying to validate them.
 
 ## [0.3.0] - 2018-07-24
 

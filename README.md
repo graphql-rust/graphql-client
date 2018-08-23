@@ -62,10 +62,12 @@ A typed GraphQL client library for Rust.
   extern crate graphql_client;
   extern crate reqwest;
 
+  use graphql_client::{GraphQLQuery, GraphQLResponse};
+
   fn perform_my_query(variables: &my_query::Variables) -> Result<(), failure::Error> {
 
       // this is the important line
-      let request_body = MyQuery::expand(variables);
+      let request_body = MyQuery::build_query(variables);
 
       let client = reqwest::Client::new();
       let mut res = client.post("/graphql").json(&request_body).send()?;

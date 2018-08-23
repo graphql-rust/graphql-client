@@ -150,7 +150,7 @@ mod tests {
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "User".to_string(),
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
-                    name: "first_name".to_string(),
+                    name: "firstName".to_string(),
                     fields: Selection(vec![]),
                 })]),
             }),
@@ -178,17 +178,17 @@ mod tests {
                 fields: vec![
                     GqlObjectField {
                         description: None,
-                        name: "first_name".to_string(),
+                        name: "firstName".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
                         description: None,
-                        name: "last_name".to_string(),
+                        name: "lastName".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
                     },
                     GqlObjectField {
                         description: None,
-                        name: "created_at".to_string(),
+                        name: "createdAt".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
                 ],
@@ -235,7 +235,7 @@ mod tests {
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "User".to_string(),
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
-                    name: "first_name".to_string(),
+                    name: "firstName".to_string(),
                     fields: Selection(vec![]),
                 })]),
             }),
@@ -272,17 +272,17 @@ mod tests {
                     },
                     GqlObjectField {
                         description: None,
-                        name: "first_name".to_string(),
+                        name: "firstName".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
                         description: None,
-                        name: "last_name".to_string(),
+                        name: "lastName".to_string(),
                         type_: FieldType::Named(string_type()),
                     },
                     GqlObjectField {
                         description: None,
-                        name: "created_at".to_string(),
+                        name: "createdAt".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
                 ],
@@ -307,7 +307,7 @@ mod tests {
                     },
                     GqlObjectField {
                         description: None,
-                        name: "created_at".to_string(),
+                        name: "createdAt".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
                     },
                 ],
@@ -324,16 +324,14 @@ mod tests {
             result.unwrap().to_string(),
             vec![
                 "# [ derive ( Deserialize ) ] ",
-                "# [ serde ( rename_all = \"camelCase\" ) ] ",
-                "pub struct MeowOnUser { pub first_name : String , } ",
+                "pub struct MeowOnUser { # [ serde ( rename = \"firstName\" ) ] pub first_name : String , } ",
                 "# [ derive ( Deserialize ) ] ",
-                "# [ serde ( rename_all = \"camelCase\" ) ] ",
                 "pub struct MeowOnOrganization { pub title : String , } ",
                 "# [ derive ( Deserialize ) ] ",
                 "# [ serde ( tag = \"__typename\" ) ] ",
                 "pub enum Meow { User ( MeowOnUser ) , Organization ( MeowOnOrganization ) }",
             ].into_iter()
-            .collect::<String>(),
+                .collect::<String>(),
         );
     }
 }

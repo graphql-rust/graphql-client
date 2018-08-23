@@ -16,7 +16,7 @@ use structopt::StructOpt;
 #[graphql(
     schema_path = "src/introspection_schema.graphql",
     query_path = "src/introspection_query.graphql",
-    response_derives = "Serialize",
+    response_derives = "Serialize"
 )]
 struct IntrospectionQuery;
 
@@ -86,10 +86,6 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
         println!("Something else happened. Status: {:?}", res.status());
     }
 
-    let json: graphql_client::GraphQLResponse<introspection_query::ResponseData> = res.json()?;
-    let json = serde_json::to_string(&json)?;
-
-    write!(out, "{}", json)?;
-
-    Ok(())
+    let json: serde_json::Value = res.json()?;
+    Ok(serde_json::to_writer_pretty(out, &json)?)
 }

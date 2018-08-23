@@ -22,13 +22,16 @@ impl GqlInput {
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
             let ty = field.type_.to_rust(&context, "");
-            let name = Ident::new(&field.name.to_snake_case(), Span::call_site());
-            quote!(pub #name: #ty)
+            let original_name = &field.name;
+            let snake_case_name = field.name.to_snake_case();
+            let rename = ::shared::field_rename_annotation(&original_name, &snake_case_name);
+            let name = Ident::new(&snake_case_name, Span::call_site());
+
+            quote!(#rename pub #name: #ty)
         });
 
         Ok(quote! {
             #[derive(Debug, Serialize)]
-            #[serde(rename_all = "camelCase")]
             pub struct #name {
                 #(#fields,)*
             }
@@ -132,9 +135,9 @@ mod tests {
 
         let expected: String = vec![
             "# [ derive ( Debug , Serialize ) ] ",
-            "# [ serde ( rename_all = \"camelCase\" ) ] ",
             "pub struct Cat { ",
             "pub offsprings : Vec < Cat > , ",
+            "# [ serde ( rename = \"pawsCount\" ) ] ",
             "pub paws_count : Float , ",
             "pub requirements : Option < CatRequirements > , ",
             "}",
