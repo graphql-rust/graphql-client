@@ -51,12 +51,9 @@ impl Operation {
             let name = &variable.name;
             let ty = variable.ty.to_rust(context, "");
             let snake_case_name = name.to_snake_case();
-            let rename = if snake_case_name.as_str() != name.as_str() {
-                quote!(#[serde(rename = #name)])
-            } else {
-                quote!()
-            };
+            let rename = ::shared::field_rename_annotation(&name, &snake_case_name);
             let name = Ident::new(&snake_case_name, Span::call_site());
+
             quote!(#rename pub #name: #ty)
         });
 

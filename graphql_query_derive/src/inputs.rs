@@ -24,11 +24,7 @@ impl GqlInput {
             let ty = field.type_.to_rust(&context, "");
             let original_name = &field.name;
             let snake_case_name = field.name.to_snake_case();
-            let rename = if snake_case_name.as_str() != original_name.as_str() {
-                quote!(#[serde(rename = #original_name)])
-            } else {
-                quote!()
-            };
+            let rename = ::shared::field_rename_annotation(&original_name, &snake_case_name);
             let name = Ident::new(&snake_case_name, Span::call_site());
 
             quote!(#rename pub #name: #ty)

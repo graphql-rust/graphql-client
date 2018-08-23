@@ -21,13 +21,7 @@ pub(crate) fn render_object_field(
     }
 
     let snake_case_name = field_name.to_snake_case();
-
-    let rename = if snake_case_name != field_name {
-        quote!(#[serde(rename = #field_name)])
-    } else {
-        quote!()
-    };
-
+    let rename = ::shared::field_rename_annotation(&field_name, &snake_case_name);
     let name_ident = Ident::new(&snake_case_name, Span::call_site());
 
     quote!(#description #rename pub #name_ident: #field_type)
@@ -103,4 +97,15 @@ pub(crate) fn response_fields_for_selection(
                 Err(format_err!("inline fragment on object field"))?
             }
         }).collect()
+}
+
+/// Given the GraphQL schema name for an object/interface/input object field and
+/// the equivalent rust name, produces a serde annotation to map them during
+/// (de)serialization if it is necessary, otherwise an empty TokenStream.
+pub(crate) fn field_rename_annotation(graphql_name: &str, rust_name: &str) -> TokenStream {
+    if graphql_name != rust_name {
+        quote!(#[serde(rename = #graphql_name)])
+    } else {
+        quote!()
+    }
 }
