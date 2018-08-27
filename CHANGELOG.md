@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+- Support for `@deprecated` field annotations. You can configure how
+  deprecations are handled via the `deprecated` argument in the `GraphQLQuery`
+  derive:
+
+  ```rust
+  #[derive(GraphQLQuery)]
+  #[graphql(
+      schema_path = "src/graphql/schema.json",
+      query_path = "src/graphql/queries/my_query.graphql",
+      deprecated = "warn"
+  )]
+  pub struct MyQuery;
+  ```
+
+  Valid values are:
+
+  - `allow`: the response struct fields are not marked as deprecated.
+  - `warn`: the response struct fields are marked as `#[deprecated]`.
+  - `deny`: The struct fields are not included in the response struct and
+    using them is a compile error.
+
+  The default is `warn`.
+
 ## [0.4.0] - 2018-08-23
 
 There are a number of breaking changes due to the new features, read the `Added` section attentively if you are upgrading.

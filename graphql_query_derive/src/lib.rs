@@ -19,6 +19,7 @@ use proc_macro2::TokenStream;
 mod attributes;
 mod codegen;
 mod constants;
+mod deprecation;
 mod enums;
 mod field_type;
 mod fragments;
@@ -82,6 +83,10 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
     let schema_path = attributes::extract_attr(input, "schema_path")?;
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
 
+    // The user can determine what to do about deprecations.
+    let deprecation_strategy = deprecation::extract_deprecation_strategy(input)
+        .unwrap_or(deprecation::DeprecationStrategy::Warn);
+
     // We need to qualify the query with the path to the crate it is part of
     let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
     let query_string = read_file(&query_path)?;
@@ -110,8 +115,13 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
 
     let module_name = Ident::new(&input.ident.to_string().to_snake_case(), Span::call_site());
     let struct_name = &input.ident;
-    let schema_output =
-        codegen::response_for_query(schema, query, input.ident.to_string(), response_derives)?;
+    let schema_output = codegen::response_for_query(
+        schema,
+        query,
+        input.ident.to_string(),
+        response_derives,
+        deprecation_strategy,
+    )?;
 
     let result = quote!(
         pub mod #module_name {

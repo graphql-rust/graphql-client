@@ -1,3 +1,4 @@
+use deprecation::DeprecationStatus;
 use failure;
 use graphql_parser;
 use heck::SnakeCase;
@@ -53,6 +54,7 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
                         description: None,
                         name: field.name,
                         type_: field.value_type.into(),
+                        deprecation: DeprecationStatus::Current,
                     };
                     (name, field)
                 }).collect(),
@@ -80,6 +82,7 @@ impl ::std::convert::From<introspection_response::FullType> for GqlInput {
                             .type_
                             .expect("type on input object field")
                             .into(),
+                        deprecation: DeprecationStatus::Current,
                     };
                     (name, field)
                 }).collect(),
@@ -105,6 +108,7 @@ mod tests {
                         description: None,
                         name: "pawsCount".to_string(),
                         type_: FieldType::Named(float_type()),
+                        deprecation: DeprecationStatus::Current,
                     },
                 ),
                 (
@@ -116,6 +120,7 @@ mod tests {
                             "Cat",
                             Span::call_site(),
                         )))),
+                        deprecation: DeprecationStatus::Current,
                     },
                 ),
                 (
@@ -127,6 +132,7 @@ mod tests {
                             "CatRequirements",
                             Span::call_site(),
                         )))),
+                        deprecation: DeprecationStatus::Current,
                     },
                 ),
             ].into_iter()

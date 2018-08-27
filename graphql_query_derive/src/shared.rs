@@ -1,3 +1,4 @@
+use deprecation::{DeprecationStatus, DeprecationStrategy};
 use failure;
 use heck::{CamelCase, SnakeCase};
 use objects::GqlObjectField;
@@ -9,12 +10,36 @@ pub(crate) fn render_object_field(
     field_name: &str,
     field_type: &TokenStream,
     description: Option<&str>,
+    status: &DeprecationStatus,
+    strategy: &DeprecationStrategy,
 ) -> TokenStream {
+    #[allow(unused_assignments)]
+    let mut deprecation = quote!();
+    match (status, strategy) {
+        // If the field is deprecated and we are denying usage, don't generate the
+        // field in rust at all and short-circuit.
+        (DeprecationStatus::Deprecated(_), DeprecationStrategy::Deny) => return quote!(),
+        // Everything is allowed so there is nothing to do.
+        (_, DeprecationStrategy::Allow) => deprecation = quote!(),
+        // Current so there is nothing to do.
+        (DeprecationStatus::Current, _) => deprecation = quote!(),
+        // A reason was provided, translate it to a note.
+        (DeprecationStatus::Deprecated(Some(reason)), DeprecationStrategy::Warn) => {
+            deprecation = quote!(#[deprecated(note = #reason)])
+        }
+        // No reason provided, just mark as deprecated.
+        (DeprecationStatus::Deprecated(None), DeprecationStrategy::Warn) => {
+            deprecation = quote!(#[deprecated])
+        }
+    };
+
     let description = description.map(|s| quote!(#[doc = #s]));
+
     if field_name == "type" {
         let name_ident = Ident::new(&format!("{}_", field_name), Span::call_site());
         return quote! {
             #description
+            #deprecation
             #[serde(rename = #field_name)]
             pub #name_ident: #field_type
         };
@@ -24,7 +49,7 @@ pub(crate) fn render_object_field(
     let rename = ::shared::field_rename_annotation(&field_name, &snake_case_name);
     let name_ident = Ident::new(&snake_case_name, Span::call_site());
 
-    quote!(#description #rename pub #name_ident: #field_type)
+    quote!(#description #deprecation #rename pub #name_ident: #field_type)
 }
 
 pub(crate) fn field_impls_for_selection(
@@ -82,6 +107,8 @@ pub(crate) fn response_fields_for_selection(
                     name,
                     &ty,
                     schema_field.description.as_ref().map(|s| s.as_str()),
+                    &schema_field.deprecation,
+                    &context.deprecation_strategy,
                 ))
             }
             SelectionItem::FragmentSpread(fragment) => {
@@ -96,6 +123,11 @@ pub(crate) fn response_fields_for_selection(
             SelectionItem::InlineFragment(_) => {
                 Err(format_err!("inline fragment on object field"))?
             }
+        }).filter(|x| match x {
+            // Remove empty fields so callers always know a field has some
+            // tokens.
+            Ok(f) => !f.is_empty(),
+            Err(_) => true,
         }).collect()
 }
 

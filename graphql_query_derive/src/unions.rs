@@ -66,7 +66,7 @@ pub(crate) fn union_variants(
                             query_context.maybe_expand_field(
                                 &frag.on,
                                 &frag.fields,
-                                &new_prefix
+                                &new_prefix,
                             )
                         });
                         // nested unions, is that even a thing?
@@ -140,6 +140,7 @@ impl GqlUnion {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use deprecation::DeprecationStatus;
     use field_type::FieldType;
     use objects::{GqlObject, GqlObjectField};
     use selection::*;
@@ -180,16 +181,20 @@ mod tests {
                         description: None,
                         name: "firstName".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "lastName".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
+
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "createdAt".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                 ],
             },
@@ -205,11 +210,13 @@ mod tests {
                         description: None,
                         name: "title".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "created_at".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                 ],
             },
@@ -269,21 +276,25 @@ mod tests {
                         description: None,
                         name: "__typename".to_string(),
                         type_: FieldType::Named(string_type()),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "firstName".to_string(),
                         type_: FieldType::Named(string_type()),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "lastName".to_string(),
                         type_: FieldType::Named(string_type()),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "createdAt".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                 ],
             },
@@ -299,16 +310,19 @@ mod tests {
                         description: None,
                         name: "__typename".to_string(),
                         type_: FieldType::Named(string_type()),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "title".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "createdAt".to_string(),
                         type_: FieldType::Named(Ident::new("Date", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                 ],
             },

@@ -16,6 +16,8 @@ A typed GraphQL client library for Rust.
 - Arbitrary derives on the generated responses
 - Arbitrary custom scalars
 - Supports multiple operations per query document
+- Supports setting GraphQL fields as deprecated and having the Rust compiler check
+  their use.
 
 ## Getting started
 
@@ -96,6 +98,30 @@ struct SearchQuery;
 ## Custom scalars
 
 The generated code will reference the scalar types as defined in the server schema. This means you have to provide matching rust types in the scope of the struct under derive. It can be as simple as declarations like `type Email = String;`. This gives you complete freedom on how to treat custom scalars, as long as they can be deserialized.
+
+## Deprecations
+
+The generated code has support for [`@deprecated`](http://facebook.github.io/graphql/June2018/#sec-Field-Deprecation)
+field annotations. You can configure how deprecations are handled via the `deprecated` argument in the `GraphQLQuery` derive:
+
+```rust
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/graphql/schema.json",
+    query_path = "src/graphql/queries/my_query.graphql",
+    deprecated = "warn"
+)]
+pub struct MyQuery;
+```
+
+Valid values are:
+
+- `allow`: the response struct fields are not marked as deprecated.
+- `warn`: the response struct fields are marked as `#[deprecated]`.
+- `deny`: The struct fields are not included in the response struct and
+  using them is a compile error.
+
+The default is `warn`.
 
 ## Query documents with multiple operations
 

@@ -1,0 +1,8 @@
+query Test {
+  currentUser {
+    name
+    id
+    deprecatedWithReason
+    deprecatedNoReason
+  }
+}
