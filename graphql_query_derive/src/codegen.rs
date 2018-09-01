@@ -1,3 +1,4 @@
+use deprecation;
 use failure;
 use fragments::GqlFragment;
 use graphql_parser::query;
@@ -12,8 +13,9 @@ pub(crate) fn response_for_query(
     query: query::Document,
     selected_operation: String,
     additional_derives: Option<String>,
+    deprecation_strategy: deprecation::DeprecationStrategy,
 ) -> Result<TokenStream, failure::Error> {
-    let mut context = QueryContext::new(schema);
+    let mut context = QueryContext::new(schema, deprecation_strategy);
 
     if let Some(derives) = additional_derives {
         context.ingest_additional_derives(&derives).unwrap();

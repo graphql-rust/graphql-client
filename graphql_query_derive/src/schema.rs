@@ -1,3 +1,4 @@
+use deprecation::DeprecationStatus;
 use enums::{EnumVariant, GqlEnum};
 use failure;
 use field_type::FieldType;
@@ -126,6 +127,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                                 description: f.description.as_ref().map(|s| s.to_owned()),
                                 name: f.name.clone(),
                                 type_: FieldType::from(f.field_type.clone()),
+                                deprecation: DeprecationStatus::Current,
                             }));
                         schema.interfaces.insert(interface.name, iface);
                     }
@@ -262,6 +264,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                                 description: f.description,
                                 name: f.name.expect("field name"),
                                 type_: FieldType::from(f.type_.expect("field type")),
+                                deprecation: DeprecationStatus::Current,
                             }),
                     );
                     schema.interfaces.insert(name, iface);
@@ -302,16 +305,19 @@ mod tests {
                         description: None,
                         name: TYPENAME_FIELD.to_string(),
                         type_: FieldType::Named(string_type()),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "id".to_string(),
                         type_: FieldType::Named(Ident::new("ID", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "name".to_string(),
                         type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
@@ -322,11 +328,13 @@ mod tests {
                                 Span::call_site(),
                             )))),
                         )))),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "friendsConnection".to_string(),
                         type_: FieldType::Named(Ident::new("FriendsConnection", Span::call_site())),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
@@ -334,6 +342,7 @@ mod tests {
                         type_: FieldType::Vector(Box::new(FieldType::Optional(Box::new(
                             FieldType::Named(Ident::new("Episode", Span::call_site())),
                         )))),
+                        deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
@@ -342,6 +351,7 @@ mod tests {
                             "String",
                             Span::call_site(),
                         )))),
+                        deprecation: DeprecationStatus::Current,
                     },
                 ],
             })

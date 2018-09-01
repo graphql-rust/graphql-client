@@ -1,3 +1,4 @@
+use deprecation::DeprecationStrategy;
 use failure;
 use fragments::GqlFragment;
 use operations::Operation;
@@ -13,16 +14,18 @@ pub(crate) struct QueryContext {
     pub fragments: BTreeMap<String, GqlFragment>,
     pub schema: Schema,
     pub selected_operation: Option<Operation>,
+    pub deprecation_strategy: DeprecationStrategy,
     response_derives: Vec<Ident>,
 }
 
 impl QueryContext {
     /// Create a QueryContext with the given Schema.
-    pub(crate) fn new(schema: Schema) -> QueryContext {
+    pub(crate) fn new(schema: Schema, deprecation_strategy: DeprecationStrategy) -> QueryContext {
         QueryContext {
             fragments: BTreeMap::new(),
             schema,
             selected_operation: None,
+            deprecation_strategy,
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
         }
     }
@@ -34,6 +37,7 @@ impl QueryContext {
             fragments: BTreeMap::new(),
             schema: Schema::new(),
             selected_operation: None,
+            deprecation_strategy: DeprecationStrategy::Allow,
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
         }
     }

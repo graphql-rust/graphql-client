@@ -1,3 +1,4 @@
+use deprecation::DeprecationStatus;
 use field_type::FieldType;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span};
@@ -20,6 +21,7 @@ pub(crate) fn typename_field() -> GqlObjectField {
         /// Non-nullable, see spec:
         /// https://github.com/facebook/graphql/blob/master/spec/Section%204%20--%20Introspection.md
         type_: FieldType::Named(string_type()),
+        deprecation: DeprecationStatus::Current,
     }
 }
 

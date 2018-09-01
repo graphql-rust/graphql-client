@@ -1,6 +1,8 @@
 use constants::*;
+use deprecation::DeprecationStatus;
 use failure;
 use field_type::FieldType;
+use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::*;
@@ -19,6 +21,37 @@ pub struct GqlObjectField {
     pub description: Option<String>,
     pub name: String,
     pub type_: FieldType,
+    pub deprecation: DeprecationStatus,
+}
+
+fn parse_deprecation_info(field: &schema::Field) -> DeprecationStatus {
+    let deprecated = field
+        .directives
+        .iter()
+        .filter(|x| x.name.to_lowercase() == "deprecated")
+        .nth(0);
+    let reason = if let Some(d) = deprecated {
+        if let Some((_, value)) = d
+            .arguments
+            .iter()
+            .filter(|x| x.0.to_lowercase() == "reason")
+            .nth(0)
+        {
+            match value {
+                schema::Value::String(reason) => Some(reason.clone()),
+                schema::Value::Null => None,
+                _ => panic!("deprecation reason is not a string"),
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    match deprecated {
+        Some(_) => DeprecationStatus::Deprecated(reason),
+        None => DeprecationStatus::Current,
+    }
 }
 
 impl GqlObject {
@@ -30,15 +63,18 @@ impl GqlObject {
         }
     }
 
-    pub fn from_graphql_parser_object(obj: ::graphql_parser::schema::ObjectType) -> Self {
+    pub fn from_graphql_parser_object(obj: schema::ObjectType) -> Self {
         let description = obj.description.as_ref().map(|s| s.as_str());
         let mut item = GqlObject::new(obj.name.into(), description);
-        item.fields
-            .extend(obj.fields.iter().map(|f| GqlObjectField {
+        item.fields.extend(obj.fields.iter().map(|f| {
+            let deprecation = parse_deprecation_info(&f);
+            GqlObjectField {
                 description: f.description.clone(),
                 name: f.name.clone(),
                 type_: FieldType::from(f.field_type.clone()),
-            }));
+                deprecation,
+            }
+        }));
         item
     }
 
@@ -49,10 +85,18 @@ impl GqlObject {
             description,
         );
         let fields = obj.fields.clone().unwrap().into_iter().filter_map(|t| {
-            t.map(|t| GqlObjectField {
-                description: t.description.clone(),
-                name: t.name.expect("field name"),
-                type_: FieldType::from(t.type_.expect("field type")),
+            t.map(|t| {
+                let deprecation = if t.is_deprecated.unwrap_or(false) {
+                    DeprecationStatus::Deprecated(t.deprecation_reason)
+                } else {
+                    DeprecationStatus::Current
+                };
+                GqlObjectField {
+                    description: t.description.clone(),
+                    name: t.name.expect("field name"),
+                    type_: FieldType::from(t.type_.expect("field type")),
+                    deprecation,
+                }
             })
         });
 
@@ -99,5 +143,79 @@ impl GqlObject {
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
         response_fields_for_selection(&self.fields, query_context, selection, prefix)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use graphql_parser::query;
+    use graphql_parser::Pos;
+
+    fn mock_field(directives: Vec<schema::Directive>) -> schema::Field {
+        schema::Field {
+            position: Pos::default(),
+            description: None,
+            name: "foo".to_string(),
+            arguments: vec![],
+            field_type: schema::Type::NamedType("x".to_string()),
+            directives,
+        }
+    }
+
+    #[test]
+    fn deprecation_no_reason() {
+        let directive = schema::Directive {
+            position: Pos::default(),
+            name: "deprecated".to_string(),
+            arguments: vec![],
+        };
+        let result = parse_deprecation_info(&mock_field(vec![directive]));
+        assert_eq!(DeprecationStatus::Deprecated(None), result);
+    }
+
+    #[test]
+    fn deprecation_with_reason() {
+        let directive = schema::Directive {
+            position: Pos::default(),
+            name: "deprecated".to_string(),
+            arguments: vec![(
+                "reason".to_string(),
+                query::Value::String("whatever".to_string()),
+            )],
+        };
+        let result = parse_deprecation_info(&mock_field(vec![directive]));
+        assert_eq!(
+            DeprecationStatus::Deprecated(Some("whatever".to_string())),
+            result
+        );
+    }
+
+    #[test]
+    fn null_deprecation_reason() {
+        let directive = schema::Directive {
+            position: Pos::default(),
+            name: "deprecated".to_string(),
+            arguments: vec![("reason".to_string(), query::Value::Null)],
+        };
+        let result = parse_deprecation_info(&mock_field(vec![directive]));
+        assert_eq!(DeprecationStatus::Deprecated(None), result);
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_deprecation_reason() {
+        let directive = schema::Directive {
+            position: Pos::default(),
+            name: "deprecated".to_string(),
+            arguments: vec![("reason".to_string(), query::Value::Boolean(true))],
+        };
+        let _ = parse_deprecation_info(&mock_field(vec![directive]));
+    }
+
+    #[test]
+    fn no_deprecation() {
+        let result = parse_deprecation_info(&mock_field(vec![]));
+        assert_eq!(DeprecationStatus::Current, result);
     }
 }
