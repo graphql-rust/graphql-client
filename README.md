@@ -143,18 +143,16 @@ There is an embryonic CLI for downloading schemas - the plan is to make it somet
 
 ## Contributors
 
-Many thanks go to all our contributors:
+Warmest thanks to all those who contributed in any way (not only code) to this project:
 
-|                                            |              |
-| ------------------------------------------ | ------------ |
-| Alex Vlasov (@indifferentalex)             | 👀           |
-| Fausto Nuñez Alberro (@brainlessdeveloper) | 👀           |
-| Peter Gundel (@peterfication)              | 👀           |
-| Sooraj Chandran (@SoorajChandran)          | 🤔           |
-| Tom Houlé (@tomhoule)                      | 💻📖🐛💡🔧👀 |
-
-This project follows the [all-contributors](https://github.com/kentcdodds/all-contributors) specification.
-Contributions of any kind are welcome!
+- Alex Vlasov (@indifferentalex)
+- Christian Legnitto (@LegNeato)
+- Dirkjan Ochtman (@djc)
+- Fausto Nunez Alberro (@brainlessdeveloper)
+- Peter Gundel (@peterfication)
+- Sonny Scroggin (@scrogson)
+- Sooraj Chandran (@SoorajChandran)
+- Tom Houlé (@tomhoule)
 
 ## Code of conduct
 
