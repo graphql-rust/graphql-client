@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
 - Support for `@deprecated` field annotations. You can configure how
   deprecations are handled via the `deprecated` argument in the `GraphQLQuery`
   derive:
@@ -29,6 +31,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     using them is a compile error.
 
   The default is `warn`.
+
+  This is a *breaking change* if you have the `#[deny(deprecated)]` compiler
+  lint and you use deprecated fields in your queries. The quick solution is to
+  annotate the relevant queries with `depracated = "allow"` as shown above.
+
+- The CLI now supports the `--authorization` flag to pass the contents of an `Authorization` header. Thanks to @h-michael for the [PR](https://github.com/tomhoule/graphql-client/pull/92)!
 
 ## [0.4.0] - 2018-08-23
 
