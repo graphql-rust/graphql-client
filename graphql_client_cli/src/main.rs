@@ -70,7 +70,7 @@ fn introspect_schema(
 ) -> Result<(), failure::Error> {
     use std::io::Write;
 
-    let mut out: Box<Write> = match output {
+    let out: Box<Write> = match output {
         Some(path) => Box::new(::std::fs::File::create(path)?),
         None => Box::new(::std::io::stdout()),
     };
