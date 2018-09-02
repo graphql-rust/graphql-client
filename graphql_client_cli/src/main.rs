@@ -9,6 +9,8 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
+use reqwest::header::*;
+use reqwest::mime;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -30,6 +32,9 @@ enum Cli {
         #[structopt(parse(from_os_str))]
         #[structopt(long = "output")]
         output: Option<PathBuf>,
+        // Set authorizaiton header.
+        #[structopt(long = "authorization")]
+        authorization: Option<String>,
     },
     #[structopt(name = "generate")]
     Generate {
@@ -48,7 +53,8 @@ fn main() -> Result<(), failure::Error> {
         Cli::IntrospectSchema {
             schema_location,
             output,
-        } => introspect_schema(schema_location, output),
+            authorization,
+        } => introspect_schema(schema_location, output, authorization),
         Cli::Generate {
             paths: _,
             schema: _,
@@ -57,12 +63,14 @@ fn main() -> Result<(), failure::Error> {
     }
 }
 
-fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), failure::Error> {
-    use reqwest::header::*;
-    use reqwest::mime;
+fn introspect_schema(
+    location: String,
+    output: Option<PathBuf>,
+    authorization: Option<String>,
+) -> Result<(), failure::Error> {
     use std::io::Write;
 
-    let mut out: Box<Write> = match output {
+    let out: Box<Write> = match output {
         Some(path) => Box::new(::std::fs::File::create(path)?),
         None => Box::new(::std::io::stdout()),
     };
@@ -72,10 +80,12 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
         query: introspection_query::QUERY,
     };
 
+    let headers = set_headers(authorization);
+
     let client = reqwest::Client::new();
     let mut res = client
         .post(&location)
-        .header(Accept(vec![qitem(mime::APPLICATION_JSON)]))
+        .headers(headers)
         .json(&request_body)
         .send()?;
 
@@ -88,4 +98,15 @@ fn introspect_schema(location: String, output: Option<PathBuf>) -> Result<(), fa
 
     let json: serde_json::Value = res.json()?;
     Ok(serde_json::to_writer_pretty(out, &json)?)
+}
+
+fn set_headers(authorization: Option<String>) -> Headers {
+    let mut headers = Headers::new();
+    headers.set(Accept(vec![qitem(mime::APPLICATION_JSON)]));
+
+    match authorization {
+        Some(token) => headers.set(reqwest::header::Authorization(token)),
+        None => (),
+    };
+    headers
 }
