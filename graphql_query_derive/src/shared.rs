@@ -35,7 +35,15 @@ pub(crate) fn render_object_field(
 
     let description = description.map(|s| quote!(#[doc = #s]));
 
-    if field_name == "type" {
+    let reserved = &[
+        "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate", "do",
+        "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop",
+        "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv", "proc", "pub",
+        "pure", "ref", "return", "Self", "self", "sizeof", "static", "struct", "super", "trait",
+        "true", "type", "typeof", "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
+    ];
+
+    if reserved.contains(&field_name) {
         let name_ident = Ident::new(&format!("{}_", field_name), Span::call_site());
         return quote! {
             #description
