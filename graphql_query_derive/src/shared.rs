@@ -35,6 +35,7 @@ pub(crate) fn render_object_field(
 
     let description = description.map(|s| quote!(#[doc = #s]));
 
+    // List of keywords based on https://doc.rust-lang.org/grammar.html#keywords
     let reserved = &[
         "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate", "do",
         "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop",
@@ -86,7 +87,8 @@ pub(crate) fn field_impls_for_selection(
             } else {
                 Ok(quote!())
             }
-        }).collect()
+        })
+        .collect()
 }
 
 pub(crate) fn response_fields_for_selection(
@@ -131,12 +133,14 @@ pub(crate) fn response_fields_for_selection(
             SelectionItem::InlineFragment(_) => {
                 Err(format_err!("inline fragment on object field"))?
             }
-        }).filter(|x| match x {
+        })
+        .filter(|x| match x {
             // Remove empty fields so callers always know a field has some
             // tokens.
             Ok(f) => !f.is_empty(),
             Err(_) => true,
-        }).collect()
+        })
+        .collect()
 }
 
 /// Given the GraphQL schema name for an object/interface/input object field and
