@@ -23,5 +23,6 @@ members = [
     "examples/example_module",
     "examples/github",
     "graphql_query_derive",
+    "graphql_client_codegen",
     "graphql_client_cli",
 ]

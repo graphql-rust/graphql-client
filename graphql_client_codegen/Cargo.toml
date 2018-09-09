@@ -8,6 +8,8 @@ repository = "https://github.com/tomhoule/graphql-client"
 
 [dependencies]
 failure = "0.1"
+itertools = "0.7"
+lazy_static = "1.0"
 quote = "^0.6"
 syn = "0.14"
 proc-macro2 = { version = "0.4", features = [] }
