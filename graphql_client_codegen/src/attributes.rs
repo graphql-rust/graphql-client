@@ -1,7 +1,7 @@
 use failure;
 use syn;
 
-pub(crate) fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failure::Error> {
+pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failure::Error> {
     let attributes = &ast.attrs;
     let attribute = attributes
         .iter()

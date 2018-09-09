@@ -11,13 +11,13 @@ pub enum DeprecationStatus {
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum DeprecationStrategy {
+pub enum DeprecationStrategy {
     Allow,
     Deny,
     Warn,
 }
 
-pub(crate) fn extract_deprecation_strategy(
+pub fn extract_deprecation_strategy(
     ast: &syn::DeriveInput,
 ) -> Result<DeprecationStrategy, failure::Error> {
     match attributes::extract_attr(&ast, "deprecated")?
