@@ -48,18 +48,26 @@ pub(crate) fn response_for_query(
         .find(|op| op.name == selected_operation)
         .map(|i| i.to_owned());
 
-    let operation = context.selected_operation.clone().unwrap_or_else(|| {
+    let opt_operation = context.selected_operation.clone().or_else(|| {
         operations
             .iter()
             .next()
             .map(|i| i.to_owned())
-            .expect("no operation in query document")
     });
+    let operation = if let Some(operation) = opt_operation {
+        operation
+    } else {
+        panic!("no operation '{}' in query document", selected_operation);
+    };
 
     let response_data_fields = {
-        let root_name: String = operation
-            .root_name(&context.schema)
-            .expect("operation type not in schema");
+        let opt_root_name = operation
+            .root_name(&context.schema);
+        let root_name: String = if let Some(root_name) = opt_root_name {
+            root_name
+        } else {
+            panic!("operation type '{:?}' not in schema", operation.operation_type);
+        };
         let definition = context
             .schema
             .objects
