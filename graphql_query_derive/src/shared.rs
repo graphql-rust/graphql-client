@@ -72,16 +72,19 @@ pub(crate) fn field_impls_for_selection(
         .iter()
         .map(|selected| {
             if let SelectionItem::Field(selected) = selected {
+                let name = &selected.name;
+                let alias = selected.alias.as_ref().unwrap_or(name);
+
                 let ty = fields
                     .iter()
-                    .find(|f| f.name == selected.name)
-                    .ok_or_else(|| format_err!("could not find field `{}`", selected.name))?
+                    .find(|f| &f.name == name)
+                    .ok_or_else(|| format_err!("could not find field `{}`", name))?
                     .type_
                     .inner_name_string();
                 let prefix = format!(
                     "{}{}",
                     prefix.to_camel_case(),
-                    selected.name.to_camel_case()
+                    alias.to_camel_case()
                 );
                 context.maybe_expand_field(&ty, &selected.fields, &prefix)
             } else {
@@ -103,6 +106,7 @@ pub(crate) fn response_fields_for_selection(
         .map(|item| match item {
             SelectionItem::Field(f) => {
                 let name = &f.name;
+                let alias = f.alias.as_ref().unwrap_or(name);
 
                 let schema_field = &schema_fields
                     .iter()
@@ -110,11 +114,11 @@ pub(crate) fn response_fields_for_selection(
                     .ok_or_else(|| format_err!("Could not find field: {}", name.as_str()))?;
                 let ty = schema_field.type_.to_rust(
                     context,
-                    &format!("{}{}", prefix.to_camel_case(), name.to_camel_case()),
+                    &format!("{}{}", prefix.to_camel_case(), alias.to_camel_case()),
                 );
 
                 Ok(render_object_field(
-                    name,
+                    alias,
                     &ty,
                     schema_field.description.as_ref().map(|s| s.as_str()),
                     &schema_field.deprecation,

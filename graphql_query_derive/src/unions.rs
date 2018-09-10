@@ -151,6 +151,7 @@ mod tests {
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "User".to_string(),
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
+                    alias: None,
                     name: "firstName".to_string(),
                     fields: Selection(vec![]),
                 })]),
@@ -158,6 +159,7 @@ mod tests {
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "Organization".to_string(),
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
+                    alias: None,
                     name: "title".to_string(),
                     fields: Selection(vec![]),
                 })]),
@@ -236,12 +238,14 @@ mod tests {
     fn union_response_for_selection_works() {
         let fields = vec![
             SelectionItem::Field(SelectionField {
+                alias: None,
                 name: "__typename".to_string(),
                 fields: Selection(vec![]),
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "User".to_string(),
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
+                    alias: None,
                     name: "firstName".to_string(),
                     fields: Selection(vec![]),
                 })]),
@@ -249,6 +253,7 @@ mod tests {
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "Organization".to_string(),
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
+                    alias: None,
                     name: "title".to_string(),
                     fields: Selection(vec![]),
                 })]),
