@@ -52,7 +52,7 @@ A typed GraphQL client library for Rust.
 
   That module contains all the struct and enum definitions necessary to deserialize a response to that query.
 
-  The root type for the response is named `ResponseData`. The GraphQL response will take the form of a `GraphQLResponse<ResponseData>` (the [GraphQLResponse](https://docs.rs/graphql_client/latest/graphql_client/struct.GraphQLResponse.html) type is always the same).
+  The root type for the response is named `ResponseData`. The GraphQL response will take the form of a `Response<ResponseData>` (the [Response](https://docs.rs/graphql_client/latest/graphql_client/struct.Response.html) type is always the same).
 
   The module also contains a struct called `Variables` representing the variables expected by the query.
 
@@ -64,7 +64,7 @@ A typed GraphQL client library for Rust.
   extern crate graphql_client;
   extern crate reqwest;
 
-  use graphql_client::{GraphQLQuery, GraphQLResponse};
+  use graphql_client::{GraphQLQuery, Response};
 
   fn perform_my_query(variables: &my_query::Variables) -> Result<(), failure::Error> {
 
@@ -73,7 +73,7 @@ A typed GraphQL client library for Rust.
 
       let client = reqwest::Client::new();
       let mut res = client.post("/graphql").json(&request_body).send()?;
-      let response_body: GraphQLResponse<my_query::ResponseData> = res.json()?;
+      let response_body: Response<my_query::ResponseData> = res.json()?;
       println!("{:#?}", response_body);
       Ok(())
   }

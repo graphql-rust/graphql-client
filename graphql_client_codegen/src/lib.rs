@@ -149,8 +149,8 @@ pub fn generate_module_token_stream(
             type Variables = #module_name::Variables;
             type ResponseData = #module_name::ResponseData;
 
-            fn build_query(variables: Self::Variables) -> ::graphql_client::GraphQLQueryBody<Self::Variables> {
-                ::graphql_client::GraphQLQueryBody {
+            fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
+                ::graphql_client::QueryBody {
                     variables,
                     query: #module_name::QUERY,
                 }

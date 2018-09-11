@@ -71,12 +71,12 @@ pub trait GraphQLQuery<'de> {
     type ResponseData: serde::Deserialize<'de>;
 
     /// Produce a GraphQL query struct that can be JSON serialized and sent to a GraphQL API.
-    fn build_query(variables: Self::Variables) -> GraphQLQueryBody<Self::Variables>;
+    fn build_query(variables: Self::Variables) -> QueryBody<Self::Variables>;
 }
 
 /// The form in which queries are sent over HTTP in most implementations. This will be built using the [`GraphQLQuery`] trait normally.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GraphQLQueryBody<Variables>
+pub struct QueryBody<Variables>
 where
     Variables: serde::Serialize,
 {
@@ -86,7 +86,7 @@ where
     pub query: &'static str,
 }
 
-/// Represents a location inside a query string. Used in errors. See [`GraphQLError`].
+/// Represents a location inside a query string. Used in errors. See [`Error`].
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Location {
     /// The line number in the query string where the error originated (starting from 1).
@@ -95,7 +95,7 @@ pub struct Location {
     pub column: i32,
 }
 
-/// Part of a path in a query. It can be an object key or an array index. See [`GraphQLError`].
+/// Part of a path in a query. It can be an object key or an array index. See [`Error`].
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum PathFragment {
@@ -128,7 +128,7 @@ pub enum PathFragment {
 /// # fn main() -> Result<(), failure::Error> {
 /// use graphql_client::*;
 ///
-/// let body: GraphQLResponse<ResponseData> = serde_json::from_value(json!({
+/// let body: Response<ResponseData> = serde_json::from_value(json!({
 ///     "data": null,
 ///     "errors": [
 ///         {
@@ -142,10 +142,10 @@ pub enum PathFragment {
 ///      ],
 /// }))?;
 ///
-/// let expected: GraphQLResponse<ResponseData> = GraphQLResponse {
+/// let expected: Response<ResponseData> = Response {
 ///     data: None,
 ///     errors: Some(vec![
-///         GraphQLError {
+///         Error {
 ///             message: "The server crashed. Sorry.".to_owned(),
 ///             locations: Some(vec![
 ///                 Location {
@@ -156,7 +156,7 @@ pub enum PathFragment {
 ///             path: None,
 ///             extensions: None,
 ///         },
-///         GraphQLError {
+///         Error {
 ///             message: "Seismic activity detected".to_owned(),
 ///             locations: None,
 ///             path: Some(vec![
@@ -174,7 +174,7 @@ pub enum PathFragment {
 /// # }
 /// ```
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct GraphQLError {
+pub struct Error {
     /// The human-readable error message. This is the only required field.
     pub message: String,
     /// Which locations in the query the error applies to.
@@ -216,9 +216,9 @@ pub struct GraphQLError {
 /// # }
 /// #
 /// # fn main() -> Result<(), failure::Error> {
-/// use graphql_client::GraphQLResponse;
+/// use graphql_client::Response;
 ///
-/// let body: GraphQLResponse<ResponseData> = serde_json::from_value(json!({
+/// let body: Response<ResponseData> = serde_json::from_value(json!({
 ///     "data": {
 ///         "users": [{"id": 13}],
 ///         "dogs": [{"name": "Strelka"}],
@@ -226,7 +226,7 @@ pub struct GraphQLError {
 ///     "errors": [],
 /// }))?;
 ///
-/// let expected: GraphQLResponse<ResponseData> = GraphQLResponse {
+/// let expected: Response<ResponseData> = Response {
 ///     data: Some(ResponseData {
 ///         users: vec![User { id: 13 }],
 ///         dogs: vec![Dog { name: "Strelka".to_owned() }],
@@ -240,11 +240,11 @@ pub struct GraphQLError {
 /// # }
 /// ```
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct GraphQLResponse<Data> {
+pub struct Response<Data> {
     /// The absent, partial or complete response data.
     pub data: Option<Data>,
     /// The top-level errors returned by the server.
-    pub errors: Option<Vec<GraphQLError>>,
+    pub errors: Option<Vec<Error>>,
 }
 
 #[cfg(test)]
@@ -257,11 +257,11 @@ mod tests {
             "message": "I accidentally your whole query"
         });
 
-        let deserialized_error: GraphQLError = serde_json::from_value(err).unwrap();
+        let deserialized_error: Error = serde_json::from_value(err).unwrap();
 
         assert_eq!(
             deserialized_error,
-            GraphQLError {
+            Error {
                 message: "I accidentally your whole query".to_string(),
                 locations: None,
                 path: None,
@@ -278,11 +278,11 @@ mod tests {
             "path": ["home", "alone", 3, "rating"]
         });
 
-        let deserialized_error: GraphQLError = serde_json::from_value(err).unwrap();
+        let deserialized_error: Error = serde_json::from_value(err).unwrap();
 
         assert_eq!(
             deserialized_error,
-            GraphQLError {
+            Error {
                 message: "I accidentally your whole query".to_string(),
                 locations: Some(vec![
                     Location {
@@ -317,7 +317,7 @@ mod tests {
             }
         });
 
-        let deserialized_error: GraphQLError = serde_json::from_value(err).unwrap();
+        let deserialized_error: Error = serde_json::from_value(err).unwrap();
 
         let mut expected_extensions = HashMap::new();
         expected_extensions.insert("code".to_owned(), json!("CAN_NOT_FETCH_BY_ID"));
@@ -326,7 +326,7 @@ mod tests {
 
         assert_eq!(
             deserialized_error,
-            GraphQLError {
+            Error {
                 message: "I accidentally your whole query".to_string(),
                 locations: Some(vec![
                     Location {

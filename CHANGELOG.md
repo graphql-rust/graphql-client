@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Most of the `graphql-query-derive` crate was factored out into a new `graphql-client-codegen` crate that should enable code generation through means other than custom derives (CLI, build scripts...). Thanks @h-michael for this important refactoring!
 
+- Types have been renamed. Types no longer have a `GraphQL` prefix.
+
 ### Fixed
 
 - Handle all Rust keywords as field names in codegen by appending `_` to the generated names, so a field called `type` in a GraphQL query will become a `type_` field in the generated struct. Thanks to @scrogson!

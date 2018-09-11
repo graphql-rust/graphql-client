@@ -75,7 +75,7 @@ fn introspect_schema(
         None => Box::new(::std::io::stdout()),
     };
 
-    let request_body: graphql_client::GraphQLQueryBody<()> = graphql_client::GraphQLQueryBody {
+    let request_body: graphql_client::QueryBody<()> = graphql_client::QueryBody {
         variables: (),
         query: introspection_query::QUERY,
     };
