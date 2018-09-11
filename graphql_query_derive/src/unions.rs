@@ -180,20 +180,20 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "firstName".to_string(),
-                        type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        type_: FieldType::Named("String".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "lastName".to_string(),
-                        type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        type_: FieldType::Named("String".to_string()),
 
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "createdAt".to_string(),
-                        type_: FieldType::Named(Ident::new("Date", Span::call_site())),
+                        type_: FieldType::Named("Date".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
@@ -209,13 +209,13 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "title".to_string(),
-                        type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        type_: FieldType::Named("String".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "created_at".to_string(),
-                        type_: FieldType::Named(Ident::new("Date", Span::call_site())),
+                        type_: FieldType::Named("Date".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
@@ -293,7 +293,7 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "createdAt".to_string(),
-                        type_: FieldType::Named(Ident::new("Date", Span::call_site())),
+                        type_: FieldType::Named("Date".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
@@ -315,13 +315,13 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "title".to_string(),
-                        type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        type_: FieldType::Named("String".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "createdAt".to_string(),
-                        type_: FieldType::Named(Ident::new("Date", Span::call_site())),
+                        type_: FieldType::Named("Date".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
