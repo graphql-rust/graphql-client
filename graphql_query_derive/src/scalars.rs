@@ -1,6 +1,6 @@
 use proc_macro2;
 
-#[derive(Debug, PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct Scalar {
     pub name: String,
     pub description: Option<String>,

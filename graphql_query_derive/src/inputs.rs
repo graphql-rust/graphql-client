@@ -9,7 +9,7 @@ use query::QueryContext;
 use std::collections::HashMap;
 
 /// Represents an input object type from a GraphQL schema
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GqlInput {
     pub description: Option<String>,
     pub name: String,

@@ -12,7 +12,7 @@ use unions::GqlUnion;
 
 pub const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Schema {
     pub enums: BTreeMap<String, GqlEnum>,
     pub inputs: BTreeMap<String, GqlInput>,

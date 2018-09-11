@@ -5,7 +5,7 @@ use query::QueryContext;
 use selection::{Selection, SelectionItem};
 use std::collections::BTreeSet;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GqlUnion {
     pub description: Option<String>,
     pub variants: BTreeSet<String>,

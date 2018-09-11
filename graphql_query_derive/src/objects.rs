@@ -9,7 +9,7 @@ use selection::*;
 use shared::{field_impls_for_selection, response_fields_for_selection};
 use std::borrow::Cow;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GqlObject {
     pub description: Option<String>,
     pub fields: Vec<GqlObjectField>,
