@@ -146,6 +146,7 @@ There is an embryonic CLI for downloading schemas - the plan is to make it somet
 Warmest thanks to all those who contributed in any way (not only code) to this project:
 
 - Alex Vlasov (@indifferentalex)
+- Ben Boeckel (@mathstuf)
 - Christian Legnitto (@LegNeato)
 - Dirkjan Ochtman (@djc)
 - Fausto Nunez Alberro (@brainlessdeveloper)
