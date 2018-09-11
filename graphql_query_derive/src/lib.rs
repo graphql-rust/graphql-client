@@ -51,19 +51,19 @@ pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::Token
 }
 
 fn read_file(
-    path: impl AsRef<::std::path::Path> + ::std::fmt::Debug,
+    path: &::std::path::Path,
 ) -> Result<String, failure::Error> {
     use std::io::prelude::*;
 
     let mut out = String::new();
-    let mut file = ::std::fs::File::open(&path).map_err(|io_err| {
+    let mut file = ::std::fs::File::open(path).map_err(|io_err| {
         let err: failure::Error = io_err.into();
         err.context(format!(
             r#"
-            Could not find file with path: {:?}
+            Could not find file with path: {}
             Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = "src/my_query.graphql".
             "#,
-            path
+            path.display()
         ))
     })?;
     file.read_to_string(&mut out)?;
@@ -88,7 +88,7 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
         .unwrap_or(deprecation::DeprecationStrategy::Warn);
 
     // We need to qualify the query with the path to the crate it is part of
-    let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
+    let query_path = ::std::path::Path::new(&cargo_manifest_dir).join(query_path);
     let query_string = read_file(&query_path)?;
     let query = graphql_parser::parse_query(&query_string)?;
 
