@@ -59,7 +59,7 @@ impl GqlInterface {
         );
 
         let object_fields =
-            response_fields_for_selection(&self.fields, query_context, &object_selection, prefix)?;
+            response_fields_for_selection(&self.name, &self.fields, query_context, &object_selection, prefix)?;
 
         let object_children =
             field_impls_for_selection(&self.fields, query_context, &object_selection, prefix)?;

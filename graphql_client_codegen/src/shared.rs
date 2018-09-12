@@ -1,6 +1,7 @@
 use deprecation::{DeprecationStatus, DeprecationStrategy};
 use failure;
 use heck::{CamelCase, SnakeCase};
+use itertools::Itertools;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
@@ -95,6 +96,7 @@ pub(crate) fn field_impls_for_selection(
 }
 
 pub(crate) fn response_fields_for_selection(
+    type_name: &str,
     schema_fields: &[GqlObjectField],
     context: &QueryContext,
     selection: &Selection,
@@ -110,8 +112,15 @@ pub(crate) fn response_fields_for_selection(
 
                 let schema_field = &schema_fields
                     .iter()
-                    .find(|field| field.name.as_str() == name.as_str())
-                    .ok_or_else(|| format_err!("Could not find field: {}", name.as_str()))?;
+                    .find(|field| &field.name == name)
+                    .ok_or_else(|| {
+                        format_err!(
+                            "Could not find field `{}` on `{}`. Available fields: `{}`.",
+                            name.as_str(),
+                            type_name,
+                            schema_fields.iter().map(|ref field| &field.name).format("`, `"),
+                        )
+                    })?;
                 let ty = schema_field.type_.to_rust(
                     context,
                     &format!("{}{}", prefix.to_camel_case(), alias.to_camel_case()),
