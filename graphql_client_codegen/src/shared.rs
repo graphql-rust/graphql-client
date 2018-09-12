@@ -131,7 +131,7 @@ pub(crate) fn response_fields_for_selection(
                 let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
                 Ok(quote!{
                     #[serde(flatten)]
-                    #field_name: #type_name
+                    pub #field_name: #type_name
                 })
             }
             SelectionItem::InlineFragment(_) => {
