@@ -1,0 +1,7 @@
+fragment FragmentReference on QueryRoot {
+  inFragment
+}
+
+query FragmentReference {
+  ...FragmentReference
+}
