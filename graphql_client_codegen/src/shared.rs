@@ -135,7 +135,7 @@ pub(crate) fn response_fields_for_selection(
                 })
             }
             SelectionItem::InlineFragment(_) => {
-                Err(format_err!("inline fragment on object field"))?
+                Err(format_err!("unimplemented: inline fragment on object field"))?
             }
         })
         .filter(|x| match x {
