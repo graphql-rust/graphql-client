@@ -37,6 +37,7 @@ pub fn response_for_query(
                         name: fragment.name,
                         selection: Selection::from(&fragment.selection_set),
                         on,
+                        is_required: false.into(),
                     },
                 );
             }
@@ -97,11 +98,23 @@ pub fn response_for_query(
         .schema
         .enums
         .values()
-        .map(|enm| enm.to_rust(&context));
+        .filter_map(|enm| {
+            if enm.is_required.get() {
+                Some(enm.to_rust(&context))
+            } else {
+                None
+            }
+        });
     let fragment_definitions: Result<Vec<TokenStream>, _> = context
         .fragments
         .values()
-        .map(|fragment| fragment.to_rust(&context))
+        .filter_map(|fragment| {
+            if fragment.is_required.get() {
+                Some(fragment.to_rust(&context))
+            } else {
+                None
+            }
+        })
         .collect();
     let fragment_definitions = fragment_definitions?;
     let variables_struct = operation.expand_variables(&context);
@@ -110,7 +123,13 @@ pub fn response_for_query(
         .schema
         .inputs
         .values()
-        .map(|i| i.to_rust(&context))
+        .filter_map(|i| {
+            if i.is_required.get() {
+                Some(i.to_rust(&context))
+            } else {
+                None
+            }
+        })
         .collect();
     let input_object_definitions = input_object_definitions?;
 
@@ -118,7 +137,13 @@ pub fn response_for_query(
         .schema
         .scalars
         .values()
-        .map(|s| s.to_rust())
+        .filter_map(|s| {
+            if s.is_required.get() {
+                Some(s.to_rust())
+            } else {
+                None
+            }
+        })
         .collect();
 
     let response_derives = context.response_derives();

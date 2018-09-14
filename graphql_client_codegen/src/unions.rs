@@ -4,11 +4,13 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::{Selection, SelectionItem};
 use std::collections::BTreeSet;
+use std::cell::Cell;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GqlUnion {
     pub description: Option<String>,
     pub variants: BTreeSet<String>,
+    pub is_required: Cell<bool>,
 }
 
 #[derive(Debug, Fail)]
@@ -171,6 +173,7 @@ mod tests {
         let union = GqlUnion {
             description: None,
             variants: BTreeSet::new(),
+            is_required: false.into(),
         };
 
         context.schema.objects.insert(
@@ -199,6 +202,7 @@ mod tests {
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
+                is_required: false.into(),
             },
         );
 
@@ -221,6 +225,7 @@ mod tests {
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
+                is_required: false.into(),
             },
         );
 
@@ -265,6 +270,7 @@ mod tests {
         let union = GqlUnion {
             description: None,
             variants: BTreeSet::new(),
+            is_required: false.into(),
         };
 
         let result = union.response_for_selection(&context, &selection, &prefix);
@@ -302,6 +308,7 @@ mod tests {
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
+                is_required: false.into(),
             },
         );
 
@@ -330,6 +337,7 @@ mod tests {
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
+                is_required: false.into(),
             },
         );
 

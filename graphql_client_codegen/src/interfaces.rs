@@ -5,6 +5,7 @@ use query::QueryContext;
 use selection::{Selection, SelectionItem};
 use shared::*;
 use std::borrow::Cow;
+use std::cell::Cell;
 use std::collections::HashSet;
 use unions::union_variants;
 
@@ -14,6 +15,7 @@ pub struct GqlInterface {
     pub implemented_by: HashSet<String>,
     pub name: String,
     pub fields: Vec<GqlObjectField>,
+    pub is_required: Cell<bool>,
 }
 
 impl GqlInterface {
@@ -23,6 +25,7 @@ impl GqlInterface {
             name: name.into_owned(),
             implemented_by: HashSet::new(),
             fields: vec![],
+            is_required: false.into(),
         }
     }
 

@@ -6,7 +6,9 @@ use introspection_response;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
+use schema::Schema;
 use std::collections::HashMap;
+use std::cell::Cell;
 
 /// Represents an input object type from a GraphQL schema
 #[derive(Debug, Clone, PartialEq)]
@@ -14,15 +16,29 @@ pub struct GqlInput {
     pub description: Option<String>,
     pub name: String,
     pub fields: HashMap<String, GqlObjectField>,
+    pub is_required: Cell<bool>,
 }
 
 impl GqlInput {
+    pub(crate) fn require(&self, schema: &Schema) {
+        if self.is_required.get() {
+            return;
+        }
+        self.is_required.set(true);
+        self.fields
+            .values()
+            .for_each(|field| {
+                schema.require(&field.type_.inner_name_string());
+            })
+    }
+
     pub(crate) fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(&self.name, Span::call_site());
         let mut fields: Vec<&GqlObjectField> = self.fields.values().collect();
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
             let ty = field.type_.to_rust(&context, "");
+            context.schema.require(&field.type_.inner_name_string());
             let original_name = &field.name;
             let snake_case_name = field.name.to_snake_case();
             let rename = ::shared::field_rename_annotation(&original_name, &snake_case_name);
@@ -59,6 +75,7 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
                     };
                     (name, field)
                 }).collect(),
+            is_required: false.into(),
         }
     }
 }
@@ -87,6 +104,7 @@ impl ::std::convert::From<introspection_response::FullType> for GqlInput {
                     };
                     (name, field)
                 }).collect(),
+            is_required: false.into(),
         }
     }
 }
@@ -132,6 +150,7 @@ mod tests {
                 ),
             ].into_iter()
             .collect(),
+            is_required: false.into(),
         };
 
         let expected: String = vec![

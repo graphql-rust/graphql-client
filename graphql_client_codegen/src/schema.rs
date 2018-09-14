@@ -55,6 +55,28 @@ impl Schema {
                 Ok(())
             }).collect()
     }
+
+    pub(crate) fn require(&self, typename_: &str) {
+        DEFAULT_SCALARS.iter()
+            .find(|&&s| s == typename_)
+            .map(|_| ())
+            .or_else(|| {
+                self.enums.get(typename_)
+                    .map(|enm| enm.is_required.set(true))
+            })
+            .or_else(|| {
+                self.inputs.get(typename_)
+                    .map(|input| input.require(self))
+            })
+            .or_else(|| {
+                self.objects.get(typename_)
+                    .map(|object| object.require(self))
+            })
+            .or_else(|| {
+                self.scalars.get(typename_)
+                    .map(|scalar| scalar.is_required.set(true))
+            });
+    }
 }
 
 impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
@@ -94,6 +116,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                                         description: v.description.clone(),
                                         name: v.name.clone(),
                                     }).collect(),
+                                is_required: false.into(),
                             },
                         );
                     }
@@ -103,6 +126,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                             Scalar {
                                 name: scalar.name,
                                 description: scalar.description,
+                                is_required: false.into(),
                             },
                         );
                     }
@@ -113,6 +137,7 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                             GqlUnion {
                                 variants,
                                 description: union.description,
+                                is_required: false.into(),
                             },
                         );
                     }
@@ -196,6 +221,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         name: name.clone(),
                         description: ty.description.clone(),
                         variants,
+                        is_required: false.into(),
                     };
                     schema.enums.insert(name, enm);
                 }
@@ -210,6 +236,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                             Scalar {
                                 name,
                                 description: ty.description.as_ref().map(|d| d.clone()),
+                                is_required: false.into(),
                             },
                         );
                     }
@@ -227,6 +254,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                         GqlUnion {
                             description: ty.description.as_ref().map(|d| d.to_owned()),
                             variants,
+                            is_required: false.into(),
                         },
                     );
                 }
@@ -347,6 +375,7 @@ mod tests {
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
+                is_required: false.into(),
             })
         )
     }

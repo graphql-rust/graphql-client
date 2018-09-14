@@ -1,9 +1,11 @@
 use proc_macro2;
+use std::cell::Cell;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct Scalar {
     pub name: String,
     pub description: Option<String>,
+    pub is_required: Cell<bool>,
 }
 
 impl Scalar {
