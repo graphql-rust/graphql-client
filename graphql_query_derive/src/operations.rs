@@ -42,8 +42,10 @@ impl Operation {
     pub(crate) fn expand_variables(&self, context: &QueryContext) -> TokenStream {
         let variables = &self.variables;
 
+        let variables_derives = context.variables_derives();
+
         if variables.is_empty() {
-            return quote!(#[derive(Serialize)]
+            return quote!(#variables_derives
             pub struct Variables;);
         }
 
@@ -62,7 +64,7 @@ impl Operation {
             .map(|variable| variable.generate_default_value_constructor(context));
 
         quote! {
-            #[derive(Serialize)]
+            #variables_derives
             pub struct Variables {
                 #(#fields,)*
             }

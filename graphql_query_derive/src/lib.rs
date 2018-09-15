@@ -4,6 +4,7 @@
 extern crate failure;
 extern crate graphql_parser;
 extern crate heck;
+extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
 extern crate proc_macro;
