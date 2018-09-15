@@ -9,7 +9,7 @@ use query::QueryContext;
 use std::collections::HashMap;
 
 /// Represents an input object type from a GraphQL schema
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GqlInput {
     pub description: Option<String>,
     pub name: String,
@@ -116,10 +116,7 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "offsprings".to_string(),
-                        type_: FieldType::Vector(Box::new(FieldType::Named(Ident::new(
-                            "Cat",
-                            Span::call_site(),
-                        )))),
+                        type_: FieldType::Vector(Box::new(FieldType::Named("Cat".to_string()))),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),
@@ -128,10 +125,7 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "requirements".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                            "CatRequirements",
-                            Span::call_site(),
-                        )))),
+                        type_: FieldType::Optional(Box::new(FieldType::Named("CatRequirements".to_string()))),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),

@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 use unions::union_variants;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GqlInterface {
     pub description: Option<String>,
     pub implemented_by: HashSet<String>,

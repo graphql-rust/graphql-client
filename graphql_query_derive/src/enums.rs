@@ -2,13 +2,13 @@ use proc_macro2::{Ident, Span, TokenStream};
 
 pub const ENUMS_PREFIX: &str = "";
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EnumVariant {
     pub description: Option<String>,
     pub name: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GqlEnum {
     pub description: Option<String>,
     pub name: String,

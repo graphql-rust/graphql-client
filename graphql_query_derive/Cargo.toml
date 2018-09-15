@@ -11,6 +11,7 @@ proc-macro = true
 
 [dependencies]
 failure = "0.1"
+lazy_static = "1.0"
 quote = "^0.6"
 syn = "0.14"
 proc-macro2 = { version = "0.4", features = [] }

@@ -12,7 +12,7 @@ use unions::GqlUnion;
 
 pub const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Schema {
     pub enums: BTreeMap<String, GqlEnum>,
     pub inputs: BTreeMap<String, GqlInput>,
@@ -288,7 +288,6 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
 mod tests {
     use super::*;
     use constants::*;
-    use proc_macro2::{Ident, Span};
 
     #[test]
     fn build_schema_works() {
@@ -310,47 +309,41 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "id".to_string(),
-                        type_: FieldType::Named(Ident::new("ID", Span::call_site())),
+                        type_: FieldType::Named("ID".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "name".to_string(),
-                        type_: FieldType::Named(Ident::new("String", Span::call_site())),
+                        type_: FieldType::Named("String".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "friends".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Vector(Box::new(
-                            FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                                "Character",
-                                Span::call_site(),
-                            )))),
+                            FieldType::Optional(Box::new(FieldType::Named("Character".to_string()))),
                         )))),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "friendsConnection".to_string(),
-                        type_: FieldType::Named(Ident::new("FriendsConnection", Span::call_site())),
+                        type_: FieldType::Named("FriendsConnection".to_string()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "appearsIn".to_string(),
                         type_: FieldType::Vector(Box::new(FieldType::Optional(Box::new(
-                            FieldType::Named(Ident::new("Episode", Span::call_site())),
+                            FieldType::Named("Episode".to_string()),
                         )))),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "primaryFunction".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                            "String",
-                            Span::call_site(),
-                        )))),
+                        type_: FieldType::Optional(Box::new(FieldType::Named("String".to_string()))),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],

@@ -1,17 +1,16 @@
 use deprecation::DeprecationStatus;
 use field_type::FieldType;
 use objects::GqlObjectField;
-use proc_macro2::{Ident, Span};
 
 pub(crate) const TYPENAME_FIELD: &str = "__typename";
 
-pub(crate) fn string_type() -> Ident {
-    Ident::new("String", Span::call_site())
+pub(crate) fn string_type() -> String {
+    "String".to_string()
 }
 
 #[cfg(test)]
-pub(crate) fn float_type() -> Ident {
-    Ident::new("Float", Span::call_site())
+pub(crate) fn float_type() -> String {
+    "Float".to_string()
 }
 
 pub(crate) fn typename_field() -> GqlObjectField {

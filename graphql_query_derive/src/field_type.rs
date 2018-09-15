@@ -7,7 +7,7 @@ use schema::DEFAULT_SCALARS;
 
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub enum FieldType {
-    Named(Ident),
+    Named(String),
     Optional(Box<FieldType>),
     Vector(Box<FieldType>),
 }
@@ -21,27 +21,23 @@ impl FieldType {
             prefix.to_string()
         };
         match &self {
-            FieldType::Named(name) => {
-                let name_string = name.to_string();
-
-                let name = if context.schema.scalars.contains_key(&name_string) || DEFAULT_SCALARS
+            FieldType::Named(ref name) => {
+                let full_name = if context.schema.scalars.contains_key(name) || DEFAULT_SCALARS
                     .iter()
-                    .any(|elem| elem == &name_string.as_str())
+                    .any(|elem| elem == name)
                 {
                     name.clone()
-                } else if context.schema.enums.contains_key(&name_string) {
-                    Ident::new(
-                        &format!("{}{}", ENUMS_PREFIX, &name_string),
-                        Span::call_site(),
-                    )
+                } else if context.schema.enums.contains_key(name) {
+                    format!("{}{}", ENUMS_PREFIX, name)
                 } else {
                     if prefix.is_empty() {
                         panic!("Empty prefix for {:?}", self);
                     }
-                    Ident::new(&prefix, Span::call_site())
+                    prefix
                 };
+                let full_name = Ident::new(&full_name, Span::call_site());
 
-                quote!(#name)
+                quote!(#full_name)
             }
             FieldType::Optional(inner) => {
                 let inner = inner.to_rust(context, &prefix);
@@ -89,7 +85,7 @@ fn from_schema_type_inner(inner: graphql_parser::schema::Type, non_null: bool) -
             }
         }
         graphql_parser::schema::Type::NamedType(name) => {
-            let f = FieldType::Named(Ident::new(&name, Span::call_site()));
+            let f = FieldType::Named(name);
             if non_null {
                 f
             } else {
@@ -120,10 +116,7 @@ fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool)
             }
         }
         Some(_) => {
-            let f = FieldType::Named(Ident::new(
-                &inner.name.expect("type name"),
-                Span::call_site(),
-            ));
+            let f = FieldType::Named(inner.name.expect("type name").clone());
             if non_null {
                 f
             } else {
@@ -157,17 +150,14 @@ mod tests {
         let ty = GqlParserType::NamedType("Cat".to_string());
         assert_eq!(
             FieldType::from(ty),
-            FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                "Cat",
-                Span::call_site()
-            ))))
+            FieldType::Optional(Box::new(FieldType::Named("Cat".to_string())))
         );
 
         let ty = GqlParserType::NonNullType(Box::new(GqlParserType::NamedType("Cat".to_string())));
 
         assert_eq!(
             FieldType::from(ty),
-            FieldType::Named(Ident::new("Cat", Span::call_site()))
+            FieldType::Named("Cat".to_string())
         );
     }
 
@@ -182,10 +172,7 @@ mod tests {
         };
         assert_eq!(
             FieldType::from(ty),
-            FieldType::Optional(Box::new(FieldType::Named(Ident::new(
-                "Cat",
-                Span::call_site()
-            ))))
+            FieldType::Optional(Box::new(FieldType::Named("Cat".to_string())))
         );
 
         let ty = FullTypeFieldsType {
@@ -201,7 +188,7 @@ mod tests {
         };
         assert_eq!(
             FieldType::from(ty),
-            FieldType::Named(Ident::new("Cat", Span::call_site()))
+            FieldType::Named("Cat".to_string())
         );
     }
 }

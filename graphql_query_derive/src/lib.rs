@@ -4,6 +4,8 @@
 extern crate failure;
 extern crate graphql_parser;
 extern crate heck;
+#[macro_use]
+extern crate lazy_static;
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate serde;
@@ -42,6 +44,13 @@ mod tests;
 use heck::*;
 use proc_macro2::{Ident, Span};
 
+type CacheMap<T> = ::std::sync::Mutex<::std::collections::hash_map::HashMap<::std::path::PathBuf, T>>;
+
+lazy_static! {
+    static ref SCHEMA_CACHE: CacheMap<schema::Schema> = CacheMap::default();
+    static ref QUERY_CACHE: CacheMap<(String, graphql_parser::query::Document)> = CacheMap::default();
+}
+
 #[proc_macro_derive(GraphQLQuery, attributes(graphql))]
 pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = TokenStream::from(input);
@@ -51,19 +60,19 @@ pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::Token
 }
 
 fn read_file(
-    path: impl AsRef<::std::path::Path> + ::std::fmt::Debug,
+    path: &::std::path::Path,
 ) -> Result<String, failure::Error> {
     use std::io::prelude::*;
 
     let mut out = String::new();
-    let mut file = ::std::fs::File::open(&path).map_err(|io_err| {
+    let mut file = ::std::fs::File::open(path).map_err(|io_err| {
         let err: failure::Error = io_err.into();
         err.context(format!(
             r#"
-            Could not find file with path: {:?}
+            Could not find file with path: {}
             Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = "src/my_query.graphql".
             "#,
-            path
+            path.display()
         ))
     })?;
     file.read_to_string(&mut out)?;
@@ -88,29 +97,52 @@ fn impl_gql_query(input: &syn::DeriveInput) -> Result<TokenStream, failure::Erro
         .unwrap_or(deprecation::DeprecationStrategy::Warn);
 
     // We need to qualify the query with the path to the crate it is part of
-    let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
-    let query_string = read_file(&query_path)?;
-    let query = graphql_parser::parse_query(&query_string)?;
+    let query_path = ::std::path::Path::new(&cargo_manifest_dir).join(query_path);
+    // Check the query cache.
+    let (query_string, query) = {
+        let mut lock = QUERY_CACHE.lock().expect("query cache is poisoned");
+        match lock.entry(query_path) {
+            ::std::collections::hash_map::Entry::Occupied(o) => o.get().clone(),
+            ::std::collections::hash_map::Entry::Vacant(v) => {
+                let query_string = read_file(v.key())?;
+                let query = graphql_parser::parse_query(&query_string)?;
+                v.insert((query_string, query)).clone()
+            },
+        }
+    };
 
     // We need to qualify the schema with the path to the crate it is part of
     let schema_path = ::std::path::Path::new(&cargo_manifest_dir).join(schema_path);
-    let schema_string = read_file(&schema_path)?;
+    // Check the schema cache.
+    let schema = {
+        let mut lock = SCHEMA_CACHE.lock().expect("schema cache is poisoned");
+        match lock.entry(schema_path) {
+            ::std::collections::hash_map::Entry::Occupied(o) => o.get().clone(),
+            ::std::collections::hash_map::Entry::Vacant(v) => {
+                let schema_string = read_file(v.key())?;
+                let schema = {
+                    let extension = v
+                        .key()
+                        .extension()
+                        .and_then(|e| e.to_str())
+                        .unwrap_or("INVALID");
 
-    let extension = schema_path
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("INVALID");
+                    match extension {
+                        "graphql" | "gql" => {
+                            let s = graphql_parser::schema::parse_schema(&schema_string)?;
+                            schema::Schema::from(s)
+                        }
+                        "json" => {
+                            let parsed: FullResponse<introspection_response::IntrospectionResponse> = ::serde_json::from_str(&schema_string)?;
+                            schema::Schema::from(parsed.data)
+                        }
+                        extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
+                    }
+                };
 
-    let schema = match extension {
-        "graphql" | "gql" => {
-            let s = graphql_parser::schema::parse_schema(&schema_string)?;
-            schema::Schema::from(s)
+                v.insert(schema).clone()
+            },
         }
-        "json" => {
-            let parsed: FullResponse<introspection_response::IntrospectionResponse> = ::serde_json::from_str(&schema_string)?;
-            schema::Schema::from(parsed.data)
-        }
-        extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
     };
 
     let module_name = Ident::new(&input.ident.to_string().to_snake_case(), Span::call_site());
