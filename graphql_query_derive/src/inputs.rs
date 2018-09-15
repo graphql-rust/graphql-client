@@ -30,9 +30,10 @@ impl GqlInput {
 
             quote!(#rename pub #name: #ty)
         });
+        let variables_derives = context.variables_derives();
 
         Ok(quote! {
-            #[derive(Debug, Serialize)]
+            #variables_derives
             pub struct #name {
                 #(#fields,)*
             }
@@ -134,7 +135,7 @@ mod tests {
         };
 
         let expected: String = vec![
-            "# [ derive ( Debug , Serialize ) ] ",
+            "# [ derive ( Serialize , Clone ) ] ",
             "pub struct Cat { ",
             "pub offsprings : Vec < Cat > , ",
             "# [ serde ( rename = \"pawsCount\" ) ] ",
@@ -146,6 +147,7 @@ mod tests {
 
         let mut context = QueryContext::new_empty();
         context.schema.inputs.insert(cat.name.clone(), cat);
+        context.ingest_additional_derives("Clone").unwrap();
 
         assert_eq!(
             format!(

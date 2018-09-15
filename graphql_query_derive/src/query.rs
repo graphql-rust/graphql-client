@@ -1,6 +1,7 @@
 use deprecation::DeprecationStrategy;
 use failure;
 use fragments::GqlFragment;
+use itertools::Itertools;
 use operations::Operation;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
@@ -15,6 +16,7 @@ pub(crate) struct QueryContext {
     pub schema: Schema,
     pub selected_operation: Option<Operation>,
     pub deprecation_strategy: DeprecationStrategy,
+    variables_derives: Vec<Ident>,
     response_derives: Vec<Ident>,
 }
 
@@ -26,6 +28,7 @@ impl QueryContext {
             schema,
             selected_operation: None,
             deprecation_strategy,
+            variables_derives: vec![Ident::new("Serialize", Span::call_site())],
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
         }
     }
@@ -38,6 +41,7 @@ impl QueryContext {
             schema: Schema::new(),
             selected_operation: None,
             deprecation_strategy: DeprecationStrategy::Allow,
+            variables_derives: vec![Ident::new("Serialize", Span::call_site())],
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
         }
     }
@@ -71,6 +75,12 @@ impl QueryContext {
             ));
         }
 
+        self.variables_derives.extend(
+            attribute_value
+                .split(',')
+                .map(|s| s.trim())
+                .map(|s| Ident::new(s, Span::call_site())),
+        );
         self.response_derives.extend(
             attribute_value
                 .split(',')
@@ -80,8 +90,16 @@ impl QueryContext {
         Ok(())
     }
 
+    pub(crate) fn variables_derives(&self) -> TokenStream {
+        let derives = self.variables_derives.iter().unique();
+
+        quote! {
+            #[derive( #(#derives),* )]
+        }
+    }
+
     pub(crate) fn response_derives(&self) -> TokenStream {
-        let derives = &self.response_derives;
+        let derives = self.response_derives.iter().unique();
 
         quote! {
             #[derive( #(#derives),* )]

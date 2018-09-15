@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Aliases in queries are now supported.
 
+- The traits in `response_derives` are now used for input types as well.
+
 ### Fixed
 
 - Handle all Rust keywords as field names in codegen by appending `_` to the generated names, so a field called `type` in a GraphQL query will become a `type_` field in the generated struct. Thanks to @scrogson!
