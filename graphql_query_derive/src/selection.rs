@@ -3,6 +3,7 @@ use graphql_parser::query::SelectionSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SelectionField {
+    pub alias: Option<String>,
     pub name: String,
     pub fields: Selection,
 }
@@ -54,6 +55,7 @@ impl<'a> ::std::convert::From<&'a SelectionSet> for Selection {
         for item in &selection_set.items {
             let converted = match item {
                 Selection::Field(f) => SelectionItem::Field(SelectionField {
+                    alias: f.alias.as_ref().map(|alias| alias.to_string()),
                     name: f.name.to_string(),
                     fields: (&f.selection_set).into(),
                 }),
@@ -99,6 +101,7 @@ mod tests {
                 rating
             }
             pawsCount
+            aliased: sillyName
           }
         }
         "##;
@@ -123,13 +126,16 @@ mod tests {
         assert_eq!(
             selection,
             Selection(vec![SelectionItem::Field(SelectionField {
+                alias: None,
                 name: "animal".to_string(),
                 fields: Selection(vec![
                     SelectionItem::Field(SelectionField {
+                        alias: None,
                         name: "isCat".to_string(),
                         fields: Selection(Vec::new()),
                     }),
                     SelectionItem::Field(SelectionField {
+                        alias: None,
                         name: "isHorse".to_string(),
                         fields: Selection(Vec::new()),
                     }),
@@ -137,18 +143,26 @@ mod tests {
                         fragment_name: "Timestamps".to_string(),
                     }),
                     SelectionItem::Field(SelectionField {
+                        alias: None,
                         name: "barks".to_string(),
                         fields: Selection(Vec::new()),
                     }),
                     SelectionItem::InlineFragment(SelectionInlineFragment {
                         on: "Dog".to_string(),
                         fields: Selection(vec![SelectionItem::Field(SelectionField {
+                            alias: None,
                             name: "rating".to_string(),
                             fields: Selection(Vec::new()),
                         })]),
                     }),
                     SelectionItem::Field(SelectionField {
+                        alias: None,
                         name: "pawsCount".to_string(),
+                        fields: Selection(Vec::new()),
+                    }),
+                    SelectionItem::Field(SelectionField {
+                        alias: Some("aliased".to_string()),
+                        name: "sillyName".to_string(),
                         fields: Selection(Vec::new()),
                     }),
                 ]),

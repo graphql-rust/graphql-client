@@ -1,0 +1,12 @@
+schema {
+  query: QueryRoot
+}
+
+type QueryNest {
+  inner: String
+}
+
+type QueryRoot {
+  address: String
+  nested: QueryNest
+}

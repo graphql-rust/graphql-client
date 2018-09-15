@@ -1,0 +1,6 @@
+query AliasQuery {
+  alias: address
+  outer_alias: nested {
+    inner_alias: inner
+  }
+}
