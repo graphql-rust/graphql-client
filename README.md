@@ -150,6 +150,7 @@ Warmest thanks to all those who contributed in any way (not only code) to this p
 - Christian Legnitto (@LegNeato)
 - Dirkjan Ochtman (@djc)
 - Fausto Nunez Alberro (@brainlessdeveloper)
+- Hirokazu Hata (@h-michael)
 - Peter Gundel (@peterfication)
 - Sonny Scroggin (@scrogson)
 - Sooraj Chandran (@SoorajChandran)

@@ -38,15 +38,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - The CLI now supports the `--authorization` flag to pass the contents of an `Authorization` header. Thanks to @h-michael for the [PR](https://github.com/tomhoule/graphql-client/pull/92)!
 
-- Improved some codegen error messages, giving more context. Thank @mathstuf!
+- Improved some codegen error messages, giving more context. Thanks @mathstuf!
 
-- Aliases in queries are now supported.
+- Aliases in queries are now supported. Beyond the ergonomics, this is an important feature since it allows to query the same field on an object multiple times with different arguments, as shown in the [official guide](https://graphql.org/learn/queries/#aliases). Thanks a lot @mathstuf!
 
-- The traits in `response_derives` are now used for input types as well.
+- The traits in `response_derives` are now used for input types (variables) as well. In the future we may want to separate the options, but we will first experiment this way.
+
+- Most of the `graphql-query-derive` crate was factored out into a new `graphql-client-codegen` crate that should enable code generation through means other than custom derives (CLI, build scripts...). Thanks @h-michael for this important refactoring!
 
 ### Fixed
 
 - Handle all Rust keywords as field names in codegen by appending `_` to the generated names, so a field called `type` in a GraphQL query will become a `type_` field in the generated struct. Thanks to @scrogson!
+
+- [Some error message improvements](https://github.com/tomhoule/graphql-client/pull/100).
 
 ## [0.4.0] - 2018-08-23
 
