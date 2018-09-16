@@ -8,7 +8,7 @@ use query::QueryContext;
 use schema;
 use selection::Selection;
 
-pub(crate) fn response_for_query(
+pub fn response_for_query(
     schema: schema::Schema,
     query: query::Document,
     selected_operation: String,

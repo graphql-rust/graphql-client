@@ -36,8 +36,8 @@ use std::collections::HashMap;
 ///
 /// #[derive(GraphQLQuery)]
 /// #[graphql(
-///   query_path = "graphql_query_derive/src/tests/star_wars_query.graphql",
-///   schema_path = "graphql_query_derive/src/tests/star_wars_schema.graphql"
+///   query_path = "graphql_client_codegen/src/tests/star_wars_query.graphql",
+///   schema_path = "graphql_client_codegen/src/tests/star_wars_schema.graphql"
 /// )]
 /// struct StarWarsQuery;
 ///
