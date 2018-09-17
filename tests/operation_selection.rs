@@ -11,7 +11,6 @@ extern crate serde_json;
     schema_path = "tests/operation_selection/schema.graphql",
     response_derives = "Debug",
 )]
-#[allow(dead_code)]
 struct Heights;
 
 #[derive(GraphQLQuery)]
@@ -20,7 +19,6 @@ struct Heights;
     schema_path = "tests/operation_selection/schema.graphql",
     response_derives = "Debug",
 )]
-#[allow(dead_code)]
 struct Echo;
 
 const HEIGHTS_RESPONSE: &'static str = r##"{"mountainHeight": 224, "buildingHeight": 12}"##;

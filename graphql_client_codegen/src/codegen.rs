@@ -149,9 +149,13 @@ pub fn response_for_query(
     let response_derives = context.response_derives();
 
     Ok(quote! {
+        #[allow(dead_code)]
         type Boolean = bool;
+        #[allow(dead_code)]
         type Float = f64;
+        #[allow(dead_code)]
         type Int = i64;
+        #[allow(dead_code)]
         type ID = String;
 
         #(#scalar_definitions)*

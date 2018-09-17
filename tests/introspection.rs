@@ -11,7 +11,6 @@ extern crate serde_json;
     schema_path = "tests/introspection/introspection_schema.graphql",
     response_derives = "Debug,PartialEq"
 )]
-#[allow(dead_code)]
 struct IntrospectionQuery;
 
 #[test]
