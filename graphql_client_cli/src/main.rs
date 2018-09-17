@@ -78,6 +78,7 @@ fn introspect_schema(
     let request_body: graphql_client::GraphQLQueryBody<()> = graphql_client::GraphQLQueryBody {
         variables: (),
         query: introspection_query::QUERY,
+        operation_name: introspection_query::OPERATION_NAME,
     };
 
     let headers = set_headers(authorization);
