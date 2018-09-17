@@ -55,8 +55,10 @@ lazy_static! {
         CacheMap::default();
 }
 
-pub struct GraphQLClientDeriveOptions<'a> {
-    pub input: &'a syn::DeriveInput,
+pub struct GraphQLClientDeriveOptions {
+    pub selected_operation: String,
+    pub additional_derives: Option<String>,
+    pub deprecation_strategy: Option<deprecation::DeprecationStrategy>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -69,12 +71,13 @@ pub fn generate_module_token_stream(
     schema_path: std::path::PathBuf,
     options: Option<GraphQLClientDeriveOptions>,
 ) -> Result<TokenStream, failure::Error> {
-    let input = options.unwrap().input;
+    let options = options.unwrap();
 
-    let response_derives = attributes::extract_attr(input, "response_derives").ok();
+    let response_derives = options.additional_derives;
 
     // The user can determine what to do about deprecations.
-    let deprecation_strategy = deprecation::extract_deprecation_strategy(input)
+    let deprecation_strategy = options
+        .deprecation_strategy
         .unwrap_or(deprecation::DeprecationStrategy::Warn);
 
     // We need to qualify the query with the path to the crate it is part of
@@ -122,13 +125,16 @@ pub fn generate_module_token_stream(
         }
     };
 
-    let operation_string = input.ident.to_string();
-    let module_name = Ident::new(&operation_string.to_snake_case(), Span::call_site());
-    let struct_name = &input.ident;
+    let operation_string = options.selected_operation.clone();
+    let module_name = Ident::new(
+        options.selected_operation.to_snake_case().as_str(),
+        Span::call_site(),
+    );
+    let struct_name = Ident::new(options.selected_operation.as_str(), Span::call_site());
     let schema_output = codegen::response_for_query(
         schema,
         query,
-        input.ident.to_string(),
+        options.selected_operation.clone(),
         response_derives,
         deprecation_strategy,
     )?;

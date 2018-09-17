@@ -11,8 +11,8 @@ pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::Token
     let input = TokenStream::from(input);
     let ast = syn::parse2(input).expect("Derive input is well formed");
     let (query_path, schema_path) = build_query_and_schema_path(&ast);
-    let option = GraphQLClientDeriveOptions { input: &ast };
-    let gen = generate_module_token_stream(query_path, schema_path, Some(option)).unwrap();
+    let options = build_graphql_client_derive_options(&ast);
+    let gen = generate_module_token_stream(query_path, schema_path, Some(options)).unwrap();
     gen.into()
 }
 
@@ -28,4 +28,17 @@ fn build_query_and_schema_path(
     let schema_path = attributes::extract_attr(input, "schema_path").unwrap();
     let schema_path = ::std::path::Path::new(&cargo_manifest_dir).join(schema_path);
     (query_path, schema_path)
+}
+
+fn build_graphql_client_derive_options(input: &syn::DeriveInput) -> GraphQLClientDeriveOptions {
+    let response_derives = attributes::extract_attr(input, "response_derives").ok();
+    // The user can determine what to do about deprecations.
+    let deprecation_strategy = deprecation::extract_deprecation_strategy(input)
+        .unwrap_or(deprecation::DeprecationStrategy::Warn);
+
+    GraphQLClientDeriveOptions {
+        selected_operation: input.ident.to_string(),
+        additional_derives: response_derives,
+        deprecation_strategy: Some(deprecation_strategy),
+    }
 }
