@@ -9,8 +9,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
-use reqwest::header::*;
-use reqwest::mime;
+use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, ACCEPT};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -81,14 +80,14 @@ fn introspect_schema(
         operation_name: introspection_query::OPERATION_NAME,
     };
 
-    let headers = set_headers(authorization);
-
     let client = reqwest::Client::new();
-    let mut res = client
-        .post(&location)
-        .headers(headers)
-        .json(&request_body)
-        .send()?;
+
+    let mut req_builder = client.post(&location).headers(construct_headers());
+    if let Some(token) = authorization {
+        req_builder = req_builder.bearer_auth(token.as_str());
+    };
+
+    let mut res = req_builder.json(&request_body).send()?;
 
     if res.status().is_success() {
     } else if res.status().is_server_error() {
@@ -101,13 +100,9 @@ fn introspect_schema(
     Ok(serde_json::to_writer_pretty(out, &json)?)
 }
 
-fn set_headers(authorization: Option<String>) -> Headers {
-    let mut headers = Headers::new();
-    headers.set(Accept(vec![qitem(mime::APPLICATION_JSON)]));
-
-    match authorization {
-        Some(token) => headers.set(reqwest::header::Authorization(token)),
-        None => (),
-    };
+fn construct_headers() -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+    headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
     headers
 }
