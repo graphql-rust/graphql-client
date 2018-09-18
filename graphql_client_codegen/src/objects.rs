@@ -5,15 +5,18 @@ use field_type::FieldType;
 use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
+use schema::Schema;
 use selection::*;
 use shared::{field_impls_for_selection, response_fields_for_selection};
 use std::borrow::Cow;
+use std::cell::Cell;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GqlObject {
     pub description: Option<String>,
     pub fields: Vec<GqlObjectField>,
     pub name: String,
+    pub is_required: Cell<bool>,
 }
 
 #[derive(Clone, Debug, PartialEq, Hash)]
@@ -60,6 +63,7 @@ impl GqlObject {
             description: description.map(|s| s.to_owned()),
             name: name.into_owned(),
             fields: vec![typename_field()],
+            is_required: false.into(),
         }
     }
 
@@ -103,6 +107,18 @@ impl GqlObject {
         item.fields.extend(fields);
 
         item
+    }
+
+    pub(crate) fn require(&self, schema: &Schema) {
+        if self.is_required.get() {
+            return;
+        }
+        self.is_required.set(true);
+        self.fields
+            .iter()
+            .for_each(|field| {
+                schema.require(&field.type_.inner_name_string());
+            })
     }
 
     pub(crate) fn response_for_selection(

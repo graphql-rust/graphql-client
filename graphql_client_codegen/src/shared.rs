@@ -128,6 +128,7 @@ pub(crate) fn response_fields_for_selection(
             SelectionItem::FragmentSpread(fragment) => {
                 let field_name =
                     Ident::new(&fragment.fragment_name.to_snake_case(), Span::call_site());
+                context.require(&fragment.fragment_name);
                 let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
                 Ok(quote!{
                     #[serde(flatten)]

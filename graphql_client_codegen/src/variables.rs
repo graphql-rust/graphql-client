@@ -13,6 +13,7 @@ pub struct Variable {
 
 impl Variable {
     pub(crate) fn generate_default_value_constructor(&self, context: &QueryContext) -> TokenStream {
+        context.schema.require(&self.ty.inner_name_string());
         match &self.default {
             Some(default) => {
                 let fn_name = Ident::new(&format!("default_{}", self.name), Span::call_site());

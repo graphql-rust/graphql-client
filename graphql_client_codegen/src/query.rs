@@ -33,6 +33,12 @@ impl QueryContext {
         }
     }
 
+    pub(crate) fn require(&self, typename_: &str) {
+        self.fragments
+            .get(typename_)
+            .map(|fragment| fragment.is_required.set(true));
+    }
+
     /// For testing only. creates an empty QueryContext with an empty Schema.
     #[cfg(test)]
     pub(crate) fn new_empty() -> QueryContext {
@@ -52,13 +58,17 @@ impl QueryContext {
         selection: &Selection,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
-        if let Some(_enm) = self.schema.enums.get(ty) {
+        if let Some(enm) = self.schema.enums.get(ty) {
+            enm.is_required.set(true);
             Ok(quote!()) // we already expand enums separately
         } else if let Some(obj) = self.schema.objects.get(ty) {
+            obj.is_required.set(true);
             obj.response_for_selection(self, &selection, prefix)
         } else if let Some(iface) = self.schema.interfaces.get(ty) {
+            iface.is_required.set(true);
             iface.response_for_selection(self, &selection, prefix)
         } else if let Some(unn) = self.schema.unions.get(ty) {
+            unn.is_required.set(true);
             unn.response_for_selection(self, &selection, prefix)
         } else {
             Ok(quote!())

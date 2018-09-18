@@ -1,12 +1,14 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::Selection;
+use std::cell::Cell;
 
 #[derive(Debug, PartialEq)]
 pub struct GqlFragment {
     pub name: String,
     pub on: String,
     pub selection: Selection,
+    pub is_required: Cell<bool>,
 }
 
 impl GqlFragment {

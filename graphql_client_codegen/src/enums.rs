@@ -1,4 +1,5 @@
 use proc_macro2::{Ident, Span, TokenStream};
+use std::cell::Cell;
 
 pub const ENUMS_PREFIX: &str = "";
 
@@ -13,6 +14,7 @@ pub struct GqlEnum {
     pub description: Option<String>,
     pub name: String,
     pub variants: Vec<EnumVariant>,
+    pub is_required: Cell<bool>,
 }
 
 impl GqlEnum {

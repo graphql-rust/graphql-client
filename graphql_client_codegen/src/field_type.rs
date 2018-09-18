@@ -22,12 +22,12 @@ impl FieldType {
         };
         match &self {
             FieldType::Named(ref name) => {
-                let full_name = if context.schema.scalars.contains_key(name) || DEFAULT_SCALARS
+                let full_name = if context.schema.scalars.get(name).map(|s| s.is_required.set(true)).is_some() || DEFAULT_SCALARS
                     .iter()
                     .any(|elem| elem == name)
                 {
                     name.clone()
-                } else if context.schema.enums.contains_key(name) {
+                } else if context.schema.enums.get(name).map(|enm| enm.is_required.set(true)).is_some() {
                     format!("{}{}", ENUMS_PREFIX, name)
                 } else {
                     if prefix.is_empty() {
