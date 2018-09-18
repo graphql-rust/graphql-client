@@ -49,6 +49,7 @@ use std::collections::HashMap;
 ///     };
 ///
 ///     let expected_body = json!({
+///         "operationName": star_wars_query::OPERATION_NAME,
 ///         "query": star_wars_query::QUERY,
 ///         "variables": {
 ///             "episodeForHero": "NEWHOPE"
@@ -84,6 +85,9 @@ where
     pub variables: Variables,
     /// The GraphQL query, as a string.
     pub query: &'static str,
+    /// The GraphQL operation name, as a string.
+    #[serde(rename = "operationName")]
+    pub operation_name: &'static str,
 }
 
 /// Represents a location inside a query string. Used in errors. See [`GraphQLError`].

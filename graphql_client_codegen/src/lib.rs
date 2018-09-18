@@ -122,7 +122,8 @@ pub fn generate_module_token_stream(
         }
     };
 
-    let module_name = Ident::new(&input.ident.to_string().to_snake_case(), Span::call_site());
+    let operation_string = input.ident.to_string();
+    let module_name = Ident::new(&operation_string.to_snake_case(), Span::call_site());
     let struct_name = &input.ident;
     let schema_output = codegen::response_for_query(
         schema,
@@ -141,6 +142,7 @@ pub fn generate_module_token_stream(
             use serde;
 
             pub const QUERY: &'static str = #query_string;
+            pub const OPERATION_NAME: &'static str = #operation_string;
 
             #schema_output
         }
@@ -153,6 +155,7 @@ pub fn generate_module_token_stream(
                 ::graphql_client::GraphQLQueryBody {
                     variables,
                     query: #module_name::QUERY,
+                    operation_name: #module_name::OPERATION_NAME,
                 }
 
             }
