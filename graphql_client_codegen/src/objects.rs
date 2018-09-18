@@ -158,7 +158,7 @@ impl GqlObject {
         selection: &Selection,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
-        response_fields_for_selection(&self.fields, query_context, selection, prefix)
+        response_fields_for_selection(&self.name, &self.fields, query_context, selection, prefix)
     }
 }
 
