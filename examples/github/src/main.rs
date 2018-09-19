@@ -69,10 +69,8 @@ fn main() -> Result<(), failure::Error> {
 
     let mut res = client
         .post("https://api.github.com/graphql")
-        .header(reqwest::header::Authorization(format!(
-            "bearer {}",
-            config.github_api_token
-        ))).json(&q)
+        .bearer_auth(config.github_api_token)
+        .json(&q)
         .send()?;
 
     let response_body: GraphQLResponse<query1::ResponseData> = res.json()?;
