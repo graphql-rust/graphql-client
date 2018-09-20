@@ -73,7 +73,7 @@ fn main() -> Result<(), failure::Error> {
         .json(&q)
         .send()?;
 
-    let response_body: GraphQLResponse<query1::ResponseData> = res.json()?;
+    let response_body: Response<query1::ResponseData> = res.json()?;
     info!("{:?}", response_body);
 
     if let Some(errors) = response_body.errors {

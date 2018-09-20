@@ -98,7 +98,7 @@ fn cb() -> Closure<Fn(String)> {
 
         let parent = document.body();
 
-        let json: GraphQLResponse<puppy_smiles::ResponseData> =
+        let json: Response<puppy_smiles::ResponseData> =
             serde_json::from_str(&s).expect("failed to deserialize");
         let response = document.createElement("div");
         let mut inner_html = String::new();
