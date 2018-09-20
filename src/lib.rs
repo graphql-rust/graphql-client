@@ -5,6 +5,7 @@
 #![deny(warnings)]
 #![deny(missing_docs)]
 
+extern crate itertools;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -17,6 +18,9 @@ extern crate serde_json;
 pub use graphql_query_derive::*;
 
 use std::collections::HashMap;
+use std::fmt::{self, Display};
+
+use itertools::Itertools;
 
 /// A convenience trait that can be used to build a GraphQL request body.
 ///
@@ -91,7 +95,7 @@ where
 }
 
 /// Represents a location inside a query string. Used in errors. See [`Error`].
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq)]
 pub struct Location {
     /// The line number in the query string where the error originated (starting from 1).
     pub line: i32,
@@ -100,13 +104,22 @@ pub struct Location {
 }
 
 /// Part of a path in a query. It can be an object key or an array index. See [`Error`].
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum PathFragment {
     /// A key inside an object
     Key(String),
     /// An index inside an array
     Index(i32),
+}
+
+impl Display for PathFragment {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            PathFragment::Key(ref key) => write!(f, "{}", key),
+            PathFragment::Index(ref idx) => write!(f, "{}", idx),
+        }
+    }
 }
 
 /// An element in the top-level `errors` array of a response body.
@@ -177,7 +190,7 @@ pub enum PathFragment {
 /// #     Ok(())
 /// # }
 /// ```
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Error {
     /// The human-readable error message. This is the only required field.
     pub message: String,
@@ -187,6 +200,25 @@ pub struct Error {
     pub path: Option<Vec<PathFragment>>,
     /// Additional errors. Their exact format is defined by the server.
     pub extensions: Option<HashMap<String, serde_json::Value>>,
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Use `/` as a separator like JSON Pointer.
+        let path = self.path
+            .as_ref()
+            .map(|fragments| format!("{}", fragments.iter().format("/")))
+            .unwrap_or_else(|| "<query>".to_string());
+
+        // Get the location of the error. We'll use just the first location for this.
+        let loc = self.locations
+            .as_ref()
+            .and_then(|locations| locations.iter().next())
+            .cloned()
+            .unwrap_or_else(Location::default);
+
+        write!(f, "{}:{}:{}: {}", path, loc.line, loc.column, self.message)
+    }
 }
 
 /// The generic shape taken by the responses of GraphQL APIs.
