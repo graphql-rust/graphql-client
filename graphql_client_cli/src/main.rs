@@ -41,19 +41,20 @@ enum Cli {
     #[structopt(name = "generate")]
     Generate {
         // should be a glob
-        /// Path to graphql query file
+        /// Path to graphql query file.
         #[structopt(parse(from_os_str))]
         query_path: PathBuf,
-        /// Path to graphql schema file
+        /// Path to graphql schema file.
         #[structopt(parse(from_os_str))]
         schema_path: PathBuf,
-        /// Name of struct
+        /// Name of struct that is implementation target.
         selected_operation: String,
-        /// Additional derives
+        /// Additional derives that will be added to the generated structs and enums for the response and the variables.
         /// --additional-derives='Serialize,PartialEq'
         #[structopt(short = "a", long = "additional-derives")]
         additional_derives: Option<String>,
-        /// allow, deny, or warn
+        /// You can choose deprecation strategy from allow, deny, or warn.
+        /// Default value is warn.
         #[structopt(short = "d", long = "deprecation-strategy",)]
         deprecation_strategy: Option<String>,
         #[structopt(parse(from_os_str))]
