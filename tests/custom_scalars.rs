@@ -16,8 +16,7 @@ type NetworkAddress = Ipv4Addr;
     query_path = "tests/custom_scalars/query.graphql",
     schema_path = "tests/custom_scalars/schema.graphql"
 )]
-#[allow(dead_code)]
-struct CustomScalarsQuery;
+pub struct CustomScalarsQuery;
 
 #[test]
 fn custom_scalars() {

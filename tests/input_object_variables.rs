@@ -11,8 +11,7 @@ extern crate serde_json;
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
     response_derives = "Debug",
 )]
-#[allow(dead_code)]
-struct InputObjectVariablesQuery;
+pub struct InputObjectVariablesQuery;
 
 #[test]
 fn input_object_variables_query_variables_struct() {
@@ -37,8 +36,7 @@ type Email = String;
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
     response_derives = "Debug",
 )]
-#[allow(dead_code)]
-struct DefaultInputObjectVariablesQuery;
+pub struct DefaultInputObjectVariablesQuery;
 
 #[test]
 fn input_object_variables_default() {

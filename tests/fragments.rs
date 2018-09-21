@@ -11,8 +11,7 @@ extern crate serde_json;
     query_path = "tests/fragments/query.graphql",
     schema_path = "tests/fragments/schema.graphql"
 )]
-#[allow(dead_code)]
-struct FragmentReference;
+pub struct FragmentReference;
 
 #[test]
 fn fragment_reference() {
@@ -24,7 +23,10 @@ fn fragment_reference() {
         serde_json::from_value::<fragment_reference::ResponseData>(valid_response).unwrap();
 
     assert_eq!(
-        valid_fragment_reference.fragment_reference.in_fragment.unwrap(),
+        valid_fragment_reference
+            .fragment_reference
+            .in_fragment
+            .unwrap(),
         "value"
     );
 }
