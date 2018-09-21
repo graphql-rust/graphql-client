@@ -10,6 +10,7 @@ extern crate serde_json;
     query_path = "tests/scalar_variables/scalar_variables_query.graphql",
     schema_path = "tests/scalar_variables/scalar_variables_schema.graphql"
 )]
+#[allow(dead_code)]
 struct ScalarVariablesQuery;
 
 #[test]
@@ -25,6 +26,7 @@ fn scalar_variables_query_variables_struct() {
     query_path = "tests/scalar_variables/scalar_variables_query_defaults.graphql",
     schema_path = "tests/scalar_variables/scalar_variables_schema.graphql"
 )]
+#[allow(dead_code)]
 struct DefaultScalarVariablesQuery;
 
 #[test]

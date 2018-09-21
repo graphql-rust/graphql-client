@@ -10,6 +10,7 @@ extern crate serde_derive;
     query_path = "tests/more_derives/query.graphql",
     response_derives = "Debug, PartialEq, PartialOrd",
 )]
+#[allow(dead_code)]
 struct MoreDerives;
 
 #[test]

@@ -13,6 +13,7 @@ const RESPONSE: &'static str = include_str!("unions/union_query_response.json");
     schema_path = "tests/unions/union_schema.graphql",
     response_derives = "PartialEq, Debug",
 )]
+#[allow(dead_code)]
 struct UnionQuery;
 
 #[test]
