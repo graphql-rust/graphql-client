@@ -11,8 +11,7 @@ extern crate serde_json;
     query_path = "tests/alias/query.graphql",
     schema_path = "tests/alias/schema.graphql"
 )]
-#[allow(dead_code)]
-struct AliasQuery;
+pub struct AliasQuery;
 
 #[test]
 fn alias() {
@@ -23,17 +22,11 @@ fn alias() {
         },
     });
 
-    let _type_name_test = alias_query::RustAliasQueryOuterAlias {
-        inner_alias: None,
-    };
+    let _type_name_test = alias_query::RustAliasQueryOuterAlias { inner_alias: None };
 
-    let valid_alias =
-        serde_json::from_value::<alias_query::ResponseData>(valid_response).unwrap();
+    let valid_alias = serde_json::from_value::<alias_query::ResponseData>(valid_response).unwrap();
 
-    assert_eq!(
-        valid_alias.alias.unwrap(),
-        "127.0.1.2"
-    );
+    assert_eq!(valid_alias.alias.unwrap(), "127.0.1.2");
     assert_eq!(
         valid_alias.outer_alias.unwrap().inner_alias.unwrap(),
         "inner value"

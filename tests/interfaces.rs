@@ -13,7 +13,7 @@ const RESPONSE: &'static str = include_str!("interfaces/interface_response.json"
     schema_path = "tests/interfaces/interface_schema.graphql",
     response_derives = "Debug, PartialEq",
 )]
-struct InterfaceQuery;
+pub struct InterfaceQuery;
 
 #[test]
 fn interface_deserialization() {
@@ -60,7 +60,7 @@ fn interface_deserialization() {
     schema_path = "tests/interfaces/interface_schema.graphql",
     response_derives = "Debug",
 )]
-struct InterfaceNotOnEverythingQuery;
+pub struct InterfaceNotOnEverythingQuery;
 
 const RESPONSE_NOT_ON_EVERYTHING: &'static str =
     include_str!("interfaces/interface_response_not_on_everything.json");

@@ -22,7 +22,7 @@ const RESPONSE: &str = include_str!("subscription/subscription_query_response.js
     query_path = "tests/subscription/subscription_query.graphql",
     response_derives = "Debug, PartialEq"
 )]
-struct SubscriptionQuery;
+pub struct SubscriptionQuery;
 
 #[test]
 fn subscriptions_work() {

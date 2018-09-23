@@ -10,8 +10,7 @@ extern crate serde_derive;
     query_path = "tests/deprecation/query.graphql",
     deprecated = "allow",
 )]
-#[allow(unused_variables)]
-struct AllowDeprecation;
+pub struct AllowDeprecation;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -19,8 +18,7 @@ struct AllowDeprecation;
     query_path = "tests/deprecation/query.graphql",
     deprecated = "deny",
 )]
-#[allow(unused_variables)]
-struct DenyDeprecation;
+pub struct DenyDeprecation;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -28,8 +26,7 @@ struct DenyDeprecation;
     query_path = "tests/deprecation/query.graphql",
     deprecated = "warn",
 )]
-#[allow(unused_variables)]
-struct WarnDeprecation;
+pub struct WarnDeprecation;
 
 #[test]
 fn deprecation_allow() {
