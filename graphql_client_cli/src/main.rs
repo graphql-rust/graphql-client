@@ -10,19 +10,10 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
-use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, ACCEPT};
-use std::fs::File;
-use std::io::Write as IoWrite;
+mod generate;
+mod introspect_schema;
 use std::path::PathBuf;
 use structopt::StructOpt;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "src/introspection_schema.graphql",
-    query_path = "src/introspection_query.graphql",
-    response_derives = "Serialize"
-)]
-struct IntrospectionQuery;
 
 #[derive(StructOpt)]
 enum Cli {
@@ -69,7 +60,7 @@ fn main() -> Result<(), failure::Error> {
             schema_location,
             output,
             authorization,
-        } => introspect_schema(schema_location, output, authorization),
+        } => introspect_schema::introspect_schema(&schema_location, output, authorization),
         Cli::Generate {
             query_path,
             schema_path,
@@ -77,7 +68,7 @@ fn main() -> Result<(), failure::Error> {
             additional_derives,
             deprecation_strategy,
             output,
-        } => generate_code(
+        } => generate::generate_code(
             query_path,
             schema_path,
             selected_operation,
@@ -86,80 +77,4 @@ fn main() -> Result<(), failure::Error> {
             output,
         ),
     }
-}
-
-fn introspect_schema(
-    location: String,
-    output: Option<PathBuf>,
-    authorization: Option<String>,
-) -> Result<(), failure::Error> {
-    use std::io::Write;
-
-    let out: Box<Write> = match output {
-        Some(path) => Box::new(::std::fs::File::create(path)?),
-        None => Box::new(::std::io::stdout()),
-    };
-
-    let request_body: graphql_client::QueryBody<()> = graphql_client::QueryBody {
-        variables: (),
-        query: introspection_query::QUERY,
-        operation_name: introspection_query::OPERATION_NAME,
-    };
-
-    let client = reqwest::Client::new();
-
-    let mut req_builder = client.post(&location).headers(construct_headers());
-    if let Some(token) = authorization {
-        req_builder = req_builder.bearer_auth(token.as_str());
-    };
-
-    let mut res = req_builder.json(&request_body).send()?;
-
-    if res.status().is_success() {
-    } else if res.status().is_server_error() {
-        println!("server error!");
-    } else {
-        println!("Something else happened. Status: {:?}", res.status());
-    }
-
-    let json: serde_json::Value = res.json()?;
-    Ok(serde_json::to_writer_pretty(out, &json)?)
-}
-
-fn construct_headers() -> HeaderMap {
-    let mut headers = HeaderMap::new();
-    headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
-    headers
-}
-
-fn generate_code(
-    query_path: PathBuf,
-    schema_path: PathBuf,
-    selected_operation: String,
-    additional_derives: Option<String>,
-    deprecation_strategy: Option<String>,
-    output: PathBuf,
-) -> Result<(), failure::Error> {
-    let deprecation_strategy = deprecation_strategy.as_ref().map(|s| s.as_str());
-    let deprecation_strategy = match deprecation_strategy {
-        Some("allow") => Some(graphql_client_codegen::deprecation::DeprecationStrategy::Allow),
-        Some("deny") => Some(graphql_client_codegen::deprecation::DeprecationStrategy::Deny),
-        Some("warn") => Some(graphql_client_codegen::deprecation::DeprecationStrategy::Warn),
-        _ => None,
-    };
-
-    let options = graphql_client_codegen::GraphQLClientDeriveOptions {
-        selected_operation,
-        additional_derives: additional_derives,
-        deprecation_strategy,
-    };
-    let gen = graphql_client_codegen::generate_module_token_stream(
-        query_path,
-        schema_path,
-        Some(options),
-    )?;
-    let mut file = File::create(output)?;
-    write!(file, "{}", gen.to_string());
-    Ok(())
 }
