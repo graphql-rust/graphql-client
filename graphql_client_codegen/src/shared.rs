@@ -82,17 +82,12 @@ pub(crate) fn field_impls_for_selection(
                     .ok_or_else(|| format_err!("could not find field `{}`", name))?
                     .type_
                     .inner_name_string();
-                let prefix = format!(
-                    "{}{}",
-                    prefix.to_camel_case(),
-                    alias.to_camel_case()
-                );
+                let prefix = format!("{}{}", prefix.to_camel_case(), alias.to_camel_case());
                 context.maybe_expand_field(&ty, &selected.fields, &prefix)
             } else {
                 Ok(quote!())
             }
-        })
-        .collect()
+        }).collect()
 }
 
 pub(crate) fn response_fields_for_selection(
@@ -118,7 +113,10 @@ pub(crate) fn response_fields_for_selection(
                             "Could not find field `{}` on `{}`. Available fields: `{}`.",
                             name.as_str(),
                             type_name,
-                            schema_fields.iter().map(|ref field| &field.name).format("`, `"),
+                            schema_fields
+                                .iter()
+                                .map(|ref field| &field.name)
+                                .format("`, `"),
                         )
                     })?;
                 let ty = schema_field.type_.to_rust(
@@ -144,17 +142,15 @@ pub(crate) fn response_fields_for_selection(
                     pub #field_name: #type_name
                 })
             }
-            SelectionItem::InlineFragment(_) => {
-                Err(format_err!("unimplemented: inline fragment on object field"))?
-            }
-        })
-        .filter(|x| match x {
+            SelectionItem::InlineFragment(_) => Err(format_err!(
+                "unimplemented: inline fragment on object field"
+            ))?,
+        }).filter(|x| match x {
             // Remove empty fields so callers always know a field has some
             // tokens.
             Ok(f) => !f.is_empty(),
             Err(_) => true,
-        })
-        .collect()
+        }).collect()
 }
 
 /// Given the GraphQL schema name for an object/interface/input object field and

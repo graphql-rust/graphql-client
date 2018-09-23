@@ -114,11 +114,9 @@ impl GqlObject {
             return;
         }
         self.is_required.set(true);
-        self.fields
-            .iter()
-            .for_each(|field| {
-                schema.require(&field.type_.inner_name_string());
-            })
+        self.fields.iter().for_each(|field| {
+            schema.require(&field.type_.inner_name_string());
+        })
     }
 
     pub(crate) fn response_for_selection(

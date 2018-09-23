@@ -19,7 +19,10 @@ impl GqlFragment {
         let object = if let Some(object) = opt_object {
             object
         } else {
-            panic!("fragment '{}' cannot operate on unknown type '{}'", self.name, self.on);
+            panic!(
+                "fragment '{}' cannot operate on unknown type '{}'",
+                self.name, self.on
+            );
         };
         let field_impls = object.field_impls_for_selection(context, &self.selection, &self.name)?;
         let fields = object.response_fields_for_selection(context, &self.selection, &self.name)?;

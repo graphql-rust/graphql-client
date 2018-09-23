@@ -7,8 +7,8 @@ use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use schema::Schema;
-use std::collections::HashMap;
 use std::cell::Cell;
+use std::collections::HashMap;
 
 /// Represents an input object type from a GraphQL schema
 #[derive(Debug, Clone, PartialEq)]
@@ -25,11 +25,9 @@ impl GqlInput {
             return;
         }
         self.is_required.set(true);
-        self.fields
-            .values()
-            .for_each(|field| {
-                schema.require(&field.type_.inner_name_string());
-            })
+        self.fields.values().for_each(|field| {
+            schema.require(&field.type_.inner_name_string());
+        })
     }
 
     pub(crate) fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, failure::Error> {
@@ -144,7 +142,9 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "requirements".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Named("CatRequirements".to_string()))),
+                        type_: FieldType::Optional(Box::new(FieldType::Named(
+                            "CatRequirements".to_string(),
+                        ))),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),
