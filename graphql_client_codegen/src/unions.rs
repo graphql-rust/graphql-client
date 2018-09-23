@@ -3,8 +3,8 @@ use failure;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::{Selection, SelectionItem};
-use std::collections::BTreeSet;
 use std::cell::Cell;
+use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GqlUnion {
@@ -34,62 +34,51 @@ pub(crate) fn union_variants(
     let mut used_variants = Vec::with_capacity(selection.0.len());
 
     let variants: Result<Vec<TokenStream>, failure::Error> = selection
-            .0
-            .iter()
-            // ignore __typename
-            .filter(|item| {
-                if let SelectionItem::Field(f) = item {
-                    f.name != TYPENAME_FIELD
-                } else {
-                    true
+        .0
+        .iter()
+        // ignore __typename
+        .filter(|item| {
+            if let SelectionItem::Field(f) = item {
+                f.name != TYPENAME_FIELD
+            } else {
+                true
+            }
+        }).map(|item| {
+            match item {
+                SelectionItem::Field(_) => Err(format_err!("field selection on union"))?,
+                SelectionItem::FragmentSpread(_) => Err(format_err!("fragment spread on union"))?,
+                SelectionItem::InlineFragment(frag) => {
+                    let variant_name = Ident::new(&frag.on, Span::call_site());
+                    used_variants.push(frag.on.to_string());
+
+                    let new_prefix = format!("{}On{}", prefix, frag.on);
+
+                    let variant_type = Ident::new(&new_prefix, Span::call_site());
+
+                    let field_object_type = query_context.schema.objects.get(&frag.on).map(|_f| {
+                        query_context.maybe_expand_field(&frag.on, &frag.fields, &new_prefix)
+                    });
+                    let field_interface = query_context.schema.interfaces.get(&frag.on).map(|_f| {
+                        query_context.maybe_expand_field(&frag.on, &frag.fields, &new_prefix)
+                    });
+                    // nested unions, is that even a thing?
+                    let field_union_type = query_context.schema.unions.get(&frag.on).map(|_f| {
+                        query_context.maybe_expand_field(&frag.on, &frag.fields, &new_prefix)
+                    });
+
+                    match field_object_type.or(field_interface).or(field_union_type) {
+                        Some(tokens) => children_definitions.push(tokens?),
+                        None => Err(UnionError::UnknownType {
+                            ty: frag.on.to_string(),
+                        })?,
+                    };
+
+                    Ok(quote! {
+                        #variant_name(#variant_type)
+                    })
                 }
-            })
-            .map(|item| {
-                match item {
-                    SelectionItem::Field(_) => Err(format_err!("field selection on union"))?,
-                    SelectionItem::FragmentSpread(_) => Err(format_err!("fragment spread on union"))?,
-                    SelectionItem::InlineFragment(frag) => {
-                        let variant_name = Ident::new(&frag.on, Span::call_site());
-                        used_variants.push(frag.on.to_string());
-
-                        let new_prefix = format!("{}On{}", prefix, frag.on);
-
-                        let variant_type = Ident::new(&new_prefix, Span::call_site());
-
-                        let field_object_type =
-                            query_context.schema.objects.get(&frag.on).map(|_f| {
-                                query_context.maybe_expand_field(
-                                    &frag.on,
-                                    &frag.fields,
-                                    &new_prefix,
-                                )
-                            });
-                        let field_interface = query_context.schema.interfaces.get(&frag.on).map(|_f| {
-                            query_context.maybe_expand_field(
-                                &frag.on,
-                                &frag.fields,
-                                &new_prefix,
-                            )
-                        });
-                        // nested unions, is that even a thing?
-                        let field_union_type = query_context.schema.unions.get(&frag.on).map(|_f| {
-                            query_context.maybe_expand_field(&frag.on, &frag.fields, &new_prefix)
-                        });
-
-                        match field_object_type.or(field_interface).or(field_union_type) {
-                            Some(tokens) => children_definitions.push(tokens?),
-                            None => Err(UnionError::UnknownType {
-                                ty: frag.on.to_string(),
-                            })?,
-                        };
-
-                        Ok(quote! {
-                            #variant_name(#variant_type)
-                        })
-                    }
-                }
-            })
-            .collect();
+            }
+        }).collect();
 
     let variants = variants?;
 

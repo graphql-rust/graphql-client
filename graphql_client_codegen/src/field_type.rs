@@ -22,12 +22,22 @@ impl FieldType {
         };
         match &self {
             FieldType::Named(ref name) => {
-                let full_name = if context.schema.scalars.get(name).map(|s| s.is_required.set(true)).is_some() || DEFAULT_SCALARS
-                    .iter()
-                    .any(|elem| elem == name)
+                let full_name = if context
+                    .schema
+                    .scalars
+                    .get(name)
+                    .map(|s| s.is_required.set(true))
+                    .is_some()
+                    || DEFAULT_SCALARS.iter().any(|elem| elem == name)
                 {
                     name.clone()
-                } else if context.schema.enums.get(name).map(|enm| enm.is_required.set(true)).is_some() {
+                } else if context
+                    .schema
+                    .enums
+                    .get(name)
+                    .map(|enm| enm.is_required.set(true))
+                    .is_some()
+                {
                     format!("{}{}", ENUMS_PREFIX, name)
                 } else {
                     if prefix.is_empty() {
@@ -155,10 +165,7 @@ mod tests {
 
         let ty = GqlParserType::NonNullType(Box::new(GqlParserType::NamedType("Cat".to_string())));
 
-        assert_eq!(
-            FieldType::from(ty),
-            FieldType::Named("Cat".to_string())
-        );
+        assert_eq!(FieldType::from(ty), FieldType::Named("Cat".to_string()));
     }
 
     #[test]
@@ -186,9 +193,6 @@ mod tests {
                 })),
             },
         };
-        assert_eq!(
-            FieldType::from(ty),
-            FieldType::Named("Cat".to_string())
-        );
+        assert_eq!(FieldType::from(ty), FieldType::Named("Cat".to_string()));
     }
 }

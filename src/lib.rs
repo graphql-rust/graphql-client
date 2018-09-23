@@ -205,13 +205,15 @@ pub struct Error {
 impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Use `/` as a separator like JSON Pointer.
-        let path = self.path
+        let path = self
+            .path
             .as_ref()
             .map(|fragments| format!("{}", fragments.iter().format("/")))
             .unwrap_or_else(|| "<query>".to_string());
 
         // Get the location of the error. We'll use just the first location for this.
-        let loc = self.locations
+        let loc = self
+            .locations
             .as_ref()
             .and_then(|locations| locations.iter().next())
             .cloned()

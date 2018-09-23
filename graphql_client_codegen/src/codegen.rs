@@ -49,12 +49,10 @@ pub fn response_for_query(
         .find(|op| op.name == selected_operation)
         .map(|i| i.to_owned());
 
-    let opt_operation = context.selected_operation.clone().or_else(|| {
-        operations
-            .iter()
-            .next()
-            .map(|i| i.to_owned())
-    });
+    let opt_operation = context
+        .selected_operation
+        .clone()
+        .or_else(|| operations.iter().next().map(|i| i.to_owned()));
     let operation = if let Some(operation) = opt_operation {
         operation
     } else {
@@ -62,12 +60,14 @@ pub fn response_for_query(
     };
 
     let response_data_fields = {
-        let opt_root_name = operation
-            .root_name(&context.schema);
+        let opt_root_name = operation.root_name(&context.schema);
         let root_name: String = if let Some(root_name) = opt_root_name {
             root_name
         } else {
-            panic!("operation type '{:?}' not in schema", operation.operation_type);
+            panic!(
+                "operation type '{:?}' not in schema",
+                operation.operation_type
+            );
         };
         let definition = context
             .schema
@@ -94,17 +94,13 @@ pub fn response_for_query(
             .unwrap()
     };
 
-    let enum_definitions = context
-        .schema
-        .enums
-        .values()
-        .filter_map(|enm| {
-            if enm.is_required.get() {
-                Some(enm.to_rust(&context))
-            } else {
-                None
-            }
-        });
+    let enum_definitions = context.schema.enums.values().filter_map(|enm| {
+        if enm.is_required.get() {
+            Some(enm.to_rust(&context))
+        } else {
+            None
+        }
+    });
     let fragment_definitions: Result<Vec<TokenStream>, _> = context
         .fragments
         .values()
@@ -114,8 +110,7 @@ pub fn response_for_query(
             } else {
                 None
             }
-        })
-        .collect();
+        }).collect();
     let fragment_definitions = fragment_definitions?;
     let variables_struct = operation.expand_variables(&context);
 
@@ -129,8 +124,7 @@ pub fn response_for_query(
             } else {
                 None
             }
-        })
-        .collect();
+        }).collect();
     let input_object_definitions = input_object_definitions?;
 
     let scalar_definitions: Vec<TokenStream> = context
@@ -143,8 +137,7 @@ pub fn response_for_query(
             } else {
                 None
             }
-        })
-        .collect();
+        }).collect();
 
     let response_derives = context.response_derives();
 

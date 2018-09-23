@@ -57,23 +57,22 @@ impl Schema {
     }
 
     pub(crate) fn require(&self, typename_: &str) {
-        DEFAULT_SCALARS.iter()
+        DEFAULT_SCALARS
+            .iter()
             .find(|&&s| s == typename_)
             .map(|_| ())
             .or_else(|| {
-                self.enums.get(typename_)
+                self.enums
+                    .get(typename_)
                     .map(|enm| enm.is_required.set(true))
-            })
+            }).or_else(|| self.inputs.get(typename_).map(|input| input.require(self)))
             .or_else(|| {
-                self.inputs.get(typename_)
-                    .map(|input| input.require(self))
-            })
-            .or_else(|| {
-                self.objects.get(typename_)
+                self.objects
+                    .get(typename_)
                     .map(|object| object.require(self))
-            })
-            .or_else(|| {
-                self.scalars.get(typename_)
+            }).or_else(|| {
+                self.scalars
+                    .get(typename_)
                     .map(|scalar| scalar.is_required.set(true))
             });
     }
@@ -350,7 +349,9 @@ mod tests {
                         description: None,
                         name: "friends".to_string(),
                         type_: FieldType::Optional(Box::new(FieldType::Vector(Box::new(
-                            FieldType::Optional(Box::new(FieldType::Named("Character".to_string()))),
+                            FieldType::Optional(Box::new(FieldType::Named(
+                                "Character".to_string()
+                            ))),
                         )))),
                         deprecation: DeprecationStatus::Current,
                     },
@@ -371,7 +372,9 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "primaryFunction".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Named("String".to_string()))),
+                        type_: FieldType::Optional(Box::new(FieldType::Named(
+                            "String".to_string()
+                        ))),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],

@@ -43,26 +43,37 @@ impl GqlInterface {
             .ok_or_else(|| format_err!("Missing __typename in selection for {}", prefix))?;
 
         let object_selection = Selection(
-            selection.0.iter()
-            // Only keep what we can handle
-            .filter(|f| match f {
-                SelectionItem::Field(f) => f.name != "__typename",
-                SelectionItem::FragmentSpread(_) => true,
-                SelectionItem::InlineFragment(_) => false,
-            }).map(|a| (*a).clone()).collect(),
+            selection
+                .0
+                .iter()
+                // Only keep what we can handle
+                .filter(|f| match f {
+                    SelectionItem::Field(f) => f.name != "__typename",
+                    SelectionItem::FragmentSpread(_) => true,
+                    SelectionItem::InlineFragment(_) => false,
+                }).map(|a| (*a).clone())
+                .collect(),
         );
 
         let union_selection = Selection(
-            selection.0.iter()
-            // Only keep what we can handle
-            .filter(|f| match f {
-                SelectionItem::InlineFragment(_) => true,
-                SelectionItem::Field(_) | SelectionItem::FragmentSpread(_) => false,
-            }).map(|a| (*a).clone()).collect(),
+            selection
+                .0
+                .iter()
+                // Only keep what we can handle
+                .filter(|f| match f {
+                    SelectionItem::InlineFragment(_) => true,
+                    SelectionItem::Field(_) | SelectionItem::FragmentSpread(_) => false,
+                }).map(|a| (*a).clone())
+                .collect(),
         );
 
-        let object_fields =
-            response_fields_for_selection(&self.name, &self.fields, query_context, &object_selection, prefix)?;
+        let object_fields = response_fields_for_selection(
+            &self.name,
+            &self.fields,
+            query_context,
+            &object_selection,
+            prefix,
+        )?;
 
         let object_children =
             field_impls_for_selection(&self.fields, query_context, &object_selection, prefix)?;
