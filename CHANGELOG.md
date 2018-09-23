@@ -46,7 +46,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Most of the `graphql-query-derive` crate was factored out into a new `graphql-client-codegen` crate that should enable code generation through means other than custom derives (CLI, build scripts...). Thanks @h-michael for this important refactoring!
 
-- Types have been renamed. Types no longer have a `GraphQL` prefix.
+- Top-level exported types have been renamed. Types no longer have a `GraphQL` prefix. e.g. `GraphQLQuery` -> `Query`, `GraphQLError` -> `Error`.
+
+- For several classes of items that we generate, we only generate those that are actually used by the query. This way, you do not need to define mappings for _every_ scalar in the schema you are querying - even for small queries - anymore. This also improves compile times a lot in some scenarios. (#116 - thanks @mathstuf!)
 
 ### Fixed
 
