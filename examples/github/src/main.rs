@@ -28,7 +28,7 @@ type URI = String;
     query_path = "src/query_1.graphql",
     response_derives = "Debug",
 )]
-struct Query1;
+struct RepoView;
 
 #[derive(StructOpt)]
 struct Command {
@@ -60,7 +60,7 @@ fn main() -> Result<(), failure::Error> {
     let repo = args.repo;
     let (owner, name) = parse_repo_name(&repo).unwrap_or(("tomhoule", "graphql-client"));
 
-    let q = Query1::build_query(query1::Variables {
+    let q = RepoView::build_query(repo_view::Variables {
         owner: owner.to_string(),
         name: name.to_string(),
     });
@@ -73,7 +73,7 @@ fn main() -> Result<(), failure::Error> {
         .json(&q)
         .send()?;
 
-    let response_body: Response<query1::ResponseData> = res.json()?;
+    let response_body: Response<repo_view::ResponseData> = res.json()?;
     info!("{:?}", response_body);
 
     if let Some(errors) = response_body.errors {
@@ -84,7 +84,7 @@ fn main() -> Result<(), failure::Error> {
         }
     }
 
-    let response_data: query1::ResponseData = response_body.data.expect("missing response data");
+    let response_data: repo_view::ResponseData = response_body.data.expect("missing response data");
 
     let stars: Option<i64> = response_data
         .repository
