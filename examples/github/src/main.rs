@@ -2,7 +2,6 @@ extern crate dotenv;
 extern crate envy;
 #[macro_use]
 extern crate failure;
-#[macro_use]
 extern crate graphql_client;
 #[macro_use]
 extern crate log;
@@ -12,7 +11,6 @@ extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate structopt;
 #[macro_use]
 extern crate prettytable;

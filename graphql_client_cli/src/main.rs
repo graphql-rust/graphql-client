@@ -1,6 +1,5 @@
 extern crate failure;
 extern crate reqwest;
-#[macro_use]
 extern crate structopt;
 #[macro_use]
 extern crate graphql_client;
