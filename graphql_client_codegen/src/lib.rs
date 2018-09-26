@@ -78,7 +78,7 @@ pub fn generate_module_token_stream(
     // The user can determine what to do about deprecations.
     let deprecation_strategy = options
         .deprecation_strategy
-        .unwrap_or(deprecation::DeprecationStrategy::Warn);
+        .unwrap_or(deprecation::DeprecationStrategy::default());
 
     // We need to qualify the query with the path to the crate it is part of
     let (query_string, query) = {

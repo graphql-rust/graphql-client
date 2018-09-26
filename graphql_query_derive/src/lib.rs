@@ -34,7 +34,7 @@ fn build_graphql_client_derive_options(input: &syn::DeriveInput) -> GraphQLClien
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
     // The user can determine what to do about deprecations.
     let deprecation_strategy = deprecation::extract_deprecation_strategy(input)
-        .unwrap_or(deprecation::DeprecationStrategy::Warn);
+        .unwrap_or(deprecation::DeprecationStrategy::default());
 
     GraphQLClientDeriveOptions {
         selected_operation: input.ident.to_string(),
