@@ -17,6 +17,10 @@ pub enum DeprecationStrategy {
     Warn,
 }
 
+impl Default for DeprecationStrategy {
+    fn default() -> Self { DeprecationStrategy::Warn }
+}
+
 pub fn extract_deprecation_strategy(
     ast: &syn::DeriveInput,
 ) -> Result<DeprecationStrategy, failure::Error> {
