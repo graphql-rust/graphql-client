@@ -18,7 +18,9 @@ pub enum DeprecationStrategy {
 }
 
 impl Default for DeprecationStrategy {
-    fn default() -> Self { DeprecationStrategy::Warn }
+    fn default() -> Self {
+        DeprecationStrategy::Warn
+    }
 }
 
 pub fn extract_deprecation_strategy(
