@@ -56,7 +56,7 @@ lazy_static! {
 }
 
 pub struct GraphQLClientDeriveOptions {
-    pub selected_operation: String,
+    pub struct_name: String,
     pub additional_derives: Option<String>,
     pub deprecation_strategy: Option<deprecation::DeprecationStrategy>,
 }
@@ -93,6 +93,16 @@ pub fn generate_module_token_stream(
         }
     };
 
+    // Determine which operation we are generating code for. This will be used in operationName.
+
+    let operation = if let Some(op) = codegen::select_operation(&query, &options.struct_name) {
+        op
+    } else {
+        panic!("Query document defines no operation.")
+    };
+
+    let operation_name_literal = &operation.name;
+
     // Check the schema cache.
     let schema = {
         let mut lock = SCHEMA_CACHE.lock().expect("schema cache is poisoned");
@@ -125,16 +135,15 @@ pub fn generate_module_token_stream(
         }
     };
 
-    let operation_string = options.selected_operation.clone();
     let module_name = Ident::new(
-        options.selected_operation.to_snake_case().as_str(),
+        options.struct_name.to_snake_case().as_str(),
         Span::call_site(),
     );
-    let struct_name = Ident::new(options.selected_operation.as_str(), Span::call_site());
+    let struct_name = Ident::new(options.struct_name.as_str(), Span::call_site());
     let schema_output = codegen::response_for_query(
         schema,
         query,
-        options.selected_operation.clone(),
+        &operation,
         response_derives,
         deprecation_strategy,
     )?;
@@ -148,7 +157,7 @@ pub fn generate_module_token_stream(
             use serde;
 
             pub const QUERY: &'static str = #query_string;
-            pub const OPERATION_NAME: &'static str = #operation_string;
+            pub const OPERATION_NAME: &'static str = #operation_name_literal;
 
             #schema_output
         }

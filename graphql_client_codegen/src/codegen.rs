@@ -8,10 +8,31 @@ use query::QueryContext;
 use schema;
 use selection::Selection;
 
+/// Selects the first operation matching `struct_name` or the first one. Returns `None` when the query document defines no operation.
+pub(crate) fn select_operation(query: &query::Document, struct_name: &str) -> Option<Operation> {
+    let mut operations: Vec<Operation> = Vec::new();
+
+    for definition in query.definitions.iter() {
+        match definition {
+            query::Definition::Operation(op) => {
+                operations.push(op.into());
+            }
+            _ => (),
+        }
+    }
+
+    operations
+        .iter()
+        .find(|op| op.name == struct_name)
+        .map(|i| i.to_owned())
+        .or_else(|| operations.iter().next().map(|i| i.to_owned()))
+}
+
+/// The main code generation function.
 pub fn response_for_query(
     schema: schema::Schema,
     query: query::Document,
-    selected_operation: String,
+    operation: &Operation,
     additional_derives: Option<String>,
     deprecation_strategy: deprecation::DeprecationStrategy,
 ) -> Result<TokenStream, failure::Error> {
@@ -22,13 +43,10 @@ pub fn response_for_query(
     }
 
     let mut definitions = Vec::new();
-    let mut operations: Vec<Operation> = Vec::new();
 
     for definition in query.definitions {
         match definition {
-            query::Definition::Operation(op) => {
-                operations.push(op.into());
-            }
+            query::Definition::Operation(_op) => (),
             query::Definition::Fragment(fragment) => {
                 let query::TypeCondition::On(on) = fragment.type_condition;
                 context.fragments.insert(
@@ -43,21 +61,6 @@ pub fn response_for_query(
             }
         }
     }
-
-    context.selected_operation = operations
-        .iter()
-        .find(|op| op.name == selected_operation)
-        .map(|i| i.to_owned());
-
-    let opt_operation = context
-        .selected_operation
-        .clone()
-        .or_else(|| operations.iter().next().map(|i| i.to_owned()));
-    let operation = if let Some(operation) = opt_operation {
-        operation
-    } else {
-        panic!("no operation '{}' in query document", selected_operation);
-    };
 
     let response_data_fields = {
         let opt_root_name = operation.root_name(&context.schema);
