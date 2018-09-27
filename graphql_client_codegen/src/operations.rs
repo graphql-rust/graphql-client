@@ -8,14 +8,14 @@ use syn::Ident;
 use variables::Variable;
 
 #[derive(Debug, Clone)]
-pub(crate) enum OperationType {
+pub enum OperationType {
     Query,
     Mutation,
     Subscription,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Operation {
+pub struct Operation {
     pub name: String,
     pub operation_type: OperationType,
     pub variables: Vec<Variable>,
@@ -101,6 +101,44 @@ impl ::std::convert::From<OperationDefinition> for Operation {
             },
             OperationDefinition::Subscription(s) => Operation {
                 name: s.name.expect("unnamed operation"),
+                operation_type: OperationType::Subscription,
+                variables: s
+                    .variable_definitions
+                    .iter()
+                    .map(|v| v.clone().into())
+                    .collect(),
+                selection: (&s.selection_set).into(),
+            },
+            OperationDefinition::SelectionSet(_) => panic!(SELECTION_SET_AT_ROOT),
+        }
+    }
+}
+
+impl<'a> ::std::convert::From<&'a OperationDefinition> for Operation {
+    fn from(definition: &OperationDefinition) -> Operation {
+        match *definition {
+            OperationDefinition::Query(ref q) => Operation {
+                name: q.name.clone().expect("unnamed operation"),
+                operation_type: OperationType::Query,
+                variables: q
+                    .variable_definitions
+                    .iter()
+                    .map(|v| v.clone().into())
+                    .collect(),
+                selection: (&q.selection_set).into(),
+            },
+            OperationDefinition::Mutation(ref m) => Operation {
+                name: m.name.clone().expect("unnamed operation"),
+                operation_type: OperationType::Mutation,
+                variables: m
+                    .variable_definitions
+                    .iter()
+                    .map(|v| v.clone().into())
+                    .collect(),
+                selection: (&m.selection_set).into(),
+            },
+            OperationDefinition::Subscription(ref s) => Operation {
+                name: s.name.clone().expect("unnamed operation"),
                 operation_type: OperationType::Subscription,
                 variables: s
                     .variable_definitions

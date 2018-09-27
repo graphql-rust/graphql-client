@@ -2,7 +2,6 @@ use deprecation::DeprecationStrategy;
 use failure;
 use fragments::GqlFragment;
 use itertools::Itertools;
-use operations::Operation;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use schema::Schema;
@@ -14,7 +13,6 @@ use syn::Ident;
 pub(crate) struct QueryContext {
     pub fragments: BTreeMap<String, GqlFragment>,
     pub schema: Schema,
-    pub selected_operation: Option<Operation>,
     pub deprecation_strategy: DeprecationStrategy,
     variables_derives: Vec<Ident>,
     response_derives: Vec<Ident>,
@@ -26,7 +24,6 @@ impl QueryContext {
         QueryContext {
             fragments: BTreeMap::new(),
             schema,
-            selected_operation: None,
             deprecation_strategy,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
@@ -45,7 +42,6 @@ impl QueryContext {
         QueryContext {
             fragments: BTreeMap::new(),
             schema: Schema::new(),
-            selected_operation: None,
             deprecation_strategy: DeprecationStrategy::Allow,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],

@@ -21,7 +21,7 @@ pub fn generate_code(
     };
 
     let options = GraphQLClientDeriveOptions {
-        selected_operation,
+        struct_name: selected_operation,
         additional_derives,
         deprecation_strategy,
     };
