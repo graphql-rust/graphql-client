@@ -79,3 +79,20 @@ fn interface_not_on_everything_deserialization() {
 
     assert_eq!(response_data.everything.map(|names| names.len()), Some(4));
 }
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    query_path = "tests/interfaces/interface_with_fragment_query.graphql",
+    schema_path = "tests/interfaces/interface_schema.graphql",
+    response_derives = "Debug",
+)]
+pub struct InterfaceWithFragmentQuery;
+
+const RESPONSE_FRAGMENT: &'static str =
+    include_str!("interfaces/interface_with_fragment_response.json");
+
+#[test]
+fn fragment_in_interface() {
+    let response_data: interface_with_fragment_query::ResponseData =
+        serde_json::from_str(RESPONSE_FRAGMENT).unwrap();
+}

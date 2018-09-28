@@ -1,35 +1,36 @@
 schema {
-  query: InterfaceQuery
+    query: InterfaceQuery
 }
 
 interface Named {
-  name: String!
+    name: String!
+    displayName: Boolean!
 }
 
 type Person implements Named {
-  name: String!
-  birthday: String
+    name: String!
+    birthday: String
 }
 
 enum Industry {
-  CHOCOLATE
-  OTHER
+    CHOCOLATE
+    OTHER
 }
 
 type Organization implements Named {
-  name: String
-  industry: Industry!
-  createdAt: String
+    name: String
+    industry: Industry!
+    createdAt: String
 }
 
 type Dog implements Named {
-  name: String!
-  """
-  Always returns true
-  """
-  isGoodDog: Boolean!
+    name: String!
+    """
+    Always returns true
+    """
+    isGoodDog: Boolean!
 }
 
 type InterfaceQuery {
-  everything: [Named!]
+    everything: [Named!]
 }

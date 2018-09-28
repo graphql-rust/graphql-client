@@ -1,0 +1,20 @@
+fragment PublicStatus on Named {
+    displayName
+}
+
+query MyQuery {
+    everything {
+        name
+        __typename
+        ...PublicStatus
+        ... on Dog {
+            isGoodDog
+        }
+        ... on Person {
+            birthday
+        }
+        ... on Organization {
+            industry
+        }
+    }
+}
