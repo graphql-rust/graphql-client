@@ -129,6 +129,10 @@ You can write multiple operations in one query document (one `.graphql` file). Y
 
 There is an example [in the tests](./tests/operation_selection).
 
+## Documentation for the generated modules
+
+You can use `cargo doc --document-private-items` to generate rustdoc documentation on the generated code.
+
 ## Examples
 
 See the examples directory in this repository.
