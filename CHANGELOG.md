@@ -50,11 +50,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - For several classes of items that we generate, we only generate those that are actually used by the query. This way, you do not need to define mappings for _every_ scalar in the schema you are querying - even for small queries - anymore. This also improves compile times a lot in some scenarios. (#116 - thanks @mathstuf!)
 
+- `GraphQLError` now implements the `Display` trait.
+
 ### Fixed
 
 - Handle all Rust keywords as field names in codegen by appending `_` to the generated names, so a field called `type` in a GraphQL query will become a `type_` field in the generated struct. Thanks to @scrogson!
 
 - [Some error message improvements](https://github.com/tomhoule/graphql-client/pull/100).
+
+- The `operationName` field is now correctly set on request bodies.
 
 ## [0.4.0] - 2018-08-23
 
