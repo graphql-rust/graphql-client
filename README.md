@@ -133,6 +133,10 @@ There is an example [in the tests](./tests/operation_selection).
 
 You can use `cargo doc --document-private-items` to generate rustdoc documentation on the generated code.
 
+## Make cargo recompile when .graphql files have changed
+
+There is an [`include`](https://doc.rust-lang.org/cargo/reference/manifest.html#the-exclude-and-include-fields-optional) option you can add to your `Cargo.toml`. It currently has issues however (see [this issue](https://github.com/rust-lang/cargo/issues/6031#issuecomment-422160178)).
+
 ## Examples
 
 See the examples directory in this repository.
