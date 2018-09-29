@@ -19,7 +19,22 @@ pub struct GqlInterface {
 }
 
 impl GqlInterface {
-    pub fn new(name: Cow<str>, description: Option<&str>) -> GqlInterface {
+    fn object_selection(&self, selection: &Selection) -> Selection {
+        Selection(
+            selection
+                .0
+                .iter()
+                // Only keep what we can handle
+                .filter(|f| match f {
+                    SelectionItem::Field(f) => f.name != "__typename",
+                    SelectionItem::FragmentSpread(_) => true,
+                    SelectionItem::InlineFragment(_) => false,
+                }).map(|a| (*a).clone())
+                .collect(),
+        )
+    }
+
+    pub(crate) fn new(name: Cow<str>, description: Option<&str>) -> GqlInterface {
         GqlInterface {
             description: description.map(|d| d.to_owned()),
             name: name.into_owned(),
@@ -27,6 +42,35 @@ impl GqlInterface {
             fields: vec![],
             is_required: false.into(),
         }
+    }
+
+    pub(crate) fn field_impls_for_selection(
+        &self,
+        context: &QueryContext,
+        selection: &Selection,
+        prefix: &str,
+    ) -> Result<Vec<TokenStream>, failure::Error> {
+        ::shared::field_impls_for_selection(
+            &self.fields,
+            context,
+            &self.object_selection(selection),
+            prefix,
+        )
+    }
+
+    pub(crate) fn response_fields_for_selection(
+        &self,
+        context: &QueryContext,
+        selection: &Selection,
+        prefix: &str,
+    ) -> Result<Vec<TokenStream>, failure::Error> {
+        response_fields_for_selection(
+            &self.name,
+            &self.fields,
+            context,
+            &self.object_selection(selection),
+            prefix,
+        )
     }
 
     pub(crate) fn response_for_selection(
@@ -42,19 +86,6 @@ impl GqlInterface {
             .extract_typename()
             .ok_or_else(|| format_err!("Missing __typename in selection for {}", prefix))?;
 
-        let object_selection = Selection(
-            selection
-                .0
-                .iter()
-                // Only keep what we can handle
-                .filter(|f| match f {
-                    SelectionItem::Field(f) => f.name != "__typename",
-                    SelectionItem::FragmentSpread(_) => true,
-                    SelectionItem::InlineFragment(_) => false,
-                }).map(|a| (*a).clone())
-                .collect(),
-        );
-
         let union_selection = Selection(
             selection
                 .0
@@ -67,16 +98,10 @@ impl GqlInterface {
                 .collect(),
         );
 
-        let object_fields = response_fields_for_selection(
-            &self.name,
-            &self.fields,
-            query_context,
-            &object_selection,
-            prefix,
-        )?;
+        let object_fields =
+            self.response_fields_for_selection(query_context, &selection, prefix)?;
 
-        let object_children =
-            field_impls_for_selection(&self.fields, query_context, &object_selection, prefix)?;
+        let object_children = self.field_impls_for_selection(query_context, &selection, prefix)?;
         let (mut union_variants, union_children, used_variants) =
             union_variants(&union_selection, query_context, prefix)?;
 

@@ -15,8 +15,7 @@
         {
             "__typename": "Organization",
             "name": "Mozilla",
-            "displayName": false,
-            "industry": "OTHER"
+            "displayName": false
         },
         {
             "__typename": "Dog",

@@ -16,16 +16,24 @@ impl GqlFragment {
         let derives = context.response_derives();
         let name_ident = Ident::new(&self.name, Span::call_site());
         let opt_object = context.schema.objects.get(&self.on);
-        let object = if let Some(object) = opt_object {
-            object
+        let (field_impls, fields) = if let Some(object) = opt_object {
+            let field_impls =
+                object.field_impls_for_selection(context, &self.selection, &self.name)?;
+            let fields =
+                object.response_fields_for_selection(context, &self.selection, &self.name)?;
+            (field_impls, fields)
+        } else if let Some(iface) = context.schema.interfaces.get(&self.on) {
+            let field_impls =
+                iface.field_impls_for_selection(context, &self.selection, &self.name)?;
+            let fields =
+                iface.response_fields_for_selection(context, &self.selection, &self.name)?;
+            (field_impls, fields)
         } else {
             panic!(
                 "fragment '{}' cannot operate on unknown type '{}'",
                 self.name, self.on
             );
         };
-        let field_impls = object.field_impls_for_selection(context, &self.selection, &self.name)?;
-        let fields = object.response_fields_for_selection(context, &self.selection, &self.name)?;
 
         Ok(quote!{
             #derives

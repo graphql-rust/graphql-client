@@ -84,7 +84,7 @@ fn interface_not_on_everything_deserialization() {
 #[graphql(
     query_path = "tests/interfaces/interface_with_fragment_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug",
+    response_derives = "Debug,PartialEq",
 )]
 pub struct InterfaceWithFragmentQuery;
 
@@ -93,6 +93,45 @@ const RESPONSE_FRAGMENT: &'static str =
 
 #[test]
 fn fragment_in_interface() {
+    use interface_with_fragment_query::*;
     let response_data: interface_with_fragment_query::ResponseData =
-        serde_json::from_str(RESPONSE_FRAGMENT).unwrap();
+        serde_json::from_str(RESPONSE_FRAGMENT).expect("RESPONSE_FRAGMENT did not deserialize");
+
+    assert_eq!(
+        response_data,
+        ResponseData {
+            everything: Some(vec![
+                RustMyQueryEverything {
+                    name: "Audrey Lorde".to_string(),
+                    public_status: PublicStatus {
+                        display_name: false,
+                    },
+                    on: RustMyQueryEverythingOn::Person(RustMyQueryEverythingOnPerson {
+                        birthday: Some("1934-02-18".to_string()),
+                    })
+                },
+                RustMyQueryEverything {
+                    name: "Laïka".to_string(),
+                    public_status: PublicStatus { display_name: true },
+                    on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog {
+                        is_good_dog: true,
+                    })
+                },
+                RustMyQueryEverything {
+                    name: "Mozilla".to_string(),
+                    public_status: PublicStatus {
+                        display_name: false
+                    },
+                    on: RustMyQueryEverythingOn::Organization,
+                },
+                RustMyQueryEverything {
+                    name: "Norbert".to_string(),
+                    public_status: PublicStatus { display_name: true },
+                    on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog {
+                        is_good_dog: true
+                    }),
+                },
+            ])
+        }
+    )
 }
