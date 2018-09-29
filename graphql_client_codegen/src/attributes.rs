@@ -1,6 +1,7 @@
 use failure;
 use syn;
 
+/// Extract an configuration parameter specified in the `graphql` attribute.
 pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failure::Error> {
     let attributes = &ast.attrs;
     let attribute = attributes

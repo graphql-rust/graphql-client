@@ -1,4 +1,9 @@
 #![recursion_limit = "512"]
+#![deny(missing_docs)]
+
+//! Crate for internal use by other graphql-client crates, for code generation.
+//!
+//! It is not meant to be used directly by users of the library.
 
 #[macro_use]
 extern crate failure;
@@ -19,11 +24,14 @@ extern crate quote;
 
 use proc_macro2::TokenStream;
 
+/// Derive-related code. This will be moved into graphql_query_derive.
 pub mod attributes;
-pub mod codegen;
+mod codegen;
+/// Deprecation-related code
 pub mod deprecation;
-pub mod introspection_response;
-pub mod query;
+mod introspection_response;
+mod query;
+/// Contains the [Schema] type and its implementation.
 pub mod schema;
 
 mod constants;
@@ -55,9 +63,13 @@ lazy_static! {
         CacheMap::default();
 }
 
+/// Used to configure code generation.
 pub struct GraphQLClientDeriveOptions {
+    /// Name of the operation we want to generate code for. If it does not match, we default to the first one.
     pub struct_name: String,
+    /// Comma-separated list of additional traits we want to derive.
     pub additional_derives: Option<String>,
+    /// The deprecation strategy to adopt.
     pub deprecation_strategy: Option<deprecation::DeprecationStrategy>,
 }
 
@@ -66,6 +78,7 @@ pub(crate) struct FullResponse<T> {
     data: T,
 }
 
+/// Generates the code for a Rust module given a query, a schema and options.
 pub fn generate_module_token_stream(
     query_path: std::path::PathBuf,
     schema_path: std::path::PathBuf,

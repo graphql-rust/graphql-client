@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `GraphQLError` now implements the `Display` trait.
 
-- Basic support for fragments on interfaces
+- Basic support for fragments on interfaces. See #154 for what is not supported yet.
 
 ### Fixed
 

@@ -10,23 +10,24 @@ use scalars::Scalar;
 use std::collections::{BTreeMap, BTreeSet};
 use unions::GqlUnion;
 
-pub const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
+pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
+/// Intermediate representation for a parsed GraphQL schema used during code generation.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Schema {
-    pub enums: BTreeMap<String, GqlEnum>,
-    pub inputs: BTreeMap<String, GqlInput>,
-    pub interfaces: BTreeMap<String, GqlInterface>,
-    pub objects: BTreeMap<String, GqlObject>,
-    pub scalars: BTreeMap<String, Scalar>,
-    pub unions: BTreeMap<String, GqlUnion>,
-    pub query_type: Option<String>,
-    pub mutation_type: Option<String>,
-    pub subscription_type: Option<String>,
+    pub(crate) enums: BTreeMap<String, GqlEnum>,
+    pub(crate) inputs: BTreeMap<String, GqlInput>,
+    pub(crate) interfaces: BTreeMap<String, GqlInterface>,
+    pub(crate) objects: BTreeMap<String, GqlObject>,
+    pub(crate) scalars: BTreeMap<String, Scalar>,
+    pub(crate) unions: BTreeMap<String, GqlUnion>,
+    pub(crate) query_type: Option<String>,
+    pub(crate) mutation_type: Option<String>,
+    pub(crate) subscription_type: Option<String>,
 }
 
 impl Schema {
-    pub fn new() -> Schema {
+    pub(crate) fn new() -> Schema {
         Schema {
             enums: BTreeMap::new(),
             inputs: BTreeMap::new(),
@@ -40,7 +41,7 @@ impl Schema {
         }
     }
 
-    pub fn ingest_interface_implementations(
+    pub(crate) fn ingest_interface_implementations(
         &mut self,
         impls: BTreeMap<String, Vec<String>>,
     ) -> Result<(), failure::Error> {

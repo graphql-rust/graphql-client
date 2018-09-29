@@ -12,13 +12,17 @@ use unions::union_variants;
 #[derive(Debug, Clone, PartialEq)]
 pub struct GqlInterface {
     pub description: Option<String>,
+    /// The set of object types implementing this interface.
     pub implemented_by: HashSet<String>,
+    /// The name of the interface. Should match 1-to-1 to its name in the GraphQL schema.
     pub name: String,
+    /// The interface's fields. Analogous to object fields.
     pub fields: Vec<GqlObjectField>,
     pub is_required: Cell<bool>,
 }
 
 impl GqlInterface {
+    /// filters the selection to keep only the fields that refer to the interface's own.
     fn object_selection(&self, selection: &Selection) -> Selection {
         Selection(
             selection
@@ -34,6 +38,7 @@ impl GqlInterface {
         )
     }
 
+    /// Create an empty interface. This needs to be mutated before it is useful.
     pub(crate) fn new(name: Cow<str>, description: Option<&str>) -> GqlInterface {
         GqlInterface {
             description: description.map(|d| d.to_owned()),
@@ -44,6 +49,7 @@ impl GqlInterface {
         }
     }
 
+    /// The generated code for each of the selected field's types. See [shared::field_impls_for_selection].
     pub(crate) fn field_impls_for_selection(
         &self,
         context: &QueryContext,
@@ -58,6 +64,7 @@ impl GqlInterface {
         )
     }
 
+    /// The code for the interface's corresponding struct's fields.
     pub(crate) fn response_fields_for_selection(
         &self,
         context: &QueryContext,
@@ -73,6 +80,7 @@ impl GqlInterface {
         )
     }
 
+    /// Generate all the code for the interface.
     pub(crate) fn response_for_selection(
         &self,
         query_context: &QueryContext,
