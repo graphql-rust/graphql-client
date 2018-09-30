@@ -1,4 +1,4 @@
-#![feature(wasm_custom_section, wasm_import_module, use_extern_macros)]
+#![feature(use_extern_macros)]
 
 #[macro_use]
 extern crate graphql_client;
