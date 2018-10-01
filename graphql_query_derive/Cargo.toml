@@ -1,6 +1,6 @@
 [package]
 name = "graphql_query_derive"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Utility crate for graphql_client"
 license = "Apache-2.0 OR MIT"
@@ -12,4 +12,4 @@ proc-macro = true
 [dependencies]
 syn = "0.15"
 proc-macro2 = { version = "0.4", features = [] }
-graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.4.0" }
+graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.5.0" }
