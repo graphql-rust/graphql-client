@@ -3,6 +3,9 @@ rust:
   - stable
   - beta
   - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
 cache: cargo
 before_script:
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (rustup component add rustfmt-preview clippy-preview) fi
