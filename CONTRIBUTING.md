@@ -17,7 +17,7 @@ The CI system conducts a few different tests for various releases of rust. In ad
 | beta    |     |        | x    |
 | nightly |     |        | x    |
 
-Too avoid any surprises by CI while merging, it's recommended you run these locally after making changes. Setup and testing only takes a couple minutes at most.
+To avoid any surprises by CI while merging, it's recommended you run these locally after making changes. Setup and testing only takes a couple minutes at most.
 
 ### Setup
 
