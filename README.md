@@ -1,6 +1,6 @@
 # graphql_client
 
-[![Build Status](https://travis-ci.org/tomhoule/graphql-client.svg?branch=master)](https://travis-ci.org/tomhoule/graphql-client)
+[![Build Status](https://travis-ci.org/tomhoule/graphql-client.svg?branch=master)](https://travis-ci.org/graphql-rust/graphql-client)
 [![docs](https://docs.rs/graphql_client/badge.svg)](https://docs.rs/graphql_client/latest/graphql_client/)
 [![crates.io](https://img.shields.io/crates/v/graphql_client.svg)](https://crates.io/crates/graphql_client)
 
