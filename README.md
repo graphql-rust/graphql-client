@@ -1,6 +1,6 @@
 # graphql_client
 
-[![Build Status](https://travis-ci.org/tomhoule/graphql-client.svg?branch=master)](https://travis-ci.org/graphql-rust/graphql-client)
+[![Build Status](https://travis-ci.org/graphql-rust/graphql-client.svg?branch=master)](https://travis-ci.org/graphql-rust/graphql-client)
 [![docs](https://docs.rs/graphql_client/badge.svg)](https://docs.rs/graphql_client/latest/graphql_client/)
 [![crates.io](https://img.shields.io/crates/v/graphql_client.svg)](https://crates.io/crates/graphql_client)
 
@@ -27,7 +27,7 @@ A typed GraphQL client library for Rust.
 
 - In order to provide precise types for a response, graphql_client needs to read the query and the schema at compile-time.
 
-  To download the schema, you have multiple options. This projects provides a [CLI](https://github.com/tomhoule/graphql-client/tree/master/graphql_client_cli), but there are also more mature tools like [apollo-cli](https://github.com/apollographql/apollo-cli). It does not matter which one you use, the resulting `schema.json` is the same.
+  To download the schema, you have multiple options. This projects provides a [CLI](https://github.com/graphql-rust/graphql-client/tree/master/graphql_client_cli), but there are also more mature tools like [apollo-cli](https://github.com/apollographql/apollo-cli). It does not matter which one you use, the resulting `schema.json` is the same.
 
 - We now have everything we need to derive Rust types for our query. This is achieved through a procedural macro, as in the following snippet:
 
@@ -79,7 +79,7 @@ A typed GraphQL client library for Rust.
   }
   ```
 
-[A complete example using the GitHub GraphQL API is available](https://github.com/tomhoule/graphql-client/tree/master/examples/github), as well as sample [rustdoc output](https://www.tomhoule.com/docs/example_module/).
+[A complete example using the GitHub GraphQL API is available](https://github.com/graphql-rust/graphql-client/tree/master/examples/github), as well as sample [rustdoc output](https://www.tomhoule.com/docs/example_module/).
 
 ## Deriving specific traits on the response
 
@@ -167,7 +167,7 @@ Warmest thanks to all those who contributed in any way (not only code) to this p
 ## Code of conduct
 
 Anyone who interacts with this project in any space, including but not limited to
-this GitHub repository, must follow our [code of conduct](https://github.com/tomhoule/graphql-client/blob/master/CODE_OF_CONDUCT.md).
+this GitHub repository, must follow our [code of conduct](https://github.com/graphql-rust/graphql-client/blob/master/CODE_OF_CONDUCT.md).
 
 ## License
 

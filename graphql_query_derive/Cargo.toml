@@ -4,7 +4,7 @@ version = "0.5.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Utility crate for graphql_client"
 license = "Apache-2.0 OR MIT"
-repository = "https://github.com/tomhoule/graphql-client"
+repository = "https://github.com/graphql-rust/graphql-client"
 
 [lib]
 proc-macro = true
