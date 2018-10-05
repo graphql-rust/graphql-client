@@ -10,5 +10,5 @@ script:
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (cargo fmt --all -- --check) fi
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (cargo clippy) fi
   - cargo test --all
-  - cargo build --manifest-path=./examples/github/Cargo.toml
+  - cargo build --manifest-path=./graphql_client/examples/github/Cargo.toml
   - cargo build --manifest-path=./graphql_client_cli/Cargo.toml
