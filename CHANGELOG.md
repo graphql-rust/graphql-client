@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   lint and you use deprecated fields in your queries. The quick solution is to
   annotate the relevant queries with `depracated = "allow"` as shown above.
 
-- The CLI now supports the `--authorization` flag to pass the contents of an `Authorization` header. Thanks to @h-michael for the [PR](https://github.com/tomhoule/graphql-client/pull/92)!
+- The CLI now supports the `--authorization` flag to pass the contents of an `Authorization` header. Thanks to @h-michael for the [PR](https://github.com/graphql-rust/graphql-client/pull/92)!
 
 - Improved some codegen error messages, giving more context. Thanks @mathstuf!
 
@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Handle all Rust keywords as field names in codegen by appending `_` to the generated names, so a field called `type` in a GraphQL query will become a `type_` field in the generated struct. Thanks to @scrogson!
 
-- [Some error message improvements](https://github.com/tomhoule/graphql-client/pull/100).
+- [Some error message improvements](https://github.com/graphql-rust/graphql-client/pull/100).
 
 - The `operationName` field is now correctly set on request bodies.
 

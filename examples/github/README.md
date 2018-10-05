@@ -9,5 +9,5 @@ The example expects to find a valid GitHub API Token in the environment (`GITHUB
 Then just run the example with a repository name as argument. For example:
 
 ```bash
-cargo run -- tomhoule/graphql-client
+cargo run -- graphql-rust/graphql-client
 ```

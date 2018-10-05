@@ -120,7 +120,7 @@ mod tests {
     #[test]
     fn parse_repo_name_works() {
         assert_eq!(
-            parse_repo_name("tomhoule/graphql-client").unwrap(),
+            parse_repo_name("graphql-rust/graphql-client").unwrap(),
             ("tomhoule", "graphql-client")
         );
         assert!(parse_repo_name("abcd").is_err());
