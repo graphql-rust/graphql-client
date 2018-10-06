@@ -5,10 +5,14 @@ rust:
   - nightly
 cache: cargo
 before_script:
+  - sudo apt-get update
+  - sudo apt-get install -y nodejs
+  - npm i -g prettier
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (rustup component add rustfmt-preview clippy-preview) fi
 script:
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (cargo fmt --all -- --check) fi
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (cargo clippy) fi
+  - prettier --debug-check -l './**/*.json'
   - cargo test --all
   - cargo build --manifest-path=./graphql_client/examples/github/Cargo.toml
   - cargo build --manifest-path=./graphql_client_cli/Cargo.toml
