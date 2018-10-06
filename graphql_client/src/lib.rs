@@ -69,11 +69,11 @@ use itertools::Itertools;
 ///     Ok(())
 /// }
 /// ```
-pub trait GraphQLQuery<'de> {
+pub trait GraphQLQuery {
     /// The shape of the variables expected by the query. This should be a generated struct most of the time.
     type Variables: serde::Serialize;
     /// The top-level shape of the response data (the `data` field in the GraphQL response). In practice this should be generated, since it is hard to write by hand without error.
-    type ResponseData: serde::Deserialize<'de>;
+    type ResponseData: for<'de> serde::Deserialize<'de>;
 
     /// Produce a GraphQL query struct that can be JSON serialized and sent to a GraphQL API.
     fn build_query(variables: Self::Variables) -> QueryBody<Self::Variables>;
