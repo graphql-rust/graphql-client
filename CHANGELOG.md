@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- Better error messages from the derive macro stwhen the schema or the query file path is not found.
+
 ## 0.5.0
 
 ### Added
