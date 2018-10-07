@@ -1,5 +1,6 @@
 extern crate failure;
 extern crate reqwest;
+
 #[macro_use]
 extern crate structopt;
 #[macro_use]
@@ -9,6 +10,9 @@ extern crate graphql_client_codegen;
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
+
+#[cfg(feature = "rustfmt")]
+extern crate rustfmt_nightly as rustfmt;
 
 mod generate;
 mod introspect_schema;
@@ -46,8 +50,13 @@ enum Cli {
         additional_derives: Option<String>,
         /// You can choose deprecation strategy from allow, deny, or warn.
         /// Default value is warn.
-        #[structopt(short = "d", long = "deprecation-strategy",)]
+        #[structopt(short = "d", long = "deprecation-strategy")]
         deprecation_strategy: Option<String>,
+        /// If you don't want to execute rustfmt to generated code, set this option.
+        /// Default value is false.
+        /// Formating feature is disabled as default installation.
+        #[structopt(long = "no-formatting")]
+        no_formatting: bool,
         #[structopt(parse(from_os_str))]
         output: PathBuf,
     },
@@ -67,6 +76,7 @@ fn main() -> Result<(), failure::Error> {
             selected_operation,
             additional_derives,
             deprecation_strategy,
+            no_formatting,
             output,
         } => generate::generate_code(
             query_path,
@@ -74,6 +84,7 @@ fn main() -> Result<(), failure::Error> {
             selected_operation,
             additional_derives,
             deprecation_strategy,
+            no_formatting,
             output,
         ),
     }
