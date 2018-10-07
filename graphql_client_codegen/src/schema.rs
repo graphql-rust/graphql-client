@@ -185,7 +185,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
         use introspection_response::__TypeKind;
 
         let mut schema = Schema::new();
-        let root = src.schema.expect("__schema is not null");
+        let root = src.into_schema().schema.expect("__schema is not null");
 
         schema.query_type = root.query_type.and_then(|ty| ty.name);
         schema.mutation_type = root.mutation_type.and_then(|ty| ty.name);

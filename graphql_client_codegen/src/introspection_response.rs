@@ -327,9 +327,28 @@ pub struct RustIntrospectionQuerySchema {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct Schema {
+pub(crate) struct Schema {
     #[serde(rename = "__schema")]
     pub schema: Option<RustIntrospectionQuerySchema>,
 }
 
-pub type IntrospectionResponse = Schema;
+#[derive(Deserialize, Debug)]
+pub(crate) struct FullResponse<T> {
+    data: T,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub(crate) enum IntrospectionResponse {
+    FullResponse(FullResponse<Schema>),
+    Schema(Schema),
+}
+
+impl IntrospectionResponse {
+    pub(crate) fn into_schema(self) -> Schema {
+        match self {
+            IntrospectionResponse::FullResponse(full_response) => full_response.data,
+            IntrospectionResponse::Schema(schema) => schema,
+        }
+    }
+}
