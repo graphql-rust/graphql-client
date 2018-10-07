@@ -73,11 +73,6 @@ pub struct GraphQLClientDeriveOptions {
     pub deprecation_strategy: Option<deprecation::DeprecationStrategy>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct FullResponse<T> {
-    data: T,
-}
-
 /// Generates the code for a Rust module given a query, a schema and options.
 pub fn generate_module_token_stream(
     query_path: std::path::PathBuf,
@@ -136,8 +131,8 @@ pub fn generate_module_token_stream(
                             schema::Schema::from(s)
                         }
                         "json" => {
-                            let parsed: FullResponse<introspection_response::IntrospectionResponse> = ::serde_json::from_str(&schema_string)?;
-                            schema::Schema::from(parsed.data)
+                            let parsed: introspection_response::IntrospectionResponse = ::serde_json::from_str(&schema_string)?;
+                            schema::Schema::from(parsed)
                         }
                         extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
                     }

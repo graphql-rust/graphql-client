@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Better error messages from the derive macro stwhen the schema or the query file path is not found.
 
+## Fixed
+
+- Support both full introspection responses (with "data") field and just the content of the "data" field in schema.json files.
+
 ## 0.5.0
 
 ### Added
