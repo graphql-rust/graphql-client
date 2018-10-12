@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- The CLI can now optionally format the generated code with rustfmt (enable the `rustfmt` feature).
+
 ## 0.5.1 (2018-10-07)
 
 ### Added
