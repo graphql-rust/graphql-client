@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - The CLI can now optionally format the generated code with rustfmt (enable the `rustfmt` feature).
 
+### Changed
+
+- (BREAKING) GraphQLQuery does not take a lifetime parameter anymore. This makes it easier to work with futures in async client, since futures expect everything they capture to have the 'static lifetime.
+
 ## 0.5.1 (2018-10-07)
 
 ### Added

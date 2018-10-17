@@ -170,7 +170,7 @@ pub fn generate_module_token_stream(
             #schema_output
         }
 
-        impl<'de> ::graphql_client::GraphQLQuery<'de> for #struct_name {
+        impl ::graphql_client::GraphQLQuery for #struct_name {
             type Variables = #module_name::Variables;
             type ResponseData = #module_name::ResponseData;
 
