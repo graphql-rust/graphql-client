@@ -44,7 +44,10 @@ fn test_germany() -> impl Future<Item = (), Error = JsValue> {
                 .expect("germany is on a continent");
 
             assert_eq!(continent_name, "Europe");
-        }).map_err(|_| JsValue::NULL)
+        }).map_err(|err| {
+            panic!("{:?}", err);
+            JsValue::NULL
+        })
 }
 
 #[derive(GraphQLQuery)]
@@ -74,5 +77,8 @@ fn test_country() -> impl Future<Item = (), Error = JsValue> {
                 .expect("country is on a continent");
 
             assert_eq!(continent_name, "Asia");
-        }).map_err(|_| JsValue::NULL)
+        }).map_err(|err| {
+            panic!("{:?}", err);
+            JsValue::NULL
+        })
 }
