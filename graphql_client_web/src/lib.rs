@@ -33,6 +33,7 @@ pub struct Client {
 ///
 /// not exhaustive
 #[derive(Debug, Fail)]
+#[non_exhaustive]
 pub enum ClientError {
     /// The body couldn't be built
     #[fail(display = "Request body is not a valid string")]
