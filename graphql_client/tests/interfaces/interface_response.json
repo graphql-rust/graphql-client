@@ -1,24 +1,24 @@
 {
-    "everything": [
-        {
-            "__typename": "Person",
-            "name": "Audrey Lorde",
-            "birthday": "1934-02-18"
-        },
-        {
-            "__typename": "Dog",
-            "name": "Laïka",
-            "isGoodDog": true
-        },
-        {
-            "__typename": "Organization",
-            "name": "Mozilla",
-            "industry": "OTHER"
-        },
-        {
-            "__typename": "Dog",
-            "name": "Norbert",
-            "isGoodDog": true
-        }
-    ]
+  "everything": [
+    {
+      "__typename": "Person",
+      "name": "Audrey Lorde",
+      "birthday": "1934-02-18"
+    },
+    {
+      "__typename": "Dog",
+      "name": "Laïka",
+      "isGoodDog": true
+    },
+    {
+      "__typename": "Organization",
+      "name": "Mozilla",
+      "industry": "OTHER"
+    },
+    {
+      "__typename": "Dog",
+      "name": "Norbert",
+      "isGoodDog": true
+    }
+  ]
 }
