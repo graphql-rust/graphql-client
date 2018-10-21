@@ -43,8 +43,9 @@ fn build_graphql_client_derive_options(input: &syn::DeriveInput) -> GraphQLClien
     let deprecation_strategy = deprecation::extract_deprecation_strategy(input).unwrap_or_default();
 
     GraphQLClientDeriveOptions {
-        struct_name: input.ident.to_string(),
+        struct_name: input.clone().ident.to_string(),
         additional_derives: response_derives,
         deprecation_strategy: Some(deprecation_strategy),
+        module_visibility: input.clone().vis,
     }
 }

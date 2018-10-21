@@ -3,7 +3,9 @@ use graphql_client_codegen::*;
 use std::fs::File;
 use std::io::Write as IoWrite;
 use std::path::PathBuf;
+use syn;
 
+#[allow(too_many_arguments)]
 pub fn generate_code(
     query_path: PathBuf,
     schema_path: PathBuf,
@@ -11,6 +13,7 @@ pub fn generate_code(
     additional_derives: Option<String>,
     deprecation_strategy: &Option<String>,
     no_formatting: bool,
+    module_visibility: &Option<String>,
     output: &PathBuf,
 ) -> Result<(), failure::Error> {
     let deprecation_strategy = deprecation_strategy.as_ref().map(|s| s.as_str());
@@ -21,10 +24,22 @@ pub fn generate_code(
         _ => None,
     };
 
+    let module_visibility = module_visibility.as_ref().map(|s| s.as_str());
+    let module_visibility = match module_visibility {
+        Some("pub") => syn::VisPublic {
+            pub_token: <Token![pub]>::default(),
+        }.into(),
+        Some("private") => syn::Visibility::Inherited {},
+        _ => syn::VisPublic {
+            pub_token: <Token![pub]>::default(),
+        }.into(),
+    };
+
     let options = GraphQLClientDeriveOptions {
         struct_name: selected_operation,
         additional_derives,
         deprecation_strategy,
+        module_visibility,
     };
 
     let gen = generate_module_token_stream(query_path, schema_path, Some(options))?;
