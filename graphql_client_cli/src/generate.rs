@@ -9,9 +9,9 @@ pub fn generate_code(
     schema_path: PathBuf,
     selected_operation: String,
     additional_derives: Option<String>,
-    deprecation_strategy: Option<String>,
+    deprecation_strategy: &Option<String>,
     no_formatting: bool,
-    output: PathBuf,
+    output: &PathBuf,
 ) -> Result<(), failure::Error> {
     let deprecation_strategy = deprecation_strategy.as_ref().map(|s| s.as_str());
     let deprecation_strategy = match deprecation_strategy {

@@ -235,7 +235,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                             name.clone(),
                             Scalar {
                                 name,
-                                description: ty.description.as_ref().map(|d| d.clone()),
+                                description: ty.description.as_ref().cloned(),
                                 is_required: false.into(),
                             },
                         );
@@ -262,7 +262,7 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                     for implementing in ty
                         .interfaces
                         .clone()
-                        .unwrap_or_else(|| Vec::new())
+                        .unwrap_or_else(Vec::new)
                         .into_iter()
                         .filter_map(|t| t)
                         .map(|t| t.type_ref.name)
