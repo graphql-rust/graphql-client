@@ -12,12 +12,9 @@ use selection::Selection;
 pub(crate) fn select_operation(query: &query::Document, struct_name: &str) -> Option<Operation> {
     let mut operations: Vec<Operation> = Vec::new();
 
-    for definition in query.definitions.iter() {
-        match definition {
-            query::Definition::Operation(op) => {
-                operations.push(op.into());
-            }
-            _ => (),
+    for definition in &query.definitions {
+        if let query::Definition::Operation(op) = definition {
+            operations.push(op.into());
         }
     }
 

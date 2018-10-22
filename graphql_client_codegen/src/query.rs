@@ -31,9 +31,9 @@ impl QueryContext {
     }
 
     pub(crate) fn require(&self, typename_: &str) {
-        self.fragments
-            .get(typename_)
-            .map(|fragment| fragment.is_required.set(true));
+        if let Some(fragment) = self.fragments.get(typename_) {
+            fragment.is_required.set(true)
+        }
     }
 
     /// For testing only. creates an empty QueryContext with an empty Schema.
@@ -121,7 +121,7 @@ impl QueryContext {
                     && !derive.to_string().contains("Deserialize")
             }).collect();
 
-        if enum_derives.len() > 0 {
+        if !enum_derives.is_empty() {
             quote! {
                 #[derive( #(#enum_derives),* )]
             }

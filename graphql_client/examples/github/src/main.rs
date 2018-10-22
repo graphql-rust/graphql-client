@@ -42,7 +42,7 @@ struct Env {
 }
 
 fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), failure::Error> {
-    let mut parts = repo_name.split("/");
+    let mut parts = repo_name.split('/');
     match (parts.next(), parts.next()) {
         (Some(owner), Some(name)) => Ok((owner, name)),
         _ => Err(format_err!("wrong format for the repository name param (we expect something like facebook/graphql)"))

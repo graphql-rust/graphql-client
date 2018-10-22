@@ -83,9 +83,9 @@ fn main() -> Result<(), failure::Error> {
             schema_path,
             selected_operation,
             additional_derives,
-            deprecation_strategy,
+            &deprecation_strategy,
             no_formatting,
-            output,
+            &output,
         ),
     }
 }

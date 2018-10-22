@@ -49,7 +49,8 @@ pub fn introspect_schema(
     }
 
     let json: serde_json::Value = res.json()?;
-    Ok(serde_json::to_writer_pretty(out, &json)?)
+    serde_json::to_writer_pretty(out, &json)?;
+    Ok(())
 }
 
 fn construct_headers() -> HeaderMap {
