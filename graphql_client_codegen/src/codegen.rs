@@ -142,6 +142,8 @@ pub fn response_for_query(
     let response_derives = context.response_derives();
 
     Ok(quote! {
+        use serde_derive::*;
+
         #[allow(dead_code)]
         type Boolean = bool;
         #[allow(dead_code)]
