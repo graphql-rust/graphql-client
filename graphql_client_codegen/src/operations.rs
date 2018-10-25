@@ -39,14 +39,27 @@ impl Operation {
     }
 
     /// Generate the Variables struct and all the necessary supporting code.
-    pub(crate) fn expand_variables(&self, context: &QueryContext) -> TokenStream {
+    pub(crate) fn expand_variables(
+        &self,
+        context: &QueryContext,
+        operation_name: &str,
+        mulutiple_operation: bool,
+    ) -> TokenStream {
         let variables = &self.variables;
+        let variables_struct_name = if mulutiple_operation {
+            Ident::new(
+                format!("{}Variables", operation_name).as_str(),
+                Span::call_site(),
+            )
+        } else {
+            Ident::new("Variables", Span::call_site())
+        };
 
         let variables_derives = context.variables_derives();
 
         if variables.is_empty() {
             return quote!(#variables_derives
-            pub struct Variables;);
+            pub struct #variables_struct_name;);
         }
 
         let fields = variables.iter().map(|variable| {
@@ -65,11 +78,11 @@ impl Operation {
 
         quote! {
             #variables_derives
-            pub struct Variables {
+            pub struct #variables_struct_name {
                 #(#fields,)*
             }
 
-            impl Variables {
+            impl #variables_struct_name {
                 #(#default_constructors)*
             }
         }
