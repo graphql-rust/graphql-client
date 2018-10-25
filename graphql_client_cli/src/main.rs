@@ -42,8 +42,11 @@ enum Cli {
         /// Path to graphql schema file.
         #[structopt(parse(from_os_str))]
         schema_path: PathBuf,
-        /// Name of struct that is implementation target.
-        selected_operation: String,
+        /// Name of module.
+        module_name: String,
+        /// Name of target query. If you don't set this parameter, cli generate all queries in query file.
+        #[structopt(short = "o", long = "selected-operation")]
+        selected_operation: Option<String>,
         /// Additional derives that will be added to the generated structs and enums for the response and the variables.
         /// --additional-derives='Serialize,PartialEq'
         #[structopt(short = "a", long = "additional-derives")]
@@ -73,6 +76,7 @@ fn main() -> Result<(), failure::Error> {
         Cli::Generate {
             query_path,
             schema_path,
+            module_name,
             selected_operation,
             additional_derives,
             deprecation_strategy,
@@ -81,6 +85,7 @@ fn main() -> Result<(), failure::Error> {
         } => generate::generate_code(
             query_path,
             schema_path,
+            module_name,
             selected_operation,
             additional_derives,
             &deprecation_strategy,
