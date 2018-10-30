@@ -25,11 +25,13 @@ enum UnionError {
     MissingTypename { union_name: String },
 }
 
+type UnionVariantResult = Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<String>), failure::Error>;
+
 pub(crate) fn union_variants(
     selection: &Selection,
     query_context: &QueryContext,
     prefix: &str,
-) -> Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<String>), failure::Error> {
+) -> UnionVariantResult {
     let mut children_definitions = Vec::new();
     let mut used_variants = Vec::with_capacity(selection.0.len());
 

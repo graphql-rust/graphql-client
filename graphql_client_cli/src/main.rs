@@ -1,7 +1,5 @@
 extern crate failure;
 extern crate reqwest;
-
-#[macro_use]
 extern crate structopt;
 #[macro_use]
 extern crate graphql_client;
@@ -10,6 +8,8 @@ extern crate graphql_client_codegen;
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
+#[macro_use]
+extern crate syn;
 
 #[cfg(feature = "rustfmt")]
 extern crate rustfmt_nightly as rustfmt;
@@ -57,6 +57,10 @@ enum Cli {
         /// Formating feature is disabled as default installation.
         #[structopt(long = "no-formatting")]
         no_formatting: bool,
+        /// You can choose module and target struct visibility from pub and private.
+        /// Default value is pub.
+        #[structopt(short = "m", long = "module_visibility")]
+        module_visibility: Option<String>,
         #[structopt(parse(from_os_str))]
         output: PathBuf,
     },
@@ -77,15 +81,17 @@ fn main() -> Result<(), failure::Error> {
             additional_derives,
             deprecation_strategy,
             no_formatting,
+            module_visibility,
             output,
         } => generate::generate_code(
             query_path,
             schema_path,
             selected_operation,
             additional_derives,
-            deprecation_strategy,
+            &deprecation_strategy,
             no_formatting,
-            output,
+            &module_visibility,
+            &output,
         ),
     }
 }

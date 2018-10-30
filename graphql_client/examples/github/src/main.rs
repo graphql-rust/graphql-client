@@ -2,7 +2,6 @@ extern crate dotenv;
 extern crate envy;
 #[macro_use]
 extern crate failure;
-#[macro_use]
 extern crate graphql_client;
 #[macro_use]
 extern crate log;
@@ -12,7 +11,6 @@ extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate structopt;
 #[macro_use]
 extern crate prettytable;
@@ -42,7 +40,7 @@ struct Env {
 }
 
 fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), failure::Error> {
-    let mut parts = repo_name.split("/");
+    let mut parts = repo_name.split('/');
     match (parts.next(), parts.next()) {
         (Some(owner), Some(name)) => Ok((owner, name)),
         _ => Err(format_err!("wrong format for the repository name param (we expect something like facebook/graphql)"))

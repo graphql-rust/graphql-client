@@ -40,12 +40,12 @@ fn build_query_and_schema_path(
 fn build_graphql_client_derive_options(input: &syn::DeriveInput) -> GraphQLClientDeriveOptions {
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
     // The user can determine what to do about deprecations.
-    let deprecation_strategy = deprecation::extract_deprecation_strategy(input)
-        .unwrap_or(deprecation::DeprecationStrategy::default());
+    let deprecation_strategy = deprecation::extract_deprecation_strategy(input).unwrap_or_default();
 
     GraphQLClientDeriveOptions {
-        struct_name: input.ident.to_string(),
+        struct_name: input.clone().ident.to_string(),
         additional_derives: response_derives,
         deprecation_strategy: Some(deprecation_strategy),
+        module_visibility: input.clone().vis,
     }
 }
