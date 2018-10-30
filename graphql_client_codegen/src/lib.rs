@@ -23,6 +23,7 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro2::TokenStream;
+use syn::Visibility;
 
 /// Derive-related code. This will be moved into graphql_query_derive.
 pub mod attributes;
@@ -76,6 +77,8 @@ pub struct GraphQLClientDeriveOptions {
     pub additional_derives: Option<String>,
     /// The deprecation strategy to adopt.
     pub deprecation_strategy: Option<deprecation::DeprecationStrategy>,
+    /// target struct visibility.
+    pub module_visibility: Visibility,
 }
 
 /// Generates the code for a Rust module given a query, a schema and options.
@@ -86,6 +89,7 @@ pub fn generate_module_token_stream(
 ) -> Result<TokenStream, failure::Error> {
     let options = options.unwrap();
 
+    let module_visibility = options.module_visibility.clone();
     let response_derives = options.additional_derives.clone();
 
     // The user can determine what to do about deprecations.
@@ -187,6 +191,7 @@ pub fn generate_module_token_stream(
     }
 
     let result = build_module_token_stream(
+        module_visibility,
         &module_name,
         &struct_name,
         &query_string,
@@ -197,6 +202,7 @@ pub fn generate_module_token_stream(
 }
 
 fn build_module_token_stream(
+    module_visibility: syn::Visibility,
     module_name: &Ident,
     struct_name: &Option<Ident>,
     query_string: &str,
@@ -219,6 +225,7 @@ fn build_module_token_stream(
     }
 
     merge_with_common_token_stream(
+        module_visibility,
         &module_name,
         query_string,
         schema_token_streams,
@@ -227,13 +234,14 @@ fn build_module_token_stream(
 }
 
 fn merge_with_common_token_stream(
+    module_visibility: syn::Visibility,
     module_name: &Ident,
     query_string: &str,
     schema_token_streams: Vec<TokenStream>,
     trait_token_streams: Vec<TokenStream>,
 ) -> TokenStream {
     quote!(
-        pub mod #module_name {
+        #module_visibility mod #module_name {
             #![allow(non_camel_case_types)]
             #![allow(non_snake_case)]
             #![allow(dead_code)]

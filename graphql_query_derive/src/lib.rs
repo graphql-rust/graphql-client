@@ -56,5 +56,6 @@ fn build_graphql_client_derive_options(input: &syn::DeriveInput) -> GraphQLClien
         module_name: Some(input.ident.to_string()),
         additional_derives: response_derives,
         deprecation_strategy: Some(deprecation_strategy),
+        module_visibility: input.clone().vis,
     }
 }

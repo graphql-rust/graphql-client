@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - (BREAKING) GraphQLQuery does not take a lifetime parameter anymore. This makes it easier to work with futures in async client, since futures expect everything they capture to have the 'static lifetime.
 
+### Fixed
+
+- When using edition 2018, you no longer need to add `#[macro_use] extern crate serde_derive` to your crate for the generated modules to compile (thanks @aergonaut!)
+
 ## 0.5.1 (2018-10-07)
 
 ### Added
