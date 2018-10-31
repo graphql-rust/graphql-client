@@ -1,15 +1,15 @@
 query MyQuery {
-    names {
-        __typename
-        ...on Dog {
-            name
-        }
-        ...on Person {
-            firstName
-            lastName
-        }
-        ...on Organization {
-            title
-        }
+  names {
+    __typename
+    ... on Dog {
+      name
     }
+    ... on Person {
+      firstName
+      lastName
+    }
+    ... on Organization {
+      title
+    }
+  }
 }

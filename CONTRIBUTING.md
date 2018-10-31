@@ -33,6 +33,13 @@ If you want install to a different toolchain (if for instance your default is se
 rustup component add rustfmt-preview clippy-preview --toolchain stable
 ```
 
+We are using [Prettier](https://prettier.io) to check `.json|.graphql` files. To have it on your local machine you need to install [Node.js](https://nodejs.org) first.
+Our build is now using latest LTS version of Node.js. We're using `npm` and global install here:
+
+```bash
+npm install --global prettier
+```
+
 ### Running
 
 Verify you are using the stable channel (output of `rustc --version` does not contain "nightly" or "beta"). Then run fmt, clippy, and test as they are invoked in the `.travis.yml` file.

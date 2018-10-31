@@ -1,16 +1,16 @@
 {
-    "dogBirthdays": [
-        {
-            "name": "Maya"
-        },
-        {
-            "name": "Norbert"
-        },
-        {
-            "name": "Strelka"
-        },
-        {
-            "name": "Belka"
-        }
-    ]
+  "dogBirthdays": [
+    {
+      "name": "Maya"
+    },
+    {
+      "name": "Norbert"
+    },
+    {
+      "name": "Strelka"
+    },
+    {
+      "name": "Belka"
+    }
+  ]
 }

@@ -1,21 +1,21 @@
 {
-    "names": [
-        {
-            "__typename": "Person",
-            "firstName": "Audrey",
-            "lastName": "Lorde"
-        },
-        {
-            "__typename": "Dog",
-            "name": "Laïka"
-        },
-        {
-            "__typename": "Organization",
-            "title": "Mozilla"
-        },
-        {
-            "__typename": "Dog",
-            "name": "Norbert"
-        }
-    ]
+  "names": [
+    {
+      "__typename": "Person",
+      "firstName": "Audrey",
+      "lastName": "Lorde"
+    },
+    {
+      "__typename": "Dog",
+      "name": "Laïka"
+    },
+    {
+      "__typename": "Organization",
+      "title": "Mozilla"
+    },
+    {
+      "__typename": "Dog",
+      "name": "Norbert"
+    }
+  ]
 }
