@@ -10,6 +10,40 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - The CLI can now optionally format the generated code with rustfmt (enable the `rustfmt` feature).
+- When deriving, the generated module now has the same visibility (private, `pub`, `pub(crate)` or `crate`) as the struct under derive.
+- Codegen now supports type-refining fragments, i.e. fragments on interfaces or unions that only apply to one of the variants. Example:
+
+  ```graphql
+  type Pie {
+    diameter: Integer
+    name: String
+  }
+
+  type Sandwich {
+    length: Float
+    ingredients: [String]
+  }
+
+  union Food = Sandwich | Pie
+
+  type Query {
+    lunch: Food
+  }
+
+  fragment PieName on Pie {
+    name
+  }
+
+  query Test {
+    lunch {
+      ...PieName
+      ...on Sandwich {
+        length
+      }
+    }
+  }
+
+  ```
 
 ### Changed
 
