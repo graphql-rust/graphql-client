@@ -191,7 +191,7 @@ pub fn generate_module_token_stream(
     }
 
     let result = build_module_token_stream(
-        module_visibility,
+        &module_visibility,
         &module_name,
         &struct_name,
         &query_string,
@@ -202,7 +202,7 @@ pub fn generate_module_token_stream(
 }
 
 fn build_module_token_stream(
-    module_visibility: syn::Visibility,
+    module_visibility: &syn::Visibility,
     module_name: &Ident,
     struct_name: &Option<Ident>,
     query_string: &str,
@@ -225,7 +225,7 @@ fn build_module_token_stream(
     }
 
     merge_with_common_token_stream(
-        module_visibility,
+        &module_visibility,
         &module_name,
         query_string,
         schema_token_streams,
@@ -234,7 +234,7 @@ fn build_module_token_stream(
 }
 
 fn merge_with_common_token_stream(
-    module_visibility: syn::Visibility,
+    module_visibility: &syn::Visibility,
     module_name: &Ident,
     query_string: &str,
     schema_token_streams: Vec<TokenStream>,
