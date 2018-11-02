@@ -127,6 +127,7 @@ The default is `warn`.
 ## Query documents with multiple operations
 
 You can write multiple operations in one query document (one `.graphql` file). You can then select one by naming the struct you `#[derive(GraphQLQuery)]` on with the same name as one of the operations. This is neat, as it allows sharing fragments between operations.
+
 If you want to name the struct different from query name, you can use ``selected_operation`` argument like this.
 
 #[derive(GraphQLQuery)]

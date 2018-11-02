@@ -5,10 +5,10 @@ This is still a WIP, the main use for it now is to download the `schema.json` fr
 ## Install
 
 ```
-cargo install graphql-client-cli
+cargo install graphql-client-cli --force
 ```
 
-## introsect schema
+## introspect schema
 
 ```
 USAGE:
@@ -58,4 +58,4 @@ ARGS:
 
 If you want to use formatting feature, you should install like this.
 
-`cargo install graphql-client-cli --features rustfmt`
+`cargo install graphql-client-cli --features rustfmt --force`
