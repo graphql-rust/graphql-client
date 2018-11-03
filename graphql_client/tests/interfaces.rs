@@ -11,7 +11,7 @@ const RESPONSE: &'static str = include_str!("interfaces/interface_response.json"
 #[graphql(
     query_path = "tests/interfaces/interface_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug, PartialEq",
+    response_derives = "Debug, PartialEq"
 )]
 pub struct InterfaceQuery;
 
@@ -50,15 +50,13 @@ fn interface_deserialization() {
     };
 
     assert_eq!(response_data, expected);
-
-    assert_eq!(response_data.everything.map(|names| names.len()), Some(4));
 }
 
 #[derive(GraphQLQuery)]
 #[graphql(
     query_path = "tests/interfaces/interface_not_on_everything_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug",
+    response_derives = "Debug"
 )]
 pub struct InterfaceNotOnEverythingQuery;
 
@@ -84,7 +82,7 @@ fn interface_not_on_everything_deserialization() {
 #[graphql(
     query_path = "tests/interfaces/interface_with_fragment_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug,PartialEq",
+    response_derives = "Debug,PartialEq"
 )]
 pub struct InterfaceWithFragmentQuery;
 
@@ -101,35 +99,37 @@ fn fragment_in_interface() {
         response_data,
         ResponseData {
             everything: Some(vec![
-                RustMyQueryEverything {
+                RustInterfaceWithFragmentQueryEverything {
                     name: "Audrey Lorde".to_string(),
                     public_status: PublicStatus {
                         display_name: false,
                     },
-                    on: RustMyQueryEverythingOn::Person(RustMyQueryEverythingOnPerson {
-                        birthday: Some("1934-02-18".to_string()),
-                    })
+                    on: RustInterfaceWithFragmentQueryEverythingOn::Person(
+                        RustInterfaceWithFragmentQueryEverythingOnPerson {
+                            birthday: Some("1934-02-18".to_string()),
+                        }
+                    )
                 },
-                RustMyQueryEverything {
+                RustInterfaceWithFragmentQueryEverything {
                     name: "Laïka".to_string(),
                     public_status: PublicStatus { display_name: true },
-                    on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog {
-                        is_good_dog: true,
-                    })
+                    on: RustInterfaceWithFragmentQueryEverythingOn::Dog(
+                        RustInterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
+                    )
                 },
-                RustMyQueryEverything {
+                RustInterfaceWithFragmentQueryEverything {
                     name: "Mozilla".to_string(),
                     public_status: PublicStatus {
                         display_name: false
                     },
-                    on: RustMyQueryEverythingOn::Organization,
+                    on: RustInterfaceWithFragmentQueryEverythingOn::Organization,
                 },
-                RustMyQueryEverything {
+                RustInterfaceWithFragmentQueryEverything {
                     name: "Norbert".to_string(),
                     public_status: PublicStatus { display_name: true },
-                    on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog {
-                        is_good_dog: true
-                    }),
+                    on: RustInterfaceWithFragmentQueryEverythingOn::Dog(
+                        RustInterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
+                    ),
                 },
             ])
         }

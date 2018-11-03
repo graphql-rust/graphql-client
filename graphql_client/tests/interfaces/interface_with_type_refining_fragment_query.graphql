@@ -1,0 +1,17 @@
+fragment Birthday on Person {
+  birthday
+}
+
+query MyQuery {
+  everything {
+    __typename
+    name
+    ... on Dog {
+      isGoodDog
+    }
+    ...Birthday
+    ... on Organization {
+      industry
+    }
+  }
+}

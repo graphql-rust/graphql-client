@@ -1,0 +1,17 @@
+fragment DogName on Dog {
+  name
+}
+
+query MyQuery {
+  names {
+    __typename
+    ...DogName
+    ... on Person {
+      firstName
+      lastName
+    }
+    ... on Organization {
+      title
+    }
+  }
+}

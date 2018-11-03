@@ -2,10 +2,10 @@ fragment PublicStatus on Named {
   displayName
 }
 
-query MyQuery {
+query InterfaceWithFragmentQuery {
   everything {
-    name
     __typename
+    name
     ...PublicStatus
     ... on Dog {
       isGoodDog
