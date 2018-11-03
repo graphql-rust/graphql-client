@@ -25,6 +25,8 @@ pub struct GqlInterface {
 
 impl GqlInterface {
     /// filters the selection to keep only the fields that refer to the interface's own.
+    ///
+    /// This does not include the __typename field because it is translated into the `on` enum.
     fn object_selection(&self, selection: &Selection, query_context: &QueryContext) -> Selection {
         Selection(
             selection
@@ -239,7 +241,7 @@ mod tests {
 
         assert_eq!(
             iface.object_selection(&selection, &context),
-            Selection(vec![typename_field])
+            Selection(vec![])
         );
     }
 }

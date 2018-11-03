@@ -104,16 +104,18 @@ fn fragment_in_interface() {
                     public_status: PublicStatus {
                         display_name: false,
                     },
-                    on: RustInterfaceWithFragmentQueryEverythingOn::Person(RustInterfaceWithFragmentQueryEverythingOnPerson {
-                        birthday: Some("1934-02-18".to_string()),
-                    })
+                    on: RustInterfaceWithFragmentQueryEverythingOn::Person(
+                        RustInterfaceWithFragmentQueryEverythingOnPerson {
+                            birthday: Some("1934-02-18".to_string()),
+                        }
+                    )
                 },
                 RustInterfaceWithFragmentQueryEverything {
                     name: "Laïka".to_string(),
                     public_status: PublicStatus { display_name: true },
-                    on: RustInterfaceWithFragmentQueryEverythingOn::Dog(RustInterfaceWithFragmentQueryEverythingOnDog {
-                        is_good_dog: true,
-                    })
+                    on: RustInterfaceWithFragmentQueryEverythingOn::Dog(
+                        RustInterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
+                    )
                 },
                 RustInterfaceWithFragmentQueryEverything {
                     name: "Mozilla".to_string(),
@@ -125,9 +127,9 @@ fn fragment_in_interface() {
                 RustInterfaceWithFragmentQueryEverything {
                     name: "Norbert".to_string(),
                     public_status: PublicStatus { display_name: true },
-                    on: RustInterfaceWithFragmentQueryEverythingOn::Dog(RustInterfaceWithFragmentQueryEverythingOnDog {
-                        is_good_dog: true
-                    }),
+                    on: RustInterfaceWithFragmentQueryEverythingOn::Dog(
+                        RustInterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
+                    ),
                 },
             ])
         }
