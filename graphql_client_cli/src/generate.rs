@@ -9,7 +9,8 @@ use syn;
 pub fn generate_code(
     query_path: PathBuf,
     schema_path: PathBuf,
-    selected_operation: String,
+    module_name: String,
+    selected_operation: Option<String>,
     additional_derives: Option<String>,
     deprecation_strategy: &Option<String>,
     no_formatting: bool,
@@ -36,7 +37,9 @@ pub fn generate_code(
     };
 
     let options = GraphQLClientDeriveOptions {
-        struct_name: selected_operation,
+        operation_name: selected_operation,
+        struct_name: None,
+        module_name: Some(module_name),
         additional_derives,
         deprecation_strategy,
         module_visibility,

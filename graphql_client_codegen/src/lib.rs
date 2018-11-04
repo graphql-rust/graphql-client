@@ -65,9 +65,14 @@ lazy_static! {
 }
 
 /// Used to configure code generation.
+#[derive(Clone)]
 pub struct GraphQLClientDeriveOptions {
-    /// Name of the operation we want to generate code for. If it does not match, we default to the first one.
-    pub struct_name: String,
+    /// Name of the operation we want to generate code for. If it does not match, we use all queries.
+    pub operation_name: Option<String>,
+    /// The name of implemention target struct.
+    pub struct_name: Option<String>,
+    /// The module that contains queries.
+    pub module_name: Option<String>,
     /// Comma-separated list of additional traits we want to derive.
     pub additional_derives: Option<String>,
     /// The deprecation strategy to adopt.
@@ -84,11 +89,11 @@ pub fn generate_module_token_stream(
 ) -> Result<TokenStream, failure::Error> {
     let options = options.unwrap();
 
-    let module_visibility = options.module_visibility;
-    let response_derives = options.additional_derives;
+    let module_visibility = options.module_visibility.clone();
+    let response_derives = options.additional_derives.clone();
 
     // The user can determine what to do about deprecations.
-    let deprecation_strategy = options.deprecation_strategy.unwrap_or_default();
+    let deprecation_strategy = options.deprecation_strategy.clone().unwrap_or_default();
 
     // We need to qualify the query with the path to the crate it is part of
     let (query_string, query) = {
@@ -104,14 +109,16 @@ pub fn generate_module_token_stream(
     };
 
     // Determine which operation we are generating code for. This will be used in operationName.
-
-    let operation = if let Some(op) = codegen::select_operation(&query, &options.struct_name) {
-        op
+    let operations = if options.operation_name.is_some() {
+        let op = codegen::select_operation(&query, &(options.operation_name.clone().unwrap()));
+        if op.is_some() {
+            vec![op.unwrap()]
+        } else {
+            codegen::all_operations(&query)
+        }
     } else {
-        panic!("Query document defines no operation.")
+        codegen::all_operations(&query)
     };
-
-    let operation_name_literal = &operation.name;
 
     // Check the schema cache.
     let schema = {
@@ -145,20 +152,95 @@ pub fn generate_module_token_stream(
         }
     };
 
+    let struct_name = if options.struct_name.is_some() {
+        Some(Ident::new(
+            options.struct_name.clone().unwrap().as_str(),
+            Span::call_site(),
+        ))
+    } else {
+        None
+    };
+
     let module_name = Ident::new(
-        options.struct_name.to_snake_case().as_str(),
+        options
+            .module_name
+            .clone()
+            .unwrap_or_else(|| options.operation_name.clone().unwrap())
+            .to_snake_case()
+            .as_str(),
         Span::call_site(),
     );
-    let struct_name = Ident::new(options.struct_name.as_str(), Span::call_site());
-    let schema_output = codegen::response_for_query(
-        schema,
-        query,
-        &operation,
-        response_derives,
-        deprecation_strategy,
-    )?;
 
-    let result = quote!(
+    let operation_count = operations.len();
+
+    let multiple_operations = operation_count > 1;
+
+    let mut schema_and_operations = Vec::with_capacity(operation_count);
+
+    for operation in &operations {
+        let schema_output = codegen::response_for_query(
+            schema.clone(),
+            query.clone(),
+            &operation,
+            response_derives.clone(),
+            deprecation_strategy.clone(),
+            multiple_operations,
+        )?;
+        let operation_name = Ident::new(operation.name.as_str(), Span::call_site());
+        schema_and_operations.push((schema_output, operation_name, operation.name.as_str()));
+    }
+
+    let result = build_module_token_stream(
+        &module_visibility,
+        &module_name,
+        &struct_name,
+        &query_string,
+        schema_and_operations,
+    );
+
+    Ok(result)
+}
+
+fn build_module_token_stream(
+    module_visibility: &syn::Visibility,
+    module_name: &Ident,
+    struct_name: &Option<Ident>,
+    query_string: &str,
+    schema_and_operations: Vec<(TokenStream, Ident, &str)>,
+) -> TokenStream {
+    let mut schema_token_streams = vec![];
+    let mut trait_token_streams = vec![];
+    let multiple_operations = schema_and_operations.len() > 1;
+    for (schema_output, operation_name, operation_name_literal) in schema_and_operations {
+        let (schema_token_stream, trait_token_stream) = build_query_struct_token_stream(
+            &module_name,
+            struct_name.clone(),
+            &schema_output,
+            &operation_name,
+            operation_name_literal,
+            multiple_operations,
+        );
+        schema_token_streams.push(schema_token_stream);
+        trait_token_streams.push(trait_token_stream);
+    }
+
+    merge_with_common_token_stream(
+        &module_visibility,
+        &module_name,
+        query_string,
+        schema_token_streams,
+        trait_token_streams,
+    )
+}
+
+fn merge_with_common_token_stream(
+    module_visibility: &syn::Visibility,
+    module_name: &Ident,
+    query_string: &str,
+    schema_token_streams: Vec<TokenStream>,
+    trait_token_streams: Vec<TokenStream>,
+) -> TokenStream {
+    quote!(
         #module_visibility mod #module_name {
             #![allow(non_camel_case_types)]
             #![allow(non_snake_case)]
@@ -167,14 +249,52 @@ pub fn generate_module_token_stream(
             use serde;
 
             pub const QUERY: &'static str = #query_string;
-            pub const OPERATION_NAME: &'static str = #operation_name_literal;
-
-            #schema_output
+            #(#schema_token_streams)*
         }
+        #(#trait_token_streams)*
+    )
+}
 
+fn build_query_struct_token_stream(
+    module_name: &Ident,
+    struct_name: Option<Ident>,
+    schema_output: &TokenStream,
+    operation_name: &Ident,
+    operation_name_literal: &str,
+    multiple_operations: bool,
+) -> (TokenStream, TokenStream) {
+    let struct_name = if struct_name.is_some() {
+        struct_name.unwrap()
+    } else {
+        operation_name.clone()
+    };
+
+    let (respons_data_struct_name, variables_struct_name) = if multiple_operations {
+        (
+            Ident::new(
+                format!("{}ResponseData", operation_name_literal).as_str(),
+                Span::call_site(),
+            ),
+            Ident::new(
+                format!("{}Variables", operation_name).as_str(),
+                Span::call_site(),
+            ),
+        )
+    } else {
+        (
+            Ident::new("ResponseData", Span::call_site()),
+            Ident::new("Variables", Span::call_site()),
+        )
+    };
+
+    let schema_token = quote!(
+        pub const OPERATION_NAME: &'static str = #operation_name_literal;
+        #schema_output
+    );
+    let trait_token = quote!(
         impl ::graphql_client::GraphQLQuery for #struct_name {
-            type Variables = #module_name::Variables;
-            type ResponseData = #module_name::ResponseData;
+            type Variables = #module_name::#variables_struct_name;
+            type ResponseData = #module_name::#respons_data_struct_name;
 
             fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
                 ::graphql_client::QueryBody {
@@ -186,8 +306,7 @@ pub fn generate_module_token_stream(
             }
         }
     );
-
-    Ok(result)
+    (schema_token, trait_token)
 }
 
 fn read_file(path: &::std::path::Path) -> Result<String, failure::Error> {

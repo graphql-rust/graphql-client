@@ -42,8 +42,18 @@ fn build_graphql_client_derive_options(input: &syn::DeriveInput) -> GraphQLClien
     // The user can determine what to do about deprecations.
     let deprecation_strategy = deprecation::extract_deprecation_strategy(input).unwrap_or_default();
 
+    let selected_operation_name = attributes::extract_attr(input, "selected_operation")
+        .context("Extracting selected operation name");
+    let selected_operation_name = if selected_operation_name.is_ok() {
+        Some(selected_operation_name.unwrap())
+    } else {
+        Some(input.ident.to_string())
+    };
+
     GraphQLClientDeriveOptions {
-        struct_name: input.clone().ident.to_string(),
+        operation_name: selected_operation_name,
+        struct_name: Some(input.ident.to_string()),
+        module_name: Some(input.ident.to_string()),
         additional_derives: response_derives,
         deprecation_strategy: Some(deprecation_strategy),
         module_visibility: input.clone().vis,

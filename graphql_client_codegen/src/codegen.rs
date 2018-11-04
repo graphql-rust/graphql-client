@@ -3,13 +3,23 @@ use failure;
 use fragments::GqlFragment;
 use graphql_parser::query;
 use operations::Operation;
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use schema;
 use selection::Selection;
 
 /// Selects the first operation matching `struct_name` or the first one. Returns `None` when the query document defines no operation.
 pub(crate) fn select_operation(query: &query::Document, struct_name: &str) -> Option<Operation> {
+    let operations = all_operations(query);
+
+    operations
+        .iter()
+        .find(|op| op.name == struct_name)
+        .map(|i| i.to_owned())
+        .or_else(|| operations.iter().next().map(|i| i.to_owned()))
+}
+
+pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation> {
     let mut operations: Vec<Operation> = Vec::new();
 
     for definition in &query.definitions {
@@ -17,12 +27,7 @@ pub(crate) fn select_operation(query: &query::Document, struct_name: &str) -> Op
             operations.push(op.into());
         }
     }
-
     operations
-        .iter()
-        .find(|op| op.name == struct_name)
-        .map(|i| i.to_owned())
-        .or_else(|| operations.iter().next().map(|i| i.to_owned()))
 }
 
 /// The main code generation function.
@@ -32,6 +37,7 @@ pub fn response_for_query(
     operation: &Operation,
     additional_derives: Option<String>,
     deprecation_strategy: deprecation::DeprecationStrategy,
+    multiple_operation: bool,
 ) -> Result<TokenStream, failure::Error> {
     let mut context = QueryContext::new(schema, deprecation_strategy);
 
@@ -112,7 +118,8 @@ pub fn response_for_query(
             }
         }).collect();
     let fragment_definitions = fragment_definitions?;
-    let variables_struct = operation.expand_variables(&context);
+    let variables_struct =
+        operation.expand_variables(&context, &operation.name, multiple_operation);
 
     let input_object_definitions: Result<Vec<TokenStream>, _> = context
         .schema
@@ -141,6 +148,15 @@ pub fn response_for_query(
 
     let response_derives = context.response_derives();
 
+    let respons_data_struct_name = if multiple_operation {
+        Ident::new(
+            format!("{}ResponseData", operation.name).as_str(),
+            Span::call_site(),
+        )
+    } else {
+        Ident::new("ResponseData", Span::call_site())
+    };
+
     Ok(quote! {
         use serde_derive::*;
 
@@ -166,7 +182,7 @@ pub fn response_for_query(
         #variables_struct
 
         #response_derives
-        pub struct ResponseData {
+        pub struct #respons_data_struct_name {
             #(#response_data_fields,)*
         }
 

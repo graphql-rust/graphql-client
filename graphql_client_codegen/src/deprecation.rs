@@ -14,7 +14,7 @@ pub enum DeprecationStatus {
 }
 
 /// The available deprecation startegies.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum DeprecationStrategy {
     /// Allow use of deprecated items in queries, and say nothing.
     Allow,

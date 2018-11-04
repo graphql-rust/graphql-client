@@ -11,7 +11,7 @@ use graphql_client::GraphQLQuery;
 #[graphql(
     query_path = "tests/operation_selection/queries.graphql",
     schema_path = "tests/operation_selection/schema.graphql",
-    response_derives = "Debug,PartialEq",
+    response_derives = "Debug,PartialEq"
 )]
 pub struct Heights;
 
@@ -19,7 +19,7 @@ pub struct Heights;
 #[graphql(
     query_path = "tests/operation_selection/queries.graphql",
     schema_path = "tests/operation_selection/schema.graphql",
-    response_derives = "Debug,PartialEq",
+    response_derives = "Debug,PartialEq"
 )]
 pub struct Echo;
 
@@ -28,9 +28,18 @@ pub struct Echo;
 #[graphql(
     query_path = "tests/operation_selection/queries.graphql",
     schema_path = "tests/operation_selection/schema.graphql",
-    response_derives = "Debug,PartialEq",
+    response_derives = "Debug,PartialEq"
 )]
 pub struct Unrelated;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    query_path = "tests/operation_selection/queries.graphql",
+    schema_path = "tests/operation_selection/schema.graphql",
+    response_derives = "Debug,PartialEq",
+    selected_operation = "Echo"
+)]
+pub struct SelectedOperation;
 
 const HEIGHTS_RESPONSE: &'static str = r##"{"mountainHeight": 224, "buildingHeight": 12}"##;
 const ECHO_RESPONSE: &'static str = r##"{"echo": "tiramisù"}"##;
@@ -42,6 +51,8 @@ fn operation_selection_works() {
     let heights_unrelated_response_data: unrelated::ResponseData =
         serde_json::from_str(HEIGHTS_RESPONSE).unwrap();
     let echo_response_data: echo::ResponseData = serde_json::from_str(ECHO_RESPONSE).unwrap();
+    let selected_operation_response_data: selected_operation::ResponseData =
+        serde_json::from_str(ECHO_RESPONSE).unwrap();
 
     let _echo_variables = echo::Variables {
         msg: Some("hi".to_string()),
@@ -56,9 +67,14 @@ fn operation_selection_works() {
         mountain_name: Some("canigou".to_string()),
     };
 
+    let _selected_operation_variables = selected_operation::Variables {
+        msg: Some("hi".to_string()),
+    };
+
     let expected_echo = echo::ResponseData {
         echo: Some("tiramisù".to_string()),
     };
+
     let expected_heights = heights::ResponseData {
         mountain_height: Some(224),
         building_height: Some(12),
@@ -69,9 +85,17 @@ fn operation_selection_works() {
         building_height: Some(12),
     };
 
+    let expected_selected_operation = selected_operation::ResponseData {
+        echo: Some("tiramisù".to_string()),
+    };
+
     assert_eq!(expected_echo, echo_response_data);
     assert_eq!(expected_heights, heights_response_data);
     assert_eq!(expected_heights_unrelated, heights_unrelated_response_data);
+    assert_eq!(
+        expected_selected_operation,
+        selected_operation_response_data
+    );
 }
 
 #[test]
