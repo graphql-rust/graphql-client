@@ -173,7 +173,7 @@ pub fn generate_module_token_stream(
 
     let operation_count = operations.len();
 
-    let mulutiple_operation = operation_count > 1;
+    let multiple_operations = operation_count > 1;
 
     let mut schema_and_operations = Vec::with_capacity(operation_count);
 
@@ -184,7 +184,7 @@ pub fn generate_module_token_stream(
             &operation,
             response_derives.clone(),
             deprecation_strategy.clone(),
-            mulutiple_operation,
+            multiple_operations,
         )?;
         let operation_name = Ident::new(operation.name.as_str(), Span::call_site());
         schema_and_operations.push((schema_output, operation_name, operation.name.as_str()));
@@ -210,7 +210,7 @@ fn build_module_token_stream(
 ) -> TokenStream {
     let mut schema_token_streams = vec![];
     let mut trait_token_streams = vec![];
-    let mulutiple_operation = schema_and_operations.len() > 1;
+    let multiple_operations = schema_and_operations.len() > 1;
     for (schema_output, operation_name, operation_name_literal) in schema_and_operations {
         let (schema_token_stream, trait_token_stream) = build_query_struct_token_stream(
             &module_name,
@@ -218,7 +218,7 @@ fn build_module_token_stream(
             &schema_output,
             &operation_name,
             operation_name_literal,
-            mulutiple_operation,
+            multiple_operations,
         );
         schema_token_streams.push(schema_token_stream);
         trait_token_streams.push(trait_token_stream);
@@ -261,7 +261,7 @@ fn build_query_struct_token_stream(
     schema_output: &TokenStream,
     operation_name: &Ident,
     operation_name_literal: &str,
-    mulutiple_operation: bool,
+    multiple_operations: bool,
 ) -> (TokenStream, TokenStream) {
     let struct_name = if struct_name.is_some() {
         struct_name.unwrap()
@@ -269,7 +269,7 @@ fn build_query_struct_token_stream(
         operation_name.clone()
     };
 
-    let (respons_data_struct_name, variables_struct_name) = if mulutiple_operation {
+    let (respons_data_struct_name, variables_struct_name) = if multiple_operations {
         (
             Ident::new(
                 format!("{}ResponseData", operation_name_literal).as_str(),

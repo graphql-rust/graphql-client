@@ -43,10 +43,10 @@ impl Operation {
         &self,
         context: &QueryContext,
         operation_name: &str,
-        mulutiple_operation: bool,
+        multiple_operations: bool,
     ) -> TokenStream {
         let variables = &self.variables;
-        let variables_struct_name = if mulutiple_operation {
+        let variables_struct_name = if multiple_operations {
             Ident::new(
                 format!("{}Variables", operation_name).as_str(),
                 Span::call_site(),
