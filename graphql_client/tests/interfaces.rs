@@ -26,25 +26,25 @@ fn interface_deserialization() {
 
     let expected = ResponseData {
         everything: Some(vec![
-            RustMyQueryEverything {
+            MyQueryEverything {
                 name: "Audrey Lorde".to_string(),
-                on: RustMyQueryEverythingOn::Person(RustMyQueryEverythingOnPerson {
+                on: MyQueryEverythingOn::Person(MyQueryEverythingOnPerson {
                     birthday: Some("1934-02-18".to_string()),
                 }),
             },
-            RustMyQueryEverything {
+            MyQueryEverything {
                 name: "Laïka".to_string(),
-                on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog { is_good_dog: true }),
+                on: MyQueryEverythingOn::Dog(MyQueryEverythingOnDog { is_good_dog: true }),
             },
-            RustMyQueryEverything {
+            MyQueryEverything {
                 name: "Mozilla".to_string(),
-                on: RustMyQueryEverythingOn::Organization(RustMyQueryEverythingOnOrganization {
+                on: MyQueryEverythingOn::Organization(MyQueryEverythingOnOrganization {
                     industry: Industry::OTHER,
                 }),
             },
-            RustMyQueryEverything {
+            MyQueryEverything {
                 name: "Norbert".to_string(),
-                on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog { is_good_dog: true }),
+                on: MyQueryEverythingOn::Dog(MyQueryEverythingOnDog { is_good_dog: true }),
             },
         ]),
     };
@@ -71,7 +71,7 @@ fn interface_not_on_everything_deserialization() {
 
     println!("{:?}", response_data);
 
-    let expected = r##"ResponseData { everything: Some([RustMyQueryEverything { name: "Audrey Lorde", on: Person(RustMyQueryEverythingOnPerson { birthday: Some("1934-02-18") }) }, RustMyQueryEverything { name: "Laïka", on: Dog }, RustMyQueryEverything { name: "Mozilla", on: Organization(RustMyQueryEverythingOnOrganization { industry: OTHER }) }, RustMyQueryEverything { name: "Norbert", on: Dog }]) }"##;
+    let expected = r##"ResponseData { everything: Some([MyQueryEverything { name: "Audrey Lorde", on: Person(MyQueryEverythingOnPerson { birthday: Some("1934-02-18") }) }, MyQueryEverything { name: "Laïka", on: Dog }, MyQueryEverything { name: "Mozilla", on: Organization(MyQueryEverythingOnOrganization { industry: OTHER }) }, MyQueryEverything { name: "Norbert", on: Dog }]) }"##;
 
     assert_eq!(format!("{:?}", response_data), expected);
 
@@ -99,36 +99,36 @@ fn fragment_in_interface() {
         response_data,
         ResponseData {
             everything: Some(vec![
-                RustInterfaceWithFragmentQueryEverything {
+                InterfaceWithFragmentQueryEverything {
                     name: "Audrey Lorde".to_string(),
                     public_status: PublicStatus {
                         display_name: false,
                     },
-                    on: RustInterfaceWithFragmentQueryEverythingOn::Person(
-                        RustInterfaceWithFragmentQueryEverythingOnPerson {
+                    on: InterfaceWithFragmentQueryEverythingOn::Person(
+                        InterfaceWithFragmentQueryEverythingOnPerson {
                             birthday: Some("1934-02-18".to_string()),
                         }
                     )
                 },
-                RustInterfaceWithFragmentQueryEverything {
+                InterfaceWithFragmentQueryEverything {
                     name: "Laïka".to_string(),
                     public_status: PublicStatus { display_name: true },
-                    on: RustInterfaceWithFragmentQueryEverythingOn::Dog(
-                        RustInterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
+                    on: InterfaceWithFragmentQueryEverythingOn::Dog(
+                        InterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
                     )
                 },
-                RustInterfaceWithFragmentQueryEverything {
+                InterfaceWithFragmentQueryEverything {
                     name: "Mozilla".to_string(),
                     public_status: PublicStatus {
                         display_name: false
                     },
-                    on: RustInterfaceWithFragmentQueryEverythingOn::Organization,
+                    on: InterfaceWithFragmentQueryEverythingOn::Organization,
                 },
-                RustInterfaceWithFragmentQueryEverything {
+                InterfaceWithFragmentQueryEverything {
                     name: "Norbert".to_string(),
                     public_status: PublicStatus { display_name: true },
-                    on: RustInterfaceWithFragmentQueryEverythingOn::Dog(
-                        RustInterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
+                    on: InterfaceWithFragmentQueryEverythingOn::Dog(
+                        InterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
                     ),
                 },
             ])

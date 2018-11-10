@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - (BREAKING) GraphQLQuery does not take a lifetime parameter anymore. This makes it easier to work with futures in async client, since futures expect everything they capture to have the 'static lifetime.
+- (BREAKING) Removed the `Rust` prefix on the name of generated items.
 
 ### Fixed
 

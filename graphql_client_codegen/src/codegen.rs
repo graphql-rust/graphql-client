@@ -80,7 +80,7 @@ pub fn response_for_query(
             .objects
             .get(&root_name)
             .expect("schema declaration is invalid");
-        let prefix = format!("RUST_{}", operation.name);
+        let prefix = &operation.name;
         let selection = &operation.selection;
 
         if operation.is_subscription() && selection.0.len() > 1 {

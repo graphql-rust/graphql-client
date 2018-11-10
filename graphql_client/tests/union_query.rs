@@ -21,19 +21,17 @@ fn union_query_deserialization() {
 
     let expected = union_query::ResponseData {
         names: Some(vec![
-            union_query::RustMyQueryNames::Person(union_query::RustMyQueryNamesOnPerson {
+            union_query::MyQueryNames::Person(union_query::MyQueryNamesOnPerson {
                 first_name: "Audrey".to_string(),
                 last_name: Some("Lorde".to_string()),
             }),
-            union_query::RustMyQueryNames::Dog(union_query::RustMyQueryNamesOnDog {
+            union_query::MyQueryNames::Dog(union_query::MyQueryNamesOnDog {
                 name: "Laïka".to_string(),
             }),
-            union_query::RustMyQueryNames::Organization(
-                union_query::RustMyQueryNamesOnOrganization {
-                    title: "Mozilla".to_string(),
-                },
-            ),
-            union_query::RustMyQueryNames::Dog(union_query::RustMyQueryNamesOnDog {
+            union_query::MyQueryNames::Organization(union_query::MyQueryNamesOnOrganization {
+                title: "Mozilla".to_string(),
+            }),
+            union_query::MyQueryNames::Dog(union_query::MyQueryNamesOnDog {
                 name: "Norbert".to_string(),
             }),
         ]),
