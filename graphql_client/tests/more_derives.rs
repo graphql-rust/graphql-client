@@ -15,14 +15,14 @@ pub struct MoreDerives;
 #[test]
 fn response_derives_can_be_added() {
     let response_data = more_derives::ResponseData {
-        current_user: Some(more_derives::RustTestCurrentUser {
+        current_user: Some(more_derives::TestCurrentUser {
             id: Some("abcd".to_owned()),
             name: Some("Angela Merkel".to_owned()),
         }),
     };
 
     let response_data_2 = more_derives::ResponseData {
-        current_user: Some(more_derives::RustTestCurrentUser {
+        current_user: Some(more_derives::TestCurrentUser {
             id: Some("ffff".to_owned()),
             name: Some("Winnie the Pooh".to_owned()),
         }),

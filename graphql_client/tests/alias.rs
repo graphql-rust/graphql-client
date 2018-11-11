@@ -22,7 +22,7 @@ fn alias() {
         },
     });
 
-    let _type_name_test = alias_query::RustAliasQueryOuterAlias { inner_alias: None };
+    let _type_name_test = alias_query::AliasQueryOuterAlias { inner_alias: None };
 
     let valid_alias = serde_json::from_value::<alias_query::ResponseData>(valid_response).unwrap();
 

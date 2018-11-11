@@ -36,7 +36,7 @@ fn deprecation_allow() {
     // as deprecated.
     #![deny(deprecated)]
     let _ = allow_deprecation::ResponseData {
-        current_user: Some(allow_deprecation::RustTestCurrentUser {
+        current_user: Some(allow_deprecation::TestCurrentUser {
             id: Some("abcd".to_owned()),
             name: Some("Angela Merkel".to_owned()),
             deprecated_with_reason: Some("foo".to_owned()),
@@ -48,7 +48,7 @@ fn deprecation_allow() {
 #[test]
 fn deprecation_deny() {
     let _ = deny_deprecation::ResponseData {
-        current_user: Some(deny_deprecation::RustTestCurrentUser {
+        current_user: Some(deny_deprecation::TestCurrentUser {
             id: Some("abcd".to_owned()),
             name: Some("Angela Merkel".to_owned()),
             // Notice the deprecated fields are not included here.
@@ -63,7 +63,7 @@ fn deprecation_deny() {
 fn deprecation_warn() {
     #![allow(deprecated)]
     let _ = warn_deprecation::ResponseData {
-        current_user: Some(warn_deprecation::RustTestCurrentUser {
+        current_user: Some(warn_deprecation::TestCurrentUser {
             id: Some("abcd".to_owned()),
             name: Some("Angela Merkel".to_owned()),
             deprecated_with_reason: Some("foo".to_owned()),

@@ -29,19 +29,19 @@ fn type_refining_fragment_on_union() {
 
     let expected = query_on_union::ResponseData {
         names: Some(vec![
-            query_on_union::RustMyQueryNames::Person(query_on_union::RustMyQueryNamesOnPerson {
+            query_on_union::MyQueryNames::Person(query_on_union::MyQueryNamesOnPerson {
                 first_name: "Audrey".to_string(),
                 last_name: Some("Lorde".to_string()),
             }),
-            query_on_union::RustMyQueryNames::Dog(query_on_union::RustMyQueryNamesOnDog {
+            query_on_union::MyQueryNames::Dog(query_on_union::MyQueryNamesOnDog {
                 name: "Laïka".to_string(),
             }),
-            query_on_union::RustMyQueryNames::Organization(
-                query_on_union::RustMyQueryNamesOnOrganization {
+            query_on_union::MyQueryNames::Organization(
+                query_on_union::MyQueryNamesOnOrganization {
                     title: "Mozilla".to_string(),
                 },
             ),
-            query_on_union::RustMyQueryNames::Dog(query_on_union::RustMyQueryNamesOnDog {
+            query_on_union::MyQueryNames::Dog(query_on_union::MyQueryNamesOnDog {
                 name: "Norbert".to_string(),
             }),
         ]),
@@ -60,25 +60,25 @@ fn type_refining_fragment_on_interface() {
 
     let expected = ResponseData {
         everything: Some(vec![
-            RustMyQueryEverything {
+            MyQueryEverything {
                 name: "Audrey Lorde".to_string(),
-                on: RustMyQueryEverythingOn::Person(RustMyQueryEverythingOnPerson {
+                on: MyQueryEverythingOn::Person(MyQueryEverythingOnPerson {
                     birthday: Some("1934-02-18".to_string()),
                 }),
             },
-            RustMyQueryEverything {
+            MyQueryEverything {
                 name: "Laïka".to_string(),
-                on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog { is_good_dog: true }),
+                on: MyQueryEverythingOn::Dog(MyQueryEverythingOnDog { is_good_dog: true }),
             },
-            RustMyQueryEverything {
+            MyQueryEverything {
                 name: "Mozilla".to_string(),
-                on: RustMyQueryEverythingOn::Organization(RustMyQueryEverythingOnOrganization {
+                on: MyQueryEverythingOn::Organization(MyQueryEverythingOnOrganization {
                     industry: Industry::OTHER,
                 }),
             },
-            RustMyQueryEverything {
+            MyQueryEverything {
                 name: "Norbert".to_string(),
-                on: RustMyQueryEverythingOn::Dog(RustMyQueryEverythingOnDog { is_good_dog: true }),
+                on: MyQueryEverythingOn::Dog(MyQueryEverythingOnDog { is_good_dog: true }),
             },
         ]),
     };

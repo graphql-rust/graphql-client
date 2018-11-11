@@ -30,16 +30,16 @@ fn subscriptions_work() {
 
     let expected = subscription_query::ResponseData {
         dog_birthdays: Some(vec![
-            subscription_query::RustBirthdaysDogBirthdays {
+            subscription_query::BirthdaysDogBirthdays {
                 name: Some("Maya".to_string()),
             },
-            subscription_query::RustBirthdaysDogBirthdays {
+            subscription_query::BirthdaysDogBirthdays {
                 name: Some("Norbert".to_string()),
             },
-            subscription_query::RustBirthdaysDogBirthdays {
+            subscription_query::BirthdaysDogBirthdays {
                 name: Some("Strelka".to_string()),
             },
-            subscription_query::RustBirthdaysDogBirthdays {
+            subscription_query::BirthdaysDogBirthdays {
                 name: Some("Belka".to_string()),
             },
         ]),
