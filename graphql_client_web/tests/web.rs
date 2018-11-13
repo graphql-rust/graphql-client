@@ -9,8 +9,6 @@ use graphql_client_web::Client;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_test::*;
 
-use std::panic;
-
 use wasm_bindgen_test::wasm_bindgen_test_configure;
 
 wasm_bindgen_test_configure!(run_in_browser);

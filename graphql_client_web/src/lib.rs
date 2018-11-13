@@ -4,19 +4,20 @@
 
 // #![deny(warnings)]
 #![deny(missing_docs)]
+#![feature(non_exhaustive)]
 
 #[macro_use]
 pub extern crate graphql_client;
 #[macro_use]
 extern crate wasm_bindgen;
 
+pub use graphql_client::GraphQLQuery;
 use failure::*;
 use futures::{Future, IntoFuture};
-pub use graphql_client::GraphQLQuery;
 use log::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen::JsValue;
+use std::collections::HashMap;
 use wasm_bindgen_futures::JsFuture;
+use wasm_bindgen::{JsCast, JsValue};
 
 /// The main interface to the library.
 ///
@@ -27,6 +28,7 @@ use wasm_bindgen_futures::JsFuture;
 /// - use it to perform queries with the [call] method
 pub struct Client {
     endpoint: String,
+    headers: HashMap<String, String>,
 }
 
 /// All the ways a request can go wrong.

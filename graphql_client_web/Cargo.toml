@@ -1,6 +1,6 @@
 [package]
 name = "graphql_client_web"
-version = "0.1.0"
+version = "0.5.1"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 edition = "2018"
 
