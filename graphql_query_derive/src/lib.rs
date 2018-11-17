@@ -1,8 +1,12 @@
+#[macro_use]
 extern crate failure;
 extern crate graphql_client_codegen;
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate syn;
+
+/// Derive-related code. This will be moved into graphql_query_derive.
+mod attributes;
 
 use failure::ResultExt;
 use graphql_client_codegen::*;
@@ -40,7 +44,7 @@ fn build_query_and_schema_path(
 fn build_graphql_client_derive_options(input: &syn::DeriveInput) -> GraphQLClientDeriveOptions {
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
     // The user can determine what to do about deprecations.
-    let deprecation_strategy = deprecation::extract_deprecation_strategy(input).unwrap_or_default();
+    let deprecation_strategy = attributes::extract_deprecation_strategy(input).unwrap_or_default();
 
     let selected_operation_name = attributes::extract_attr(input, "selected_operation")
         .context("Extracting selected operation name");

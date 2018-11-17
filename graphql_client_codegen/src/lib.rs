@@ -25,8 +25,6 @@ extern crate quote;
 use proc_macro2::TokenStream;
 use syn::Visibility;
 
-/// Derive-related code. This will be moved into graphql_query_derive.
-pub mod attributes;
 mod codegen;
 /// Deprecation-related code
 pub mod deprecation;
