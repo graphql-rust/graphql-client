@@ -53,9 +53,9 @@ pub fn generate_code(
 
     if cfg!(feature = "rustfmt") && !no_formatting {
         let codes = format(&codes);
-        write!(file, "{}", codes);
+        write!(file, "{}", codes)?;
     } else {
-        write!(file, "{}", codes);
+        write!(file, "{}", codes)?;
     }
 
     Ok(())

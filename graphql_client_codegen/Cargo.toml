@@ -11,7 +11,7 @@ failure = "0.1"
 itertools = "0.7"
 lazy_static = "1.0"
 quote = "0.6"
-syn = "0.15"
+syn = "0.15.20"
 proc-macro2 = { version = "0.4", features = [] }
 serde = "^1.0.78"
 serde_derive = "1.0"
