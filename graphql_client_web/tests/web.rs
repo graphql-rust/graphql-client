@@ -101,12 +101,6 @@ fn test_bad_url() -> impl Future<Item = (), Error = JsValue> {
                     "NetworkError when attempting to fetch resource.".into()
                 )
             );
-            JsValue::NULL
         })
         .then(|_| Ok(()))
-}
-
-#[wasm_bindgen_test]
-fn test_404() {
-    unimplemented!()
 }

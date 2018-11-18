@@ -4,7 +4,6 @@
 
 // #![deny(warnings)]
 #![deny(missing_docs)]
-#![feature(non_exhaustive)]
 
 #[macro_use]
 pub extern crate graphql_client;
@@ -36,7 +35,6 @@ pub struct Client {
 ///
 /// not exhaustive
 #[derive(Debug, Fail, PartialEq)]
-#[non_exhaustive]
 pub enum ClientError {
     /// The body couldn't be built
     #[fail(display = "Request body is not a valid string")]
@@ -92,6 +90,7 @@ impl Client {
     {
         // this can be removed when we convert to async/await
         let endpoint = self.endpoint.clone();
+        let custom_headers = self.headers.clone();
 
         web_sys::window()
             .ok_or_else(|| ClientError::NoWindow)
@@ -113,20 +112,21 @@ impl Client {
                 // "Request constructor threw");
             })
             .and_then(move |(window, request)| {
-                let request: Result<web_sys::Request, _> = request
-                    .headers()
+                let mut headers = request.headers();
+                headers
                     .set("Content-Type", "application/json")
-                    .map_err(|_| ClientError::RequestError)
-                    .map(|_| request);
+                    .map_err(|_| ClientError::RequestError)?;
+                headers
+                    .set("Accept", "application/json")
+                    .map_err(|_| ClientError::RequestError)?;
 
-                let request: Result<web_sys::Request, _> = request.and_then(|req| {
-                    req.headers()
-                        .set("Accept", "application/json")
-                        .map_err(|_| ClientError::RequestError)
-                        .map(|_| req)
-                });
+                for (header_name, header_value) in custom_headers.iter() {
+                    headers.set(header_name, header_value)
+                        .map_err(|_| ClientError::RequestError)?;
 
-                request.map(move |request| (window, request))
+                }
+
+                Ok((window, request))
             })
             .and_then(move |(window, request)| {
                 JsFuture::from(window.fetch_with_request(&request))
