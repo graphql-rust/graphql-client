@@ -42,7 +42,8 @@ fn test_germany() -> impl Future<Item = (), Error = JsValue> {
                 .expect("germany is on a continent");
 
             assert_eq!(continent_name, "Europe");
-        }).map_err(|err| {
+        })
+        .map_err(|err| {
             panic!("{:?}", err);
             JsValue::NULL
         })
@@ -63,7 +64,8 @@ fn test_country() -> impl Future<Item = (), Error = JsValue> {
             country::Variables {
                 country_code: "CN".to_owned(),
             },
-        ).map(|response| {
+        )
+        .map(|response| {
             let continent_name = response
                 .data
                 .expect("response data is not null")
@@ -75,8 +77,36 @@ fn test_country() -> impl Future<Item = (), Error = JsValue> {
                 .expect("country is on a continent");
 
             assert_eq!(continent_name, "Asia");
-        }).map_err(|err| {
+        })
+        .map_err(|err| {
             panic!("{:?}", err);
             JsValue::NULL
         })
+}
+
+#[wasm_bindgen_test(async)]
+fn test_bad_url() -> impl Future<Item = (), Error = JsValue> {
+    Client::new("https://example.com/non-existent/graphql/endpoint")
+        .call(
+            Country,
+            country::Variables {
+                country_code: "CN".to_owned(),
+            },
+        )
+        .map(|_response| panic!("The API endpoint does not exist, this should not be called."))
+        .map_err(|err| {
+            assert_eq!(
+                err,
+                graphql_client_web::ClientError::Network(
+                    "NetworkError when attempting to fetch resource.".into()
+                )
+            );
+            JsValue::NULL
+        })
+        .then(|_| Ok(()))
+}
+
+#[wasm_bindgen_test]
+fn test_404() {
+    unimplemented!()
 }

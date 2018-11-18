@@ -8,16 +8,17 @@
 
 #[macro_use]
 pub extern crate graphql_client;
+extern crate js_sys;
 #[macro_use]
 extern crate wasm_bindgen;
 
-pub use graphql_client::GraphQLQuery;
 use failure::*;
 use futures::{Future, IntoFuture};
+pub use graphql_client::GraphQLQuery;
 use log::*;
 use std::collections::HashMap;
-use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen_futures::JsFuture;
 
 /// The main interface to the library.
 ///
@@ -34,7 +35,7 @@ pub struct Client {
 /// All the ways a request can go wrong.
 ///
 /// not exhaustive
-#[derive(Debug, Fail)]
+#[derive(Debug, Fail, PartialEq)]
 #[non_exhaustive]
 pub enum ClientError {
     /// The body couldn't be built
@@ -42,7 +43,7 @@ pub enum ClientError {
     Body,
     /// An error caused by window.fetch
     #[fail(display = "Network error")]
-    Network,
+    Network(String),
     /// Error in a dynamic JS cast that should have worked
     #[fail(display = "JS casting error")]
     Cast,
@@ -52,13 +53,13 @@ pub enum ClientError {
     )]
     NoWindow,
     /// Response shape does not match the generated code
-    #[fail(display = "Response shape error",)]
+    #[fail(display = "Response shape error")]
     ResponseShape,
     /// Response could not be converted to text
     #[fail(display = "Response conversion to text failed (Response.text threw)")]
     ResponseText,
     /// Exception thrown when building the request
-    #[fail(display = "Error building the request",)]
+    #[fail(display = "Error building the request")]
     RequestError,
     /// Other JS exception
     #[fail(display = "Unexpected JS exception")]
@@ -73,7 +74,13 @@ impl Client {
     {
         Client {
             endpoint: endpoint.into(),
+            headers: HashMap::new(),
         }
+    }
+
+    /// Add a header to those sent with the requests. Can be used for things like authorization.
+    pub fn add_header(&mut self, name: &str, value: &str) {
+        self.headers.insert(name.into(), value.into());
     }
 
     /// Perform a query.
@@ -93,7 +100,8 @@ impl Client {
                 serde_json::to_string(&Q::build_query(variables))
                     .map_err(|_| ClientError::Body)
                     .map(move |body| (window, body))
-            }).and_then(move |(window, body)| {
+            })
+            .and_then(move |(window, body)| {
                 let mut request_init = web_sys::RequestInit::new();
                 request_init
                     .method("POST")
@@ -103,7 +111,8 @@ impl Client {
                     .map_err(|_| ClientError::JsException)
                     .map(|request| (window, request))
                 // "Request constructor threw");
-            }).and_then(move |(window, request)| {
+            })
+            .and_then(move |(window, request)| {
                 let request: Result<web_sys::Request, _> = request
                     .headers()
                     .set("Content-Type", "application/json")
@@ -118,18 +127,23 @@ impl Client {
                 });
 
                 request.map(move |request| (window, request))
-            }).and_then(move |(window, request)| {
+            })
+            .and_then(move |(window, request)| {
                 JsFuture::from(window.fetch_with_request(&request))
-                    .map_err(|_| ClientError::Network)
-            }).and_then(move |res| {
+                    .map_err(|err| ClientError::Network(js_sys::Error::from(err).message().into()))
+            })
+            .and_then(move |res| {
                 debug!("response: {:?}", res);
                 res.dyn_into::<web_sys::Response>()
                     .map_err(|_| ClientError::Cast)
-            }).and_then(move |cast_response| {
+            })
+            .and_then(move |cast_response| {
                 cast_response.text().map_err(|_| ClientError::ResponseText)
-            }).and_then(move |text_promise| {
+            })
+            .and_then(move |text_promise| {
                 JsFuture::from(text_promise).map_err(|_| ClientError::ResponseText)
-            }).and_then(|text| {
+            })
+            .and_then(|text| {
                 let response_text = text.as_string().unwrap_or_else(|| String::new());
                 debug!("response text as string: {:?}", response_text);
                 serde_json::from_str(&response_text).map_err(|_| ClientError::ResponseShape)
