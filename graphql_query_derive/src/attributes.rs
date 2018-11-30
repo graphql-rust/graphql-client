@@ -2,7 +2,7 @@ use failure;
 use graphql_client_codegen::deprecation::DeprecationStrategy;
 use syn;
 
-const DEPRECATION_ERROR: &'static str = "deprecated must be one of 'allow', 'deny', or 'warn'";
+const DEPRECATION_ERROR: &str = "deprecated must be one of 'allow', 'deny', or 'warn'";
 
 /// The `graphql` attribute as a `syn::Path`.
 fn path_to_match() -> syn::Path {

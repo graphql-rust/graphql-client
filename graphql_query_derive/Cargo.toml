@@ -11,6 +11,6 @@ proc-macro = true
 
 [dependencies]
 failure = "0.1"
-syn = "0.15.20"
+syn = { version = "0.15.20", features = ["extra-traits"] }
 proc-macro2 = { version = "0.4", features = [] }
 graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.5.1" }
