@@ -18,10 +18,7 @@ pub struct GqlUnion {
 enum UnionError {
     #[fail(display = "Unknown type: {}", ty)]
     UnknownType { ty: String },
-    #[fail(
-        display = "Missing __typename in selection for {}",
-        union_name
-    )]
+    #[fail(display = "Missing __typename in selection for {}", union_name)]
     MissingTypename { union_name: String },
 }
 
@@ -45,7 +42,8 @@ pub(crate) fn union_variants(
             } else {
                 true
             }
-        }).map(|item| {
+        })
+        .map(|item| {
             let (on, fields) = match item {
                 SelectionItem::Field(_) => Err(format_err!("field selection on union"))?,
                 SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
@@ -89,7 +87,8 @@ pub(crate) fn union_variants(
             Ok(quote! {
                 #variant_name(#variant_type)
             })
-        }).collect();
+        })
+        .collect();
 
     let variants = variants?;
 
@@ -127,7 +126,7 @@ impl GqlUnion {
                 }),
         );
 
-        Ok(quote!{
+        Ok(quote! {
             #(#children_definitions)*
 
             #derives

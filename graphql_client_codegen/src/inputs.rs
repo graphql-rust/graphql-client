@@ -72,7 +72,8 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
                         deprecation: DeprecationStatus::Current,
                     };
                     (name, field)
-                }).collect(),
+                })
+                .collect(),
             is_required: false.into(),
         }
     }
@@ -101,7 +102,8 @@ impl ::std::convert::From<introspection_response::FullType> for GqlInput {
                         deprecation: DeprecationStatus::Current,
                     };
                     (name, field)
-                }).collect(),
+                })
+                .collect(),
             is_required: false.into(),
         }
     }
@@ -148,7 +150,8 @@ mod tests {
                         deprecation: DeprecationStatus::Current,
                     },
                 ),
-            ].into_iter()
+            ]
+            .into_iter()
             .collect(),
             is_required: false.into(),
         };
@@ -161,7 +164,8 @@ mod tests {
             "pub paws_count : Float , ",
             "pub requirements : Option < CatRequirements > , ",
             "}",
-        ].into_iter()
+        ]
+        .into_iter()
         .collect();
 
         let mut context = QueryContext::new_empty();

@@ -29,11 +29,13 @@ pub fn generate_code(
     let module_visibility = match module_visibility {
         Some("pub") => syn::VisPublic {
             pub_token: <Token![pub]>::default(),
-        }.into(),
+        }
+        .into(),
         Some("private") => syn::Visibility::Inherited {},
         _ => syn::VisPublic {
             pub_token: <Token![pub]>::default(),
-        }.into(),
+        }
+        .into(),
     };
 
     let options = GraphQLClientDeriveOptions {

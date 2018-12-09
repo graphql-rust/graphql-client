@@ -41,7 +41,7 @@ impl GqlFragment {
             );
         };
 
-        Ok(quote!{
+        Ok(quote! {
             #derives
             pub struct #name_ident {
                 #(#fields,)*

@@ -8,7 +8,7 @@ extern crate serde_derive;
 #[graphql(
     schema_path = "tests/deprecation/schema.graphql",
     query_path = "tests/deprecation/query.graphql",
-    deprecated = "allow",
+    deprecated = "allow"
 )]
 pub struct AllowDeprecation;
 
@@ -16,7 +16,7 @@ pub struct AllowDeprecation;
 #[graphql(
     schema_path = "tests/deprecation/schema.graphql",
     query_path = "tests/deprecation/query.graphql",
-    deprecated = "deny",
+    deprecated = "deny"
 )]
 pub struct DenyDeprecation;
 
@@ -24,7 +24,7 @@ pub struct DenyDeprecation;
 #[graphql(
     schema_path = "tests/deprecation/schema.graphql",
     query_path = "tests/deprecation/query.graphql",
-    deprecated = "warn",
+    deprecated = "warn"
 )]
 pub struct WarnDeprecation;
 
