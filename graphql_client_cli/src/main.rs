@@ -1,3 +1,8 @@
+extern crate env_logger;
+extern crate log;
+use env_logger::fmt::{Color, Style, StyledValue};
+use log::Level;
+
 extern crate failure;
 extern crate reqwest;
 extern crate structopt;
@@ -70,6 +75,8 @@ enum Cli {
 }
 
 fn main() -> Result<(), failure::Error> {
+    set_env_logger();
+
     let cli = Cli::from_args();
     match cli {
         Cli::IntrospectSchema {
@@ -98,5 +105,40 @@ fn main() -> Result<(), failure::Error> {
             &module_visibility,
             &output,
         ),
+    }
+}
+
+fn set_env_logger() {
+    use std::io::Write;
+
+    env_logger::Builder::from_default_env()
+        .format(|f, record| {
+            let mut style = f.style();
+            let level = colored_level(&mut style, record.level());
+            let mut style = f.style();
+            let file = style.set_bold(true).value("file");
+            let mut style = f.style();
+            let module = style.set_bold(true).value("module");
+            writeln!(
+                f,
+                "{} {}: {} {}: {}\n{}",
+                level,
+                file,
+                record.file().unwrap(),
+                module,
+                record.target(),
+                record.args()
+            )
+        })
+        .init();
+}
+
+fn colored_level<'a>(style: &'a mut Style, level: Level) -> StyledValue<'a, &'static str> {
+    match level {
+        Level::Trace => style.set_color(Color::Magenta).value("TRACE"),
+        Level::Debug => style.set_color(Color::Blue).value("DEBUG"),
+        Level::Info => style.set_color(Color::Green).value("INFO "),
+        Level::Warn => style.set_color(Color::Yellow).value("WARN "),
+        Level::Error => style.set_color(Color::Red).value("ERROR"),
     }
 }
