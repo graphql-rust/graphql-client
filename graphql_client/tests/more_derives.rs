@@ -8,7 +8,7 @@ extern crate serde_derive;
 #[graphql(
     schema_path = "tests/more_derives/schema.graphql",
     query_path = "tests/more_derives/query.graphql",
-    response_derives = "Debug, PartialEq, PartialOrd",
+    response_derives = "Debug, PartialEq, PartialOrd"
 )]
 pub struct MoreDerives;
 

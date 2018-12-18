@@ -87,7 +87,8 @@ pub(crate) fn field_impls_for_selection(
             } else {
                 Ok(quote!())
             }
-        }).collect()
+        })
+        .collect()
 }
 
 pub(crate) fn response_fields_for_selection(
@@ -137,7 +138,7 @@ pub(crate) fn response_fields_for_selection(
                     Ident::new(&fragment.fragment_name.to_snake_case(), Span::call_site());
                 context.require(&fragment.fragment_name);
                 let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
-                Ok(quote!{
+                Ok(quote! {
                     #[serde(flatten)]
                     pub #field_name: #type_name
                 })
@@ -145,12 +146,14 @@ pub(crate) fn response_fields_for_selection(
             SelectionItem::InlineFragment(_) => Err(format_err!(
                 "unimplemented: inline fragment on object field"
             ))?,
-        }).filter(|x| match x {
+        })
+        .filter(|x| match x {
             // Remove empty fields so callers always know a field has some
             // tokens.
             Ok(f) => !f.is_empty(),
             Err(_) => true,
-        }).collect()
+        })
+        .collect()
 }
 
 /// Given the GraphQL schema name for an object/interface/input object field and

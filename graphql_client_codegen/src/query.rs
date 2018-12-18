@@ -119,7 +119,8 @@ impl QueryContext {
             .filter(|derive| {
                 !derive.to_string().contains("erialize")
                     && !derive.to_string().contains("Deserialize")
-            }).collect();
+            })
+            .collect();
 
         if !enum_derives.is_empty() {
             quote! {
@@ -173,11 +174,9 @@ mod tests {
     fn response_derives_fails_when_called_twice() {
         let mut context = QueryContext::new_empty();
 
-        assert!(
-            context
-                .ingest_additional_derives("PartialEq, PartialOrd")
-                .is_ok()
-        );
+        assert!(context
+            .ingest_additional_derives("PartialEq, PartialOrd")
+            .is_ok());
         assert!(context.ingest_additional_derives("Serialize").is_err());
     }
 }

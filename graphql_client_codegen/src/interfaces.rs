@@ -47,7 +47,8 @@ impl GqlInterface {
                         fragment.on == self.name
                     }
                     SelectionItem::InlineFragment(_) => false,
-                }).map(|a| (*a).clone())
+                })
+                .map(|a| (*a).clone())
                 .collect(),
         )
     }
@@ -72,7 +73,8 @@ impl GqlInterface {
                         fragment.on != self.name
                     }
                     SelectionItem::Field(SelectionField { name, .. }) => name == "__typename",
-                }).map(|a| (*a).clone())
+                })
+                .map(|a| (*a).clone())
                 .collect(),
         )
     }

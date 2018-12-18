@@ -5,7 +5,7 @@ use std::io::Write as IoWrite;
 use std::path::PathBuf;
 use syn;
 
-#[allow(too_many_arguments)]
+#[allow(clippy::too_many_arguments)]
 pub fn generate_code(
     query_path: PathBuf,
     schema_path: PathBuf,
@@ -29,11 +29,13 @@ pub fn generate_code(
     let module_visibility = match module_visibility {
         Some("pub") => syn::VisPublic {
             pub_token: <Token![pub]>::default(),
-        }.into(),
+        }
+        .into(),
         Some("private") => syn::Visibility::Inherited {},
         _ => syn::VisPublic {
             pub_token: <Token![pub]>::default(),
-        }.into(),
+        }
+        .into(),
     };
 
     let options = GraphQLClientDeriveOptions {

@@ -55,11 +55,13 @@ fn graphql_parser_value_to_literal(
     use graphql_parser::query::Value;
 
     let inner = match value {
-        Value::Boolean(b) => if *b {
-            quote!(true)
-        } else {
-            quote!(false)
-        },
+        Value::Boolean(b) => {
+            if *b {
+                quote!(true)
+            } else {
+                quote!(false)
+            }
+        }
         Value::String(s) => quote!(#s.to_string()),
         Value::Variable(_) => panic!("variable in variable"),
         Value::Null => panic!("null as default value"),
@@ -119,7 +121,8 @@ fn render_object_literal(
                 }
                 None => quote!(#field_name: None),
             }
-        }).collect();
+        })
+        .collect();
 
     quote!(#constructor {
         #(#fields,)*

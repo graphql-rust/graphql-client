@@ -116,7 +116,8 @@ pub fn response_for_query(
             } else {
                 None
             }
-        }).collect();
+        })
+        .collect();
     let fragment_definitions = fragment_definitions?;
     let variables_struct =
         operation.expand_variables(&context, &operation.name, multiple_operation);
@@ -131,7 +132,8 @@ pub fn response_for_query(
             } else {
                 None
             }
-        }).collect();
+        })
+        .collect();
     let input_object_definitions = input_object_definitions?;
 
     let scalar_definitions: Vec<TokenStream> = context
@@ -144,7 +146,8 @@ pub fn response_for_query(
             } else {
                 None
             }
-        }).collect();
+        })
+        .collect();
 
     let response_derives = context.response_derives();
 

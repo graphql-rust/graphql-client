@@ -54,7 +54,8 @@ impl Schema {
                     .ok_or_else(|| format_err!("interface not found: {}", iface_name))?;
                 iface.implemented_by = implementors.into_iter().collect();
                 Ok(())
-            }).collect()
+            })
+            .collect()
     }
 
     pub(crate) fn require(&self, typename_: &str) {
@@ -66,12 +67,14 @@ impl Schema {
                 self.enums
                     .get(typename_)
                     .map(|enm| enm.is_required.set(true))
-            }).or_else(|| self.inputs.get(typename_).map(|input| input.require(self)))
+            })
+            .or_else(|| self.inputs.get(typename_).map(|input| input.require(self)))
             .or_else(|| {
                 self.objects
                     .get(typename_)
                     .map(|object| object.require(self))
-            }).or_else(|| {
+            })
+            .or_else(|| {
                 self.scalars
                     .get(typename_)
                     .map(|scalar| scalar.is_required.set(true))
@@ -115,7 +118,8 @@ impl ::std::convert::From<graphql_parser::schema::Document> for Schema {
                                     .map(|v| EnumVariant {
                                         description: v.description.clone(),
                                         name: v.name.clone(),
-                                    }).collect(),
+                                    })
+                                    .collect(),
                                 is_required: false.into(),
                             },
                         );
@@ -215,7 +219,8 @@ impl ::std::convert::From<::introspection_response::IntrospectionResponse> for S
                                 description: t.description,
                                 name: t.name.expect("enum variant name"),
                             })
-                        }).filter_map(|t| t)
+                        })
+                        .filter_map(|t| t)
                         .collect();
                     let mut enm = GqlEnum {
                         name: name.clone(),
