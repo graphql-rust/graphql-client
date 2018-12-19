@@ -2,18 +2,12 @@
 //!
 //! This crate reexports all you need from graphql-client, so you do not need any other explicit dependencies.
 
-// #![deny(warnings)]
+#![deny(warnings)]
 #![deny(missing_docs)]
-
-#[macro_use]
-pub extern crate graphql_client;
-extern crate js_sys;
-#[macro_use]
-extern crate wasm_bindgen;
 
 use failure::*;
 use futures::{Future, IntoFuture};
-pub use graphql_client::GraphQLQuery;
+pub use graphql_client::{self, GraphQLQuery};
 use log::*;
 use std::collections::HashMap;
 use wasm_bindgen::{JsCast, JsValue};
@@ -112,7 +106,7 @@ impl Client {
                 // "Request constructor threw");
             })
             .and_then(move |(window, request)| {
-                let mut headers = request.headers();
+                let headers = request.headers();
                 headers
                     .set("Content-Type", "application/json")
                     .map_err(|_| ClientError::RequestError)?;
