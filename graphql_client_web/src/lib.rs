@@ -138,7 +138,7 @@ impl Client {
                 JsFuture::from(text_promise).map_err(|_| ClientError::ResponseText)
             })
             .and_then(|text| {
-                let response_text = text.as_string().unwrap_or_else(|| String::new());
+                let response_text = text.as_string().unwrap_or_default();
                 debug!("response text as string: {:?}", response_text);
                 serde_json::from_str(&response_text).map_err(|_| ClientError::ResponseShape)
             })

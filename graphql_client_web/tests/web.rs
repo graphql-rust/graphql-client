@@ -45,7 +45,6 @@ fn test_germany() -> impl Future<Item = (), Error = JsValue> {
         })
         .map_err(|err| {
             panic!("{:?}", err);
-            JsValue::NULL
         })
 }
 
