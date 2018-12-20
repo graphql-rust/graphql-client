@@ -76,6 +76,9 @@ impl Client {
     }
 
     /// Perform a query.
+    ///
+    // Lint disabled: We can pass by value because it's always an empty struct.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn call<Q: GraphQLQuery + 'static>(
         &self,
         _query: Q,
@@ -115,9 +118,9 @@ impl Client {
                     .map_err(|_| ClientError::RequestError)?;
 
                 for (header_name, header_value) in custom_headers.iter() {
-                    headers.set(header_name, header_value)
+                    headers
+                        .set(header_name, header_value)
                         .map_err(|_| ClientError::RequestError)?;
-
                 }
 
                 Ok((window, request))

@@ -31,6 +31,3 @@ features = [
 serde = "*"
 serde_derive = "*"
 wasm-bindgen-test = "0.2.25"
-
-[workspace]
-members = ["."]

@@ -20,4 +20,4 @@ script:
   - cargo test --all
   - cargo build --manifest-path=./graphql_client/examples/github/Cargo.toml
   - cargo build --manifest-path=./graphql_client_cli/Cargo.toml
-  - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (cd graphql_client_web && cargo test --target wasm32-unknown-unknown) fi
+  - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (GECKODRIVER=`pwd`/geckodriver cargo test --manifest-path=./graphql_client_web/Cargo.toml --target wasm32-unknown-unknown) fi
