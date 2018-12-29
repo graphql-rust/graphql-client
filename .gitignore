@@ -3,3 +3,5 @@ node_modules/
 **/*.rs.bk
 Cargo.lock
 .idea
+scripts/*
+!scripts/*.sh

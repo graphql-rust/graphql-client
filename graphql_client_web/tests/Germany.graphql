@@ -1,0 +1,17 @@
+query Germany {
+  country(code: "DE") {
+    name
+    continent {
+      name
+    }
+  }
+}
+
+query Country($countryCode: String!) {
+  country(code: $countryCode) {
+    name
+    continent {
+      name
+    }
+  }
+}
