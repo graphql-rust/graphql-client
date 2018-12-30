@@ -1,6 +1,6 @@
 # call from JS example
 
-This is a demo of the library used for webassembly.
+This is a demo of the library compiled to webassembly for use in a browser.
 
 ## Build
 
