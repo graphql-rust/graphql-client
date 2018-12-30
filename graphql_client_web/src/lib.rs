@@ -7,7 +7,7 @@
 
 use failure::*;
 use futures::{Future, IntoFuture};
-pub use graphql_client::{self, GraphQLQuery};
+pub use graphql_client::{self, GraphQLQuery, Response};
 use log::*;
 use std::collections::HashMap;
 use wasm_bindgen::{JsCast, JsValue};

@@ -1,127 +1,112 @@
-#![feature(use_extern_macros)]
-
-#[macro_use]
-extern crate graphql_client;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-#[macro_use]
-extern crate lazy_static;
-
+use futures::Future;
+use lazy_static::*;
 use std::cell::RefCell;
 use std::sync::Mutex;
 
-extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::future_to_promise;
 
-use graphql_client::*;
+use graphql_client_web::*;
 
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "schema.json",
-    query_path = "src/puppy_smiles.graphql"
+    query_path = "src/puppy_smiles.graphql",
+    response_derives = "Debug"
 )]
 struct PuppySmiles;
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-
-    type HTMLDocument;
-    static document: HTMLDocument;
-    #[wasm_bindgen(method)]
-    fn createElement(this: &HTMLDocument, tagName: &str) -> Element;
-    #[wasm_bindgen(method, getter)]
-    fn body(this: &HTMLDocument) -> Element;
-
-    type Element;
-    #[wasm_bindgen(method, setter = innerHTML)]
-    fn set_inner_html(this: &Element, html: &str);
-    #[wasm_bindgen(method, js_name = appendChild)]
-    fn append_child(this: &Element, other: Element);
-    #[wasm_bindgen(method, js_name = addEventListener)]
-    fn add_event_listener(this: &Element, event: &str, cb: &Closure<Fn()>);
-}
-
-#[wasm_bindgen(module = "./convenient_fetch")]
-extern "C" {
-    fn convenient_post(
-        req: &str,
-        body: String,
-        on_complete: &Closure<Fn(String)>,
-        on_error: &Closure<Fn()>,
-    );
+fn log(s: &str) {
+    web_sys::console::log_1(&JsValue::from_str(s))
 }
 
 lazy_static! {
     static ref LAST_ENTRY: Mutex<RefCell<Option<String>>> = Mutex::new(RefCell::new(None));
 }
 
-fn load_more() {
-    let cb = cb();
-    let on_error = on_error();
-    convenient_post(
-        "https://www.graphqlhub.com/graphql",
-        serde_json::to_string(&PuppySmiles::build_query(puppy_smiles::Variables {
-            after: LAST_ENTRY
-                .lock()
-                .ok()
-                .and_then(|opt| opt.borrow().to_owned()),
-        })).unwrap(),
-        &cb,
-        &on_error,
-    );
+fn load_more() -> impl Future<Item = JsValue, Error = JsValue> {
+    let client = graphql_client_web::Client::new("https://www.graphqlhub.com/graphql");
+    let variables = puppy_smiles::Variables {
+        after: LAST_ENTRY
+            .lock()
+            .ok()
+            .and_then(|opt| opt.borrow().to_owned()),
+    };
+    let response = client.call(PuppySmiles, variables);
 
-    cb.forget();
-    on_error.forget();
+    response
+        .map(|response| {
+            render_response(response);
+            JsValue::NULL
+        })
+        .map_err(|err| {
+            log(&format!(
+                "Could not fetch puppies. graphql_client_web error: {:?}",
+                err
+            ));
+            JsValue::NULL
+        })
+}
+
+fn document() -> web_sys::Document {
+    web_sys::window()
+        .expect("no window")
+        .document()
+        .expect("no document")
 }
 
 fn add_load_more_button() {
-    let btn = document.createElement("button");
+    let btn = document()
+        .create_element("button")
+        .expect("could not create button");
     btn.set_inner_html("I WANT MORE PUPPIES");
-    let on_click = Closure::new(move || load_more());
-    btn.add_event_listener("click", &on_click);
+    let on_click = Closure::wrap(
+        Box::new(move || future_to_promise(load_more())) as Box<FnMut() -> js_sys::Promise>
+    );
+    btn.add_event_listener_with_callback(
+        "click",
+        js_sys::Function::try_from(&on_click.as_ref()).expect("on click is not a Function"),
+    )
+    .expect("could not add event listener to load more button");
 
-    let doc = document.body();
-    doc.append_child(btn);
+    let doc = document().body().expect("no body");
+    doc.append_child(&btn).expect("could not append button");
 
     on_click.forget();
 }
 
-fn cb() -> Closure<Fn(String)> {
+fn render_response(response: graphql_client_web::Response<puppy_smiles::ResponseData>) {
     use std::fmt::Write;
 
-    Closure::new(move |s: String| {
-        log(&format!("response body\n\n{}", s));
+    log(&format!("response body\n\n{:?}", response));
 
-        let parent = document.body();
+    let parent = document().body().expect("no body");
 
-        let json: Response<puppy_smiles::ResponseData> =
-            serde_json::from_str(&s).expect("failed to deserialize");
-        let response = document.createElement("div");
-        let mut inner_html = String::new();
-        let listings = json
-            .data
-            .expect("response data")
-            .reddit
-            .expect("reddit")
-            .subreddit
-            .expect("puppy smiles subreddit")
-            .new_listings;
+    let json: graphql_client_web::Response<puppy_smiles::ResponseData> = response;
+    let response = document()
+        .create_element("div")
+        .expect("could not create div");
+    let mut inner_html = String::new();
+    let listings = json
+        .data
+        .expect("response data")
+        .reddit
+        .expect("reddit")
+        .subreddit
+        .expect("puppy smiles subreddit")
+        .new_listings;
 
-        let new_cursor: Option<String> = listings[listings.len() - 1]
-            .as_ref()
-            .map(|puppy| puppy.fullname_id.clone())
-            .to_owned();
-        LAST_ENTRY.lock().unwrap().replace(new_cursor);
+    let new_cursor: Option<String> = listings[listings.len() - 1]
+        .as_ref()
+        .map(|puppy| puppy.fullname_id.clone())
+        .to_owned();
+    LAST_ENTRY.lock().unwrap().replace(new_cursor);
 
-        for puppy in &listings {
-            if let Some(puppy) = puppy {
-                write!(
-                    inner_html,
-                    r#"
+    for puppy in &listings {
+        if let Some(puppy) = puppy {
+            write!(
+                inner_html,
+                r#"
                     <div class="card" style="width: 26rem;">
                         <img class="img-thumbnail card-img-top" alt="{}" src="{}" />
                         <div class="card-body">
@@ -129,29 +114,31 @@ fn cb() -> Closure<Fn(String)> {
                         </div>
                     </div>
                     "#,
-                    puppy.title, puppy.url, puppy.title
-                ).expect("write to string");
-            }
+                puppy.title, puppy.url, puppy.title
+            )
+            .expect("write to string");
         }
-        response.set_inner_html(&format!(
-            "<h2>response:</h2><div class=\"container\"><div class=\"row\">{}</div></div>",
-            inner_html
-        ));
-        parent.append_child(response);
-    })
-}
-
-fn on_error() -> Closure<Fn()> {
-    Closure::new(|| log("sad :("))
+    }
+    response.set_inner_html(&format!(
+        "<h2>response:</h2><div class=\"container\"><div class=\"row\">{}</div></div>",
+        inner_html
+    ));
+    parent
+        .append_child(&response)
+        .expect("could not append response");
 }
 
 #[wasm_bindgen]
 pub fn run() {
     log("Hello there");
-    let message_area = document.createElement("div");
+    let message_area = document()
+        .create_element("div")
+        .expect("could not create div");
     message_area.set_inner_html("<p>good morning</p>");
-    let parent = document.body();
-    parent.append_child(message_area);
+    let parent = document().body().unwrap();
+    parent
+        .append_child(&message_area)
+        .expect("could not append message area");
 
     load_more();
     add_load_more_button();
