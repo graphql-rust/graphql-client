@@ -4,7 +4,5 @@ members = [
     "graphql_client_codegen",
     "graphql_client",
     "graphql_client_web",
-    "graphql_client/examples/example_module",
-    "graphql_client/examples/github",
     "graphql_query_derive",
 ]

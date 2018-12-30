@@ -6,4 +6,4 @@ authors = ["Tom Houlé <tom@tomhoule.com>"]
 [dependencies]
 serde = "1.0.69"
 serde_derive = "1.0.69"
-graphql_client = { path = "../.."}
+graphql_client = { path = ".." }
