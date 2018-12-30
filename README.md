@@ -159,6 +159,7 @@ Warmest thanks to all those who contributed in any way (not only code) to this p
 
 - Alex Vlasov (@indifferentalex)
 - Ben Boeckel (@mathstuf)
+- Chris Fung (@aergonaut)
 - Christian Legnitto (@LegNeato)
 - Dirkjan Ochtman (@djc)
 - Fausto Nunez Alberro (@brainlessdeveloper)
