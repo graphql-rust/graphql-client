@@ -9,16 +9,17 @@ A typed GraphQL client library for Rust.
 
 ## Features
 
-- Precise types for query variables and responses
-- Supports GraphQL fragments, objects, unions, inputs, enums, custom scalars and input objects
-- Works in the browser (WebAssembly)
-- Subscriptions support (serialization-deserialization only at the moment)
-- Copies documentation from the GraphQL schema to the generated Rust code
-- Arbitrary derives on the generated responses
-- Arbitrary custom scalars
-- Supports multiple operations per query document
+- Precise types for query variables and responses.
+- Supports GraphQL fragments, objects, unions, inputs, enums, custom scalars and input objects.
+- Works in the browser (WebAssembly).
+- Subscriptions support (serialization-deserialization only at the moment).
+- Copies documentation from the GraphQL schema to the generated Rust code.
+- Arbitrary derives on the generated responses.
+- Arbitrary custom scalars.
+- Supports multiple operations per query document.
 - Supports setting GraphQL fields as deprecated and having the Rust compiler check
   their use.
+- [web client](./graphql_client_web) for boilerplate-free API calls from browsers.
 
 ## Getting started
 
@@ -150,15 +151,7 @@ There is an [`include`](https://doc.rust-lang.org/cargo/reference/manifest.html#
 
 ## Examples
 
-See the examples directory in this repository.
-
-## Roadmap
-
-A lot of desired features have been defined in issues.
-
-graphql_client does not provide any networking, caching or other client functionality yet. Integration with different HTTP libraries is planned, although building one yourself is trivial (just send the constructed request payload as JSON with a POST request to a GraphQL endpoint, modulo authentication).
-
-There is an embryonic CLI for downloading schemas - the plan is to make it something similar to `apollo-codegen`.
+See the [examples directory](./graphql_client/examples) in this repository.
 
 ## Contributors
 
