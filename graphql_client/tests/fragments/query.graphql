@@ -2,6 +2,14 @@ fragment FragmentReference on QueryRoot {
   inFragment
 }
 
+fragment snake_case_fragment on QueryRoot {
+  inFragment
+}
+
 query FragmentReference {
   ...FragmentReference
+}
+
+query SnakeCaseFragment {
+  ...snake_case_fragment
 }
