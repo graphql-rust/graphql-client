@@ -5,7 +5,7 @@ use std::cell::Cell;
 
 /// Represents a fragment extracted from a query document.
 #[derive(Debug, PartialEq)]
-pub struct GqlFragment {
+pub(crate) struct GqlFragment {
     /// The name of the fragment, matching one-to-one with the name in the GraphQL query document.
     pub name: String,
     /// The `on` clause of the fragment.

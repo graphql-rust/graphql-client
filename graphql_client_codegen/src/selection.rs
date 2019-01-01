@@ -41,11 +41,35 @@ impl SelectionItem {
 pub struct Selection(pub Vec<SelectionItem>);
 
 impl Selection {
-    pub(crate) fn extract_typename(
-        &self,
-        context: &crate::query::QueryContext,
+    pub(crate) fn extract_typename<'s, 'context: 's>(
+        &'s self,
+        context: &'context crate::query::QueryContext,
     ) -> Option<&SelectionField> {
-        self.0.iter().filter_map(|f| f.as_typename()).next()
+        // __typename is selected directly
+        if let Some(field) = self.0.iter().filter_map(|f| f.as_typename()).next() {
+            return Some(field);
+        };
+
+        // typename is selected through a fragment
+        self.0
+            .iter()
+            .filter_map(|f| match f {
+                SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
+                    Some(fragment_name)
+                }
+                _ => None,
+            })
+            .filter_map(|fragment_name| {
+                let fragment = context.fragments.get(fragment_name);
+
+                fragment.and_then(|fragment| fragment.selection.extract_typename(context))
+            })
+            .next()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn new_empty() -> Selection {
+        Selection(Vec::new())
     }
 }
 
@@ -93,10 +117,42 @@ mod tests {
 
     #[test]
     fn selection_extract_typename_simple_case() {
-        let mut selection = Selection(Vec::new());
-        let context = query::QueryContext::new_empty();
+        let selection = Selection::new_empty();
+        let context = crate::query::QueryContext::new_empty();
 
         assert!(selection.extract_typename(&context).is_none());
+    }
+
+    #[test]
+    fn selection_extract_typename_in_fragemnt() {
+        let mut selection = Selection::new_empty();
+        selection
+            .0
+            .push(SelectionItem::FragmentSpread(SelectionFragmentSpread {
+                fragment_name: "MyFragment".to_owned(),
+            }));
+
+        let mut fragment_selection = Selection::new_empty();
+        fragment_selection
+            .0
+            .push(SelectionItem::Field(SelectionField {
+                alias: None,
+                name: "__typename".to_string(),
+                fields: Selection::new_empty(),
+            }));
+
+        let mut context = crate::query::QueryContext::new_empty();
+        context.fragments.insert(
+            "MyFragment".to_string(),
+            crate::fragments::GqlFragment {
+                name: "MyFragment".to_string(),
+                on: "something".into(),
+                selection: fragment_selection,
+                is_required: std::cell::Cell::new(false),
+            },
+        );
+
+        assert!(selection.extract_typename(&context).is_some());
     }
 
     #[test]
