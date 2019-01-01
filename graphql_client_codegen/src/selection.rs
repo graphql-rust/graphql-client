@@ -1,6 +1,7 @@
 use constants::*;
 use graphql_parser::query::SelectionSet;
 
+/// A single object field as part of a selection.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SelectionField {
     pub alias: Option<String>,
@@ -8,17 +9,20 @@ pub struct SelectionField {
     pub fields: Selection,
 }
 
+/// A spread fragment in a selection (e.g. `...MyFragment`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct SelectionFragmentSpread {
     pub fragment_name: String,
 }
 
+/// An inline fragment as part of a selection (e.g. `...on MyThing { name }`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct SelectionInlineFragment {
     pub on: String,
     pub fields: Selection,
 }
 
+/// An element in a query selection.
 #[derive(Clone, Debug, PartialEq)]
 pub enum SelectionItem {
     Field(SelectionField),
@@ -124,7 +128,7 @@ mod tests {
     }
 
     #[test]
-    fn selection_extract_typename_in_fragemnt() {
+    fn selection_extract_typename_in_fragment() {
         let mut selection = Selection::new_empty();
         selection
             .0
