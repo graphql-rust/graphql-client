@@ -19,8 +19,10 @@ pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::Token
     let ast = syn::parse2(input).expect("Derive input is well formed");
     let (query_path, schema_path) = build_query_and_schema_path(&ast);
     let options = build_graphql_client_derive_options(&ast);
-    let gen = generate_module_token_stream(query_path, schema_path, Some(options)).unwrap();
-    gen.into()
+    match generate_module_token_stream(query_path, schema_path, Some(options)) {
+        Ok(module) => module.into(),
+        Err(err) => panic!("{}", err),
+    }
 }
 
 fn build_query_and_schema_path(

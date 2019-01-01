@@ -90,14 +90,8 @@ pub fn response_for_query(
             ))?
         }
 
-        definitions.extend(
-            definition
-                .field_impls_for_selection(&context, &selection, &prefix)
-                .unwrap(),
-        );
-        definition
-            .response_fields_for_selection(&context, &selection, &prefix)
-            .unwrap()
+        definitions.extend(definition.field_impls_for_selection(&context, &selection, &prefix)?);
+        definition.response_fields_for_selection(&context, &selection, &prefix)?
     };
 
     let enum_definitions = context.schema.enums.values().filter_map(|enm| {

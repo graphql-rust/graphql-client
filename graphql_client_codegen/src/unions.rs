@@ -105,7 +105,8 @@ impl GqlUnion {
         let struct_name = Ident::new(prefix, Span::call_site());
         let derives = query_context.response_derives();
 
-        let typename_field = selection.extract_typename();
+        // TODO: do this inside fragments
+        let typename_field = selection.extract_typename(query_context);
 
         if typename_field.is_none() {
             Err(UnionError::MissingTypename {

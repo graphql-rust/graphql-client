@@ -41,7 +41,10 @@ impl SelectionItem {
 pub struct Selection(pub Vec<SelectionItem>);
 
 impl Selection {
-    pub fn extract_typename(&self) -> Option<&SelectionField> {
+    pub(crate) fn extract_typename(
+        &self,
+        context: &crate::query::QueryContext,
+    ) -> Option<&SelectionField> {
         self.0.iter().filter_map(|f| f.as_typename()).next()
     }
 }
@@ -87,6 +90,14 @@ impl<'a> ::std::convert::From<&'a SelectionSet> for Selection {
 mod tests {
     use super::*;
     use graphql_parser;
+
+    #[test]
+    fn selection_extract_typename_simple_case() {
+        let mut selection = Selection(Vec::new());
+        let context = query::QueryContext::new_empty();
+
+        assert!(selection.extract_typename(&context).is_none());
+    }
 
     #[test]
     fn selection_from_graphql_parser_selection_set() {

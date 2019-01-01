@@ -29,7 +29,6 @@ fragment NamesFragment on NamedThing {
 
 query FragmentOnUnion {
   names {
-    __typename
     ...NamesFragment
   }
 }

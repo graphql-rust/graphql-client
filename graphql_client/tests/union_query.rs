@@ -56,16 +56,20 @@ fn fragment_on_union() {
 
     let expected = fragment_on_union::ResponseData {
         names: Some(vec![
-            fragment_on_union::MyQueryNames::Person(fragment_on_union::MyQueryNamesOnPerson {
-                first_name: "Audrey".to_string(),
-                last_name: Some("Lorde".to_string()),
-            }),
-            fragment_on_union::MyQueryNames::Dog(fragment_on_union::MyQueryNamesOnDog {
+            fragment_on_union::FragmentOnUnionNames::Person(
+                fragment_on_union::MyQueryNamesOnPerson {
+                    first_name: "Audrey".to_string(),
+                    last_name: Some("Lorde".to_string()),
+                },
+            ),
+            fragment_on_union::FragmentOnUnionNames::Dog(fragment_on_union::MyQueryNamesOnDog {
                 name: "Laïka".to_string(),
             }),
-            fragment_on_union::MyQueryNames::Organization(fragment_on_union::MyQueryNamesOnOrganization {
-                title: "Mozilla".to_string(),
-            }),
+            fragment_on_union::FragmentOnUnionNames::Organization(
+                fragment_on_union::MyQueryNamesOnOrganization {
+                    title: "Mozilla".to_string(),
+                },
+            ),
             fragment_on_union::MyQueryNames::Dog(fragment_on_union::MyQueryNamesOnDog {
                 name: "Norbert".to_string(),
             }),

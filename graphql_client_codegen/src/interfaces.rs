@@ -131,7 +131,7 @@ impl GqlInterface {
         let name = Ident::new(&prefix, Span::call_site());
         let derives = query_context.response_derives();
 
-        selection.extract_typename().ok_or_else(|| {
+        selection.extract_typename(query_context).ok_or_else(|| {
             format_err!(
                 "Missing __typename in selection for the {} interface (type: {})",
                 prefix,
