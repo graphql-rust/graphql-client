@@ -12,21 +12,21 @@ use std::collections::HashMap;
 
 /// Represents an input object type from a GraphQL schema
 #[derive(Debug, Clone, PartialEq)]
-pub struct GqlInput {
-    pub description: Option<String>,
-    pub name: String,
-    pub fields: HashMap<String, GqlObjectField>,
+pub struct GqlInput<'schema> {
+    pub description: Option<&'schema str>,
+    pub name: &'schema str,
+    pub fields: HashMap<&'schema str, GqlObjectField<'schema>>,
     pub is_required: Cell<bool>,
 }
 
-impl GqlInput {
-    pub(crate) fn require(&self, schema: &Schema) {
+impl<'schema> GqlInput<'schema> {
+    pub(crate) fn require(&self, schema: &Schema<'schema>) {
         if self.is_required.get() {
             return;
         }
         self.is_required.set(true);
         self.fields.values().for_each(|field| {
-            schema.require(&field.type_.inner_name_string());
+            schema.require(&field.type_.inner_name_str());
         })
     }
 
@@ -36,7 +36,7 @@ impl GqlInput {
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
             let ty = field.type_.to_rust(&context, "");
-            context.schema.require(&field.type_.inner_name_string());
+            context.schema.require(&field.type_.inner_name_str());
             let original_name = &field.name;
             let snake_case_name = field.name.to_snake_case();
             let rename = ::shared::field_rename_annotation(&original_name, &snake_case_name);
@@ -55,20 +55,22 @@ impl GqlInput {
     }
 }
 
-impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput {
-    fn from(schema_input: graphql_parser::schema::InputObjectType) -> GqlInput {
+impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::InputObjectType>
+    for GqlInput<'schema>
+{
+    fn from(schema_input: &'schema graphql_parser::schema::InputObjectType) -> GqlInput<'schema> {
         GqlInput {
-            description: schema_input.description,
-            name: schema_input.name,
+            description: schema_input.description.as_ref().map(|s| s.as_str()),
+            name: &schema_input.name,
             fields: schema_input
                 .fields
-                .into_iter()
+                .iter()
                 .map(|field| {
-                    let name = field.name.clone();
+                    let name = field.name.as_str();
                     let field = GqlObjectField {
                         description: None,
-                        name: field.name,
-                        type_: field.value_type.into(),
+                        name: &field.name,
+                        type_: crate::field_type::FieldType::from(&field.value_type),
                         deprecation: DeprecationStatus::Current,
                     };
                     (name, field)
@@ -79,26 +81,39 @@ impl ::std::convert::From<graphql_parser::schema::InputObjectType> for GqlInput 
     }
 }
 
-impl ::std::convert::From<introspection_response::FullType> for GqlInput {
-    fn from(schema_input: introspection_response::FullType) -> GqlInput {
+impl<'schema> ::std::convert::From<&'schema introspection_response::FullType>
+    for GqlInput<'schema>
+{
+    fn from(schema_input: &'schema introspection_response::FullType) -> GqlInput<'schema> {
         GqlInput {
-            description: schema_input.description,
-            name: schema_input.name.expect("unnamed input object"),
+            description: schema_input.description.as_ref().map(String::as_str),
+            name: schema_input
+                .name
+                .as_ref()
+                .map(String::as_str)
+                .expect("unnamed input object"),
             fields: schema_input
                 .input_fields
+                .as_ref()
                 .expect("fields on input object")
-                .into_iter()
-                .filter_map(|a| a)
+                .iter()
+                .filter_map(|a| a.as_ref())
                 .map(|f| {
-                    let name = f.input_value.name.expect("unnamed input object field");
+                    let name = f
+                        .input_value
+                        .name
+                        .as_ref()
+                        .expect("unnamed input object field")
+                        .as_str();
                     let field = GqlObjectField {
                         description: None,
-                        name: name.clone(),
+                        name: &name,
                         type_: f
                             .input_value
                             .type_
-                            .expect("type on input object field")
-                            .into(),
+                            .as_ref()
+                            .map(|s| s.into())
+                            .expect("type on input object field"),
                         deprecation: DeprecationStatus::Current,
                     };
                     (name, field)
@@ -119,34 +134,32 @@ mod tests {
     fn gql_input_to_rust() {
         let cat = GqlInput {
             description: None,
-            name: "Cat".to_string(),
+            name: "Cat",
             fields: vec![
                 (
-                    "pawsCount".to_string(),
+                    "pawsCount",
                     GqlObjectField {
                         description: None,
-                        name: "pawsCount".to_string(),
+                        name: "pawsCount",
                         type_: FieldType::Named(float_type()),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),
                 (
-                    "offsprings".to_string(),
+                    "offsprings",
                     GqlObjectField {
                         description: None,
-                        name: "offsprings".to_string(),
-                        type_: FieldType::Vector(Box::new(FieldType::Named("Cat".to_string()))),
+                        name: "offsprings",
+                        type_: FieldType::Vector(Box::new(FieldType::Named("Cat"))),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),
                 (
-                    "requirements".to_string(),
+                    "requirements",
                     GqlObjectField {
                         description: None,
-                        name: "requirements".to_string(),
-                        type_: FieldType::Optional(Box::new(FieldType::Named(
-                            "CatRequirements".to_string(),
-                        ))),
+                        name: "requirements",
+                        type_: FieldType::Optional(Box::new(FieldType::Named("CatRequirements"))),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),
@@ -168,8 +181,9 @@ mod tests {
         .into_iter()
         .collect();
 
-        let mut context = QueryContext::new_empty();
-        context.schema.inputs.insert(cat.name.clone(), cat);
+        let mut schema = ::schema::Schema::new();
+        schema.inputs.insert(cat.name.clone(), cat);
+        let mut context = QueryContext::new_empty(&schema);
         context.ingest_additional_derives("Clone").unwrap();
 
         assert_eq!(

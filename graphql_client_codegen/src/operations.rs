@@ -15,19 +15,22 @@ pub enum OperationType {
 }
 
 #[derive(Debug, Clone)]
-pub struct Operation {
+pub struct Operation<'query> {
     pub name: String,
     pub operation_type: OperationType,
-    pub variables: Vec<Variable>,
-    pub selection: Selection,
+    pub variables: Vec<Variable<'query>>,
+    pub selection: Selection<'query>,
 }
 
-impl Operation {
-    pub(crate) fn root_name(&self, schema: &::schema::Schema) -> Option<String> {
+impl<'query> Operation<'query> {
+    pub(crate) fn root_name<'schema>(
+        &self,
+        schema: &'schema ::schema::Schema,
+    ) -> Option<&'schema str> {
         match self.operation_type {
-            OperationType::Query => schema.query_type.clone(),
-            OperationType::Mutation => schema.mutation_type.clone(),
-            OperationType::Subscription => schema.subscription_type.clone(),
+            OperationType::Query => schema.query_type,
+            OperationType::Mutation => schema.mutation_type,
+            OperationType::Subscription => schema.subscription_type,
         }
     }
 
@@ -89,75 +92,63 @@ impl Operation {
     }
 }
 
-impl ::std::convert::From<OperationDefinition> for Operation {
-    fn from(definition: OperationDefinition) -> Operation {
-        match definition {
-            OperationDefinition::Query(q) => Operation {
-                name: q.name.expect("unnamed operation"),
-                operation_type: OperationType::Query,
-                variables: q
-                    .variable_definitions
-                    .iter()
-                    .map(|v| v.clone().into())
-                    .collect(),
-                selection: (&q.selection_set).into(),
-            },
-            OperationDefinition::Mutation(m) => Operation {
-                name: m.name.expect("unnamed operation"),
-                operation_type: OperationType::Mutation,
-                variables: m
-                    .variable_definitions
-                    .iter()
-                    .map(|v| v.clone().into())
-                    .collect(),
-                selection: (&m.selection_set).into(),
-            },
-            OperationDefinition::Subscription(s) => Operation {
-                name: s.name.expect("unnamed operation"),
-                operation_type: OperationType::Subscription,
-                variables: s
-                    .variable_definitions
-                    .iter()
-                    .map(|v| v.clone().into())
-                    .collect(),
-                selection: (&s.selection_set).into(),
-            },
-            OperationDefinition::SelectionSet(_) => panic!(SELECTION_SET_AT_ROOT),
-        }
-    }
-}
+// impl ::std::convert::From<OperationDefinition> for Operation<'query> {
+//     fn from(definition: OperationDefinition) -> Operation<'query> {
+//         match definition {
+//             OperationDefinition::Query(q) => Operation {
+//                 name: q.name.expect("unnamed operation"),
+//                 operation_type: OperationType::Query,
+//                 variables: q
+//                     .variable_definitions
+//                     .iter()
+//                     .map(|v| v.clone().into())
+//                     .collect(),
+//                 selection: (&q.selection_set).into(),
+//             },
+//             OperationDefinition::Mutation(m) => Operation {
+//                 name: m.name.expect("unnamed operation"),
+//                 operation_type: OperationType::Mutation,
+//                 variables: m
+//                     .variable_definitions
+//                     .iter()
+//                     .map(|v| v.clone().into())
+//                     .collect(),
+//                 selection: (&m.selection_set).into(),
+//             },
+//             OperationDefinition::Subscription(s) => Operation {
+//                 name: s.name.expect("unnamed operation"),
+//                 operation_type: OperationType::Subscription,
+//                 variables: s
+//                     .variable_definitions
+//                     .iter()
+//                     .map(|v| v.clone().into())
+//                     .collect(),
+//                 selection: (&s.selection_set).into(),
+//             },
+//             OperationDefinition::SelectionSet(_) => panic!(SELECTION_SET_AT_ROOT),
+//         }
+//     }
+// }
 
-impl<'a> ::std::convert::From<&'a OperationDefinition> for Operation {
-    fn from(definition: &OperationDefinition) -> Operation {
+impl<'query> ::std::convert::From<&'query OperationDefinition> for Operation<'query> {
+    fn from(definition: &'query OperationDefinition) -> Operation<'query> {
         match *definition {
             OperationDefinition::Query(ref q) => Operation {
                 name: q.name.clone().expect("unnamed operation"),
                 operation_type: OperationType::Query,
-                variables: q
-                    .variable_definitions
-                    .iter()
-                    .map(|v| v.clone().into())
-                    .collect(),
+                variables: q.variable_definitions.iter().map(|v| v.into()).collect(),
                 selection: (&q.selection_set).into(),
             },
             OperationDefinition::Mutation(ref m) => Operation {
                 name: m.name.clone().expect("unnamed operation"),
                 operation_type: OperationType::Mutation,
-                variables: m
-                    .variable_definitions
-                    .iter()
-                    .map(|v| v.clone().into())
-                    .collect(),
+                variables: m.variable_definitions.iter().map(|v| v.into()).collect(),
                 selection: (&m.selection_set).into(),
             },
             OperationDefinition::Subscription(ref s) => Operation {
                 name: s.name.clone().expect("unnamed operation"),
                 operation_type: OperationType::Subscription,
-                variables: s
-                    .variable_definitions
-                    .iter()
-                    .map(|v| v.clone().into())
-                    .collect(),
+                variables: s.variable_definitions.iter().map(|v| v.into()).collect(),
                 selection: (&s.selection_set).into(),
             },
             OperationDefinition::SelectionSet(_) => panic!(SELECTION_SET_AT_ROOT),

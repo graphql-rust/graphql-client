@@ -1,38 +1,37 @@
 use constants::*;
 use graphql_parser::query::SelectionSet;
 use std::collections::BTreeMap;
-use std::error::Error;
 
 /// A single object field as part of a selection.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SelectionField {
-    pub alias: Option<String>,
-    pub name: String,
-    pub fields: Selection,
+pub struct SelectionField<'query> {
+    pub alias: Option<&'query str>,
+    pub name: &'query str,
+    pub fields: Selection<'query>,
 }
 
 /// A spread fragment in a selection (e.g. `...MyFragment`).
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SelectionFragmentSpread {
-    pub fragment_name: String,
+pub struct SelectionFragmentSpread<'query> {
+    pub fragment_name: &'query str,
 }
 
 /// An inline fragment as part of a selection (e.g. `...on MyThing { name }`).
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SelectionInlineFragment {
-    pub on: String,
-    pub fields: Selection,
+pub struct SelectionInlineFragment<'query> {
+    pub on: &'query str,
+    pub fields: Selection<'query>,
 }
 
 /// An element in a query selection.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum SelectionItem {
-    Field(SelectionField),
-    FragmentSpread(SelectionFragmentSpread),
-    InlineFragment(SelectionInlineFragment),
+pub enum SelectionItem<'query> {
+    Field(SelectionField<'query>),
+    FragmentSpread(SelectionFragmentSpread<'query>),
+    InlineFragment(SelectionInlineFragment<'query>),
 }
 
-impl SelectionItem {
+impl<'query> SelectionItem<'query> {
     pub fn as_typename(&self) -> Option<&SelectionField> {
         if let SelectionItem::Field(f) = self {
             if f.name == TYPENAME_FIELD {
@@ -44,9 +43,9 @@ impl SelectionItem {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Selection(pub Vec<SelectionItem>);
+pub struct Selection<'query>(pub Vec<SelectionItem<'query>>);
 
-impl Selection {
+impl<'query> Selection<'query> {
     pub(crate) fn extract_typename<'s, 'context: 's>(
         &'s self,
         context: &'context crate::query::QueryContext,
@@ -77,19 +76,19 @@ impl Selection {
     fn selected_variants_on_union_inner<'s>(
         &'s self,
         context: &'s crate::query::QueryContext,
-        selected_variants: &mut BTreeMap<&'s str, Vec<&'s SelectionItem>>,
-    ) -> Result<(), Box<Error>> {
+        selected_variants: &mut BTreeMap<&'s str, Selection<'s>>,
+    ) -> Result<(), failure::Error> {
         for item in self.0.iter() {
             match item {
-                SelectionItem::Field(_) => Err(format_err!("field selection on union"))?,
+                SelectionItem::Field(_) => (),
                 SelectionItem::InlineFragment(inline_fragment) => {
                     selected_variants
-                        .entry(inline_fragment.on.as_str())
-                        .and_modify(|entry| entry.extend(&inline_fragment.fields.0))
+                        .entry(inline_fragment.on)
+                        .and_modify(|entry| entry.0.extend(inline_fragment.fields.0.clone()))
                         .or_insert_with(|| {
-                            let mut set = Vec::new();
-                            set.extend(&inline_fragment.fields.0);
-                            set
+                            let mut items = Vec::with_capacity(inline_fragment.fields.0.len());
+                            items.extend(inline_fragment.fields.0.clone());
+                            Selection(items)
                         });
                 }
                 SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
@@ -116,7 +115,7 @@ impl Selection {
     pub(crate) fn selected_variants_on_union<'s>(
         &'s self,
         context: &'s crate::query::QueryContext,
-    ) -> Result<BTreeMap<&'s str, Vec<&'s SelectionItem>>, Box<Error>> {
+    ) -> Result<BTreeMap<&'s str, Selection<'s>>, failure::Error> {
         let mut selected_variants = BTreeMap::new();
 
         self.selected_variants_on_union_inner(context, &mut selected_variants)?;
@@ -125,37 +124,36 @@ impl Selection {
     }
 
     #[cfg(test)]
-    pub(crate) fn new_empty() -> Selection {
+    pub(crate) fn new_empty() -> Selection<'static> {
         Selection(Vec::new())
     }
 }
 
-impl<'a> ::std::convert::From<&'a SelectionSet> for Selection {
+impl<'query> ::std::convert::From<&'query SelectionSet> for Selection<'query> {
     fn from(selection_set: &SelectionSet) -> Selection {
         use graphql_parser::query::Selection;
 
-        let mut items = Vec::new();
+        let mut items = Vec::with_capacity(selection_set.items.len());
 
         for item in &selection_set.items {
             let converted = match item {
                 Selection::Field(f) => SelectionItem::Field(SelectionField {
-                    alias: f.alias.as_ref().map(|alias| alias.to_string()),
-                    name: f.name.to_string(),
+                    alias: f.alias.as_ref().map(|s| s.as_str()),
+                    name: &f.name,
                     fields: (&f.selection_set).into(),
                 }),
                 Selection::FragmentSpread(spread) => {
                     SelectionItem::FragmentSpread(SelectionFragmentSpread {
-                        fragment_name: spread.fragment_name.to_string(),
+                        fragment_name: &spread.fragment_name,
                     })
                 }
                 Selection::InlineFragment(inline) => {
+                    let graphql_parser::query::TypeCondition::On(ref name) = inline
+                        .type_condition
+                        .as_ref()
+                        .expect("Missing `on` clause.");
                     SelectionItem::InlineFragment(SelectionInlineFragment {
-                        on: inline
-                            .type_condition
-                            .clone()
-                            .expect("missing \"on\" clause")
-                            .to_string()
-                            .replace("on ", ""),
+                        on: &name,
                         fields: (&inline.selection_set).into(),
                     })
                 }
@@ -175,7 +173,8 @@ mod tests {
     #[test]
     fn selection_extract_typename_simple_case() {
         let selection = Selection::new_empty();
-        let context = crate::query::QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let context = ::query::QueryContext::new_empty(&schema);
 
         assert!(selection.extract_typename(&context).is_none());
     }
@@ -186,7 +185,7 @@ mod tests {
         selection
             .0
             .push(SelectionItem::FragmentSpread(SelectionFragmentSpread {
-                fragment_name: "MyFragment".to_owned(),
+                fragment_name: "MyFragment",
             }));
 
         let mut fragment_selection = Selection::new_empty();
@@ -194,15 +193,16 @@ mod tests {
             .0
             .push(SelectionItem::Field(SelectionField {
                 alias: None,
-                name: "__typename".to_string(),
+                name: "__typename",
                 fields: Selection::new_empty(),
             }));
 
-        let mut context = crate::query::QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let mut context = ::query::QueryContext::new_empty(&schema);
         context.fragments.insert(
-            "MyFragment".to_string(),
+            "MyFragment",
             crate::fragments::GqlFragment {
-                name: "MyFragment".to_string(),
+                name: "MyFragment",
                 on: "something".into(),
                 selection: fragment_selection,
                 is_required: std::cell::Cell::new(false),
@@ -252,42 +252,42 @@ mod tests {
             selection,
             Selection(vec![SelectionItem::Field(SelectionField {
                 alias: None,
-                name: "animal".to_string(),
+                name: "animal",
                 fields: Selection(vec![
                     SelectionItem::Field(SelectionField {
                         alias: None,
-                        name: "isCat".to_string(),
+                        name: "isCat",
                         fields: Selection(Vec::new()),
                     }),
                     SelectionItem::Field(SelectionField {
                         alias: None,
-                        name: "isHorse".to_string(),
+                        name: "isHorse",
                         fields: Selection(Vec::new()),
                     }),
                     SelectionItem::FragmentSpread(SelectionFragmentSpread {
-                        fragment_name: "Timestamps".to_string(),
+                        fragment_name: "Timestamps",
                     }),
                     SelectionItem::Field(SelectionField {
                         alias: None,
-                        name: "barks".to_string(),
+                        name: "barks",
                         fields: Selection(Vec::new()),
                     }),
                     SelectionItem::InlineFragment(SelectionInlineFragment {
-                        on: "Dog".to_string(),
+                        on: "Dog",
                         fields: Selection(vec![SelectionItem::Field(SelectionField {
                             alias: None,
-                            name: "rating".to_string(),
+                            name: "rating",
                             fields: Selection(Vec::new()),
                         })]),
                     }),
                     SelectionItem::Field(SelectionField {
                         alias: None,
-                        name: "pawsCount".to_string(),
+                        name: "pawsCount",
                         fields: Selection(Vec::new()),
                     }),
                     SelectionItem::Field(SelectionField {
-                        alias: Some("aliased".to_string()),
-                        name: "sillyName".to_string(),
+                        alias: Some("aliased"),
+                        name: "sillyName",
                         fields: Selection(Vec::new()),
                     }),
                 ]),

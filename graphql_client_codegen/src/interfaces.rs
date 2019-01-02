@@ -4,30 +4,33 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::{Selection, SelectionField, SelectionFragmentSpread, SelectionItem};
 use shared::*;
-use std::borrow::Cow;
 use std::cell::Cell;
 use std::collections::HashSet;
 use unions::union_variants;
 
 /// Represents an Interface type extracted from the schema.
 #[derive(Debug, Clone, PartialEq)]
-pub struct GqlInterface {
+pub struct GqlInterface<'schema> {
     /// The documentation for the interface. Extracted from the schema.
-    pub description: Option<String>,
+    pub description: Option<&'schema str>,
     /// The set of object types implementing this interface.
-    pub implemented_by: HashSet<String>,
+    pub implemented_by: HashSet<&'schema str>,
     /// The name of the interface. Should match 1-to-1 to its name in the GraphQL schema.
-    pub name: String,
+    pub name: &'schema str,
     /// The interface's fields. Analogous to object fields.
-    pub fields: Vec<GqlObjectField>,
+    pub fields: Vec<GqlObjectField<'schema>>,
     pub is_required: Cell<bool>,
 }
 
-impl GqlInterface {
+impl<'schema> GqlInterface<'schema> {
     /// filters the selection to keep only the fields that refer to the interface's own.
     ///
     /// This does not include the __typename field because it is translated into the `on` enum.
-    fn object_selection(&self, selection: &Selection, query_context: &QueryContext) -> Selection {
+    fn object_selection<'query>(
+        &self,
+        selection: &'query Selection<'query>,
+        query_context: &QueryContext,
+    ) -> Selection<'query> {
         Selection(
             selection
                 .0
@@ -53,7 +56,11 @@ impl GqlInterface {
         )
     }
 
-    fn union_selection(&self, selection: &Selection, query_context: &QueryContext) -> Selection {
+    fn union_selection<'query>(
+        &self,
+        selection: &'query Selection,
+        query_context: &QueryContext,
+    ) -> Selection<'query> {
         Selection(
             selection
                 .0
@@ -72,7 +79,7 @@ impl GqlInterface {
                         // only the fragments _not_ on the interface
                         fragment.on != self.name
                     }
-                    SelectionItem::Field(SelectionField { name, .. }) => name == "__typename",
+                    SelectionItem::Field(SelectionField { name, .. }) => *name == "__typename",
                 })
                 .map(|a| (*a).clone())
                 .collect(),
@@ -80,10 +87,13 @@ impl GqlInterface {
     }
 
     /// Create an empty interface. This needs to be mutated before it is useful.
-    pub(crate) fn new(name: Cow<str>, description: Option<&str>) -> GqlInterface {
+    pub(crate) fn new(
+        name: &'schema str,
+        description: Option<&'schema str>,
+    ) -> GqlInterface<'schema> {
         GqlInterface {
-            description: description.map(|d| d.to_owned()),
-            name: name.into_owned(),
+            name,
+            description,
             implemented_by: HashSet::new(),
             fields: vec![],
             is_required: false.into(),
@@ -201,16 +211,17 @@ mod tests {
         let iface = GqlInterface {
             description: None,
             implemented_by: HashSet::new(),
-            name: "MyInterface".into(),
+            name: "MyInterface",
             fields: vec![],
             is_required: Cell::new(true),
         };
 
-        let context = QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let context = QueryContext::new_empty(&schema);
 
         let typename_field = ::selection::SelectionItem::Field(::selection::SelectionField {
             alias: None,
-            name: "__typename".to_string(),
+            name: "__typename",
             fields: Selection(vec![]),
         });
         let selection = Selection(vec![typename_field.clone()]);
@@ -232,11 +243,12 @@ mod tests {
             is_required: Cell::new(true),
         };
 
-        let context = QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let context = QueryContext::new_empty(&schema);
 
         let typename_field = ::selection::SelectionItem::Field(::selection::SelectionField {
             alias: None,
-            name: "__typename".to_string(),
+            name: "__typename",
             fields: Selection(vec![]),
         });
         let selection = Selection(vec![typename_field]);

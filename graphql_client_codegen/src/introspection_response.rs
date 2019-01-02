@@ -345,10 +345,10 @@ pub(crate) enum IntrospectionResponse {
 }
 
 impl IntrospectionResponse {
-    pub(crate) fn into_schema(self) -> Schema {
+    pub(crate) fn as_schema(&self) -> &Schema {
         match self {
-            IntrospectionResponse::FullResponse(full_response) => full_response.data,
-            IntrospectionResponse::Schema(schema) => schema,
+            IntrospectionResponse::FullResponse(full_response) => &full_response.data,
+            IntrospectionResponse::Schema(schema) => &schema,
         }
     }
 }

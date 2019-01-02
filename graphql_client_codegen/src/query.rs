@@ -10,17 +10,20 @@ use std::collections::BTreeMap;
 use syn::Ident;
 
 /// This holds all the information we need during the code generation phase.
-pub(crate) struct QueryContext {
-    pub fragments: BTreeMap<String, GqlFragment>,
-    pub schema: Schema,
+pub(crate) struct QueryContext<'query, 'schema: 'query> {
+    pub fragments: BTreeMap<&'query str, GqlFragment<'query>>,
+    pub schema: &'schema Schema<'schema>,
     pub deprecation_strategy: DeprecationStrategy,
     variables_derives: Vec<Ident>,
     response_derives: Vec<Ident>,
 }
 
-impl QueryContext {
+impl<'query, 'schema> QueryContext<'query, 'schema> {
     /// Create a QueryContext with the given Schema.
-    pub(crate) fn new(schema: Schema, deprecation_strategy: DeprecationStrategy) -> QueryContext {
+    pub(crate) fn new(
+        schema: &'schema Schema<'schema>,
+        deprecation_strategy: DeprecationStrategy,
+    ) -> QueryContext<'query, 'schema> {
         QueryContext {
             fragments: BTreeMap::new(),
             schema,
@@ -30,7 +33,8 @@ impl QueryContext {
         }
     }
 
-    pub(crate) fn require(&self, typename_: &str) {
+    /// Mark a fragment as required, so code is actually generated for it.
+    pub(crate) fn require_fragment(&self, typename_: &str) {
         if let Some(fragment) = self.fragments.get(typename_) {
             fragment.is_required.set(true)
         }
@@ -38,24 +42,26 @@ impl QueryContext {
 
     /// For testing only. creates an empty QueryContext with an empty Schema.
     #[cfg(test)]
-    pub(crate) fn new_empty() -> QueryContext {
+    pub(crate) fn new_empty(schema: &'schema Schema) -> QueryContext<'query, 'schema> {
         QueryContext {
             fragments: BTreeMap::new(),
-            schema: Schema::new(),
+            schema,
             deprecation_strategy: DeprecationStrategy::Allow,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
         }
     }
 
-    ///
+    /// Expand the deserialization data structures for the given field.
     pub(crate) fn maybe_expand_field(
         &self,
         ty: &str,
         selection: &Selection,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
-        if let Some(enm) = self.schema.enums.get(ty) {
+        if self.schema.contains_scalar(ty) {
+            Ok(quote!())
+        } else if let Some(enm) = self.schema.enums.get(ty) {
             enm.is_required.set(true);
             Ok(quote!()) // we already expand enums separately
         } else if let Some(obj) = self.schema.objects.get(ty) {
@@ -139,7 +145,8 @@ mod tests {
 
     #[test]
     fn response_derives_ingestion_works() {
-        let mut context = QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let mut context = QueryContext::new_empty(&schema);
 
         context
             .ingest_additional_derives("PartialEq, PartialOrd, Serialize")
@@ -153,13 +160,15 @@ mod tests {
 
     #[test]
     fn response_enum_derives_does_not_produce_empty_list() {
-        let context = QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let context = QueryContext::new_empty(&schema);
         assert_eq!(context.response_enum_derives().to_string(), "");
     }
 
     #[test]
     fn response_enum_derives_works() {
-        let mut context = QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let mut context = QueryContext::new_empty(&schema);
 
         context
             .ingest_additional_derives("PartialEq, PartialOrd, Serialize")
@@ -173,7 +182,8 @@ mod tests {
 
     #[test]
     fn response_derives_fails_when_called_twice() {
-        let mut context = QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let mut context = QueryContext::new_empty(&schema);
 
         assert!(context
             .ingest_additional_derives("PartialEq, PartialOrd")

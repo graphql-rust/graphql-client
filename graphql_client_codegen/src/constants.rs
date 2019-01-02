@@ -4,19 +4,19 @@ use objects::GqlObjectField;
 
 pub(crate) const TYPENAME_FIELD: &str = "__typename";
 
-pub(crate) fn string_type() -> String {
-    "String".to_string()
+pub(crate) fn string_type() -> &'static str {
+    "String"
 }
 
 #[cfg(test)]
-pub(crate) fn float_type() -> String {
-    "Float".to_string()
+pub(crate) fn float_type() -> &'static str {
+    "Float"
 }
 
-pub(crate) fn typename_field() -> GqlObjectField {
+pub(crate) fn typename_field() -> GqlObjectField<'static> {
     GqlObjectField {
         description: None,
-        name: TYPENAME_FIELD.to_string(),
+        name: TYPENAME_FIELD,
         /// Non-nullable, see spec:
         /// https://github.com/facebook/graphql/blob/master/spec/Section%204%20--%20Introspection.md
         type_: FieldType::Named(string_type()),

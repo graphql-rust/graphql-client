@@ -57,7 +57,7 @@ type CacheMap<T> =
     ::std::sync::Mutex<::std::collections::hash_map::HashMap<::std::path::PathBuf, T>>;
 
 lazy_static! {
-    static ref SCHEMA_CACHE: CacheMap<schema::Schema> = CacheMap::default();
+    static ref SCHEMA_CACHE: CacheMap<String> = CacheMap::default();
     static ref QUERY_CACHE: CacheMap<(String, graphql_parser::query::Document)> =
         CacheMap::default();
 }
@@ -75,7 +75,7 @@ pub struct GraphQLClientDeriveOptions {
     pub additional_derives: Option<String>,
     /// The deprecation strategy to adopt.
     pub deprecation_strategy: Option<deprecation::DeprecationStrategy>,
-    /// target struct visibility.
+    /// target module visibility.
     pub module_visibility: Visibility,
 }
 
@@ -118,37 +118,35 @@ pub fn generate_module_token_stream(
         codegen::all_operations(&query)
     };
 
+    let schema_extension = schema_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("INVALID");
+
     // Check the schema cache.
-    let schema = {
+    let schema_string: String = {
         let mut lock = SCHEMA_CACHE.lock().expect("schema cache is poisoned");
-        match lock.entry(schema_path) {
+        match lock.entry(schema_path.clone()) {
             ::std::collections::hash_map::Entry::Occupied(o) => o.get().clone(),
             ::std::collections::hash_map::Entry::Vacant(v) => {
                 let schema_string = read_file(v.key())?;
-                let schema = {
-                    let extension = v
-                        .key()
-                        .extension()
-                        .and_then(|e| e.to_str())
-                        .unwrap_or("INVALID");
-
-                    match extension {
-                        "graphql" | "gql" => {
-                            let s = graphql_parser::schema::parse_schema(&schema_string)?;
-                            schema::Schema::from(s)
-                        }
-                        "json" => {
-                            let parsed: introspection_response::IntrospectionResponse = ::serde_json::from_str(&schema_string)?;
-                            schema::Schema::from(parsed)
-                        }
-                        extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
-                    }
-                };
-
-                v.insert(schema).clone()
+                v.insert(schema_string).to_string()
             }
         }
     };
+
+    let parsed_schema = match schema_extension {
+                        "graphql" | "gql" => {
+                            let s = graphql_parser::schema::parse_schema(&schema_string)?;
+                            schema::ParsedSchema::GraphQLParser(s)
+                        }
+                        "json" => {
+                            let parsed: introspection_response::IntrospectionResponse = ::serde_json::from_str(&schema_string)?;
+                            schema::ParsedSchema::Json(parsed)
+                        }
+                        extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
+                    };
+    let schema = schema::Schema::from(&parsed_schema);
 
     let struct_name = if options.struct_name.is_some() {
         Some(Ident::new(
@@ -162,8 +160,8 @@ pub fn generate_module_token_stream(
     let module_name = Ident::new(
         options
             .module_name
-            .clone()
-            .unwrap_or_else(|| options.operation_name.clone().unwrap())
+            .as_ref()
+            .unwrap_or_else(|| options.operation_name.as_ref().unwrap())
             .to_snake_case()
             .as_str(),
         Span::call_site(),
@@ -177,8 +175,8 @@ pub fn generate_module_token_stream(
 
     for operation in &operations {
         let schema_output = codegen::response_for_query(
-            schema.clone(),
-            query.clone(),
+            &schema.clone(),
+            &query.clone(),
             &operation,
             response_derives.clone(),
             deprecation_strategy.clone(),

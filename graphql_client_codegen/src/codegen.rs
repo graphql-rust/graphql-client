@@ -9,7 +9,10 @@ use schema;
 use selection::Selection;
 
 /// Selects the first operation matching `struct_name` or the first one. Returns `None` when the query document defines no operation.
-pub(crate) fn select_operation(query: &query::Document, struct_name: &str) -> Option<Operation> {
+pub(crate) fn select_operation<'query>(
+    query: &'query query::Document,
+    struct_name: &str,
+) -> Option<Operation<'query>> {
     let operations = all_operations(query);
 
     operations
@@ -31,9 +34,9 @@ pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation> {
 }
 
 /// The main code generation function.
-pub fn response_for_query(
-    schema: schema::Schema,
-    query: query::Document,
+pub(crate) fn response_for_query(
+    schema: &schema::Schema,
+    query: &query::Document,
     operation: &Operation,
     additional_derives: Option<String>,
     deprecation_strategy: deprecation::DeprecationStrategy,
@@ -47,17 +50,17 @@ pub fn response_for_query(
 
     let mut definitions = Vec::new();
 
-    for definition in query.definitions {
+    for definition in &query.definitions {
         match definition {
             query::Definition::Operation(_op) => (),
             query::Definition::Fragment(fragment) => {
-                let query::TypeCondition::On(on) = fragment.type_condition;
+                let &query::TypeCondition::On(ref on) = &fragment.type_condition;
                 context.fragments.insert(
-                    fragment.name.clone(),
+                    &fragment.name,
                     GqlFragment {
-                        name: fragment.name,
+                        name: &fragment.name,
                         selection: Selection::from(&fragment.selection_set),
-                        on,
+                        on: on,
                         is_required: false.into(),
                     },
                 );
@@ -67,7 +70,7 @@ pub fn response_for_query(
 
     let response_data_fields = {
         let opt_root_name = operation.root_name(&context.schema);
-        let root_name: String = if let Some(root_name) = opt_root_name {
+        let root_name: &str = if let Some(root_name) = opt_root_name {
             root_name
         } else {
             panic!(

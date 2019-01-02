@@ -5,18 +5,18 @@ use std::cell::Cell;
 
 /// Represents a fragment extracted from a query document.
 #[derive(Debug, PartialEq)]
-pub(crate) struct GqlFragment {
+pub(crate) struct GqlFragment<'query> {
     /// The name of the fragment, matching one-to-one with the name in the GraphQL query document.
-    pub name: String,
+    pub name: &'query str,
     /// The `on` clause of the fragment.
-    pub on: String,
+    pub on: &'query str,
     /// The selected fields.
-    pub selection: Selection,
-    /// Whether the fragment
+    pub selection: Selection<'query>,
+    /// Whether the fragment is used in the current query
     pub is_required: Cell<bool>,
 }
 
-impl GqlFragment {
+impl<'query> GqlFragment<'query> {
     /// Generate all the Rust code required by the fragment's selection.
     pub(crate) fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, ::failure::Error> {
         if let Some(obj) = context.schema.objects.get(&self.on) {

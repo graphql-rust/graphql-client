@@ -1,15 +1,14 @@
-use constants::*;
 use failure;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
-use selection::{Selection, SelectionFragmentSpread, SelectionItem};
+use selection::Selection;
 use std::cell::Cell;
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct GqlUnion {
-    pub description: Option<String>,
-    pub variants: BTreeSet<String>,
+pub(crate) struct GqlUnion<'schema> {
+    pub description: Option<&'schema str>,
+    pub variants: BTreeSet<&'schema str>,
     pub is_required: Cell<bool>,
 }
 
@@ -32,17 +31,17 @@ type UnionVariantResult<'selection> =
 /// - The last one contains which fields have been selected on the union, so we can make the enum exhaustive by complementing with those missing.
 pub(crate) fn union_variants<'selection>(
     selection: &'selection Selection,
-    context: &QueryContext,
+    context: &'selection QueryContext<'selection, 'selection>,
     prefix: &str,
 ) -> UnionVariantResult<'selection> {
     let selection = selection.selected_variants_on_union(context)?;
-    let used_variants = selection.keys().collect();
-    let mut children_definitions = Vec::with_capacity(selection.size());
-    let mut variants = Vec::with_capacity(selection.size());
+    let mut used_variants: Vec<&str> = selection.keys().map(|k| *k).collect();
+    let mut children_definitions = Vec::with_capacity(selection.len());
+    let mut variants = Vec::with_capacity(selection.len());
 
     for (on, fields) in selection.iter() {
         let variant_name = Ident::new(&on, Span::call_site());
-        used_variants.push(on.to_string());
+        used_variants.push(on);
 
         let new_prefix = format!("{}On{}", prefix, on);
 
@@ -112,7 +111,7 @@ pub(crate) fn union_variants<'selection>(
     // let variants = variants?;
 }
 
-impl GqlUnion {
+impl<'schema> GqlUnion<'schema> {
     /// Returns the code to deserialize this union in the response given the query selection.
     pub(crate) fn response_for_selection(
         &self,
@@ -159,6 +158,7 @@ impl GqlUnion {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::*;
     use deprecation::DeprecationStatus;
     use field_type::FieldType;
     use objects::{GqlObject, GqlObjectField};
@@ -168,23 +168,22 @@ mod tests {
     fn union_response_for_selection_complains_if_typename_is_missing() {
         let fields = vec![
             SelectionItem::InlineFragment(SelectionInlineFragment {
-                on: "User".to_string(),
+                on: "User",
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
                     alias: None,
-                    name: "firstName".to_string(),
+                    name: "firstName",
                     fields: Selection(vec![]),
                 })]),
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
-                on: "Organization".to_string(),
+                on: "Organization",
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
                     alias: None,
-                    name: "title".to_string(),
+                    name: "title",
                     fields: Selection(vec![]),
                 })]),
             }),
         ];
-        let mut context = QueryContext::new_empty();
         let selection = Selection(fields);
         let prefix = "Meow";
         let union = GqlUnion {
@@ -193,29 +192,31 @@ mod tests {
             is_required: false.into(),
         };
 
-        context.schema.objects.insert(
-            "User".to_string(),
+        let mut schema = ::schema::Schema::new();
+
+        schema.objects.insert(
+            "User",
             GqlObject {
                 description: None,
-                name: "User".to_string(),
+                name: "User",
                 fields: vec![
                     GqlObjectField {
                         description: None,
-                        name: "firstName".to_string(),
-                        type_: FieldType::Named("String".to_string()),
+                        name: "firstName",
+                        type_: FieldType::Named("String"),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
-                        name: "lastName".to_string(),
-                        type_: FieldType::Named("String".to_string()),
+                        name: "lastName",
+                        type_: FieldType::Named("String"),
 
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
-                        name: "createdAt".to_string(),
-                        type_: FieldType::Named("Date".to_string()),
+                        name: "createdAt",
+                        type_: FieldType::Named("Date"),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
@@ -223,28 +224,29 @@ mod tests {
             },
         );
 
-        context.schema.objects.insert(
-            "Organization".to_string(),
+        schema.objects.insert(
+            "Organization",
             GqlObject {
                 description: None,
-                name: "Organization".to_string(),
+                name: "Organization",
                 fields: vec![
                     GqlObjectField {
                         description: None,
-                        name: "title".to_string(),
-                        type_: FieldType::Named("String".to_string()),
+                        name: "title",
+                        type_: FieldType::Named("String"),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
-                        name: "created_at".to_string(),
-                        type_: FieldType::Named("Date".to_string()),
+                        name: "created_at",
+                        type_: FieldType::Named("Date"),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
                 is_required: false.into(),
             },
         );
+        let context = QueryContext::new_empty(&schema);
 
         let result = union.response_for_selection(&context, &selection, &prefix);
 
@@ -261,27 +263,28 @@ mod tests {
         let fields = vec![
             SelectionItem::Field(SelectionField {
                 alias: None,
-                name: "__typename".to_string(),
+                name: "__typename",
                 fields: Selection(vec![]),
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
-                on: "User".to_string(),
+                on: "User",
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
                     alias: None,
-                    name: "firstName".to_string(),
+                    name: "firstName",
                     fields: Selection(vec![]),
                 })]),
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
-                on: "Organization".to_string(),
+                on: "Organization",
                 fields: Selection(vec![SelectionItem::Field(SelectionField {
                     alias: None,
-                    name: "title".to_string(),
+                    name: "title",
                     fields: Selection(vec![]),
                 })]),
             }),
         ];
-        let mut context = QueryContext::new_empty();
+        let schema = ::schema::Schema::new();
+        let context = QueryContext::new_empty(&schema);
         let selection = Selection(fields);
         let prefix = "Meow";
         let union = GqlUnion {
@@ -294,34 +297,35 @@ mod tests {
 
         assert!(result.is_err());
 
-        context.schema.objects.insert(
-            "User".to_string(),
+        let mut schema = ::schema::Schema::new();
+        schema.objects.insert(
+            "User",
             GqlObject {
                 description: None,
-                name: "User".to_string(),
+                name: "User",
                 fields: vec![
                     GqlObjectField {
                         description: None,
-                        name: "__typename".to_string(),
+                        name: "__typename",
                         type_: FieldType::Named(string_type()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
-                        name: "firstName".to_string(),
+                        name: "firstName",
                         type_: FieldType::Named(string_type()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
-                        name: "lastName".to_string(),
+                        name: "lastName",
                         type_: FieldType::Named(string_type()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
-                        name: "createdAt".to_string(),
-                        type_: FieldType::Named("Date".to_string()),
+                        name: "createdAt",
+                        type_: FieldType::Named("Date"),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
@@ -329,34 +333,36 @@ mod tests {
             },
         );
 
-        context.schema.objects.insert(
-            "Organization".to_string(),
+        schema.objects.insert(
+            "Organization",
             GqlObject {
                 description: None,
-                name: "Organization".to_string(),
+                name: "Organization",
                 fields: vec![
                     GqlObjectField {
                         description: None,
-                        name: "__typename".to_string(),
+                        name: "__typename",
                         type_: FieldType::Named(string_type()),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
-                        name: "title".to_string(),
-                        type_: FieldType::Named("String".to_string()),
+                        name: "title",
+                        type_: FieldType::Named("String"),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
-                        name: "createdAt".to_string(),
-                        type_: FieldType::Named("Date".to_string()),
+                        name: "createdAt",
+                        type_: FieldType::Named("Date"),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
                 is_required: false.into(),
             },
         );
+
+        let context = QueryContext::new_empty(&schema);
 
         let result = union.response_for_selection(&context, &selection, &prefix);
 

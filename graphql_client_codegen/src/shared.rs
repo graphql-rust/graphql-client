@@ -81,7 +81,7 @@ pub(crate) fn field_impls_for_selection(
                     .find(|f| &f.name == name)
                     .ok_or_else(|| format_err!("could not find field `{}`", name))?
                     .type_
-                    .inner_name_string();
+                    .inner_name_str();
                 let prefix = format!("{}{}", prefix.to_camel_case(), alias.to_camel_case());
                 context.maybe_expand_field(&ty, &selected.fields, &prefix)
             } else {
@@ -112,7 +112,7 @@ pub(crate) fn response_fields_for_selection(
                     .ok_or_else(|| {
                         format_err!(
                             "Could not find field `{}` on `{}`. Available fields: `{}`.",
-                            name.as_str(),
+                            *name,
                             type_name,
                             schema_fields
                                 .iter()
@@ -128,7 +128,7 @@ pub(crate) fn response_fields_for_selection(
                 Ok(render_object_field(
                     alias,
                     &ty,
-                    schema_field.description.as_ref().map(|s| s.as_str()),
+                    schema_field.description.as_ref().map(|s| *s),
                     &schema_field.deprecation,
                     &context.deprecation_strategy,
                 ))
@@ -136,7 +136,7 @@ pub(crate) fn response_fields_for_selection(
             SelectionItem::FragmentSpread(fragment) => {
                 let field_name =
                     Ident::new(&fragment.fragment_name.to_snake_case(), Span::call_site());
-                context.require(&fragment.fragment_name);
+                context.require_fragment(&fragment.fragment_name);
                 let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
                 Ok(quote! {
                     #[serde(flatten)]
