@@ -1,8 +1,10 @@
 use constants::*;
 use graphql_parser::query::SelectionSet;
+use std::collections::BTreeMap;
+use std::error::Error;
 
 /// A single object field as part of a selection.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SelectionField {
     pub alias: Option<String>,
     pub name: String,
@@ -10,20 +12,20 @@ pub struct SelectionField {
 }
 
 /// A spread fragment in a selection (e.g. `...MyFragment`).
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SelectionFragmentSpread {
     pub fragment_name: String,
 }
 
 /// An inline fragment as part of a selection (e.g. `...on MyThing { name }`).
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SelectionInlineFragment {
     pub on: String,
     pub fields: Selection,
 }
 
 /// An element in a query selection.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SelectionItem {
     Field(SelectionField),
     FragmentSpread(SelectionFragmentSpread),
@@ -41,7 +43,7 @@ impl SelectionItem {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Selection(pub Vec<SelectionItem>);
 
 impl Selection {
@@ -69,6 +71,57 @@ impl Selection {
                 fragment.and_then(|fragment| fragment.selection.extract_typename(context))
             })
             .next()
+    }
+
+    // Implementation helper for `selected_variants_on_union`.
+    fn selected_variants_on_union_inner<'s>(
+        &'s self,
+        context: &'s crate::query::QueryContext,
+        selected_variants: &mut BTreeMap<&'s str, Vec<&'s SelectionItem>>,
+    ) -> Result<(), Box<Error>> {
+        for item in self.0.iter() {
+            match item {
+                SelectionItem::Field(_) => Err(format_err!("field selection on union"))?,
+                SelectionItem::InlineFragment(inline_fragment) => {
+                    selected_variants
+                        .entry(inline_fragment.on.as_str())
+                        .and_modify(|entry| entry.extend(&inline_fragment.fields.0))
+                        .or_insert_with(|| {
+                            let mut set = Vec::new();
+                            set.extend(&inline_fragment.fields.0);
+                            set
+                        });
+                }
+                SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
+                    let fragment = context
+                        .fragments
+                        .get(fragment_name)
+                        .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))?;
+
+                    fragment
+                        .selection
+                        .selected_variants_on_union_inner(context, selected_variants)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// This method should only be invoked on selections on union fields. It returns the selected varianst and the
+    ///
+    /// Importantly, it will "flatten" the fragments and handle multiple selections of the same variant.
+    ///
+    /// The `context` argument is required so we can expand the fragments.
+    pub(crate) fn selected_variants_on_union<'s>(
+        &'s self,
+        context: &'s crate::query::QueryContext,
+    ) -> Result<BTreeMap<&'s str, Vec<&'s SelectionItem>>, Box<Error>> {
+        let mut selected_variants = BTreeMap::new();
+
+        self.selected_variants_on_union_inner(context, &mut selected_variants)?;
+
+        Ok(selected_variants)
     }
 
     #[cfg(test)]

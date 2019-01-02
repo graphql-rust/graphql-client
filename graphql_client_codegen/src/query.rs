@@ -48,6 +48,7 @@ impl QueryContext {
         }
     }
 
+    ///
     pub(crate) fn maybe_expand_field(
         &self,
         ty: &str,
@@ -67,7 +68,7 @@ impl QueryContext {
             unn.is_required.set(true);
             unn.response_for_selection(self, &selection, prefix)
         } else {
-            Ok(quote!())
+            Err(format_err!("Unknown type: {}", ty))
         }
     }
 
