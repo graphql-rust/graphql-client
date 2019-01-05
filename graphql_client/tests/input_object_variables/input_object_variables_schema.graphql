@@ -24,8 +24,14 @@ input Options {
   pgpSignature: Boolean
 }
 
+input RecursiveInput {
+  head: String!
+  tail: RecursiveInput
+}
+
 type InputObjectVariablesQuery {
   echo(message: Message!, options: Options = { pgpSignature: true }): EchoResult
+  saveRecursiveInput(recursiveInput: RecursiveInput!): Category
 }
 
 type EchoResult {

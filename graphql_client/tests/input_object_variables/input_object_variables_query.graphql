@@ -3,3 +3,7 @@ query VariablesQuery($msg: Message) {
     result
   }
 }
+
+query RecursiveInputQuery($input: RecursiveInput!) {
+  saveRecursiveInput(recursiveInput: $input)
+}

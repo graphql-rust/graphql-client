@@ -36,6 +36,14 @@ impl<'schema> GqlInput<'schema> {
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
             let ty = field.type_.to_rust(&context, "");
+
+            // If the type is recursive, we have to box it
+            let ty = if field.type_.is_indirected() || field.type_.inner_name_str() != self.name {
+                ty
+            } else {
+                quote! { Box<#ty> }
+            };
+
             context.schema.require(&field.type_.inner_name_str());
             let original_name = &field.name;
             let snake_case_name = field.name.to_snake_case();
