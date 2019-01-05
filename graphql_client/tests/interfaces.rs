@@ -103,6 +103,7 @@ fn fragment_in_interface() {
                     name: "Audrey Lorde".to_string(),
                     public_status: PublicStatus {
                         display_name: false,
+                        on: PublicStatusOn::Person,
                     },
                     on: InterfaceWithFragmentQueryEverythingOn::Person(
                         InterfaceWithFragmentQueryEverythingOnPerson {
@@ -112,7 +113,10 @@ fn fragment_in_interface() {
                 },
                 InterfaceWithFragmentQueryEverything {
                     name: "Laïka".to_string(),
-                    public_status: PublicStatus { display_name: true },
+                    public_status: PublicStatus {
+                        display_name: true,
+                        on: PublicStatusOn::Dog
+                    },
                     on: InterfaceWithFragmentQueryEverythingOn::Dog(
                         InterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
                     )
@@ -120,13 +124,17 @@ fn fragment_in_interface() {
                 InterfaceWithFragmentQueryEverything {
                     name: "Mozilla".to_string(),
                     public_status: PublicStatus {
-                        display_name: false
+                        display_name: false,
+                        on: PublicStatusOn::Organization
                     },
                     on: InterfaceWithFragmentQueryEverythingOn::Organization,
                 },
                 InterfaceWithFragmentQueryEverything {
                     name: "Norbert".to_string(),
-                    public_status: PublicStatus { display_name: true },
+                    public_status: PublicStatus {
+                        display_name: true,
+                        on: PublicStatusOn::Dog
+                    },
                     on: InterfaceWithFragmentQueryEverythingOn::Dog(
                         InterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }
                     ),

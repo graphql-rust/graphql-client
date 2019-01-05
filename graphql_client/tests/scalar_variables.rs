@@ -14,7 +14,7 @@ pub struct ScalarVariablesQuery;
 
 #[test]
 fn scalar_variables_query_variables_struct() {
-    scalar_variables_query::Variables {
+    let _ = scalar_variables_query::Variables {
         msg: "hello".to_string(),
         reps: Some(32),
     };

@@ -2,13 +2,13 @@ use proc_macro2;
 use std::cell::Cell;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
-pub struct Scalar {
-    pub name: String,
-    pub description: Option<String>,
+pub struct Scalar<'schema> {
+    pub name: &'schema str,
+    pub description: Option<&'schema str>,
     pub is_required: Cell<bool>,
 }
 
-impl Scalar {
+impl<'schema> Scalar<'schema> {
     // TODO: do something smarter here
     pub fn to_rust(&self) -> proc_macro2::TokenStream {
         use proc_macro2::{Ident, Span};

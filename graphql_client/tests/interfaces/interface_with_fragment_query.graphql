@@ -1,4 +1,5 @@
 fragment PublicStatus on Named {
+  __typename
   displayName
 }
 

@@ -96,7 +96,7 @@ fn main() -> Result<(), failure::Error> {
             output,
         } => generate::generate_code(
             query_path,
-            schema_path,
+            &schema_path,
             module_name,
             selected_operation,
             additional_derives,

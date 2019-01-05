@@ -8,22 +8,21 @@ use query::QueryContext;
 use schema::Schema;
 use selection::*;
 use shared::{field_impls_for_selection, response_fields_for_selection};
-use std::borrow::Cow;
 use std::cell::Cell;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct GqlObject {
-    pub description: Option<String>,
-    pub fields: Vec<GqlObjectField>,
-    pub name: String,
+pub struct GqlObject<'schema> {
+    pub description: Option<&'schema str>,
+    pub fields: Vec<GqlObjectField<'schema>>,
+    pub name: &'schema str,
     pub is_required: Cell<bool>,
 }
 
 #[derive(Clone, Debug, PartialEq, Hash)]
-pub struct GqlObjectField {
-    pub description: Option<String>,
-    pub name: String,
-    pub type_: FieldType,
+pub struct GqlObjectField<'schema> {
+    pub description: Option<&'schema str>,
+    pub name: &'schema str,
+    pub type_: FieldType<'schema>,
     pub deprecation: DeprecationStatus,
 }
 
@@ -57,48 +56,45 @@ fn parse_deprecation_info(field: &schema::Field) -> DeprecationStatus {
     }
 }
 
-impl GqlObject {
-    pub fn new(name: Cow<str>, description: Option<&str>) -> GqlObject {
+impl<'schema> GqlObject<'schema> {
+    pub fn new(name: &'schema str, description: Option<&'schema str>) -> GqlObject<'schema> {
         GqlObject {
-            description: description.map(|s| s.to_owned()),
-            name: name.into_owned(),
+            description,
+            name,
             fields: vec![typename_field()],
             is_required: false.into(),
         }
     }
 
-    pub fn from_graphql_parser_object(obj: schema::ObjectType) -> Self {
+    pub fn from_graphql_parser_object(obj: &'schema schema::ObjectType) -> Self {
         let description = obj.description.as_ref().map(|s| s.as_str());
-        let mut item = GqlObject::new(obj.name.into(), description);
+        let mut item = GqlObject::new(&obj.name, description);
         item.fields.extend(obj.fields.iter().map(|f| {
             let deprecation = parse_deprecation_info(&f);
             GqlObjectField {
-                description: f.description.clone(),
-                name: f.name.clone(),
-                type_: FieldType::from(f.field_type.clone()),
+                description: f.description.as_ref().map(String::as_str),
+                name: &f.name,
+                type_: FieldType::from(&f.field_type),
                 deprecation,
             }
         }));
         item
     }
 
-    pub fn from_introspected_schema_json(obj: &::introspection_response::FullType) -> Self {
+    pub fn from_introspected_schema_json(obj: &'schema ::introspection_response::FullType) -> Self {
         let description = obj.description.as_ref().map(|s| s.as_str());
-        let mut item = GqlObject::new(
-            obj.name.clone().expect("missing object name").into(),
-            description,
-        );
-        let fields = obj.fields.clone().unwrap().into_iter().filter_map(|t| {
-            t.map(|t| {
+        let mut item = GqlObject::new(obj.name.as_ref().expect("missing object name"), description);
+        let fields = obj.fields.as_ref().unwrap().iter().filter_map(|t| {
+            t.as_ref().map(|t| {
                 let deprecation = if t.is_deprecated.unwrap_or(false) {
-                    DeprecationStatus::Deprecated(t.deprecation_reason)
+                    DeprecationStatus::Deprecated(t.deprecation_reason.clone())
                 } else {
                     DeprecationStatus::Current
                 };
                 GqlObjectField {
-                    description: t.description.clone(),
-                    name: t.name.expect("field name"),
-                    type_: FieldType::from(t.type_.expect("field type")),
+                    description: t.description.as_ref().map(String::as_str),
+                    name: t.name.as_ref().expect("field name"),
+                    type_: FieldType::from(t.type_.as_ref().expect("field type")),
                     deprecation,
                 }
             })
@@ -115,7 +111,7 @@ impl GqlObject {
         }
         self.is_required.set(true);
         self.fields.iter().for_each(|field| {
-            schema.require(&field.type_.inner_name_string());
+            schema.require(&field.type_.inner_name_str());
         })
     }
 

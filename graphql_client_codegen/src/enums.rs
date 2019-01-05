@@ -4,20 +4,20 @@ use std::cell::Cell;
 pub const ENUMS_PREFIX: &str = "";
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct EnumVariant {
-    pub description: Option<String>,
-    pub name: String,
+pub struct EnumVariant<'schema> {
+    pub description: Option<&'schema str>,
+    pub name: &'schema str,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct GqlEnum {
-    pub description: Option<String>,
-    pub name: String,
-    pub variants: Vec<EnumVariant>,
+pub struct GqlEnum<'schema> {
+    pub description: Option<&'schema str>,
+    pub name: &'schema str,
+    pub variants: Vec<EnumVariant<'schema>>,
     pub is_required: Cell<bool>,
 }
 
-impl GqlEnum {
+impl<'schema> GqlEnum<'schema> {
     pub(crate) fn to_rust(&self, query_context: &::query::QueryContext) -> TokenStream {
         let derives = query_context.response_enum_derives();
         let variant_names: Vec<TokenStream> = self
@@ -41,7 +41,7 @@ impl GqlEnum {
             })
             .collect();
         let constructors = &constructors;
-        let variant_str: Vec<&str> = self.variants.iter().map(|v| v.name.as_str()).collect();
+        let variant_str: Vec<&str> = self.variants.iter().map(|v| v.name).collect();
         let variant_str = &variant_str;
 
         let name = name_ident.clone();

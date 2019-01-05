@@ -6,19 +6,19 @@ use query::QueryContext;
 use schema::DEFAULT_SCALARS;
 
 #[derive(Clone, Debug, PartialEq, Hash)]
-pub enum FieldType {
-    Named(String),
-    Optional(Box<FieldType>),
-    Vector(Box<FieldType>),
+pub enum FieldType<'a> {
+    Named(&'a str),
+    Optional(Box<FieldType<'a>>),
+    Vector(Box<FieldType<'a>>),
 }
 
-impl FieldType {
+impl<'a> FieldType<'a> {
     /// Takes a field type with its name
     pub(crate) fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
-        let prefix: String = if prefix.is_empty() {
-            self.inner_name_string()
+        let prefix: &str = if prefix.is_empty() {
+            self.inner_name_str()
         } else {
-            prefix.to_string()
+            prefix
         };
         match &self {
             FieldType::Named(ref name) => {
@@ -30,7 +30,7 @@ impl FieldType {
                     .is_some()
                     || DEFAULT_SCALARS.iter().any(|elem| elem == name)
                 {
-                    name.clone()
+                    name.to_string()
                 } else if context
                     .schema
                     .enums
@@ -43,7 +43,7 @@ impl FieldType {
                     if prefix.is_empty() {
                         panic!("Empty prefix for {:?}", self);
                     }
-                    prefix
+                    prefix.to_string()
                 };
                 let full_name = Ident::new(&full_name, Span::call_site());
 
@@ -61,11 +61,11 @@ impl FieldType {
     }
 
     /// Return the innermost name - we mostly use this for looking types up in our Schema struct.
-    pub fn inner_name_string(&self) -> String {
+    pub fn inner_name_str(&self) -> &str {
         match &self {
-            FieldType::Named(name) => name.to_string(),
-            FieldType::Optional(inner) => inner.inner_name_string(),
-            FieldType::Vector(inner) => inner.inner_name_string(),
+            FieldType::Named(name) => name,
+            FieldType::Optional(inner) => inner.inner_name_str(),
+            FieldType::Vector(inner) => inner.inner_name_str(),
         }
     }
 
@@ -77,16 +77,16 @@ impl FieldType {
     }
 }
 
-impl ::std::convert::From<graphql_parser::schema::Type> for FieldType {
-    fn from(schema_type: graphql_parser::schema::Type) -> FieldType {
+impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Type> for FieldType<'schema> {
+    fn from(schema_type: &'schema graphql_parser::schema::Type) -> FieldType<'schema> {
         from_schema_type_inner(schema_type, false)
     }
 }
 
-fn from_schema_type_inner(inner: graphql_parser::schema::Type, non_null: bool) -> FieldType {
+fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) -> FieldType {
     match inner {
         graphql_parser::schema::Type::ListType(inner) => {
-            let inner = from_schema_type_inner(*inner, false);
+            let inner = from_schema_type_inner(&*inner, false);
             let f = FieldType::Vector(Box::new(inner));
             if non_null {
                 f
@@ -102,21 +102,21 @@ fn from_schema_type_inner(inner: graphql_parser::schema::Type, non_null: bool) -
                 FieldType::Optional(Box::new(f))
             }
         }
-        graphql_parser::schema::Type::NonNullType(inner) => from_schema_type_inner(*inner, true),
+        graphql_parser::schema::Type::NonNullType(inner) => from_schema_type_inner(&*inner, true),
     }
 }
 
 fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool) -> FieldType {
     use introspection_response::*;
-    let inner = inner.clone();
 
     match inner.kind {
-        Some(__TypeKind::NON_NULL) => {
-            from_json_type_inner(&inner.of_type.expect("inner type is missing"), true)
-        }
+        Some(__TypeKind::NON_NULL) => from_json_type_inner(
+            &inner.of_type.as_ref().expect("inner type is missing"),
+            true,
+        ),
         Some(__TypeKind::LIST) => {
             let f = FieldType::Vector(Box::new(from_json_type_inner(
-                &inner.of_type.expect("inner type is missing"),
+                &inner.of_type.as_ref().expect("inner type is missing"),
                 false,
             )));
             if non_null {
@@ -126,7 +126,7 @@ fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool)
             }
         }
         Some(_) => {
-            let f = FieldType::Named(inner.name.expect("type name").clone());
+            let f = FieldType::Named(&inner.name.as_ref().expect("type name"));
             if non_null {
                 f
             } else {
@@ -137,14 +137,18 @@ fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool)
     }
 }
 
-impl ::std::convert::From<introspection_response::FullTypeFieldsType> for FieldType {
-    fn from(schema_type: introspection_response::FullTypeFieldsType) -> FieldType {
+impl<'schema> ::std::convert::From<&'schema introspection_response::FullTypeFieldsType>
+    for FieldType<'schema>
+{
+    fn from(
+        schema_type: &'schema introspection_response::FullTypeFieldsType,
+    ) -> FieldType<'schema> {
         from_json_type_inner(&schema_type.type_ref, false)
     }
 }
 
-impl ::std::convert::From<introspection_response::InputValueType> for FieldType {
-    fn from(schema_type: introspection_response::InputValueType) -> FieldType {
+impl<'a> ::std::convert::From<&'a introspection_response::InputValueType> for FieldType<'a> {
+    fn from(schema_type: &'a introspection_response::InputValueType) -> FieldType<'a> {
         from_json_type_inner(&schema_type.type_ref, false)
     }
 }
@@ -157,15 +161,15 @@ mod tests {
 
     #[test]
     fn field_type_from_graphql_parser_schema_type_works() {
-        let ty = GqlParserType::NamedType("Cat".to_string());
+        let ty = GqlParserType::NamedType("Cat".to_owned());
         assert_eq!(
-            FieldType::from(ty),
-            FieldType::Optional(Box::new(FieldType::Named("Cat".to_string())))
+            FieldType::from(&ty),
+            FieldType::Optional(Box::new(FieldType::Named("Cat")))
         );
 
-        let ty = GqlParserType::NonNullType(Box::new(GqlParserType::NamedType("Cat".to_string())));
+        let ty = GqlParserType::NonNullType(Box::new(GqlParserType::NamedType("Cat".to_owned())));
 
-        assert_eq!(FieldType::from(ty), FieldType::Named("Cat".to_string()));
+        assert_eq!(FieldType::from(&ty), FieldType::Named("Cat"));
     }
 
     #[test]
@@ -173,13 +177,13 @@ mod tests {
         let ty = FullTypeFieldsType {
             type_ref: TypeRef {
                 kind: Some(__TypeKind::OBJECT),
-                name: Some("Cat".to_string()),
+                name: Some("Cat".into()),
                 of_type: None,
             },
         };
         assert_eq!(
-            FieldType::from(ty),
-            FieldType::Optional(Box::new(FieldType::Named("Cat".to_string())))
+            FieldType::from(&ty),
+            FieldType::Optional(Box::new(FieldType::Named("Cat")))
         );
 
         let ty = FullTypeFieldsType {
@@ -188,11 +192,11 @@ mod tests {
                 name: None,
                 of_type: Some(Box::new(TypeRef {
                     kind: Some(__TypeKind::OBJECT),
-                    name: Some("Cat".to_string()),
+                    name: Some("Cat".into()),
                     of_type: None,
                 })),
             },
         };
-        assert_eq!(FieldType::from(ty), FieldType::Named("Cat".to_string()));
+        assert_eq!(FieldType::from(&ty), FieldType::Named("Cat"));
     }
 }

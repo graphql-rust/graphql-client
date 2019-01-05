@@ -13,3 +13,22 @@ query MyQuery {
     }
   }
 }
+
+fragment NamesFragment on NamedThing {
+  __typename
+  ... on Dog {
+    name
+  }
+  ... on Person {
+    firstName
+  }
+  ... on Organization {
+    title
+  }
+}
+
+query FragmentOnUnion {
+  names {
+    ...NamesFragment
+  }
+}
