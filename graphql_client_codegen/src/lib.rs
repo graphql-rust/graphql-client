@@ -82,7 +82,7 @@ pub struct GraphQLClientDeriveOptions {
 /// Generates the code for a Rust module given a query, a schema and options.
 pub fn generate_module_token_stream(
     query_path: std::path::PathBuf,
-    schema_path: std::path::PathBuf,
+    schema_path: &std::path::Path,
     options: Option<GraphQLClientDeriveOptions>,
 ) -> Result<TokenStream, failure::Error> {
     let options = options.unwrap();
@@ -126,7 +126,7 @@ pub fn generate_module_token_stream(
     // Check the schema cache.
     let schema_string: String = {
         let mut lock = SCHEMA_CACHE.lock().expect("schema cache is poisoned");
-        match lock.entry(schema_path.clone()) {
+        match lock.entry(schema_path.to_path_buf()) {
             ::std::collections::hash_map::Entry::Occupied(o) => o.get().clone(),
             ::std::collections::hash_map::Entry::Vacant(v) => {
                 let schema_string = read_file(v.key())?;

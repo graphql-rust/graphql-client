@@ -83,10 +83,7 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Type> for Fi
     }
 }
 
-fn from_schema_type_inner<'schema>(
-    inner: &'schema graphql_parser::schema::Type,
-    non_null: bool,
-) -> FieldType<'schema> {
+fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) -> FieldType {
     match inner {
         graphql_parser::schema::Type::ListType(inner) => {
             let inner = from_schema_type_inner(&*inner, false);

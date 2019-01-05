@@ -14,12 +14,9 @@ extern crate serde_json;
 pub struct IntrospectionQuery;
 
 #[test]
-fn introspection_schema() {
-    ()
-}
+fn introspection_schema() {}
 
-const INTROSPECTION_RESPONSE: &'static str =
-    include_str!("./introspection/introspection_response.json");
+const INTROSPECTION_RESPONSE: &str = include_str!("./introspection/introspection_response.json");
 
 #[test]
 fn leading_underscores_are_preserved() {

@@ -7,6 +7,7 @@ use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct GqlUnion<'schema> {
+    pub name: &'schema str,
     pub description: Option<&'schema str>,
     pub variants: BTreeSet<&'schema str>,
     pub is_required: Cell<bool>,
@@ -33,9 +34,10 @@ pub(crate) fn union_variants<'selection>(
     selection: &'selection Selection,
     context: &'selection QueryContext<'selection, 'selection>,
     prefix: &str,
+    selection_on: &str,
 ) -> UnionVariantResult<'selection> {
-    let selection = selection.selected_variants_on_union(context)?;
-    let mut used_variants: Vec<&str> = selection.keys().map(|k| *k).collect();
+    let selection = selection.selected_variants_on_union(context, selection_on)?;
+    let mut used_variants: Vec<&str> = selection.keys().cloned().collect();
     let mut children_definitions = Vec::with_capacity(selection.len());
     let mut variants = Vec::with_capacity(selection.len());
 
@@ -74,41 +76,6 @@ pub(crate) fn union_variants<'selection>(
     }
 
     Ok((variants, children_definitions, used_variants))
-
-    // let variants: Result<Vec<TokenStream>, failure::Error> = selection
-    //     .0
-    //     .iter()
-    //     // ignore __typename
-    //     .filter(|item| {
-    //         if let SelectionItem::Field(f) = item {
-    //             f.name != TYPENAME_FIELD
-    //         } else {
-    //             true
-    //         }
-    //     })
-    //     // .flat_map(
-    //     //     |item| -> impl ::std::iter::Iterator<Item = Result<(_, _), failure::Error>> {
-    //     //         match item {
-    //     //             SelectionItem::Field(_) => Err(format_err!("field selection on union"))?,
-    //     //             SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
-    //     //                 let fragment = query_context
-    //     //                     .fragments
-    //     //                     .get(fragment_name)
-    //     //                     .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))?;
-    //     //                 // found the bug! `on` doesn't mean the same here as in the inline fragments
-    //     //                 std::iter::once(Ok((&fragment.on, &fragment.selection)))
-    //     //             }
-    //     //             SelectionItem::InlineFragment(frag) => {
-    //     //                 std::iter::once(Ok((&frag.on, &frag.fields)))
-    //     //             }
-    //     //         }
-    //     //     },
-    //     // )
-    //     // // .collect::<Result<_, _>>()?
-    //     .map(|result: Result<(_, _), failure::Error>| -> Result<_, _> {
-    //         let Ok((on, fields)) = result?;
-
-    // let variants = variants?;
 }
 
 impl<'schema> GqlUnion<'schema> {
@@ -131,7 +98,7 @@ impl<'schema> GqlUnion<'schema> {
         let derives = query_context.response_derives();
 
         let (mut variants, children_definitions, used_variants) =
-            union_variants(selection, query_context, prefix)?;
+            union_variants(selection, query_context, prefix, &self.name)?;
 
         variants.extend(
             self.variants
@@ -187,6 +154,7 @@ mod tests {
         let selection = Selection(fields);
         let prefix = "Meow";
         let union = GqlUnion {
+            name: "MyUnion",
             description: None,
             variants: BTreeSet::new(),
             is_required: false.into(),
@@ -288,6 +256,7 @@ mod tests {
         let selection = Selection(fields);
         let prefix = "Meow";
         let union = GqlUnion {
+            name: "MyUnion",
             description: None,
             variants: BTreeSet::new(),
             is_required: false.into(),
@@ -374,12 +343,12 @@ mod tests {
             result.unwrap().to_string(),
             vec![
                 "# [ derive ( Deserialize ) ] ",
-                "pub struct MeowOnUser { # [ serde ( rename = \"firstName\" ) ] pub first_name : String , } ",
-                "# [ derive ( Deserialize ) ] ",
                 "pub struct MeowOnOrganization { pub title : String , } ",
                 "# [ derive ( Deserialize ) ] ",
+                "pub struct MeowOnUser { # [ serde ( rename = \"firstName\" ) ] pub first_name : String , } ",
+                "# [ derive ( Deserialize ) ] ",
                 "# [ serde ( tag = \"__typename\" ) ] ",
-                "pub enum Meow { User ( MeowOnUser ) , Organization ( MeowOnOrganization ) }",
+                "pub enum Meow { Organization ( MeowOnOrganization ) , User ( MeowOnUser ) }",
             ].into_iter()
                 .collect::<String>(),
         );

@@ -15,7 +15,7 @@ pub struct InputObjectVariablesQuery;
 
 #[test]
 fn input_object_variables_query_variables_struct() {
-    input_object_variables_query::Variables {
+    let _ = input_object_variables_query::Variables {
         msg: Some(input_object_variables_query::Message {
             content: None,
             to: Some(input_object_variables_query::Recipient {

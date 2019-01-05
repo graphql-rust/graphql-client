@@ -3,8 +3,8 @@ use schema::Schema;
 use serde_json;
 use std::collections::HashSet;
 
-const SCHEMA_JSON: &'static str = include_str!("github_schema.json");
-const SCHEMA_GRAPHQL: &'static str = include_str!("github_schema.graphql");
+const SCHEMA_JSON: &str = include_str!("github_schema.json");
+const SCHEMA_GRAPHQL: &str = include_str!("github_schema.graphql");
 
 #[test]
 fn ast_from_graphql_and_json_produce_the_same_schema() {

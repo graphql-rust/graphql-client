@@ -182,20 +182,14 @@ mod tests {
         .collect();
 
         let mut schema = ::schema::Schema::new();
-        schema.inputs.insert(cat.name.clone(), cat);
+        schema.inputs.insert(cat.name, cat);
         let mut context = QueryContext::new_empty(&schema);
         context.ingest_additional_derives("Clone").unwrap();
 
         assert_eq!(
             format!(
                 "{}",
-                context
-                    .schema
-                    .inputs
-                    .get("Cat")
-                    .unwrap()
-                    .to_rust(&context)
-                    .unwrap()
+                context.schema.inputs["Cat"].to_rust(&context).unwrap()
             ),
             expected
         );

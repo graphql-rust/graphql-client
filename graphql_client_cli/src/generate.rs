@@ -2,13 +2,13 @@ use failure;
 use graphql_client_codegen::*;
 use std::fs::File;
 use std::io::Write as IoWrite;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use syn;
 
 #[allow(clippy::too_many_arguments)]
 pub fn generate_code(
     query_path: PathBuf,
-    schema_path: PathBuf,
+    schema_path: &Path,
     module_name: String,
     selected_operation: Option<String>,
     additional_derives: Option<String>,
@@ -47,7 +47,7 @@ pub fn generate_code(
         module_visibility,
     };
 
-    let gen = generate_module_token_stream(query_path, schema_path, Some(options))?;
+    let gen = generate_module_token_stream(query_path, &schema_path, Some(options))?;
 
     let mut file = File::create(output.clone())?;
 

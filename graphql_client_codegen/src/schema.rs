@@ -52,7 +52,7 @@ impl<'schema> Schema<'schema> {
                     .interfaces
                     .get_mut(&iface_name)
                     .ok_or_else(|| format_err!("interface not found: {}", iface_name))?;
-                iface.implemented_by = implementors.iter().map(|s| *s).collect();
+                iface.implemented_by = implementors.iter().cloned().collect();
                 Ok(())
             })
             .collect()
@@ -82,8 +82,7 @@ impl<'schema> Schema<'schema> {
     }
 
     pub(crate) fn contains_scalar(&self, type_name: &str) -> bool {
-        DEFAULT_SCALARS.iter().find(|s| s == &&type_name).is_some()
-            || self.scalars.contains_key(type_name)
+        DEFAULT_SCALARS.iter().any(|s| s == &type_name) || self.scalars.contains_key(type_name)
     }
 }
 
@@ -145,6 +144,7 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> fo
                         schema.unions.insert(
                             &union.name,
                             GqlUnion {
+                                name: &union.name,
                                 variants,
                                 description: union.description.as_ref().map(String::as_str),
                                 is_required: false.into(),
@@ -264,7 +264,7 @@ impl<'schema> ::std::convert::From<&'schema ::introspection_response::Introspect
                 Some(__TypeKind::SCALAR) => {
                     if DEFAULT_SCALARS.iter().find(|s| s == &&name).is_none() {
                         schema.scalars.insert(
-                            name.clone(),
+                            name,
                             Scalar {
                                 name,
                                 description: ty.description.as_ref().map(String::as_str),
@@ -278,7 +278,7 @@ impl<'schema> ::std::convert::From<&'schema ::introspection_response::Introspect
                         .possible_types
                         .as_ref()
                         .unwrap()
-                        .into_iter()
+                        .iter()
                         .filter_map(|t| {
                             t.as_ref()
                                 .and_then(|t| t.type_ref.name.as_ref().map(String::as_str))
@@ -287,6 +287,7 @@ impl<'schema> ::std::convert::From<&'schema ::introspection_response::Introspect
                     schema.unions.insert(
                         name,
                         GqlUnion {
+                            name: ty.name.as_ref().map(String::as_str).expect("unnamed union"),
                             description: ty.description.as_ref().map(String::as_str),
                             variants,
                             is_required: false.into(),
@@ -299,7 +300,7 @@ impl<'schema> ::std::convert::From<&'schema ::introspection_response::Introspect
                         .as_ref()
                         .map(|s| s.as_slice())
                         .unwrap_or_else(|| &[])
-                        .into_iter()
+                        .iter()
                         .filter_map(|t| t.as_ref())
                         .map(|t| &t.type_ref.name)
                     {
@@ -325,7 +326,7 @@ impl<'schema> ::std::convert::From<&'schema ::introspection_response::Introspect
                         ty.fields
                             .as_ref()
                             .expect("interface fields")
-                            .into_iter()
+                            .iter()
                             .filter_map(|f| f.as_ref())
                             .map(|f| GqlObjectField {
                                 description: f.description.as_ref().map(|s| s.as_str()),

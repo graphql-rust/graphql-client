@@ -77,6 +77,8 @@ impl<'query> Selection<'query> {
         &'s self,
         context: &'s crate::query::QueryContext,
         selected_variants: &mut BTreeMap<&'s str, Selection<'s>>,
+        // the name of the type the selection applies to
+        selection_on: &str,
     ) -> Result<(), failure::Error> {
         for item in self.0.iter() {
             match item {
@@ -97,9 +99,25 @@ impl<'query> Selection<'query> {
                         .get(fragment_name)
                         .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))?;
 
-                    fragment
-                        .selection
-                        .selected_variants_on_union_inner(context, selected_variants)?;
+                    // The fragment can either be on the union/interface itself, or on one of its variants (type-refining fragment).
+                    if fragment.on == selection_on {
+                        // The fragment is on the union/interface itself.
+                        fragment.selection.selected_variants_on_union_inner(
+                            context,
+                            selected_variants,
+                            selection_on,
+                        )?;
+                    } else {
+                        // Type-refining fragment
+                        selected_variants
+                            .entry(fragment.on)
+                            .and_modify(|entry| entry.0.extend(fragment.selection.0.clone()))
+                            .or_insert_with(|| {
+                                let mut items = Vec::with_capacity(fragment.selection.0.len());
+                                items.extend(fragment.selection.0.clone());
+                                Selection(items)
+                            });
+                    }
                 }
             }
         }
@@ -107,7 +125,7 @@ impl<'query> Selection<'query> {
         Ok(())
     }
 
-    /// This method should only be invoked on selections on union fields. It returns the selected varianst and the
+    /// This method should only be invoked on selections on union and interface fields. It returns a map from the name of the selected variants to the corresponding selections.
     ///
     /// Importantly, it will "flatten" the fragments and handle multiple selections of the same variant.
     ///
@@ -115,10 +133,12 @@ impl<'query> Selection<'query> {
     pub(crate) fn selected_variants_on_union<'s>(
         &'s self,
         context: &'s crate::query::QueryContext,
+        // the name of the type the selection applies to
+        selection_on: &str,
     ) -> Result<BTreeMap<&'s str, Selection<'s>>, failure::Error> {
         let mut selected_variants = BTreeMap::new();
 
-        self.selected_variants_on_union_inner(context, &mut selected_variants)?;
+        self.selected_variants_on_union_inner(context, &mut selected_variants, selection_on)?;
 
         Ok(selected_variants)
     }

@@ -60,7 +60,7 @@ pub(crate) fn response_for_query(
                     GqlFragment {
                         name: &fragment.name,
                         selection: Selection::from(&fragment.selection_set),
-                        on: on,
+                        on,
                         is_required: false.into(),
                     },
                 );

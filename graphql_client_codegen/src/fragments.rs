@@ -17,7 +17,7 @@ pub(crate) struct GqlFragment<'query> {
 }
 
 impl<'query> GqlFragment<'query> {
-    /// Generate all the Rust code required by the fragment's selection.
+    /// Generate all the Rust code required by the fragment's object selection.
     pub(crate) fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, ::failure::Error> {
         if let Some(obj) = context.schema.objects.get(&self.on) {
             obj.response_for_selection(context, &self.selection, &self.name)

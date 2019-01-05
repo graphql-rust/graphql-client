@@ -92,44 +92,6 @@ impl<'query> Operation<'query> {
     }
 }
 
-// impl ::std::convert::From<OperationDefinition> for Operation<'query> {
-//     fn from(definition: OperationDefinition) -> Operation<'query> {
-//         match definition {
-//             OperationDefinition::Query(q) => Operation {
-//                 name: q.name.expect("unnamed operation"),
-//                 operation_type: OperationType::Query,
-//                 variables: q
-//                     .variable_definitions
-//                     .iter()
-//                     .map(|v| v.clone().into())
-//                     .collect(),
-//                 selection: (&q.selection_set).into(),
-//             },
-//             OperationDefinition::Mutation(m) => Operation {
-//                 name: m.name.expect("unnamed operation"),
-//                 operation_type: OperationType::Mutation,
-//                 variables: m
-//                     .variable_definitions
-//                     .iter()
-//                     .map(|v| v.clone().into())
-//                     .collect(),
-//                 selection: (&m.selection_set).into(),
-//             },
-//             OperationDefinition::Subscription(s) => Operation {
-//                 name: s.name.expect("unnamed operation"),
-//                 operation_type: OperationType::Subscription,
-//                 variables: s
-//                     .variable_definitions
-//                     .iter()
-//                     .map(|v| v.clone().into())
-//                     .collect(),
-//                 selection: (&s.selection_set).into(),
-//             },
-//             OperationDefinition::SelectionSet(_) => panic!(SELECTION_SET_AT_ROOT),
-//         }
-//     }
-// }
-
 impl<'query> ::std::convert::From<&'query OperationDefinition> for Operation<'query> {
     fn from(definition: &'query OperationDefinition) -> Operation<'query> {
         match *definition {

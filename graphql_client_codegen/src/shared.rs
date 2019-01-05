@@ -128,7 +128,7 @@ pub(crate) fn response_fields_for_selection(
                 Ok(render_object_field(
                     alias,
                     &ty,
-                    schema_field.description.as_ref().map(|s| *s),
+                    schema_field.description.as_ref().cloned(),
                     &schema_field.deprecation,
                     &context.deprecation_strategy,
                 ))

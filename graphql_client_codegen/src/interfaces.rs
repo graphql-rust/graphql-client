@@ -1,3 +1,4 @@
+use crate::constants::TYPENAME_FIELD;
 use failure;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -37,7 +38,7 @@ impl<'schema> GqlInterface<'schema> {
                 .iter()
                 // Only keep what we can handle
                 .filter(|f| match f {
-                    SelectionItem::Field(f) => f.name != "__typename",
+                    SelectionItem::Field(f) => f.name != TYPENAME_FIELD,
                     SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
                         // only if the fragment refers to the interface’s own fields (to take into account type-refining fragments)
                         let fragment = query_context
@@ -157,8 +158,9 @@ impl<'schema> GqlInterface<'schema> {
         let union_selection = self.union_selection(&selection, &query_context);
 
         let (mut union_variants, union_children, used_variants) =
-            union_variants(&union_selection, query_context, prefix)?;
+            union_variants(&union_selection, query_context, prefix, &self.name)?;
 
+        // Add the non-selected variants to the generated enum's variants.
         union_variants.extend(
             self.implemented_by
                 .iter()
@@ -170,19 +172,20 @@ impl<'schema> GqlInterface<'schema> {
         );
 
         let attached_enum_name = Ident::new(&format!("{}On", name), Span::call_site());
-        let (attached_enum, last_object_field) = if !union_variants.is_empty() {
-            let attached_enum = quote! {
-                #derives
-                #[serde(tag = "__typename")]
-                pub enum #attached_enum_name {
-                    #(#union_variants,)*
-                }
+        let (attached_enum, last_object_field) =
+            if selection.extract_typename(query_context).is_some() {
+                let attached_enum = quote! {
+                    #derives
+                    #[serde(tag = "__typename")]
+                    pub enum #attached_enum_name {
+                        #(#union_variants,)*
+                    }
+                };
+                let last_object_field = quote!(#[serde(flatten)] pub on: #attached_enum_name,);
+                (attached_enum, last_object_field)
+            } else {
+                (quote!(), quote!())
             };
-            let last_object_field = quote!(#[serde(flatten)] pub on: #attached_enum_name,);
-            (attached_enum, last_object_field)
-        } else {
-            (quote!(), quote!())
-        };
 
         Ok(quote! {
 
@@ -238,7 +241,7 @@ mod tests {
         let iface = GqlInterface {
             description: None,
             implemented_by: HashSet::new(),
-            name: "MyInterface".into(),
+            name: "MyInterface",
             fields: vec![],
             is_required: Cell::new(true),
         };
