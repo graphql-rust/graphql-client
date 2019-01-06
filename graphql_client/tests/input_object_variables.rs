@@ -34,7 +34,7 @@ type Email = String;
 #[graphql(
     query_path = "tests/input_object_variables/input_object_variables_query_defaults.graphql",
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, PartialEq"
 )]
 pub struct DefaultInputObjectVariablesQuery;
 
@@ -47,4 +47,30 @@ fn input_object_variables_default() {
     let out = serde_json::to_string(&variables).unwrap();
 
     assert_eq!(out, r#"{"msg":{"content":null,"to":{"category":null,"email":"rosa.luxemburg@example.com","name":null}}}"#);
+}
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    query_path = "tests/input_object_variables/input_object_variables_query.graphql",
+    schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
+    response_derives = "Debug, PartialEq"
+)]
+pub struct RecursiveInputQuery;
+
+#[test]
+fn recursive_input_objects_can_be_constructed() {
+    use recursive_input_query::*;
+
+    RecursiveInput {
+        head: "hello".to_string(),
+        tail: Box::new(None),
+    };
+
+    RecursiveInput {
+        head: "hi".to_string(),
+        tail: Box::new(Some(RecursiveInput {
+            head: "this is crazy".to_string(),
+            tail: Box::new(None),
+        })),
+    };
 }

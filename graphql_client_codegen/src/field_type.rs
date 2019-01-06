@@ -75,6 +75,17 @@ impl<'a> FieldType<'a> {
             _ => false,
         }
     }
+
+    /// A type is indirected if it is a (flat or nested) list type, optional or not.
+    ///
+    /// We use this to determine whether a type needs to be boxed for recursion.
+    pub fn is_indirected(&self) -> bool {
+        match self {
+            FieldType::Vector(_) => true,
+            FieldType::Named(_) => false,
+            FieldType::Optional(inner) => inner.is_indirected(),
+        }
+    }
 }
 
 impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Type> for FieldType<'schema> {
