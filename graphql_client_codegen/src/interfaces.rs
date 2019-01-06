@@ -9,7 +9,9 @@ use std::cell::Cell;
 use std::collections::HashSet;
 use unions::union_variants;
 
-/// Represents an Interface type extracted from the schema.
+/// A GraphQL interface (simplified schema representation).
+///
+/// In the generated code, fragments nesting is preserved, including for selection on union variants. See the tests in the graphql client crate for examples.
 #[derive(Debug, Clone, PartialEq)]
 pub struct GqlInterface<'schema> {
     /// The documentation for the interface. Extracted from the schema.

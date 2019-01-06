@@ -92,7 +92,7 @@ const RESPONSE_FRAGMENT: &'static str =
 #[test]
 fn fragment_in_interface() {
     use interface_with_fragment_query::*;
-    let response_data: interface_with_fragment_query::ResponseData =
+    let response_data: ResponseData =
         serde_json::from_str(RESPONSE_FRAGMENT).expect("RESPONSE_FRAGMENT did not deserialize");
 
     assert_eq!(
@@ -103,7 +103,10 @@ fn fragment_in_interface() {
                     name: "Audrey Lorde".to_string(),
                     public_status: PublicStatus {
                         display_name: false,
-                        on: PublicStatusOn::Person,
+                        on: PublicStatusOn::Person(PublicStatusOnPerson {
+                            birthday: Some("1934-02-18".to_string()),
+                            age: Some(84),
+                        }),
                     },
                     on: InterfaceWithFragmentQueryEverythingOn::Person(
                         InterfaceWithFragmentQueryEverythingOnPerson {
@@ -125,7 +128,9 @@ fn fragment_in_interface() {
                     name: "Mozilla".to_string(),
                     public_status: PublicStatus {
                         display_name: false,
-                        on: PublicStatusOn::Organization
+                        on: PublicStatusOn::Organization(PublicStatusOnOrganization {
+                            industry: Industry::CAT_FOOD,
+                        })
                     },
                     on: InterfaceWithFragmentQueryEverythingOn::Organization,
                 },

@@ -1,6 +1,13 @@
 fragment PublicStatus on Named {
   __typename
   displayName
+  ... on Person {
+    age
+    birthday
+  }
+  ... on Organization {
+    industry
+  }
 }
 
 query InterfaceWithFragmentQuery {
