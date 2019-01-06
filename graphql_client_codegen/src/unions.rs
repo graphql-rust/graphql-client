@@ -5,6 +5,9 @@ use selection::Selection;
 use std::cell::Cell;
 use std::collections::BTreeSet;
 
+/// A GraphQL union (simplified schema representation).
+///
+/// For code generation purposes, unions will "flatten" fragment spreads, so there is only one enum for the selection. See the tests in the graphql_client crate for examples.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct GqlUnion<'schema> {
     pub name: &'schema str,

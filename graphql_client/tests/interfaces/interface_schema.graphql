@@ -10,9 +10,11 @@ interface Named {
 type Person implements Named {
   name: String!
   birthday: String
+  age: Int
 }
 
 enum Industry {
+  CAT_FOOD
   CHOCOLATE
   OTHER
 }

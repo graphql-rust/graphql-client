@@ -4,7 +4,8 @@
       "__typename": "Person",
       "name": "Audrey Lorde",
       "displayName": false,
-      "birthday": "1934-02-18"
+      "birthday": "1934-02-18",
+      "age": 84
     },
     {
       "__typename": "Dog",
@@ -15,7 +16,8 @@
     {
       "__typename": "Organization",
       "name": "Mozilla",
-      "displayName": false
+      "displayName": false,
+      "industry": "CAT_FOOD"
     },
     {
       "__typename": "Dog",
