@@ -2,7 +2,13 @@ schema {
   query: QueryRoot
 }
 
+type RecursiveNode {
+  head: String
+  tail: RecursiveNode
+}
+
 type QueryRoot {
   extra: String
   inFragment: String
+  recursive: RecursiveNode!
 }

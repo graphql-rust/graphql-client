@@ -68,9 +68,8 @@ pub(crate) fn field_impls_for_selection(
     selection: &Selection,
     prefix: &str,
 ) -> Result<Vec<TokenStream>, failure::Error> {
-    selection
-        .0
-        .iter()
+    (&selection)
+        .into_iter()
         .map(|selected| {
             if let SelectionItem::Field(selected) = selected {
                 let name = &selected.name;
@@ -98,9 +97,8 @@ pub(crate) fn response_fields_for_selection(
     selection: &Selection,
     prefix: &str,
 ) -> Result<Vec<TokenStream>, failure::Error> {
-    selection
-        .0
-        .iter()
+    (&selection)
+        .into_iter()
         .map(|item| match item {
             SelectionItem::Field(f) => {
                 let name = &f.name;
@@ -137,7 +135,16 @@ pub(crate) fn response_fields_for_selection(
                 let field_name =
                     Ident::new(&fragment.fragment_name.to_snake_case(), Span::call_site());
                 context.require_fragment(&fragment.fragment_name);
+                let fragment_from_context = context
+                    .fragments
+                    .get(&fragment.fragment_name)
+                    .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment.fragment_name))?;
                 let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
+                let type_name = if fragment_from_context.is_recursive() {
+                    quote!(Box<#type_name>)
+                } else {
+                    quote!(#type_name)
+                };
                 Ok(quote! {
                     #[serde(flatten)]
                     pub #field_name: #type_name

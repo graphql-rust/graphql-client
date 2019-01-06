@@ -55,6 +55,13 @@ pub(crate) fn response_for_query(
             query::Definition::Operation(_op) => (),
             query::Definition::Fragment(fragment) => {
                 let &query::TypeCondition::On(ref on) = &fragment.type_condition;
+                let on = schema.fragment_target(on).ok_or_else(|| {
+                    format_err!(
+                        "Fragment {} is defined on unknown type: {}",
+                        &fragment.name,
+                        on,
+                    )
+                })?;
                 context.fragments.insert(
                     &fragment.name,
                     GqlFragment {
@@ -82,7 +89,7 @@ pub(crate) fn response_for_query(
         let prefix = &operation.name;
         let selection = &operation.selection;
 
-        if operation.is_subscription() && selection.0.len() > 1 {
+        if operation.is_subscription() && selection.len() > 1 {
             Err(format_err!(
                 "{}",
                 ::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR

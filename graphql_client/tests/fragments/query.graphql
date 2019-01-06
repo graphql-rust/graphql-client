@@ -6,10 +6,23 @@ fragment snake_case_fragment on QueryRoot {
   inFragment
 }
 
+fragment RecursiveFragment on RecursiveNode {
+  head
+  tail {
+    ...RecursiveFragment
+  }
+}
+
 query FragmentReference {
   ...FragmentReference
 }
 
 query SnakeCaseFragment {
   ...snake_case_fragment
+}
+
+query RecursiveFragmentQuery {
+  recursive {
+    ...RecursiveFragment
+  }
 }

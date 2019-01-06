@@ -84,6 +84,25 @@ impl<'schema> Schema<'schema> {
     pub(crate) fn contains_scalar(&self, type_name: &str) -> bool {
         DEFAULT_SCALARS.iter().any(|s| s == &type_name) || self.scalars.contains_key(type_name)
     }
+
+    pub(crate) fn fragment_target(
+        &self,
+        target_name: &str,
+    ) -> Option<crate::fragments::FragmentTarget<'_>> {
+        self.objects
+            .get(target_name)
+            .map(crate::fragments::FragmentTarget::Object)
+            .or_else(|| {
+                self.interfaces
+                    .get(target_name)
+                    .map(crate::fragments::FragmentTarget::Interface)
+            })
+            .or_else(|| {
+                self.unions
+                    .get(target_name)
+                    .map(crate::fragments::FragmentTarget::Union)
+            })
+    }
 }
 
 impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> for Schema<'schema> {

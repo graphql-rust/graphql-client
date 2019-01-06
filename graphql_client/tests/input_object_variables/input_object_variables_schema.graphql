@@ -29,6 +29,16 @@ input RecursiveInput {
   tail: RecursiveInput
 }
 
+input IndirectlyRecursiveInput {
+  head: String!
+  tail: IndirectlyRecursiveInputTailPart
+}
+
+input IndirectlyRecursiveInputTailPart {
+  name: String!
+  recursed_field: IndirectlyRecursiveInput
+}
+
 type InputObjectVariablesQuery {
   echo(message: Message!, options: Options = { pgpSignature: true }): EchoResult
   saveRecursiveInput(recursiveInput: RecursiveInput!): Category

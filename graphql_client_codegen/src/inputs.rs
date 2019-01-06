@@ -30,6 +30,36 @@ impl<'schema> GqlInput<'schema> {
         })
     }
 
+    fn contains_type_without_indirection(&self, context: &QueryContext, type_name: &str) -> bool {
+        // the input type is recursive if any of its members contains it, without indirection
+        self.fields.values().any(|field| {
+            // the field is indirected, so no boxing is needed
+            if field.type_.is_indirected() {
+                return false;
+            }
+
+            let field_type_name = field.type_.inner_name_str();
+            let input = context.schema.inputs.get(field_type_name);
+
+            if let Some(input) = input {
+                // the input contains itself, not indirected
+                if input.name == type_name {
+                    return true;
+                }
+
+                // we check if the other input contains this one (without indirection)
+                input.contains_type_without_indirection(context, type_name)
+            } else {
+                // the field is not referring to an input type
+                false
+            }
+        })
+    }
+
+    fn is_recursive_without_indirection(&self, context: &QueryContext) -> bool {
+        self.contains_type_without_indirection(context, &self.name)
+    }
+
     pub(crate) fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(&self.name, Span::call_site());
         let mut fields: Vec<&GqlObjectField> = self.fields.values().collect();
@@ -38,10 +68,14 @@ impl<'schema> GqlInput<'schema> {
             let ty = field.type_.to_rust(&context, "");
 
             // If the type is recursive, we have to box it
-            let ty = if field.type_.is_indirected() || field.type_.inner_name_str() != self.name {
-                ty
+            let ty = if let Some(input) = context.schema.inputs.get(field.type_.inner_name_str()) {
+                if input.is_recursive_without_indirection(context) {
+                    quote! { Box<#ty> }
+                } else {
+                    quote!(#ty)
+                }
             } else {
-                quote! { Box<#ty> }
+                quote!(#ty)
             };
 
             context.schema.require(&field.type_.inner_name_str());

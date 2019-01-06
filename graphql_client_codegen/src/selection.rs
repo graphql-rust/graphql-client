@@ -43,7 +43,7 @@ impl<'query> SelectionItem<'query> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Selection<'query>(pub Vec<SelectionItem<'query>>);
+pub struct Selection<'query>(Vec<SelectionItem<'query>>);
 
 impl<'query> Selection<'query> {
     pub(crate) fn extract_typename<'s, 'context: 's>(
@@ -56,8 +56,8 @@ impl<'query> Selection<'query> {
         };
 
         // typename is selected through a fragment
-        self.0
-            .iter()
+        (&self)
+            .into_iter()
             .filter_map(|f| match f {
                 SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
                     Some(fragment_name)
@@ -100,7 +100,7 @@ impl<'query> Selection<'query> {
                         .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))?;
 
                     // The fragment can either be on the union/interface itself, or on one of its variants (type-refining fragment).
-                    if fragment.on == selection_on {
+                    if fragment.on.name() == selection_on {
                         // The fragment is on the union/interface itself.
                         fragment.selection.selected_variants_on_union_inner(
                             context,
@@ -110,7 +110,7 @@ impl<'query> Selection<'query> {
                     } else {
                         // Type-refining fragment
                         selected_variants
-                            .entry(fragment.on)
+                            .entry(fragment.on.name())
                             .and_modify(|entry| entry.0.extend(fragment.selection.0.clone()))
                             .or_insert_with(|| {
                                 let mut items = Vec::with_capacity(fragment.selection.0.len());
@@ -146,6 +146,25 @@ impl<'query> Selection<'query> {
     #[cfg(test)]
     pub(crate) fn new_empty() -> Selection<'static> {
         Selection(Vec::new())
+    }
+
+    #[cfg(test)]
+    pub(crate) fn from_vec(vec: Vec<SelectionItem<'query>>) -> Self {
+        Selection(vec)
+    }
+
+    pub(crate) fn contains_fragment(&self, fragment_name: &str) -> bool {
+        (&self).into_iter().any(|item| match item {
+            SelectionItem::Field(field) => field.fields.contains_fragment(fragment_name),
+            SelectionItem::InlineFragment(inline_fragment) => {
+                inline_fragment.fields.contains_fragment(fragment_name)
+            }
+            SelectionItem::FragmentSpread(fragment) => fragment.fragment_name == fragment_name,
+        })
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
     }
 }
 
@@ -185,6 +204,21 @@ impl<'query> ::std::convert::From<&'query SelectionSet> for Selection<'query> {
     }
 }
 
+impl<'a, 'query> std::iter::IntoIterator for &'a Selection<'query> {
+    type Item = &'a SelectionItem<'query>;
+    type IntoIter = std::slice::Iter<'a, SelectionItem<'query>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl<'a> std::iter::FromIterator<SelectionItem<'a>> for Selection<'a> {
+    fn from_iter<T: std::iter::IntoIterator<Item = SelectionItem<'a>>>(iter: T) -> Selection<'a> {
+        Selection(iter.into_iter().collect())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -218,12 +252,13 @@ mod tests {
             }));
 
         let schema = ::schema::Schema::new();
+        let obj = crate::objects::GqlObject::new("MyObject", None);
         let mut context = ::query::QueryContext::new_empty(&schema);
         context.fragments.insert(
             "MyFragment",
             crate::fragments::GqlFragment {
                 name: "MyFragment",
-                on: "something".into(),
+                on: crate::fragments::FragmentTarget::Object(&obj),
                 selection: fragment_selection,
                 is_required: std::cell::Cell::new(false),
             },
