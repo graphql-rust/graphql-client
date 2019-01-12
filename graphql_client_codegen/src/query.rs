@@ -6,7 +6,7 @@ use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use schema::Schema;
 use selection::Selection;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use syn::Ident;
 
 /// This holds all the information we need during the code generation phase.
@@ -120,7 +120,11 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     }
 
     pub(crate) fn response_enum_derives(&self) -> TokenStream {
-        let enum_derives: Vec<_> = self
+        let always_derives = [
+            Ident::new("Eq", Span::call_site()),
+            Ident::new("PartialEq", Span::call_site()),
+        ];
+        let mut enum_derives: BTreeSet<_> = self
             .response_derives
             .iter()
             .filter(|derive| {
@@ -128,13 +132,9 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
                     && !derive.to_string().contains("Deserialize")
             })
             .collect();
-
-        if !enum_derives.is_empty() {
-            quote! {
-                #[derive( #(#enum_derives),* )]
-            }
-        } else {
-            quote!()
+        enum_derives.extend(always_derives.iter());
+        quote! {
+            #[derive( #(#enum_derives),* )]
         }
     }
 }
@@ -162,7 +162,10 @@ mod tests {
     fn response_enum_derives_does_not_produce_empty_list() {
         let schema = ::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
-        assert_eq!(context.response_enum_derives().to_string(), "");
+        assert_eq!(
+            context.response_enum_derives().to_string(),
+            "# [ derive ( Eq , PartialEq ) ]"
+        );
     }
 
     #[test]
@@ -176,7 +179,7 @@ mod tests {
 
         assert_eq!(
             context.response_enum_derives().to_string(),
-            "# [ derive ( PartialEq , PartialOrd ) ]"
+            "# [ derive ( Eq , PartialEq , PartialOrd ) ]"
         );
     }
 
