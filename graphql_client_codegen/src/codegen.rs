@@ -70,10 +70,7 @@ pub(crate) fn response_for_query(
 
     let response_data_fields = {
         let root_name = operation.root_name(&context.schema);
-        let opt_definition = context
-            .schema
-            .objects
-            .get(&root_name);
+        let opt_definition = context.schema.objects.get(&root_name);
         let definition = if let Some(definition) = opt_definition {
             definition
         } else {

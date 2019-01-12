@@ -23,10 +23,7 @@ pub struct Operation<'query> {
 }
 
 impl<'query> Operation<'query> {
-    pub(crate) fn root_name<'schema>(
-        &self,
-        schema: &'schema ::schema::Schema,
-    ) -> &'schema str {
+    pub(crate) fn root_name<'schema>(&self, schema: &'schema ::schema::Schema) -> &'schema str {
         match self.operation_type {
             OperationType::Query => schema.query_type.unwrap_or("Query"),
             OperationType::Mutation => schema.mutation_type.unwrap_or("Mutation"),
