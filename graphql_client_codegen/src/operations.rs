@@ -23,14 +23,11 @@ pub struct Operation<'query> {
 }
 
 impl<'query> Operation<'query> {
-    pub(crate) fn root_name<'schema>(
-        &self,
-        schema: &'schema ::schema::Schema,
-    ) -> Option<&'schema str> {
+    pub(crate) fn root_name<'schema>(&self, schema: &'schema ::schema::Schema) -> &'schema str {
         match self.operation_type {
-            OperationType::Query => schema.query_type,
-            OperationType::Mutation => schema.mutation_type,
-            OperationType::Subscription => schema.subscription_type,
+            OperationType::Query => schema.query_type.unwrap_or("Query"),
+            OperationType::Mutation => schema.mutation_type.unwrap_or("Mutation"),
+            OperationType::Subscription => schema.subscription_type.unwrap_or("Subscription"),
         }
     }
 
