@@ -7,3 +7,7 @@ query VariablesQuery($msg: Message) {
 query RecursiveInputQuery($input: RecursiveInput!) {
   saveRecursiveInput(recursiveInput: $input)
 }
+
+query IndirectlyRecursiveInputQuery($input: IndirectlyRecursiveInput!) {
+  saveRecursiveInput(recursiveInput: $input)
+}

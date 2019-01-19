@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- If there is no `schema` declaration in a schema, the root types will be matched by name (`Query`, `Mutation` and `Subscription`).
+
+### Changed
+
+- Enums now always derive PartialEq and Eq by default
+
+### Fixed
+
+- Code generation for fragments on unions was fixed
+- Support for recursive fragments and input types
+- The graphql-parser dependency version is no longer pinned
+
 ## 0.6.0 (2018-12-30)
 
 ### Added

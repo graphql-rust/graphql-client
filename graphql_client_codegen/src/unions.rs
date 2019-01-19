@@ -139,22 +139,22 @@ mod tests {
         let fields = vec![
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "User",
-                fields: Selection(vec![SelectionItem::Field(SelectionField {
+                fields: Selection::from_vec(vec![SelectionItem::Field(SelectionField {
                     alias: None,
                     name: "firstName",
-                    fields: Selection(vec![]),
+                    fields: Selection::new_empty(),
                 })]),
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "Organization",
-                fields: Selection(vec![SelectionItem::Field(SelectionField {
+                fields: Selection::from_vec(vec![SelectionItem::Field(SelectionField {
                     alias: None,
                     name: "title",
-                    fields: Selection(vec![]),
+                    fields: Selection::new_empty(),
                 })]),
             }),
         ];
-        let selection = Selection(fields);
+        let selection = Selection::from_vec(fields);
         let prefix = "Meow";
         let union = GqlUnion {
             name: "MyUnion",
@@ -235,28 +235,28 @@ mod tests {
             SelectionItem::Field(SelectionField {
                 alias: None,
                 name: "__typename",
-                fields: Selection(vec![]),
+                fields: Selection::new_empty(),
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "User",
-                fields: Selection(vec![SelectionItem::Field(SelectionField {
+                fields: Selection::from_vec(vec![SelectionItem::Field(SelectionField {
                     alias: None,
                     name: "firstName",
-                    fields: Selection(vec![]),
+                    fields: Selection::new_empty(),
                 })]),
             }),
             SelectionItem::InlineFragment(SelectionInlineFragment {
                 on: "Organization",
-                fields: Selection(vec![SelectionItem::Field(SelectionField {
+                fields: Selection::from_vec(vec![SelectionItem::Field(SelectionField {
                     alias: None,
                     name: "title",
-                    fields: Selection(vec![]),
+                    fields: Selection::new_empty(),
                 })]),
             }),
         ];
         let schema = ::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
-        let selection = Selection(fields);
+        let selection: Selection = fields.into_iter().collect();
         let prefix = "Meow";
         let union = GqlUnion {
             name: "MyUnion",

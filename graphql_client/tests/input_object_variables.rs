@@ -74,3 +74,29 @@ fn recursive_input_objects_can_be_constructed() {
         })),
     };
 }
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    query_path = "tests/input_object_variables/input_object_variables_query.graphql",
+    schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
+    response_derives = "Debug, PartialEq"
+)]
+pub struct IndirectlyRecursiveInputQuery;
+
+#[test]
+fn indirectly_recursive_input_objects_can_be_constructed() {
+    use indirectly_recursive_input_query::*;
+
+    IndirectlyRecursiveInput {
+        head: "hello".to_string(),
+        tail: Box::new(None),
+    };
+
+    IndirectlyRecursiveInput {
+        head: "hi".to_string(),
+        tail: Box::new(Some(IndirectlyRecursiveInputTailPart {
+            name: "this is crazy".to_string(),
+            recursed_field: Box::new(None),
+        })),
+    };
+}
