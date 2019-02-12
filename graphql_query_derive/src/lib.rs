@@ -9,59 +9,72 @@ extern crate syn;
 mod attributes;
 
 use failure::ResultExt;
-use graphql_client_codegen::*;
+use graphql_client_codegen::{generate_module_token_stream, GraphQLClientCodegenOptions};
+use std::path::{Path, PathBuf};
 
 use proc_macro2::TokenStream;
 
 #[proc_macro_derive(GraphQLQuery, attributes(graphql))]
 pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = TokenStream::from(input);
-    let ast = syn::parse2(input).expect("Derive input is well formed");
-    let (query_path, schema_path) = build_query_and_schema_path(&ast);
-    let options = build_graphql_client_derive_options(&ast);
-    match generate_module_token_stream(query_path, &schema_path, Some(options)) {
-        Ok(module) => module.into(),
-        Err(err) => panic!("{}", err),
+    match graphql_query_derive_inner(input) {
+        Ok(ts) => ts,
+        Err(err) => panic!("{:?}", err),
     }
+}
+
+fn graphql_query_derive_inner(
+    input: proc_macro::TokenStream,
+) -> Result<proc_macro::TokenStream, failure::Error> {
+    let input = TokenStream::from(input);
+    let ast = syn::parse2(input).context("Derive input parsing.")?;
+    let (query_path, schema_path) = build_query_and_schema_path(&ast)?;
+    let options = build_graphql_client_derive_options(&ast, query_path.to_path_buf())?;
+    generate_module_token_stream(query_path, &schema_path, options).map(|module| module.into())
 }
 
 fn build_query_and_schema_path(
     input: &syn::DeriveInput,
-) -> (std::path::PathBuf, std::path::PathBuf) {
-    let cargo_manifest_dir =
-        ::std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR env variable is defined");
+) -> Result<(PathBuf, PathBuf), failure::Error> {
+    let cargo_manifest_dir = ::std::env::var("CARGO_MANIFEST_DIR")
+        .context("Checking that the CARGO_MANIFEST_DIR env variable is defined.")?;
 
-    let query_path = attributes::extract_attr(input, "query_path")
-        .context("Extracting query path")
-        .unwrap();
+    let query_path =
+        attributes::extract_attr(input, "query_path").context("Extracting query path.")?;
     let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
-    let query_path = ::std::path::Path::new(&query_path).to_path_buf();
-    let schema_path = attributes::extract_attr(input, "schema_path")
-        .context("Extracting schema path")
-        .unwrap();
-    let schema_path = ::std::path::Path::new(&cargo_manifest_dir).join(schema_path);
-    (query_path, schema_path)
+    let query_path = Path::new(&query_path).to_path_buf();
+    let schema_path =
+        attributes::extract_attr(input, "schema_path").context("Extracting schema path.")?;
+    let schema_path = Path::new(&cargo_manifest_dir).join(schema_path);
+    Ok((query_path, schema_path))
 }
 
-fn build_graphql_client_derive_options(input: &syn::DeriveInput) -> GraphQLClientDeriveOptions {
+fn build_graphql_client_derive_options(
+    input: &syn::DeriveInput,
+    query_path: PathBuf,
+) -> Result<GraphQLClientCodegenOptions, failure::Error> {
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
-    // The user can determine what to do about deprecations.
-    let deprecation_strategy = attributes::extract_deprecation_strategy(input).unwrap_or_default();
 
-    let selected_operation_name = attributes::extract_attr(input, "selected_operation")
-        .context("Extracting selected operation name");
-    let selected_operation_name = if selected_operation_name.is_ok() {
-        Some(selected_operation_name.unwrap())
-    } else {
-        Some(input.ident.to_string())
+    let selected_operation_name: String = attributes::extract_attr(input, "selected_operation")
+        .context("Extracting selected operation name")
+        .ok()
+        .unwrap_or_else(|| input.ident.to_string());
+
+    let mut options = GraphQLClientCodegenOptions::new_default();
+    options.set_query_file(query_path);
+
+    if let Some(response_derives) = response_derives {
+        options.set_additional_derives(response_derives);
     };
 
-    GraphQLClientDeriveOptions {
-        operation_name: selected_operation_name,
-        struct_name: Some(input.ident.to_string()),
-        module_name: Some(input.ident.to_string()),
-        additional_derives: response_derives,
-        deprecation_strategy: Some(deprecation_strategy),
-        module_visibility: input.clone().vis,
-    }
+    // The user can determine what to do about deprecations.
+    if let Ok(deprecation_strategy) = attributes::extract_deprecation_strategy(input) {
+        options.set_deprecation_strategy(deprecation_strategy);
+    };
+
+    options.set_module_name(input.ident.to_string());
+    options.set_module_visibility(input.vis.clone());
+    options.set_operation_name(selected_operation_name);
+    options.set_struct_name(input.ident.to_string());
+
+    Ok(options)
 }

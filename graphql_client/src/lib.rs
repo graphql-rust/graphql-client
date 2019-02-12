@@ -154,7 +154,7 @@ impl Display for PathFragment {
 ///         },
 ///         {
 ///             "message": "Seismic activity detected",
-///             "path": ["undeground", 20]
+///             "path": ["underground", 20]
 ///         },
 ///      ],
 /// }))?;
@@ -177,7 +177,7 @@ impl Display for PathFragment {
 ///             message: "Seismic activity detected".to_owned(),
 ///             locations: None,
 ///             path: Some(vec![
-///                 PathFragment::Key("undeground".into()),
+///                 PathFragment::Key("underground".into()),
 ///                 PathFragment::Index(20),
 ///             ]),
 ///             extensions: None,

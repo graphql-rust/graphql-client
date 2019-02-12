@@ -100,9 +100,9 @@ fn main() -> Result<(), failure::Error> {
             module_name,
             selected_operation,
             additional_derives,
-            &deprecation_strategy,
+            deprecation_strategy.as_ref().map(String::as_str),
             no_formatting,
-            &module_visibility,
+            module_visibility.as_ref().map(String::as_str),
             &output,
         ),
     }

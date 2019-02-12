@@ -42,6 +42,7 @@ pub fn introspect_schema(
     let mut res = req_builder.json(&request_body).send()?;
 
     if res.status().is_success() {
+        // do nothing
     } else if res.status().is_server_error() {
         println!("server error!");
     } else {

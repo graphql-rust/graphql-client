@@ -38,7 +38,7 @@ pub(crate) fn response_for_query(
     schema: &schema::Schema,
     query: &query::Document,
     operation: &Operation,
-    additional_derives: Option<String>,
+    additional_derives: Option<&str>,
     deprecation_strategy: deprecation::DeprecationStrategy,
     multiple_operation: bool,
 ) -> Result<TokenStream, failure::Error> {

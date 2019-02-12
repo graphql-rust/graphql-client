@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Fixed
+
+- Changes to query files will now always trigger code generation for the corresponding modules on the next build.
+
 ## 0.6.1 - 2019-01-19
 
 ### Added
