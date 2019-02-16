@@ -103,6 +103,9 @@ fn operation_name_is_correct() {
     let echo_variables = echo::Variables {
         msg: Some("hi".to_string()),
     };
+    let selected_operation_variables = selected_operation::Variables {
+        msg: Some("hi".to_string()),
+    };
 
     let height_variables = heights::Variables {
         building_id: "12".to_string(),
@@ -114,12 +117,19 @@ fn operation_name_is_correct() {
     };
 
     assert_eq!(Echo::build_query(echo_variables).operation_name, "Echo");
+
     assert_eq!(
         Heights::build_query(height_variables).operation_name,
         "Heights"
     );
+
     assert_eq!(
         Unrelated::build_query(unrelated_variables).operation_name,
         "Heights"
+    );
+
+    assert_eq!(
+        SelectedOperation::build_query(selected_operation_variables).operation_name,
+        "Echo"
     );
 }
