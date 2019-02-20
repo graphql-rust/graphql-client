@@ -33,7 +33,7 @@ A typed GraphQL client library for Rust.
 
 - We now have everything we need to derive Rust types for our query. This is achieved through a procedural macro, as in the following snippet:
 
-  ```rust
+  ```rust,skt-empty-main
   extern crate serde;
   #[macro_use]
   extern crate serde_derive;
@@ -44,8 +44,8 @@ A typed GraphQL client library for Rust.
   // Both json and the GraphQL schema language are supported as sources for the schema
   #[derive(GraphQLQuery)]
   #[graphql(
-      schema_path = "src/graphql/schema.json",
-      query_path = "src/graphql/queries/my_query.graphql",
+      schema_path = "tests/unions/union_schema.graphql",
+      query_path = "tests/unions/union_query.graphql",
   )]
   pub struct MyQuery;
   ```
@@ -60,7 +60,7 @@ A typed GraphQL client library for Rust.
 
 * We now need to create the complete payload that we are going to send to the server. For convenience, the [GraphQLQuery trait](https://docs.rs/graphql_client/latest/graphql_client/trait.GraphQLQuery.html), is implemented for the struct under derive, so a complete query body can be created this way:
 
-  ```rust
+  ```rust,skt-empty-main
   extern crate failure;
   #[macro_use]
   extern crate graphql_client;
@@ -68,7 +68,15 @@ A typed GraphQL client library for Rust.
 
   use graphql_client::{GraphQLQuery, Response};
 
-  fn perform_my_query(variables: &my_query::Variables) -> Result<(), failure::Error> {
+  #[derive(GraphQLQuery)]
+  #[graphql(
+      schema_path = "tests/unions/union_schema.graphql",
+      query_path = "tests/unions/union_query.graphql",
+      response_derives = "Debug",
+  )]
+  pub struct MyQuery;
+
+  fn perform_my_query(variables: my_query::Variables) -> Result<(), failure::Error> {
 
       // this is the important line
       let request_body = MyQuery::build_query(variables);
@@ -87,12 +95,15 @@ A typed GraphQL client library for Rust.
 
 The generated response types always derive `serde::Deserialize` but you may want to print them (`Debug`), compare them (`PartialEq`) or derive any other trait on it. You can achieve this with the `response_derives` option of the `graphql` attribute. Example:
 
-```rust
+```rust,skt-empty-main
+#[macro_use]
+extern crate graphql_client;
+
 #[derive(GraphQLQuery)]
 #[graphql(
-  schema_path = "src/search_schema.graphql",
-  query_path = "src/search_query.graphql"
-  response_derives = "Serialize,PartialEq",
+    schema_path = "tests/unions/union_schema.graphql",
+    query_path = "tests/unions/union_query.graphql",
+    response_derives = "Serialize,PartialEq",
 )]
 struct SearchQuery;
 ```
@@ -106,12 +117,15 @@ The generated code will reference the scalar types as defined in the server sche
 The generated code has support for [`@deprecated`](http://facebook.github.io/graphql/June2018/#sec-Field-Deprecation)
 field annotations. You can configure how deprecations are handled via the `deprecated` argument in the `GraphQLQuery` derive:
 
-```rust
+```rust,skt-empty-main
+#[macro_use]
+extern crate graphql_client;
+
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "src/graphql/schema.json",
-    query_path = "src/graphql/queries/my_query.graphql",
-    deprecated = "warn"
+  schema_path = "tests/unions/union_schema.graphql",
+  query_path = "tests/unions/union_query.graphql",
+  deprecated = "warn"
 )]
 pub struct MyQuery;
 ```
@@ -133,8 +147,8 @@ If you want to name the struct different from query name, you can use ``selected
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "src/graphql/schema.json",
-    query_path = "src/graphql/queries/my_query.graphql",
+    schema_path = "tests/unions/union_schema.graphql",
+    query_path = "tests/unions/union_query.graphql",
     selected_operation = "SearchQuery"
 )]
 pub struct MyQuery;
