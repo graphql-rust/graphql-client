@@ -7,7 +7,7 @@ pub enum DeprecationStatus {
     Deprecated(Option<String>),
 }
 
-/// The available deprecation startegies.
+/// The available deprecation strategies.
 #[derive(Debug, PartialEq, Clone)]
 pub enum DeprecationStrategy {
     /// Allow use of deprecated items in queries, and say nothing.
