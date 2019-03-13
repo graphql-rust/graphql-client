@@ -34,7 +34,7 @@ enum Cli {
         #[structopt(parse(from_os_str))]
         #[structopt(long = "output")]
         output: Option<PathBuf>,
-        // Set authorizaiton header.
+        /// Set the contents of the Authorizaiton header.
         #[structopt(long = "authorization")]
         authorization: Option<String>,
     },
@@ -67,8 +67,6 @@ enum Cli {
         /// Default value is pub.
         #[structopt(short = "m", long = "module_visibility")]
         module_visibility: Option<String>,
-        #[structopt(parse(from_os_str))]
-        output: PathBuf,
     },
 }
 
@@ -90,7 +88,6 @@ fn main() -> Result<(), failure::Error> {
             deprecation_strategy,
             no_formatting,
             module_visibility,
-            output,
         } => generate::generate_code(generate::CliCodegenParams {
             query_path,
             schema_path,
@@ -99,7 +96,6 @@ fn main() -> Result<(), failure::Error> {
             deprecation_strategy,
             no_formatting,
             module_visibility,
-            output,
         }),
     }
 }

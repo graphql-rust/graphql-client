@@ -26,7 +26,7 @@ impl<'a> GeneratedModule<'a> {
         let module_name = Ident::new(&self.operation.name.to_snake_case(), Span::call_site());
         let module_visibility = &self.options.module_visibility();
         let operation_name_literal = &self.operation.name;
-        let operation_name_ident = self.options.struct_ident();
+        let operation_name_ident = Ident::new(&self.operation.name, Span::call_site());
 
         // Force cargo to refresh the generated code when the query file changes.
         let query_include = self
@@ -34,7 +34,9 @@ impl<'a> GeneratedModule<'a> {
             .query_file()
             .map(|path| {
                 let path = path.to_str();
-                quote!(const __QUERY_WORKAROUND: &str = include_str!(#path))
+                quote!(
+                    const __QUERY_WORKAROUND: &str = include_str!(#path);
+                )
             })
             .unwrap_or_else(|| quote! {});
 
@@ -52,7 +54,7 @@ impl<'a> GeneratedModule<'a> {
                 pub const OPERATION_NAME: &'static str = #operation_name_literal;
                 pub const QUERY: &'static str = #query_string;
 
-                #query_include;
+                #query_include
 
                 #impls
 

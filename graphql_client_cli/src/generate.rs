@@ -13,7 +13,6 @@ pub(crate) struct CliCodegenParams {
     pub deprecation_strategy: Option<String>,
     pub no_formatting: bool,
     pub module_visibility: Option<String>,
-    pub output: PathBuf,
 }
 
 pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Error> {
@@ -24,7 +23,6 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
 
     let mut options = GraphQLClientCodegenOptions::new_default();
 
-    // options.set_module_name(module_name);
     options.set_module_visibility(
         syn::VisPublic {
             pub_token: <Token![pub]>::default(),
@@ -44,7 +42,8 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
         options.set_deprecation_strategy(deprecation_strategy);
     }
 
-    let gen = generate_module_token_stream(params.query_path, &params.schema_path, options)?;
+    let gen =
+        generate_module_token_stream(params.query_path.clone(), &params.schema_path, options)?;
 
     let generated_code = gen.to_string();
     let generated_code = if cfg!(feature = "rustfmt") && !params.no_formatting {
@@ -53,9 +52,13 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
         generated_code
     };
 
-    let mut file = File::create(params.output)?;
-
-    write!(file, "{}", generated_code)?;
+    let mut dest_path = params.query_path.clone();
+    if dest_path.set_extension("rs") {
+        let mut file = File::create(dest_path)?;
+        write!(file, "{}", generated_code)?;
+    } else {
+        log::error!("Could not set the file extension on {:?}", dest_path);
+    }
 
     Ok(())
 }
