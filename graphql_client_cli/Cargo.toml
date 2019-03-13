@@ -1,6 +1,6 @@
 [package]
 name = "graphql_client_cli"
-description = "The CLI for graphql-client (WIP)"
+description = "The CLI for graphql-client"
 version = "0.6.1"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 license = "Apache-2.0 OR MIT"
