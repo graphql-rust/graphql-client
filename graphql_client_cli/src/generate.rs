@@ -4,50 +4,43 @@ use graphql_client_codegen::{
 };
 use std::fs::File;
 use std::io::Write as IoWrite;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use syn;
 
-#[allow(clippy::too_many_arguments)]
-pub fn generate_code(
-    query_path: PathBuf,
-    schema_path: &Path,
-    module_name: String,
-    selected_operation: Option<String>,
-    additional_derives: Option<String>,
-    deprecation_strategy: Option<&str>,
-    no_formatting: bool,
-    module_visibility: Option<&str>,
-    output: &Path,
-) -> Result<(), failure::Error> {
-    let deprecation_strategy = match deprecation_strategy {
+pub(crate) struct CliCodegenParams {
+    pub query_path: PathBuf,
+    pub schema_path: PathBuf,
+    pub selected_operation: Option<String>,
+    pub additional_derives: Option<String>,
+    pub deprecation_strategy: Option<String>,
+    pub no_formatting: bool,
+    pub module_visibility: Option<String>,
+    pub output: PathBuf,
+}
+
+pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Error> {
+    let deprecation_strategy = match params.deprecation_strategy.as_ref().map(|s| s.as_str()) {
         Some("allow") => Some(deprecation::DeprecationStrategy::Allow),
         Some("deny") => Some(deprecation::DeprecationStrategy::Deny),
         Some("warn") => Some(deprecation::DeprecationStrategy::Warn),
         _ => None,
     };
 
-    let module_visibility = match module_visibility {
-        Some("pub") => syn::VisPublic {
-            pub_token: <Token![pub]>::default(),
-        }
-        .into(),
-        Some("private") => syn::Visibility::Inherited {},
-        _ => syn::VisPublic {
-            pub_token: <Token![pub]>::default(),
-        }
-        .into(),
-    };
-
     let mut options = GraphQLClientCodegenOptions::new_default();
 
-    options.set_module_name(module_name);
-    options.set_module_visibility(module_visibility);
+    // options.set_module_name(module_name);
+    options.set_module_visibility(
+        syn::VisPublic {
+            pub_token: <Token![pub]>::default(),
+        }
+        .into(),
+    );
 
-    if let Some(selected_operation) = selected_operation {
+    if let Some(selected_operation) = params.selected_operation {
         options.set_operation_name(selected_operation);
     }
 
-    if let Some(additional_derives) = additional_derives {
+    if let Some(additional_derives) = params.additional_derives {
         options.set_additional_derives(additional_derives);
     }
 
@@ -55,16 +48,16 @@ pub fn generate_code(
         options.set_deprecation_strategy(deprecation_strategy);
     }
 
-    let gen = generate_module_token_stream(query_path, &schema_path, options)?;
+    let gen = generate_module_token_stream(params.query_path, &params.schema_path, options)?;
 
     let generated_code = gen.to_string();
-    let generated_code = if cfg!(feature = "rustfmt") && !no_formatting {
+    let generated_code = if cfg!(feature = "rustfmt") && !params.no_formatting {
         format(&generated_code)
     } else {
         generated_code
     };
 
-    let mut file = File::create(output)?;
+    let mut file = File::create(params.output)?;
 
     write!(file, "{}", generated_code)?;
 

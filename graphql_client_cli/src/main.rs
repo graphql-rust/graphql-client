@@ -47,8 +47,6 @@ enum Cli {
         /// Path to graphql schema file.
         #[structopt(parse(from_os_str))]
         schema_path: PathBuf,
-        /// Name of module.
-        module_name: String,
         /// Name of target query. If you don't set this parameter, cli generate all queries in query file.
         #[structopt(short = "o", long = "selected-operation")]
         selected_operation: Option<String>,
@@ -87,24 +85,22 @@ fn main() -> Result<(), failure::Error> {
         Cli::Generate {
             query_path,
             schema_path,
-            module_name,
             selected_operation,
             additional_derives,
             deprecation_strategy,
             no_formatting,
             module_visibility,
             output,
-        } => generate::generate_code(
+        } => generate::generate_code(generate::CliCodegenParams {
             query_path,
-            &schema_path,
-            module_name,
+            schema_path,
             selected_operation,
             additional_derives,
-            deprecation_strategy.as_ref().map(String::as_str),
+            deprecation_strategy,
             no_formatting,
-            module_visibility.as_ref().map(String::as_str),
-            &output,
-        ),
+            module_visibility,
+            output,
+        }),
     }
 }
 
