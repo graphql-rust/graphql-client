@@ -16,7 +16,7 @@ type NetworkAddress = Ipv4Addr;
     query_path = "tests/custom_scalars/query.graphql",
     schema_path = "tests/custom_scalars/schema.graphql"
 )]
-pub struct CustomScalarsQuery;
+pub struct CustomScalarQuery;
 
 #[test]
 fn custom_scalars() {
@@ -25,7 +25,7 @@ fn custom_scalars() {
     });
 
     let valid_addr =
-        serde_json::from_value::<custom_scalars_query::ResponseData>(valid_response).unwrap();
+        serde_json::from_value::<custom_scalar_query::ResponseData>(valid_response).unwrap();
 
     assert_eq!(
         valid_addr.address.unwrap(),
@@ -36,7 +36,5 @@ fn custom_scalars() {
         "address": "localhost",
     });
 
-    assert!(
-        serde_json::from_value::<custom_scalars_query::ResponseData>(invalid_response).is_err()
-    );
+    assert!(serde_json::from_value::<custom_scalar_query::ResponseData>(invalid_response).is_err());
 }

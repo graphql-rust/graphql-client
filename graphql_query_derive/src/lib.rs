@@ -71,10 +71,9 @@ fn build_graphql_client_derive_options(
         options.set_deprecation_strategy(deprecation_strategy);
     };
 
-    options.set_module_name(input.ident.to_string());
+    options.set_struct_ident(input.ident.clone());
     options.set_module_visibility(input.vis.clone());
     options.set_operation_name(selected_operation_name);
-    options.set_struct_name(input.ident.to_string());
 
     Ok(options)
 }

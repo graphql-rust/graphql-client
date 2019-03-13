@@ -1,4 +1,22 @@
-query Test {
+query DenyDeprecation {
+  currentUser {
+    name
+    id
+    deprecatedWithReason
+    deprecatedNoReason
+  }
+}
+
+query AllowDeprecation {
+  currentUser {
+    name
+    id
+    deprecatedWithReason
+    deprecatedNoReason
+  }
+}
+
+query WarnDeprecation {
   currentUser {
     name
     id

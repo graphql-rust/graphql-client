@@ -2,7 +2,7 @@ fragment DogName on Dog {
   name
 }
 
-query MyQuery {
+query QueryOnUnion {
   names {
     __typename
     ...DogName

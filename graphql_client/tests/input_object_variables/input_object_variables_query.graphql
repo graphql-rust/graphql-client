@@ -1,4 +1,4 @@
-query VariablesQuery($msg: Message) {
+query InputObjectVariablesQuery($msg: Message) {
   echo(message: $msg) {
     result
   }

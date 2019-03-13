@@ -1,4 +1,4 @@
-query Test {
+query MoreDerives {
   currentUser {
     name
     id

@@ -42,24 +42,15 @@ impl<'query> Operation<'query> {
     pub(crate) fn expand_variables(
         &self,
         context: &QueryContext,
-        operation_name: &str,
-        multiple_operations: bool,
     ) -> TokenStream {
         let variables = &self.variables;
-        let variables_struct_name = if multiple_operations {
-            Ident::new(
-                format!("{}Variables", operation_name).as_str(),
-                Span::call_site(),
-            )
-        } else {
-            Ident::new("Variables", Span::call_site())
-        };
-
         let variables_derives = context.variables_derives();
 
         if variables.is_empty() {
-            return quote!(#variables_derives
-            pub struct #variables_struct_name;);
+            return quote! {
+                #variables_derives
+                pub struct Variables;
+            };
         }
 
         let fields = variables.iter().map(|variable| {
@@ -78,11 +69,11 @@ impl<'query> Operation<'query> {
 
         quote! {
             #variables_derives
-            pub struct #variables_struct_name {
+            pub struct Variables {
                 #(#fields,)*
             }
 
-            impl #variables_struct_name {
+            impl Variables {
                 #(#default_constructors)*
             }
         }

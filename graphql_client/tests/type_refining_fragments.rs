@@ -29,19 +29,19 @@ fn type_refining_fragment_on_union() {
 
     let expected = query_on_union::ResponseData {
         names: Some(vec![
-            query_on_union::MyQueryNames::Person(query_on_union::MyQueryNamesOnPerson {
+            query_on_union::QueryOnUnionNames::Person(query_on_union::QueryOnUnionNamesOnPerson {
                 first_name: "Audrey".to_string(),
                 last_name: Some("Lorde".to_string()),
             }),
-            query_on_union::MyQueryNames::Dog(query_on_union::MyQueryNamesOnDog {
+            query_on_union::QueryOnUnionNames::Dog(query_on_union::QueryOnUnionNamesOnDog {
                 name: "Laïka".to_string(),
             }),
-            query_on_union::MyQueryNames::Organization(
-                query_on_union::MyQueryNamesOnOrganization {
+            query_on_union::QueryOnUnionNames::Organization(
+                query_on_union::QueryOnUnionNamesOnOrganization {
                     title: "Mozilla".to_string(),
                 },
             ),
-            query_on_union::MyQueryNames::Dog(query_on_union::MyQueryNamesOnDog {
+            query_on_union::QueryOnUnionNames::Dog(query_on_union::QueryOnUnionNamesOnDog {
                 name: "Norbert".to_string(),
             }),
         ]),
@@ -60,25 +60,31 @@ fn type_refining_fragment_on_interface() {
 
     let expected = ResponseData {
         everything: Some(vec![
-            MyQueryEverything {
+            QueryOnInterfaceEverything {
                 name: "Audrey Lorde".to_string(),
-                on: MyQueryEverythingOn::Person(MyQueryEverythingOnPerson {
+                on: QueryOnInterfaceEverythingOn::Person(QueryOnInterfaceEverythingOnPerson {
                     birthday: Some("1934-02-18".to_string()),
                 }),
             },
-            MyQueryEverything {
+            QueryOnInterfaceEverything {
                 name: "Laïka".to_string(),
-                on: MyQueryEverythingOn::Dog(MyQueryEverythingOnDog { is_good_dog: true }),
-            },
-            MyQueryEverything {
-                name: "Mozilla".to_string(),
-                on: MyQueryEverythingOn::Organization(MyQueryEverythingOnOrganization {
-                    industry: Industry::OTHER,
+                on: QueryOnInterfaceEverythingOn::Dog(QueryOnInterfaceEverythingOnDog {
+                    is_good_dog: true,
                 }),
             },
-            MyQueryEverything {
+            QueryOnInterfaceEverything {
+                name: "Mozilla".to_string(),
+                on: QueryOnInterfaceEverythingOn::Organization(
+                    QueryOnInterfaceEverythingOnOrganization {
+                        industry: Industry::OTHER,
+                    },
+                ),
+            },
+            QueryOnInterfaceEverything {
                 name: "Norbert".to_string(),
-                on: MyQueryEverythingOn::Dog(MyQueryEverythingOnDog { is_good_dog: true }),
+                on: QueryOnInterfaceEverythingOn::Dog(QueryOnInterfaceEverythingOnDog {
+                    is_good_dog: true,
+                }),
             },
         ]),
     };

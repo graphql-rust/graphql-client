@@ -1,5 +1,6 @@
-query WithSchema1 {
+query WithSchema2 {
   currentSession {
     accountId
   }
 }
+

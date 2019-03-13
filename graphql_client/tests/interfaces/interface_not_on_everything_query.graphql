@@ -1,4 +1,4 @@
-query MyQuery {
+query InterfaceNotOnEverythingQuery {
   everything {
     __typename
     name

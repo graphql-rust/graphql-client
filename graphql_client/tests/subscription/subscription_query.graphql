@@ -1,4 +1,4 @@
-subscription Birthdays($filter: String) {
+subscription SubscriptionQuery($filter: String) {
   dogBirthdays(filter: $filter) {
     name
   }

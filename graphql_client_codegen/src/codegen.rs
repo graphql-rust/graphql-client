@@ -1,9 +1,8 @@
-use deprecation;
 use failure;
 use fragments::GqlFragment;
 use graphql_parser::query;
 use operations::Operation;
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::TokenStream;
 use query::QueryContext;
 use schema;
 use selection::Selection;
@@ -38,14 +37,12 @@ pub(crate) fn response_for_query(
     schema: &schema::Schema,
     query: &query::Document,
     operation: &Operation,
-    additional_derives: Option<&str>,
-    deprecation_strategy: deprecation::DeprecationStrategy,
-    multiple_operation: bool,
+    options: &::GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, failure::Error> {
-    let mut context = QueryContext::new(schema, deprecation_strategy);
+    let mut context = QueryContext::new(schema, options.deprecation_strategy());
 
-    if let Some(derives) = additional_derives {
-        context.ingest_additional_derives(&derives).unwrap();
+    if let Some(derives) = options.additional_derives() {
+        context.ingest_additional_derives(&derives)?;
     }
 
     let mut definitions = Vec::new();
@@ -119,8 +116,7 @@ pub(crate) fn response_for_query(
         })
         .collect();
     let fragment_definitions = fragment_definitions?;
-    let variables_struct =
-        operation.expand_variables(&context, &operation.name, multiple_operation);
+    let variables_struct = operation.expand_variables(&context);
 
     let input_object_definitions: Result<Vec<TokenStream>, _> = context
         .schema
@@ -151,15 +147,6 @@ pub(crate) fn response_for_query(
 
     let response_derives = context.response_derives();
 
-    let respons_data_struct_name = if multiple_operation {
-        Ident::new(
-            format!("{}ResponseData", operation.name).as_str(),
-            Span::call_site(),
-        )
-    } else {
-        Ident::new("ResponseData", Span::call_site())
-    };
-
     Ok(quote! {
         use serde_derive::*;
 
@@ -185,7 +172,8 @@ pub(crate) fn response_for_query(
         #variables_struct
 
         #response_derives
-        pub struct #respons_data_struct_name {
+
+        pub struct ResponseData {
             #(#response_data_fields,)*
         }
 

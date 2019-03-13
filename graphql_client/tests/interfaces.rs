@@ -26,25 +26,31 @@ fn interface_deserialization() {
 
     let expected = ResponseData {
         everything: Some(vec![
-            MyQueryEverything {
+            InterfaceQueryEverything {
                 name: "Audrey Lorde".to_string(),
-                on: MyQueryEverythingOn::Person(MyQueryEverythingOnPerson {
+                on: InterfaceQueryEverythingOn::Person(InterfaceQueryEverythingOnPerson {
                     birthday: Some("1934-02-18".to_string()),
                 }),
             },
-            MyQueryEverything {
+            InterfaceQueryEverything {
                 name: "Laïka".to_string(),
-                on: MyQueryEverythingOn::Dog(MyQueryEverythingOnDog { is_good_dog: true }),
-            },
-            MyQueryEverything {
-                name: "Mozilla".to_string(),
-                on: MyQueryEverythingOn::Organization(MyQueryEverythingOnOrganization {
-                    industry: Industry::OTHER,
+                on: InterfaceQueryEverythingOn::Dog(InterfaceQueryEverythingOnDog {
+                    is_good_dog: true,
                 }),
             },
-            MyQueryEverything {
+            InterfaceQueryEverything {
+                name: "Mozilla".to_string(),
+                on: InterfaceQueryEverythingOn::Organization(
+                    InterfaceQueryEverythingOnOrganization {
+                        industry: Industry::OTHER,
+                    },
+                ),
+            },
+            InterfaceQueryEverything {
                 name: "Norbert".to_string(),
-                on: MyQueryEverythingOn::Dog(MyQueryEverythingOnDog { is_good_dog: true }),
+                on: InterfaceQueryEverythingOn::Dog(InterfaceQueryEverythingOnDog {
+                    is_good_dog: true,
+                }),
             },
         ]),
     };
@@ -56,7 +62,7 @@ fn interface_deserialization() {
 #[graphql(
     query_path = "tests/interfaces/interface_not_on_everything_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug,PartialEq"
 )]
 pub struct InterfaceNotOnEverythingQuery;
 
@@ -65,15 +71,43 @@ const RESPONSE_NOT_ON_EVERYTHING: &'static str =
 
 #[test]
 fn interface_not_on_everything_deserialization() {
-    println!("{:?}", RESPONSE);
+    use interface_not_on_everything_query::*;
+
     let response_data: interface_not_on_everything_query::ResponseData =
         serde_json::from_str(RESPONSE_NOT_ON_EVERYTHING).unwrap();
 
-    println!("{:?}", response_data);
+    let expected = ResponseData {
+        everything: Some(vec![
+            InterfaceNotOnEverythingQueryEverything {
+                name: "Audrey Lorde".to_string(),
+                on: InterfaceNotOnEverythingQueryEverythingOn::Person(
+                    InterfaceNotOnEverythingQueryEverythingOnPerson {
+                        birthday: Some("1934-02-18".to_string()),
+                    },
+                ),
+            },
+            InterfaceNotOnEverythingQueryEverything {
+                name: "Laïka".to_string(),
+                on: InterfaceNotOnEverythingQueryEverythingOn::Dog,
+            },
+            InterfaceNotOnEverythingQueryEverything {
+                name: "Mozilla".to_string(),
+                on: InterfaceNotOnEverythingQueryEverythingOn::Organization(
+                    InterfaceNotOnEverythingQueryEverythingOnOrganization {
+                        industry: Industry::OTHER,
+                    },
+                ),
+            },
+            InterfaceNotOnEverythingQueryEverything {
+                name: "Norbert".to_string(),
+                on: InterfaceNotOnEverythingQueryEverythingOn::Dog,
+            },
+        ]),
+    };
 
-    let expected = r##"ResponseData { everything: Some([MyQueryEverything { name: "Audrey Lorde", on: Person(MyQueryEverythingOnPerson { birthday: Some("1934-02-18") }) }, MyQueryEverything { name: "Laïka", on: Dog }, MyQueryEverything { name: "Mozilla", on: Organization(MyQueryEverythingOnOrganization { industry: OTHER }) }, MyQueryEverything { name: "Norbert", on: Dog }]) }"##;
+    // let expected = r##"ResponseData { everything: Some([InterfaceQueryEverything { name: "Audrey Lorde", on: Person(InterfaceQueryEverythingOnPerson { birthday: Some("1934-02-18") }) }, InterfaceQueryEverything { name: "Laïka", on: Dog }, InterfaceQueryEverything { name: "Mozilla", on: Organization(InterfaceQueryEverythingOnOrganization { industry: OTHER }) }, InterfaceQueryEverything { name: "Norbert", on: Dog }]) }"##;
 
-    assert_eq!(format!("{:?}", response_data), expected);
+    assert_eq!(response_data, expected);
 
     assert_eq!(response_data.everything.map(|names| names.len()), Some(4));
 }
