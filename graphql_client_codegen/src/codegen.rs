@@ -7,7 +7,7 @@ use query::QueryContext;
 use schema;
 use selection::Selection;
 
-/// Selects the first operation matching `struct_name` or the first one. Returns `None` when the query document defines no operation.
+/// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'query>(
     query: &'query query::Document,
     struct_name: &str,
@@ -18,7 +18,6 @@ pub(crate) fn select_operation<'query>(
         .iter()
         .find(|op| op.name == struct_name)
         .map(|i| i.to_owned())
-        .or_else(|| operations.iter().next().map(|i| i.to_owned()))
 }
 
 pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation> {

@@ -1,5 +1,7 @@
 use failure;
-use graphql_client_codegen::{generate_module_token_stream, GraphQLClientCodegenOptions};
+use graphql_client_codegen::{
+    generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
+};
 use std::fs::File;
 use std::io::Write as _;
 use std::path::PathBuf;
@@ -21,7 +23,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
         .as_ref()
         .and_then(|s| s.parse().ok());
 
-    let mut options = GraphQLClientCodegenOptions::new_default();
+    let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
     options.set_module_visibility(
         syn::VisPublic {

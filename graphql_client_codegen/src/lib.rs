@@ -51,7 +51,7 @@ mod variables;
 #[cfg(test)]
 mod tests;
 
-pub use codegen_options::GraphQLClientCodegenOptions;
+pub use codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
 use std::collections::HashMap;
 
@@ -88,8 +88,21 @@ pub fn generate_module_token_stream(
         .operation_name
         .as_ref()
         .and_then(|operation_name| codegen::select_operation(&query, &operation_name))
-        .map(|op| vec![op])
-        .unwrap_or_else(|| codegen::all_operations(&query));
+        .map(|op| vec![op]);
+
+    let operations = match (operations, &options.mode) {
+        (Some(ops), _) => ops,
+        (None, &CodegenMode::Cli) => codegen::all_operations(&query),
+        (None, &CodegenMode::Derive) => {
+            return Err(
+                format_err!("The struct name does not match any defined operation in the query file.\nStruct name: {}\nDefined operations: {}", options.struct_ident().map(|i| i.to_string()).as_ref().map(String::as_str).unwrap_or(""), query.definitions.iter().filter_map(|definition| match definition { graphql_parser::query::Definition::Operation(op) => match op { graphql_parser::query::OperationDefinition::Mutation(m) => Some(m.name.as_ref().unwrap()),
+graphql_parser::query::OperationDefinition::Query(m) => Some(m.name.as_ref().unwrap()),
+graphql_parser::query::OperationDefinition::Subscription(m) => Some(m.name.as_ref().unwrap()),
+graphql_parser::query::OperationDefinition::SelectionSet(_) => panic!("Bare selection sets are not supported"),
+        }, _ => None }).fold(String::new(), |mut acc, item| { acc.push_str(&item); acc.push_str(", "); acc }).trim_end_matches(", ")),
+            )
+        }
+    };
 
     let schema_extension = schema_path
         .extension()
