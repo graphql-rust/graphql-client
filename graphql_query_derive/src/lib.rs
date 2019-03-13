@@ -54,11 +54,6 @@ fn build_graphql_client_derive_options(
 ) -> Result<GraphQLClientCodegenOptions, failure::Error> {
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
 
-    let selected_operation_name: String = attributes::extract_attr(input, "selected_operation")
-        .context("Extracting selected operation name")
-        .ok()
-        .unwrap_or_else(|| input.ident.to_string());
-
     let mut options = GraphQLClientCodegenOptions::new_default();
     options.set_query_file(query_path);
 
@@ -73,7 +68,7 @@ fn build_graphql_client_derive_options(
 
     options.set_struct_ident(input.ident.clone());
     options.set_module_visibility(input.vis.clone());
-    options.set_operation_name(selected_operation_name);
+    options.set_operation_name(input.ident.to_string());
 
     Ok(options)
 }
