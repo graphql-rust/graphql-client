@@ -1,9 +1,7 @@
 use failure;
-use graphql_client_codegen::{
-    deprecation, generate_module_token_stream, GraphQLClientCodegenOptions,
-};
+use graphql_client_codegen::{generate_module_token_stream, GraphQLClientCodegenOptions};
 use std::fs::File;
-use std::io::Write as IoWrite;
+use std::io::Write as _;
 use std::path::PathBuf;
 use syn;
 
@@ -19,12 +17,10 @@ pub(crate) struct CliCodegenParams {
 }
 
 pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Error> {
-    let deprecation_strategy = match params.deprecation_strategy.as_ref().map(|s| s.as_str()) {
-        Some("allow") => Some(deprecation::DeprecationStrategy::Allow),
-        Some("deny") => Some(deprecation::DeprecationStrategy::Deny),
-        Some("warn") => Some(deprecation::DeprecationStrategy::Warn),
-        _ => None,
-    };
+    let deprecation_strategy = params
+        .deprecation_strategy
+        .as_ref()
+        .and_then(|s| s.parse().ok());
 
     let mut options = GraphQLClientCodegenOptions::new_default();
 

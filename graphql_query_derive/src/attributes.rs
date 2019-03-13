@@ -40,12 +40,11 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failur
 pub fn extract_deprecation_strategy(
     ast: &syn::DeriveInput,
 ) -> Result<DeprecationStrategy, failure::Error> {
-    match extract_attr(&ast, "deprecated")?.to_lowercase().as_str() {
-        "allow" => Ok(DeprecationStrategy::Allow),
-        "deny" => Ok(DeprecationStrategy::Deny),
-        "warn" => Ok(DeprecationStrategy::Warn),
-        _ => Err(format_err!("{}", DEPRECATION_ERROR))?,
-    }
+    extract_attr(&ast, "deprecated")?
+        .to_lowercase()
+        .as_str()
+        .parse()
+        .map_err(|_| format_err!("{}", DEPRECATION_ERROR))
 }
 
 #[cfg(test)]

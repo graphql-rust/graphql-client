@@ -23,3 +23,16 @@ impl Default for DeprecationStrategy {
         DeprecationStrategy::Warn
     }
 }
+
+impl std::str::FromStr for DeprecationStrategy {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, ()> {
+        match s.trim() {
+            "allow" => Ok(DeprecationStrategy::Allow),
+            "deny" => Ok(DeprecationStrategy::Deny),
+            "warn" => Ok(DeprecationStrategy::Warn),
+            _ => Err(()),
+        }
+    }
+}
