@@ -3,4 +3,3 @@ query WithSchema2 {
     accountId
   }
 }
-
