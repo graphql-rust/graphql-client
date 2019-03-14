@@ -206,16 +206,14 @@ impl Display for Error {
             .path
             .as_ref()
             .map(|fragments| {
-                format!(
-                    "{}",
-                    fragments
-                        .iter()
-                        .fold(String::new(), |mut acc, item| {
-                            acc.push_str(&format!("{}/", item));
-                            acc
-                        })
-                        .trim_end_matches("/")
-                )
+                fragments
+                    .iter()
+                    .fold(String::new(), |mut acc, item| {
+                        acc.push_str(&format!("{}/", item));
+                        acc
+                    })
+                    .trim_end_matches('/')
+                    .to_string()
             })
             .unwrap_or_else(|| "<query>".to_string());
 

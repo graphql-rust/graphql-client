@@ -93,13 +93,10 @@ pub fn generate_module_token_stream(
         (Some(ops), _) => ops,
         (None, &CodegenMode::Cli) => codegen::all_operations(&query),
         (None, &CodegenMode::Derive) => {
-            return Err(
-                format_err!("The struct name does not match any defined operation in the query file.\nStruct name: {}\nDefined operations: {}", options.struct_ident().map(|i| i.to_string()).as_ref().map(String::as_str).unwrap_or(""), query.definitions.iter().filter_map(|definition| match definition { graphql_parser::query::Definition::Operation(op) => match op { graphql_parser::query::OperationDefinition::Mutation(m) => Some(m.name.as_ref().unwrap()),
-graphql_parser::query::OperationDefinition::Query(m) => Some(m.name.as_ref().unwrap()),
-graphql_parser::query::OperationDefinition::Subscription(m) => Some(m.name.as_ref().unwrap()),
-graphql_parser::query::OperationDefinition::SelectionSet(_) => panic!("Bare selection sets are not supported"),
-        }, _ => None }).fold(String::new(), |mut acc, item| { acc.push_str(&item); acc.push_str(", "); acc }).trim_end_matches(", ")),
-            )
+            return Err(derive_operation_not_found_error(
+                options.struct_ident(),
+                &query,
+            ));
         }
     };
 
@@ -142,7 +139,7 @@ graphql_parser::query::OperationDefinition::SelectionSet(_) => panic!("Bare sele
             query_string: query_string.as_str(),
             schema: &schema,
             query_document: &query,
-            operation: operation,
+            operation,
             options: &options,
         }
         .to_token_stream()?;
@@ -171,4 +168,43 @@ fn read_file(path: &::std::path::Path) -> Result<String, failure::Error> {
     })?;
     file.read_to_string(&mut out)?;
     Ok(out)
+}
+
+/// In derive mode, build an error when the operation with the same name as the struct is not found.
+fn derive_operation_not_found_error(
+    ident: Option<&proc_macro2::Ident>,
+    query: &graphql_parser::query::Document,
+) -> failure::Error {
+    use graphql_parser::query::*;
+
+    let operation_name = ident.map(|i| i.to_string());
+    let struct_ident = operation_name.as_ref().map(String::as_str).unwrap_or("");
+
+    let available_operations = query
+        .definitions
+        .iter()
+        .filter_map(|definition| match definition {
+            Definition::Operation(op) => match op {
+                OperationDefinition::Mutation(m) => Some(m.name.as_ref().unwrap()),
+                OperationDefinition::Query(m) => Some(m.name.as_ref().unwrap()),
+                OperationDefinition::Subscription(m) => Some(m.name.as_ref().unwrap()),
+                OperationDefinition::SelectionSet(_) => {
+                    unreachable!("Bare selection sets are not supported.")
+                }
+            },
+            _ => None,
+        })
+        .fold(String::new(), |mut acc, item| {
+            acc.push_str(&item);
+            acc.push_str(", ");
+            acc
+        });
+
+    let available_operations = available_operations.trim_end_matches(", ");
+
+    return format_err!(
+        "The struct name does not match any defined operation in the query file.\nStruct name: {}\nDefined operations: {}",
+        struct_ident,
+        available_operations,
+    );
 }
