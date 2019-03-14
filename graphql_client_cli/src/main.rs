@@ -26,6 +26,7 @@ use structopt::StructOpt;
 
 #[derive(StructOpt)]
 enum Cli {
+    /// Get the schema from a live GraphQL API. The schema is printed to stdout.
     #[structopt(name = "introspect-schema")]
     IntrospectSchema {
         /// The URL of a GraphQL endpoint to introspect.

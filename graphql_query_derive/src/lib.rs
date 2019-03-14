@@ -27,7 +27,7 @@ pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::Token
                     acc.push_str(&format!("{}\n", item));
                     acc
                 })
-                .trim_end_matches("\n")
+                .trim_end_matches('\n')
         ),
     }
 }

@@ -4,13 +4,15 @@ This is still a WIP, the main use for it now is to download the `schema.json` fr
 
 ## Install
 
-```
+```bash
 cargo install graphql_client_cli --force
 ```
 
 ## introspect schema
 
 ```
+Get the schema from a live GraphQL API. The schema is printed to stdout.
+
 USAGE:
     graphql-client introspect-schema [OPTIONS] <schema_location>
 
@@ -19,7 +21,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-        --authorization <authorization>
+        --authorization <authorization>    Set the contents of the Authorizaiton header.
         --output <output>                  Where to write the JSON for the introspected schema.
 
 ARGS:
@@ -30,7 +32,7 @@ ARGS:
 
 ```
 USAGE:
-    graphql-client generate [FLAGS] [OPTIONS] <query_path> <schema_path> <module_name> <output>
+    graphql-client generate [FLAGS] [OPTIONS] <query_path> <schema_path>
 
 FLAGS:
     -h, --help             Prints help information
@@ -45,6 +47,9 @@ OPTIONS:
     -d, --deprecation-strategy <deprecation_strategy>
             You can choose deprecation strategy from allow, deny, or warn. Default value is warn.
 
+    -m, --module_visibility <module_visibility>
+            You can choose module and target struct visibility from pub and private. Default value is pub.
+
     -o, --selected-operation <selected_operation>
             Name of target query. If you don't set this parameter, cli generate all queries in query file.
 
@@ -52,10 +57,10 @@ OPTIONS:
 ARGS:
     <query_path>     Path to graphql query file.
     <schema_path>    Path to graphql schema file.
-    <module_name>    Name of module.
-    <output>         Path you want to output to.
 ```
 
 If you want to use formatting feature, you should install like this.
 
-`cargo install graphql_client_cli --features rustfmt --force`
+```bash
+cargo install graphql_client_cli --features rustfmt --force
+```
