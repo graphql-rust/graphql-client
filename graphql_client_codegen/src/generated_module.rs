@@ -1,3 +1,4 @@
+use crate::codegen_options::*;
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 
@@ -43,7 +44,15 @@ impl<'a> GeneratedModule<'a> {
         let query_string = &self.query_string;
         let impls = self.build_impls()?;
 
+        let struct_declaration = match self.options.mode {
+            CodegenMode::Cli => quote!(#module_visibility struct #operation_name_ident),
+            // The struct is already present in derive mode.
+            CodegenMode::Derive => quote!(),
+        };
+
         Ok(quote!(
+            #struct_declaration
+
             #module_visibility mod #module_name {
                 #![allow(non_camel_case_types)]
                 #![allow(non_snake_case)]

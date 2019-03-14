@@ -39,10 +39,7 @@ impl<'query> Operation<'query> {
     }
 
     /// Generate the Variables struct and all the necessary supporting code.
-    pub(crate) fn expand_variables(
-        &self,
-        context: &QueryContext,
-    ) -> TokenStream {
+    pub(crate) fn expand_variables(&self, context: &QueryContext) -> TokenStream {
         let variables = &self.variables;
         let variables_derives = context.variables_derives();
 
