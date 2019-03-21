@@ -42,11 +42,11 @@ enum Cli {
     },
     #[structopt(name = "generate")]
     Generate {
-        // should be a glob
-        /// Path to graphql query file.
-        query_path: PathBuf,
-        /// Path to graphql schema file.
+        /// Path to GraphQL schema file (.json or .graphql).
+        #[structopt(short = "s", long = "schema-path")]
         schema_path: PathBuf,
+        /// Path to the GraphQL query file.
+        query_path: PathBuf,
         /// Name of target query. If you don't set this parameter, cli generate all queries in query file.
         #[structopt(short = "o", long = "selected-operation")]
         selected_operation: Option<String>,
