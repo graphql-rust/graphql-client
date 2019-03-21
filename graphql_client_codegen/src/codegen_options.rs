@@ -1,18 +1,28 @@
 use crate::deprecation::DeprecationStrategy;
-use heck::SnakeCase;
-use proc_macro2::{Ident, Span};
+use proc_macro2::Ident;
 use std::path::{Path, PathBuf};
 use syn::Visibility;
 
+/// Which context is this code generation effort taking place.
+#[derive(Debug)]
+pub enum CodegenMode {
+    /// The graphql-client CLI.
+    Cli,
+    /// The derive macro defined in graphql_query_derive.
+    Derive,
+}
+
 /// Used to configure code generation.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct GraphQLClientCodegenOptions {
+    /// Which context is this code generation effort taking place.
+    pub mode: CodegenMode,
     /// Name of the operation we want to generate code for. If it does not match, we use all queries.
     pub operation_name: Option<String>,
     /// The name of implemention target struct.
     pub struct_name: Option<String>,
-    /// The name of the module that will contains queries.
-    pub module_name: Option<String>,
+    /// The struct for which we derive GraphQLQuery.
+    struct_ident: Option<Ident>,
     /// Comma-separated list of additional traits we want to derive.
     additional_derives: Option<String>,
     /// The deprecation strategy to adopt.
@@ -29,17 +39,20 @@ pub struct GraphQLClientCodegenOptions {
 
 impl GraphQLClientCodegenOptions {
     /// Creates an empty options object with default params. It probably wants to be configured.
-    pub fn new_default() -> GraphQLClientCodegenOptions {
-        std::default::Default::default()
-    }
+    pub fn new(mode: CodegenMode) -> GraphQLClientCodegenOptions {
+        use std::default::Default;
 
-    /// The module name, either one that was set explicitly, or the operation name, as snake case.
-    pub(crate) fn module_name_ident(&self) -> Option<Ident> {
-        self.module_name
-            .as_ref()
-            .or_else(|| self.operation_name.as_ref())
-            .map(|s| s.to_snake_case())
-            .map(|module_name| Ident::new(&module_name, Span::call_site()))
+        GraphQLClientCodegenOptions {
+            mode,
+            additional_derives: Default::default(),
+            deprecation_strategy: Default::default(),
+            module_visibility: Default::default(),
+            operation_name: Default::default(),
+            struct_ident: Default::default(),
+            struct_name: Default::default(),
+            query_file: Default::default(),
+            schema_file: Default::default(),
+        }
     }
 
     /// The visibility (public/private) to apply to the target module.
@@ -75,11 +88,6 @@ impl GraphQLClientCodegenOptions {
         self.deprecation_strategy = Some(deprecation_strategy);
     }
 
-    /// The name of the module that will contains queries.
-    pub fn set_module_name(&mut self, module_name: String) {
-        self.module_name = Some(module_name);
-    }
-
     /// Target module visibility.
     pub fn set_module_visibility(&mut self, visibility: Visibility) {
         self.module_visibility = Some(visibility);
@@ -106,5 +114,15 @@ impl GraphQLClientCodegenOptions {
     /// the query files when recompiling.
     pub fn query_file(&self) -> Option<&Path> {
         self.query_file.as_ref().map(PathBuf::as_path)
+    }
+
+    /// The identifier to use when referring to the struct implementing GraphQLQuery, if any.
+    pub fn set_struct_ident(&mut self, ident: Ident) {
+        self.struct_ident = Some(ident);
+    }
+
+    /// The identifier to use when referring to the struct implementing GraphQLQuery, if any.
+    pub fn struct_ident(&self) -> Option<&proc_macro2::Ident> {
+        self.struct_ident.as_ref()
     }
 }

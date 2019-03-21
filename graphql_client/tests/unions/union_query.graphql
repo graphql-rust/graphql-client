@@ -1,4 +1,4 @@
-query MyQuery {
+query UnionQuery {
   names {
     __typename
     ... on Dog {

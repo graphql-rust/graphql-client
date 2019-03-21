@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.7.0 - 2019-03-21
+
+### Changed
+
+- The `selected_operation` derive attribute is deprecated. **The name of the
+  struct under derive now has to match one of the operations defined in the query
+  file.**
+- The CLI now takes the schema path as a required keyword argument.
+- The CLI was revamped to generate separate modules for each operation in a given query file.
+
+  The idea now is that if you generate code for the following document:
+
+  ```graphql
+  # In my_query.graphql
+
+  query QueryA { .... }
+  query QueryB { .... }
+  mutation SomeMutation { ... }
+    ```
+
+  The CLI generated code will look like this:
+
+  ```rust
+  // In my_query.rs
+
+  pub struct QueryA;
+
+  pub mod query_a { ... }
+
+  pub struct QueryB;
+
+  pub mod query_b { ... }
+
+  pub struct SomeMutation;
+
+  pub mod some_mutation { ... }
+    ```
+
+  That way the operations don't live in the same module, there is no risk of names clashing anymore.
+
 ### Fixed
 
 - Changes to query files will now always trigger code generation for the corresponding modules on the next build.

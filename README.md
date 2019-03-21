@@ -29,7 +29,7 @@ A typed GraphQL client library for Rust.
 
 - In order to provide precise types for a response, graphql_client needs to read the query and the schema at compile-time.
 
-  To download the schema, you have multiple options. This projects provides a [CLI](https://github.com/graphql-rust/graphql-client/tree/master/graphql_client_cli), but there are also more mature tools like [apollo-cli](https://github.com/apollographql/apollo-cli). It does not matter which one you use, the resulting `schema.json` is the same.
+  To download the schema, you have multiple options. This projects provides a [CLI](https://github.com/graphql-rust/graphql-client/tree/master/graphql_client_cli), however it does not matter what tool you use, the resulting `schema.json` is the same.
 
 - We now have everything we need to derive Rust types for our query. This is achieved through a procedural macro, as in the following snippet:
 
@@ -47,10 +47,10 @@ A typed GraphQL client library for Rust.
       schema_path = "tests/unions/union_schema.graphql",
       query_path = "tests/unions/union_query.graphql",
   )]
-  pub struct MyQuery;
+  pub struct UnionQuery;
   ```
 
-  The `derive` will generate a module named `my_query` in this example - the name is the struct's name, but in snake case.
+  The `derive` will generate a module named `union_query` in this example - the name is the struct's name, but in snake case.
 
   That module contains all the struct and enum definitions necessary to deserialize a response to that query.
 
@@ -74,16 +74,16 @@ A typed GraphQL client library for Rust.
       query_path = "tests/unions/union_query.graphql",
       response_derives = "Debug",
   )]
-  pub struct MyQuery;
+  pub struct UnionQuery;
 
-  fn perform_my_query(variables: my_query::Variables) -> Result<(), failure::Error> {
+  fn perform_my_query(variables: union_query::Variables) -> Result<(), failure::Error> {
 
       // this is the important line
-      let request_body = MyQuery::build_query(variables);
+      let request_body = UnionQuery::build_query(variables);
 
       let client = reqwest::Client::new();
       let mut res = client.post("/graphql").json(&request_body).send()?;
-      let response_body: Response<my_query::ResponseData> = res.json()?;
+      let response_body: Response<union_query::ResponseData> = res.json()?;
       println!("{:#?}", response_body);
       Ok(())
   }
@@ -105,7 +105,7 @@ extern crate graphql_client;
     query_path = "tests/unions/union_query.graphql",
     response_derives = "Serialize,PartialEq",
 )]
-struct SearchQuery;
+struct UnionQuery;
 ```
 
 ## Custom scalars
@@ -127,7 +127,7 @@ extern crate graphql_client;
   query_path = "tests/unions/union_query.graphql",
   deprecated = "warn"
 )]
-pub struct MyQuery;
+pub struct UnionQuery;
 ```
 
 Valid values are:
@@ -143,7 +143,11 @@ The default is `warn`.
 
 You can write multiple operations in one query document (one `.graphql` file). You can then select one by naming the struct you `#[derive(GraphQLQuery)]` on with the same name as one of the operations. This is neat, as it allows sharing fragments between operations.
 
-If you want to name the struct different from query name, you can use ``selected_operation`` argument like this.
+Note that the struct and the operation in the GraphQL file *must* have the same name. We enforce this to make the generated code more predictable.
+
+```rust,skt-empty-main
+#[macro_use]
+extern crate graphql_client;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -151,7 +155,8 @@ If you want to name the struct different from query name, you can use ``selected
     query_path = "tests/unions/union_query.graphql",
     selected_operation = "SearchQuery"
 )]
-pub struct MyQuery;
+pub struct UnionQuery;
+```
 
 There is an example [in the tests](./tests/operation_selection).
 

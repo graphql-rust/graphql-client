@@ -1,6 +1,6 @@
 [package]
 name = "graphql_client_codegen"
-version = "0.6.1"
+version = "0.7.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Utility crate for graphql_client"
 license = "Apache-2.0 OR MIT"
@@ -8,7 +8,6 @@ repository = "https://github.com/graphql-rust/graphql-client"
 
 [dependencies]
 failure = "0.1"
-itertools = "0.7"
 lazy_static = "1.0"
 quote = "0.6"
 syn = "0.15.20"

@@ -5,7 +5,6 @@
 #![deny(warnings)]
 #![deny(missing_docs)]
 
-extern crate itertools;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -19,8 +18,6 @@ pub use graphql_query_derive::*;
 
 use std::collections::HashMap;
 use std::fmt::{self, Display};
-
-use itertools::Itertools;
 
 /// A convenience trait that can be used to build a GraphQL request body.
 ///
@@ -208,7 +205,16 @@ impl Display for Error {
         let path = self
             .path
             .as_ref()
-            .map(|fragments| format!("{}", fragments.iter().format("/")))
+            .map(|fragments| {
+                fragments
+                    .iter()
+                    .fold(String::new(), |mut acc, item| {
+                        acc.push_str(&format!("{}/", item));
+                        acc
+                    })
+                    .trim_end_matches('/')
+                    .to_string()
+            })
             .unwrap_or_else(|| "<query>".to_string());
 
         // Get the location of the error. We'll use just the first location for this.

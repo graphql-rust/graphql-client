@@ -1,7 +1,6 @@
 use deprecation::{DeprecationStatus, DeprecationStrategy};
 use failure;
 use heck::{CamelCase, SnakeCase};
-use itertools::Itertools;
 use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
@@ -115,7 +114,12 @@ pub(crate) fn response_fields_for_selection(
                             schema_fields
                                 .iter()
                                 .map(|ref field| &field.name)
-                                .format("`, `"),
+                                .fold(String::new(), |mut acc, item| {
+                                    acc.push_str(item);
+                                    acc.push_str(", ");
+                                    acc
+                                })
+                                .trim_end_matches(", ")
                         )
                     })?;
                 let ty = schema_field.type_.to_rust(

@@ -9,7 +9,9 @@ extern crate syn;
 mod attributes;
 
 use failure::ResultExt;
-use graphql_client_codegen::{generate_module_token_stream, GraphQLClientCodegenOptions};
+use graphql_client_codegen::{
+    generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
+};
 use std::path::{Path, PathBuf};
 
 use proc_macro2::TokenStream;
@@ -18,7 +20,15 @@ use proc_macro2::TokenStream;
 pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     match graphql_query_derive_inner(input) {
         Ok(ts) => ts,
-        Err(err) => panic!("{:?}", err),
+        Err(err) => panic!(
+            "{}",
+            err.iter_chain()
+                .fold(String::new(), |mut acc, item| {
+                    acc.push_str(&format!("{}\n", item));
+                    acc
+                })
+                .trim_end_matches('\n')
+        ),
     }
 }
 
@@ -29,7 +39,11 @@ fn graphql_query_derive_inner(
     let ast = syn::parse2(input).context("Derive input parsing.")?;
     let (query_path, schema_path) = build_query_and_schema_path(&ast)?;
     let options = build_graphql_client_derive_options(&ast, query_path.to_path_buf())?;
-    generate_module_token_stream(query_path, &schema_path, options).map(|module| module.into())
+    Ok(
+        generate_module_token_stream(query_path, &schema_path, options)
+            .map(|module| module.into())
+            .context("Code generation failed.")?,
+    )
 }
 
 fn build_query_and_schema_path(
@@ -54,12 +68,7 @@ fn build_graphql_client_derive_options(
 ) -> Result<GraphQLClientCodegenOptions, failure::Error> {
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
 
-    let selected_operation_name: String = attributes::extract_attr(input, "selected_operation")
-        .context("Extracting selected operation name")
-        .ok()
-        .unwrap_or_else(|| input.ident.to_string());
-
-    let mut options = GraphQLClientCodegenOptions::new_default();
+    let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Derive);
     options.set_query_file(query_path);
 
     if let Some(response_derives) = response_derives {
@@ -71,10 +80,9 @@ fn build_graphql_client_derive_options(
         options.set_deprecation_strategy(deprecation_strategy);
     };
 
-    options.set_module_name(input.ident.to_string());
+    options.set_struct_ident(input.ident.clone());
     options.set_module_visibility(input.vis.clone());
-    options.set_operation_name(selected_operation_name);
-    options.set_struct_name(input.ident.to_string());
+    options.set_operation_name(input.ident.to_string());
 
     Ok(options)
 }

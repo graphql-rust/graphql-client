@@ -2,7 +2,7 @@ fragment Birthday on Person {
   birthday
 }
 
-query MyQuery {
+query QueryOnInterface {
   everything {
     __typename
     name

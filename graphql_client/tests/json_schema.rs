@@ -18,7 +18,7 @@ pub struct WithSchema1;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    query_path = "tests/json_schema/query.graphql",
+    query_path = "tests/json_schema/query_2.graphql",
     schema_path = "tests/json_schema/schema_2.json",
     response_derives = "Debug"
 )]

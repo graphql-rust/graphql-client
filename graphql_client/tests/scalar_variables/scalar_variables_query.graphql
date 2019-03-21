@@ -1,4 +1,4 @@
-query VariablesQuery($msg: String!, $reps: Int) {
+query ScalarVariablesQuery($msg: String!, $reps: Int) {
   echo(message: $msg, repetitions: $reps) {
     result
   }

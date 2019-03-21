@@ -1,7 +1,6 @@
 use deprecation::DeprecationStrategy;
 use failure;
 use fragments::GqlFragment;
-use itertools::Itertools;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use schema::Schema;
@@ -104,7 +103,9 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     }
 
     pub(crate) fn variables_derives(&self) -> TokenStream {
-        let derives = self.variables_derives.iter().unique();
+        use std::collections::BTreeSet;
+        let derives: BTreeSet<&Ident> = self.variables_derives.iter().collect();
+        let derives = derives.iter();
 
         quote! {
             #[derive( #(#derives),* )]
@@ -112,7 +113,9 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     }
 
     pub(crate) fn response_derives(&self) -> TokenStream {
-        let derives = self.response_derives.iter().unique();
+        use std::collections::BTreeSet;
+        let derives: BTreeSet<&Ident> = self.response_derives.iter().collect();
+        let derives = derives.iter();
 
         quote! {
             #[derive( #(#derives),* )]

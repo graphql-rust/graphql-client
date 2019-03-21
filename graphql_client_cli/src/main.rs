@@ -3,6 +3,7 @@ extern crate log;
 use env_logger::fmt::{Color, Style, StyledValue};
 use log::Level;
 
+#[macro_use]
 extern crate failure;
 extern crate reqwest;
 extern crate structopt;
@@ -26,6 +27,7 @@ use structopt::StructOpt;
 
 #[derive(StructOpt)]
 enum Cli {
+    /// Get the schema from a live GraphQL API. The schema is printed to stdout.
     #[structopt(name = "introspect-schema")]
     IntrospectSchema {
         /// The URL of a GraphQL endpoint to introspect.
@@ -34,21 +36,17 @@ enum Cli {
         #[structopt(parse(from_os_str))]
         #[structopt(long = "output")]
         output: Option<PathBuf>,
-        // Set authorizaiton header.
+        /// Set the contents of the Authorizaiton header.
         #[structopt(long = "authorization")]
         authorization: Option<String>,
     },
     #[structopt(name = "generate")]
     Generate {
-        // should be a glob
-        /// Path to graphql query file.
-        #[structopt(parse(from_os_str))]
-        query_path: PathBuf,
-        /// Path to graphql schema file.
-        #[structopt(parse(from_os_str))]
+        /// Path to GraphQL schema file (.json or .graphql).
+        #[structopt(short = "s", long = "schema-path")]
         schema_path: PathBuf,
-        /// Name of module.
-        module_name: String,
+        /// Path to the GraphQL query file.
+        query_path: PathBuf,
         /// Name of target query. If you don't set this parameter, cli generate all queries in query file.
         #[structopt(short = "o", long = "selected-operation")]
         selected_operation: Option<String>,
@@ -67,10 +65,14 @@ enum Cli {
         no_formatting: bool,
         /// You can choose module and target struct visibility from pub and private.
         /// Default value is pub.
-        #[structopt(short = "m", long = "module_visibility")]
+        #[structopt(short = "m", long = "module-visibility")]
         module_visibility: Option<String>,
-        #[structopt(parse(from_os_str))]
-        output: PathBuf,
+        /// The directory in which the code will be generated.
+        ///
+        /// If this option is omitted, the code will be generated next to the .graphql
+        /// file, with the same name and the .rs extension.
+        #[structopt(short = "o", long = "output-directory")]
+        output_directory: Option<PathBuf>,
     },
 }
 
@@ -85,26 +87,24 @@ fn main() -> Result<(), failure::Error> {
             authorization,
         } => introspect_schema::introspect_schema(&schema_location, output, authorization),
         Cli::Generate {
-            query_path,
-            schema_path,
-            module_name,
-            selected_operation,
             additional_derives,
             deprecation_strategy,
-            no_formatting,
             module_visibility,
-            output,
-        } => generate::generate_code(
-            query_path,
-            &schema_path,
-            module_name,
-            selected_operation,
-            additional_derives,
-            deprecation_strategy.as_ref().map(String::as_str),
             no_formatting,
-            module_visibility.as_ref().map(String::as_str),
-            &output,
-        ),
+            output_directory,
+            query_path,
+            schema_path,
+            selected_operation,
+        } => generate::generate_code(generate::CliCodegenParams {
+            additional_derives,
+            deprecation_strategy,
+            module_visibility,
+            no_formatting,
+            output_directory,
+            query_path,
+            schema_path,
+            selected_operation,
+        }),
     }
 }
 

@@ -29,17 +29,19 @@ fn union_query_deserialization() {
 
     let expected = union_query::ResponseData {
         names: Some(vec![
-            union_query::MyQueryNames::Person(union_query::MyQueryNamesOnPerson {
+            union_query::UnionQueryNames::Person(union_query::UnionQueryNamesOnPerson {
                 first_name: "Audrey".to_string(),
                 last_name: Some("Lorde".to_string()),
             }),
-            union_query::MyQueryNames::Dog(union_query::MyQueryNamesOnDog {
+            union_query::UnionQueryNames::Dog(union_query::UnionQueryNamesOnDog {
                 name: "Laïka".to_string(),
             }),
-            union_query::MyQueryNames::Organization(union_query::MyQueryNamesOnOrganization {
-                title: "Mozilla".to_string(),
-            }),
-            union_query::MyQueryNames::Dog(union_query::MyQueryNamesOnDog {
+            union_query::UnionQueryNames::Organization(
+                union_query::UnionQueryNamesOnOrganization {
+                    title: "Mozilla".to_string(),
+                },
+            ),
+            union_query::UnionQueryNames::Dog(union_query::UnionQueryNamesOnDog {
                 name: "Norbert".to_string(),
             }),
         ]),
