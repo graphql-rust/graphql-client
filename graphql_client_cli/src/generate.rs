@@ -15,13 +15,22 @@ pub(crate) struct CliCodegenParams {
     pub deprecation_strategy: Option<String>,
     pub no_formatting: bool,
     pub module_visibility: Option<String>,
+    pub output_directory: Option<PathBuf>,
 }
 
 pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Error> {
-    let deprecation_strategy = params
-        .deprecation_strategy
-        .as_ref()
-        .and_then(|s| s.parse().ok());
+    let CliCodegenParams {
+        additional_derives,
+        deprecation_strategy,
+        no_formatting,
+        output_directory,
+        module_visibility: _module_visibility,
+        query_path,
+        schema_path,
+        selected_operation,
+    } = params;
+
+    let deprecation_strategy = deprecation_strategy.as_ref().and_then(|s| s.parse().ok());
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
@@ -32,11 +41,11 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
         .into(),
     );
 
-    if let Some(selected_operation) = params.selected_operation {
+    if let Some(selected_operation) = selected_operation {
         options.set_operation_name(selected_operation);
     }
 
-    if let Some(additional_derives) = params.additional_derives {
+    if let Some(additional_derives) = additional_derives {
         options.set_additional_derives(additional_derives);
     }
 
@@ -44,23 +53,26 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
         options.set_deprecation_strategy(deprecation_strategy);
     }
 
-    let gen =
-        generate_module_token_stream(params.query_path.clone(), &params.schema_path, options)?;
+    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)?;
 
     let generated_code = gen.to_string();
-    let generated_code = if cfg!(feature = "rustfmt") && !params.no_formatting {
+    let generated_code = if cfg!(feature = "rustfmt") && !no_formatting {
         format(&generated_code)
     } else {
         generated_code
     };
 
-    let mut dest_path = params.query_path.clone();
-    if dest_path.set_extension("rs") {
-        let mut file = File::create(dest_path)?;
-        write!(file, "{}", generated_code)?;
-    } else {
-        log::error!("Could not set the file extension on {:?}", dest_path);
-    }
+    let query_file_name: ::std::ffi::OsString = query_path
+        .file_name()
+        .map(|s| s.to_owned())
+        .ok_or_else(|| format_err!("Failed to find a file name in the provided query path."))?;
+
+    let dest_file_path: PathBuf = output_directory
+        .map(|output_dir| output_dir.join(query_file_name).with_extension("rs"))
+        .unwrap_or_else(move || query_path.with_extension("rs"));
+
+    let mut file = File::create(dest_file_path)?;
+    write!(file, "{}", generated_code)?;
 
     Ok(())
 }

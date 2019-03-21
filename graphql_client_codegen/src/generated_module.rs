@@ -45,7 +45,7 @@ impl<'a> GeneratedModule<'a> {
         let impls = self.build_impls()?;
 
         let struct_declaration = match self.options.mode {
-            CodegenMode::Cli => quote!(#module_visibility struct #operation_name_ident),
+            CodegenMode::Cli => quote!(#module_visibility struct #operation_name_ident;),
             // The struct is already present in derive mode.
             CodegenMode::Derive => quote!(),
         };

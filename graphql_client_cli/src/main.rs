@@ -3,6 +3,7 @@ extern crate log;
 use env_logger::fmt::{Color, Style, StyledValue};
 use log::Level;
 
+#[macro_use]
 extern crate failure;
 extern crate reqwest;
 extern crate structopt;
@@ -43,10 +44,8 @@ enum Cli {
     Generate {
         // should be a glob
         /// Path to graphql query file.
-        #[structopt(parse(from_os_str))]
         query_path: PathBuf,
         /// Path to graphql schema file.
-        #[structopt(parse(from_os_str))]
         schema_path: PathBuf,
         /// Name of target query. If you don't set this parameter, cli generate all queries in query file.
         #[structopt(short = "o", long = "selected-operation")]
@@ -66,8 +65,14 @@ enum Cli {
         no_formatting: bool,
         /// You can choose module and target struct visibility from pub and private.
         /// Default value is pub.
-        #[structopt(short = "m", long = "module_visibility")]
+        #[structopt(short = "m", long = "module-visibility")]
         module_visibility: Option<String>,
+        /// The directory in which the code will be generated.
+        ///
+        /// If this option is omitted, the code will be generated next to the .graphql
+        /// file, with the same name and the .rs extension.
+        #[structopt(short = "o", long = "output-directory")]
+        output_directory: Option<PathBuf>,
     },
 }
 
@@ -82,21 +87,23 @@ fn main() -> Result<(), failure::Error> {
             authorization,
         } => introspect_schema::introspect_schema(&schema_location, output, authorization),
         Cli::Generate {
+            additional_derives,
+            deprecation_strategy,
+            module_visibility,
+            no_formatting,
+            output_directory,
             query_path,
             schema_path,
             selected_operation,
-            additional_derives,
-            deprecation_strategy,
-            no_formatting,
-            module_visibility,
         } => generate::generate_code(generate::CliCodegenParams {
+            additional_derives,
+            deprecation_strategy,
+            module_visibility,
+            no_formatting,
+            output_directory,
             query_path,
             schema_path,
             selected_operation,
-            additional_derives,
-            deprecation_strategy,
-            no_formatting,
-            module_visibility,
         }),
     }
 }
