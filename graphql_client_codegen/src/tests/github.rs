@@ -1,5 +1,5 @@
-use graphql_parser;
 use crate::schema::Schema;
+use graphql_parser;
 use serde_json;
 use std::collections::HashSet;
 

@@ -1,11 +1,11 @@
 use crate::constants::*;
+use crate::query::QueryContext;
+use crate::selection::Selection;
+use crate::variables::Variable;
 use graphql_parser::query::OperationDefinition;
 use heck::SnakeCase;
 use proc_macro2::{Span, TokenStream};
-use crate::query::QueryContext;
-use crate::selection::Selection;
 use syn::Ident;
-use crate::variables::Variable;
 
 #[derive(Debug, Clone)]
 pub enum OperationType {
@@ -23,7 +23,10 @@ pub struct Operation<'query> {
 }
 
 impl<'query> Operation<'query> {
-    pub(crate) fn root_name<'schema>(&self, schema: &'schema crate::schema::Schema<'_>) -> &'schema str {
+    pub(crate) fn root_name<'schema>(
+        &self,
+        schema: &'schema crate::schema::Schema<'_>,
+    ) -> &'schema str {
         match self.operation_type {
             OperationType::Query => schema.query_type.unwrap_or("Query"),
             OperationType::Mutation => schema.mutation_type.unwrap_or("Mutation"),

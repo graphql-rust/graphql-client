@@ -1,14 +1,14 @@
 use crate::deprecation::DeprecationStatus;
 use crate::enums::{EnumVariant, GqlEnum};
-use failure;
 use crate::field_type::FieldType;
-use graphql_parser::{self, schema};
 use crate::inputs::GqlInput;
 use crate::interfaces::GqlInterface;
 use crate::objects::{GqlObject, GqlObjectField};
 use crate::scalars::Scalar;
-use std::collections::{BTreeMap, BTreeSet};
 use crate::unions::GqlUnion;
+use failure;
+use graphql_parser::{self, schema};
+use std::collections::{BTreeMap, BTreeSet};
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 

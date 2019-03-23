@@ -1,7 +1,7 @@
 use crate::field_type::FieldType;
+use crate::query::QueryContext;
 use graphql_parser;
 use proc_macro2::{Ident, Span, TokenStream};
-use crate::query::QueryContext;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
@@ -12,7 +12,10 @@ pub struct Variable<'query> {
 }
 
 impl<'query> Variable<'query> {
-    pub(crate) fn generate_default_value_constructor(&self, context: &QueryContext<'_, '_>) -> TokenStream {
+    pub(crate) fn generate_default_value_constructor(
+        &self,
+        context: &QueryContext<'_, '_>,
+    ) -> TokenStream {
         context.schema.require(&self.ty.inner_name_str());
         match &self.default {
             Some(default) => {

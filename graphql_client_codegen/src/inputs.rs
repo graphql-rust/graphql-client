@@ -1,12 +1,12 @@
 use crate::deprecation::DeprecationStatus;
+use crate::introspection_response;
+use crate::objects::GqlObjectField;
+use crate::query::QueryContext;
+use crate::schema::Schema;
 use failure;
 use graphql_parser;
 use heck::SnakeCase;
-use crate::introspection_response;
-use crate::objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
-use crate::query::QueryContext;
-use crate::schema::Schema;
 use std::cell::Cell;
 use std::collections::HashMap;
 
@@ -30,7 +30,11 @@ impl<'schema> GqlInput<'schema> {
         })
     }
 
-    fn contains_type_without_indirection(&self, context: &QueryContext<'_, '_>, type_name: &str) -> bool {
+    fn contains_type_without_indirection(
+        &self,
+        context: &QueryContext<'_, '_>,
+        type_name: &str,
+    ) -> bool {
         // the input type is recursive if any of its members contains it, without indirection
         self.fields.values().any(|field| {
             // the field is indirected, so no boxing is needed
@@ -60,7 +64,10 @@ impl<'schema> GqlInput<'schema> {
         self.contains_type_without_indirection(context, &self.name)
     }
 
-    pub(crate) fn to_rust(&self, context: &QueryContext<'_, '_>) -> Result<TokenStream, failure::Error> {
+    pub(crate) fn to_rust(
+        &self,
+        context: &QueryContext<'_, '_>,
+    ) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(&self.name, Span::call_site());
         let mut fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));

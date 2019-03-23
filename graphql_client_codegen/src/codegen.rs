@@ -1,11 +1,11 @@
-use failure;
 use crate::fragments::GqlFragment;
-use graphql_parser::query;
 use crate::operations::Operation;
-use proc_macro2::TokenStream;
 use crate::query::QueryContext;
 use crate::schema;
 use crate::selection::Selection;
+use failure;
+use graphql_parser::query;
+use proc_macro2::TokenStream;
 
 /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'query>(

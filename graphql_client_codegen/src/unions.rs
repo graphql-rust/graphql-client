@@ -1,7 +1,7 @@
-use failure;
-use proc_macro2::{Ident, Span, TokenStream};
 use crate::query::QueryContext;
 use crate::selection::Selection;
+use failure;
+use proc_macro2::{Ident, Span, TokenStream};
 use std::cell::Cell;
 use std::collections::BTreeSet;
 

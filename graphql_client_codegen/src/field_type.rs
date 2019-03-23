@@ -1,9 +1,9 @@
 use crate::enums::ENUMS_PREFIX;
-use graphql_parser;
 use crate::introspection_response;
-use proc_macro2::{Ident, Span, TokenStream};
 use crate::query::QueryContext;
 use crate::schema::DEFAULT_SCALARS;
+use graphql_parser;
+use proc_macro2::{Ident, Span, TokenStream};
 
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub enum FieldType<'a> {
@@ -167,8 +167,8 @@ impl<'a> ::std::convert::From<&'a introspection_response::InputValueType> for Fi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use graphql_parser::schema::Type as GqlParserType;
     use crate::introspection_response::{FullTypeFieldsType, TypeRef, __TypeKind};
+    use graphql_parser::schema::Type as GqlParserType;
 
     #[test]
     fn field_type_from_graphql_parser_schema_type_works() {

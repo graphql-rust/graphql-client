@@ -1,10 +1,10 @@
 use crate::deprecation::{DeprecationStatus, DeprecationStrategy};
-use failure;
-use heck::{CamelCase, SnakeCase};
 use crate::objects::GqlObjectField;
-use proc_macro2::{Ident, Span, TokenStream};
 use crate::query::QueryContext;
 use crate::selection::*;
+use failure;
+use heck::{CamelCase, SnakeCase};
+use proc_macro2::{Ident, Span, TokenStream};
 
 pub(crate) fn render_object_field(
     field_name: &str,

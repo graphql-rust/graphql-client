@@ -1,10 +1,10 @@
 use crate::deprecation::DeprecationStrategy;
-use failure;
 use crate::fragments::GqlFragment;
-use proc_macro2::Span;
-use proc_macro2::TokenStream;
 use crate::schema::Schema;
 use crate::selection::Selection;
+use failure;
+use proc_macro2::Span;
+use proc_macro2::TokenStream;
 use std::collections::{BTreeMap, BTreeSet};
 use syn::Ident;
 

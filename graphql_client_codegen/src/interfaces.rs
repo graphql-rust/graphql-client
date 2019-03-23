@@ -1,13 +1,13 @@
 use crate::constants::TYPENAME_FIELD;
-use failure;
 use crate::objects::GqlObjectField;
-use proc_macro2::{Ident, Span, TokenStream};
 use crate::query::QueryContext;
 use crate::selection::{Selection, SelectionField, SelectionFragmentSpread, SelectionItem};
 use crate::shared::*;
+use crate::unions::union_variants;
+use failure;
+use proc_macro2::{Ident, Span, TokenStream};
 use std::cell::Cell;
 use std::collections::HashSet;
-use crate::unions::union_variants;
 
 /// A GraphQL interface (simplified schema representation).
 ///
@@ -218,11 +218,12 @@ mod tests {
         let schema = crate::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
 
-        let typename_field = crate::selection::SelectionItem::Field(crate::selection::SelectionField {
-            alias: None,
-            name: "__typename",
-            fields: Selection::new_empty(),
-        });
+        let typename_field =
+            crate::selection::SelectionItem::Field(crate::selection::SelectionField {
+                alias: None,
+                name: "__typename",
+                fields: Selection::new_empty(),
+            });
         let selection = Selection::from_vec(vec![typename_field.clone()]);
 
         assert_eq!(
@@ -245,11 +246,12 @@ mod tests {
         let schema = crate::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
 
-        let typename_field = crate::selection::SelectionItem::Field(crate::selection::SelectionField {
-            alias: None,
-            name: "__typename",
-            fields: Selection::new_empty(),
-        });
+        let typename_field =
+            crate::selection::SelectionItem::Field(crate::selection::SelectionField {
+                alias: None,
+                name: "__typename",
+                fields: Selection::new_empty(),
+            });
         let selection: Selection<'_> = vec![typename_field].into_iter().collect();
 
         assert_eq!(
