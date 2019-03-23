@@ -272,7 +272,7 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
                         })
                         .filter_map(|t| t)
                         .collect();
-                    let mut enm = GqlEnum {
+                    let enm = GqlEnum {
                         name,
                         description: ty.description.as_ref().map(|s| s.as_str()),
                         variants,
