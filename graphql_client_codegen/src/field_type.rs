@@ -14,7 +14,7 @@ pub enum FieldType<'a> {
 
 impl<'a> FieldType<'a> {
     /// Takes a field type with its name
-    pub(crate) fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
+    pub(crate) fn to_rust(&self, context: &QueryContext<'_, '_>, prefix: &str) -> TokenStream {
         let prefix: &str = if prefix.is_empty() {
             self.inner_name_str()
         } else {
@@ -94,7 +94,7 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Type> for Fi
     }
 }
 
-fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) -> FieldType {
+fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) -> FieldType<'_> {
     match inner {
         graphql_parser::schema::Type::ListType(inner) => {
             let inner = from_schema_type_inner(&*inner, false);
@@ -117,7 +117,7 @@ fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) 
     }
 }
 
-fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool) -> FieldType {
+fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool) -> FieldType<'_> {
     use crate::introspection_response::*;
 
     match inner.kind {

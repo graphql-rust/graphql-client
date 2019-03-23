@@ -34,7 +34,7 @@ type UnionVariantResult<'selection> =
 /// - The second is the structs for each variant's sub-selection
 /// - The last one contains which fields have been selected on the union, so we can make the enum exhaustive by complementing with those missing.
 pub(crate) fn union_variants<'selection>(
-    selection: &'selection Selection,
+    selection: &'selection Selection<'_>,
     context: &'selection QueryContext<'selection, 'selection>,
     prefix: &str,
     selection_on: &str,
@@ -85,8 +85,8 @@ impl<'schema> GqlUnion<'schema> {
     /// Returns the code to deserialize this union in the response given the query selection.
     pub(crate) fn response_for_selection(
         &self,
-        query_context: &QueryContext,
-        selection: &Selection,
+        query_context: &QueryContext<'_, '_>,
+        selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         let typename_field = selection.extract_typename(query_context);
@@ -256,7 +256,7 @@ mod tests {
         ];
         let schema = crate::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
-        let selection: Selection = fields.into_iter().collect();
+        let selection: Selection<'_> = fields.into_iter().collect();
         let prefix = "Meow";
         let union = GqlUnion {
             name: "MyUnion",

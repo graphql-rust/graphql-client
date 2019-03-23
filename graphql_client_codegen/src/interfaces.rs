@@ -32,7 +32,7 @@ impl<'schema> GqlInterface<'schema> {
     fn object_selection<'query>(
         &self,
         selection: &'query Selection<'query>,
-        query_context: &QueryContext,
+        query_context: &QueryContext<'_, '_>,
     ) -> Selection<'query> {
         (&selection)
             .into_iter()
@@ -58,8 +58,8 @@ impl<'schema> GqlInterface<'schema> {
 
     fn union_selection<'query>(
         &self,
-        selection: &'query Selection,
-        query_context: &QueryContext,
+        selection: &'query Selection<'_>,
+        query_context: &QueryContext<'_, '_>,
     ) -> Selection<'query> {
         (&selection)
             .into_iter()
@@ -100,8 +100,8 @@ impl<'schema> GqlInterface<'schema> {
     /// The generated code for each of the selected field's types. See [shared::field_impls_for_selection].
     pub(crate) fn field_impls_for_selection(
         &self,
-        context: &QueryContext,
-        selection: &Selection,
+        context: &QueryContext<'_, '_>,
+        selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
         crate::shared::field_impls_for_selection(
@@ -115,8 +115,8 @@ impl<'schema> GqlInterface<'schema> {
     /// The code for the interface's corresponding struct's fields.
     pub(crate) fn response_fields_for_selection(
         &self,
-        context: &QueryContext,
-        selection: &Selection,
+        context: &QueryContext<'_, '_>,
+        selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
         response_fields_for_selection(
@@ -131,8 +131,8 @@ impl<'schema> GqlInterface<'schema> {
     /// Generate all the code for the interface.
     pub(crate) fn response_for_selection(
         &self,
-        query_context: &QueryContext,
-        selection: &Selection,
+        query_context: &QueryContext<'_, '_>,
+        selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(&prefix, Span::call_site());
@@ -250,7 +250,7 @@ mod tests {
             name: "__typename",
             fields: Selection::new_empty(),
         });
-        let selection: Selection = vec![typename_field].into_iter().collect();
+        let selection: Selection<'_> = vec![typename_field].into_iter().collect();
 
         assert_eq!(
             iface.object_selection(&selection, &context),

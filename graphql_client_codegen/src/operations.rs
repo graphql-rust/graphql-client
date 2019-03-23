@@ -23,7 +23,7 @@ pub struct Operation<'query> {
 }
 
 impl<'query> Operation<'query> {
-    pub(crate) fn root_name<'schema>(&self, schema: &'schema crate::schema::Schema) -> &'schema str {
+    pub(crate) fn root_name<'schema>(&self, schema: &'schema crate::schema::Schema<'_>) -> &'schema str {
         match self.operation_type {
             OperationType::Query => schema.query_type.unwrap_or("Query"),
             OperationType::Mutation => schema.mutation_type.unwrap_or("Mutation"),
@@ -39,7 +39,7 @@ impl<'query> Operation<'query> {
     }
 
     /// Generate the Variables struct and all the necessary supporting code.
-    pub(crate) fn expand_variables(&self, context: &QueryContext) -> TokenStream {
+    pub(crate) fn expand_variables(&self, context: &QueryContext<'_, '_>) -> TokenStream {
         let variables = &self.variables;
         let variables_derives = context.variables_derives();
 

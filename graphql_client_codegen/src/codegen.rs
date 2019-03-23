@@ -20,8 +20,8 @@ pub(crate) fn select_operation<'query>(
         .map(|i| i.to_owned())
 }
 
-pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation> {
-    let mut operations: Vec<Operation> = Vec::new();
+pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation<'_>> {
+    let mut operations: Vec<Operation<'_>> = Vec::new();
 
     for definition in &query.definitions {
         if let query::Definition::Operation(op) = definition {
@@ -33,9 +33,9 @@ pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation> {
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
-    schema: &schema::Schema,
+    schema: &schema::Schema<'_>,
     query: &query::Document,
-    operation: &Operation,
+    operation: &Operation<'_>,
     options: &crate::GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, failure::Error> {
     let mut context = QueryContext::new(schema, options.deprecation_strategy());

@@ -255,7 +255,7 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
 
             match ty.kind {
                 Some(__TypeKind::ENUM) => {
-                    let variants: Vec<EnumVariant> = ty
+                    let variants: Vec<EnumVariant<'_>> = ty
                         .enum_values
                         .as_ref()
                         .expect("enum variants")

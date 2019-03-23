@@ -41,7 +41,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
 
     /// For testing only. creates an empty QueryContext with an empty Schema.
     #[cfg(test)]
-    pub(crate) fn new_empty(schema: &'schema Schema) -> QueryContext<'query, 'schema> {
+    pub(crate) fn new_empty(schema: &'schema Schema<'_>) -> QueryContext<'query, 'schema> {
         QueryContext {
             fragments: BTreeMap::new(),
             schema,
@@ -55,7 +55,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     pub(crate) fn maybe_expand_field(
         &self,
         ty: &str,
-        selection: &Selection,
+        selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         if self.schema.contains_scalar(ty) {
