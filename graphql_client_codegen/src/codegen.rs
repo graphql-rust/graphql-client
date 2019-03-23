@@ -1,11 +1,11 @@
 use failure;
-use fragments::GqlFragment;
+use crate::fragments::GqlFragment;
 use graphql_parser::query;
-use operations::Operation;
+use crate::operations::Operation;
 use proc_macro2::TokenStream;
-use query::QueryContext;
-use schema;
-use selection::Selection;
+use crate::query::QueryContext;
+use crate::schema;
+use crate::selection::Selection;
 
 /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'query>(
@@ -36,7 +36,7 @@ pub(crate) fn response_for_query(
     schema: &schema::Schema,
     query: &query::Document,
     operation: &Operation,
-    options: &::GraphQLClientCodegenOptions,
+    options: &crate::GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, failure::Error> {
     let mut context = QueryContext::new(schema, options.deprecation_strategy());
 
@@ -88,7 +88,7 @@ pub(crate) fn response_for_query(
         if operation.is_subscription() && selection.len() > 1 {
             Err(format_err!(
                 "{}",
-                ::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
+                crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
             ))?
         }
 

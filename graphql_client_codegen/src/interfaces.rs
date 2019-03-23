@@ -1,13 +1,13 @@
 use crate::constants::TYPENAME_FIELD;
 use failure;
-use objects::GqlObjectField;
+use crate::objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
-use selection::{Selection, SelectionField, SelectionFragmentSpread, SelectionItem};
-use shared::*;
+use crate::query::QueryContext;
+use crate::selection::{Selection, SelectionField, SelectionFragmentSpread, SelectionItem};
+use crate::shared::*;
 use std::cell::Cell;
 use std::collections::HashSet;
-use unions::union_variants;
+use crate::unions::union_variants;
 
 /// A GraphQL interface (simplified schema representation).
 ///
@@ -104,7 +104,7 @@ impl<'schema> GqlInterface<'schema> {
         selection: &Selection,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
-        ::shared::field_impls_for_selection(
+        crate::shared::field_impls_for_selection(
             &self.fields,
             context,
             &self.object_selection(selection, context),
@@ -215,10 +215,10 @@ mod tests {
             is_required: Cell::new(true),
         };
 
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
 
-        let typename_field = ::selection::SelectionItem::Field(::selection::SelectionField {
+        let typename_field = crate::selection::SelectionItem::Field(crate::selection::SelectionField {
             alias: None,
             name: "__typename",
             fields: Selection::new_empty(),
@@ -242,10 +242,10 @@ mod tests {
             is_required: Cell::new(true),
         };
 
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
 
-        let typename_field = ::selection::SelectionItem::Field(::selection::SelectionField {
+        let typename_field = crate::selection::SelectionItem::Field(crate::selection::SelectionField {
             alias: None,
             name: "__typename",
             fields: Selection::new_empty(),

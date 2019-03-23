@@ -5,6 +5,7 @@ version = "0.7.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/graphql-rust/graphql-client"
+edition = "2018"
 
 [[bin]]
 name = "graphql-client"

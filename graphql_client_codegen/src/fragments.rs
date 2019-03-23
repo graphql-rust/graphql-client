@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
-use query::QueryContext;
-use selection::Selection;
+use crate::query::QueryContext;
+use crate::selection::Selection;
 use std::cell::Cell;
 
 /// Represents which type a fragment is defined on. This is the type mentioned in the fragment's `on` clause.

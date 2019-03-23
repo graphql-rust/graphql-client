@@ -1,13 +1,13 @@
-use constants::*;
-use deprecation::DeprecationStatus;
+use crate::constants::*;
+use crate::deprecation::DeprecationStatus;
 use failure;
-use field_type::FieldType;
+use crate::field_type::FieldType;
 use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
-use schema::Schema;
-use selection::*;
-use shared::{field_impls_for_selection, response_fields_for_selection};
+use crate::query::QueryContext;
+use crate::schema::Schema;
+use crate::selection::*;
+use crate::shared::{field_impls_for_selection, response_fields_for_selection};
 use std::cell::Cell;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -81,7 +81,7 @@ impl<'schema> GqlObject<'schema> {
         item
     }
 
-    pub fn from_introspected_schema_json(obj: &'schema ::introspection_response::FullType) -> Self {
+    pub fn from_introspected_schema_json(obj: &'schema crate::introspection_response::FullType) -> Self {
         let description = obj.description.as_ref().map(|s| s.as_str());
         let mut item = GqlObject::new(obj.name.as_ref().expect("missing object name"), description);
         let fields = obj.fields.as_ref().unwrap().iter().filter_map(|t| {

@@ -1,7 +1,7 @@
-use field_type::FieldType;
+use crate::field_type::FieldType;
 use graphql_parser;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
+use crate::query::QueryContext;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]

@@ -1,10 +1,10 @@
-use deprecation::{DeprecationStatus, DeprecationStrategy};
+use crate::deprecation::{DeprecationStatus, DeprecationStrategy};
 use failure;
 use heck::{CamelCase, SnakeCase};
-use objects::GqlObjectField;
+use crate::objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
-use selection::*;
+use crate::query::QueryContext;
+use crate::selection::*;
 
 pub(crate) fn render_object_field(
     field_name: &str,
@@ -55,7 +55,7 @@ pub(crate) fn render_object_field(
     }
 
     let snake_case_name = field_name.to_snake_case();
-    let rename = ::shared::field_rename_annotation(&field_name, &snake_case_name);
+    let rename = crate::shared::field_rename_annotation(&field_name, &snake_case_name);
     let name_ident = Ident::new(&snake_case_name, Span::call_site());
 
     quote!(#description #deprecation #rename pub #name_ident: #field_type)

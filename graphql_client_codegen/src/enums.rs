@@ -18,7 +18,7 @@ pub struct GqlEnum<'schema> {
 }
 
 impl<'schema> GqlEnum<'schema> {
-    pub(crate) fn to_rust(&self, query_context: &::query::QueryContext) -> TokenStream {
+    pub(crate) fn to_rust(&self, query_context: &crate::query::QueryContext) -> TokenStream {
         let derives = query_context.response_enum_derives();
         let variant_names: Vec<TokenStream> = self
             .variants

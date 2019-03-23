@@ -1,4 +1,4 @@
-use constants::*;
+use crate::constants::*;
 use graphql_parser::query::SelectionSet;
 use std::collections::BTreeMap;
 
@@ -227,8 +227,8 @@ mod tests {
     #[test]
     fn selection_extract_typename_simple_case() {
         let selection = Selection::new_empty();
-        let schema = ::schema::Schema::new();
-        let context = ::query::QueryContext::new_empty(&schema);
+        let schema = crate::schema::Schema::new();
+        let context = crate::query::QueryContext::new_empty(&schema);
 
         assert!(selection.extract_typename(&context).is_none());
     }
@@ -251,9 +251,9 @@ mod tests {
                 fields: Selection::new_empty(),
             }));
 
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let obj = crate::objects::GqlObject::new("MyObject", None);
-        let mut context = ::query::QueryContext::new_empty(&schema);
+        let mut context = crate::query::QueryContext::new_empty(&schema);
         context.fragments.insert(
             "MyFragment",
             crate::fragments::GqlFragment {

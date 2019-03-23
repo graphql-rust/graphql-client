@@ -1,12 +1,12 @@
-use deprecation::DeprecationStatus;
+use crate::deprecation::DeprecationStatus;
 use failure;
 use graphql_parser;
 use heck::SnakeCase;
-use introspection_response;
-use objects::GqlObjectField;
+use crate::introspection_response;
+use crate::objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
-use schema::Schema;
+use crate::query::QueryContext;
+use crate::schema::Schema;
 use std::cell::Cell;
 use std::collections::HashMap;
 
@@ -81,7 +81,7 @@ impl<'schema> GqlInput<'schema> {
             context.schema.require(&field.type_.inner_name_str());
             let original_name = &field.name;
             let snake_case_name = field.name.to_snake_case();
-            let rename = ::shared::field_rename_annotation(&original_name, &snake_case_name);
+            let rename = crate::shared::field_rename_annotation(&original_name, &snake_case_name);
             let name = Ident::new(&snake_case_name, Span::call_site());
 
             quote!(#rename pub #name: #ty)
@@ -169,8 +169,8 @@ impl<'schema> ::std::convert::From<&'schema introspection_response::FullType>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use constants::*;
-    use field_type::FieldType;
+    use crate::constants::*;
+    use crate::field_type::FieldType;
 
     #[test]
     fn gql_input_to_rust() {
@@ -223,7 +223,7 @@ mod tests {
         .into_iter()
         .collect();
 
-        let mut schema = ::schema::Schema::new();
+        let mut schema = crate::schema::Schema::new();
         schema.inputs.insert(cat.name, cat);
         let mut context = QueryContext::new_empty(&schema);
         context.ingest_additional_derives("Clone").unwrap();

@@ -1,7 +1,7 @@
 use failure;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
-use selection::Selection;
+use crate::query::QueryContext;
+use crate::selection::Selection;
 use std::cell::Cell;
 use std::collections::BTreeSet;
 
@@ -129,10 +129,10 @@ impl<'schema> GqlUnion<'schema> {
 mod tests {
     use super::*;
     use crate::constants::*;
-    use deprecation::DeprecationStatus;
-    use field_type::FieldType;
-    use objects::{GqlObject, GqlObjectField};
-    use selection::*;
+    use crate::deprecation::DeprecationStatus;
+    use crate::field_type::FieldType;
+    use crate::objects::{GqlObject, GqlObjectField};
+    use crate::selection::*;
 
     #[test]
     fn union_response_for_selection_complains_if_typename_is_missing() {
@@ -163,7 +163,7 @@ mod tests {
             is_required: false.into(),
         };
 
-        let mut schema = ::schema::Schema::new();
+        let mut schema = crate::schema::Schema::new();
 
         schema.objects.insert(
             "User",
@@ -254,7 +254,7 @@ mod tests {
                 })]),
             }),
         ];
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
         let selection: Selection = fields.into_iter().collect();
         let prefix = "Meow";
@@ -269,7 +269,7 @@ mod tests {
 
         assert!(result.is_err());
 
-        let mut schema = ::schema::Schema::new();
+        let mut schema = crate::schema::Schema::new();
         schema.objects.insert(
             "User",
             GqlObject {

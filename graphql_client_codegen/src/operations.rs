@@ -1,11 +1,11 @@
-use constants::*;
+use crate::constants::*;
 use graphql_parser::query::OperationDefinition;
 use heck::SnakeCase;
 use proc_macro2::{Span, TokenStream};
-use query::QueryContext;
-use selection::Selection;
+use crate::query::QueryContext;
+use crate::selection::Selection;
 use syn::Ident;
-use variables::Variable;
+use crate::variables::Variable;
 
 #[derive(Debug, Clone)]
 pub enum OperationType {
@@ -23,7 +23,7 @@ pub struct Operation<'query> {
 }
 
 impl<'query> Operation<'query> {
-    pub(crate) fn root_name<'schema>(&self, schema: &'schema ::schema::Schema) -> &'schema str {
+    pub(crate) fn root_name<'schema>(&self, schema: &'schema crate::schema::Schema) -> &'schema str {
         match self.operation_type {
             OperationType::Query => schema.query_type.unwrap_or("Query"),
             OperationType::Mutation => schema.mutation_type.unwrap_or("Mutation"),
@@ -54,7 +54,7 @@ impl<'query> Operation<'query> {
             let name = &variable.name;
             let ty = variable.ty.to_rust(context, "");
             let snake_case_name = name.to_snake_case();
-            let rename = ::shared::field_rename_annotation(&name, &snake_case_name);
+            let rename = crate::shared::field_rename_annotation(&name, &snake_case_name);
             let name = Ident::new(&snake_case_name, Span::call_site());
 
             quote!(#rename pub #name: #ty)

@@ -50,7 +50,7 @@ mod variables;
 #[cfg(test)]
 mod tests;
 
-pub use codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
+pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
 use std::collections::HashMap;
 
