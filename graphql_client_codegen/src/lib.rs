@@ -13,7 +13,6 @@ use graphql_parser;
 extern crate lazy_static;
 
 use proc_macro2;
-use serde;
 #[macro_use]
 extern crate serde_derive;
 
