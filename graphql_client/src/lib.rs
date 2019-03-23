@@ -10,8 +10,8 @@ use serde;
 extern crate serde_derive;
 pub use graphql_query_derive;
 
-#[cfg_attr(test, macro_use)]
-use serde_json;
+#[cfg(test)]
+use serde_json::json;
 
 #[doc(hidden)]
 pub use graphql_query_derive::*;
