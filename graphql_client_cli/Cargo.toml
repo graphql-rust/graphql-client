@@ -1,7 +1,7 @@
 [package]
 name = "graphql_client_cli"
 description = "The CLI for graphql-client"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/graphql-rust/graphql-client"
@@ -14,8 +14,8 @@ path = "src/main.rs"
 [dependencies]
 failure = "0.1"
 reqwest = "^0.9.0"
-graphql_client = { version = "0.7.0", path = "../graphql_client" }
-graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.7.0" }
+graphql_client = { version = "0.8.0", path = "../graphql_client" }
+graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.8.0" }
 structopt = "0.2"
 serde = "1.0"
 serde_derive = "1.0"
