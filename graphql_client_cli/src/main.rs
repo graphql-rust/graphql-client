@@ -71,7 +71,7 @@ enum Cli {
         ///
         /// If this option is omitted, the code will be generated next to the .graphql
         /// file, with the same name and the .rs extension.
-        #[structopt(short = "o", long = "output-directory")]
+        #[structopt(short = "out", long = "output-directory")]
         output_directory: Option<PathBuf>,
     },
 }
