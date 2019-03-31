@@ -6,6 +6,19 @@ use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::*;
 
+fn format_available_fields(fields: &[GqlObjectField]) -> String {
+    fields
+        .iter()
+        .map(|ref field| &field.name)
+        .fold(String::new(), |mut acc, item| {
+            acc.push_str(item);
+            acc.push_str(", ");
+            acc
+        })
+        .trim_end_matches(", ")
+        .to_owned()
+}
+
 pub(crate) fn render_object_field(
     field_name: &str,
     field_type: &TokenStream,
@@ -77,7 +90,13 @@ pub(crate) fn field_impls_for_selection(
                 let ty = fields
                     .iter()
                     .find(|f| &f.name == name)
-                    .ok_or_else(|| format_err!("could not find field `{}`", name))?
+                    .ok_or_else(|| {
+                        format_err!(
+                            "Could not find field `{}`. Available fields: `{}`.",
+                            name,
+                            format_available_fields(fields).as_str()
+                        )
+                    })?
                     .type_
                     .inner_name_str();
                 let prefix = format!("{}{}", prefix.to_camel_case(), alias.to_camel_case());
@@ -111,15 +130,7 @@ pub(crate) fn response_fields_for_selection(
                             "Could not find field `{}` on `{}`. Available fields: `{}`.",
                             *name,
                             type_name,
-                            schema_fields
-                                .iter()
-                                .map(|ref field| &field.name)
-                                .fold(String::new(), |mut acc, item| {
-                                    acc.push_str(item);
-                                    acc.push_str(", ");
-                                    acc
-                                })
-                                .trim_end_matches(", ")
+                            format_available_fields(schema_fields).as_str()
                         )
                     })?;
                 let ty = schema_field.type_.to_rust(
