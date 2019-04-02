@@ -5,18 +5,10 @@ use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
 use query::QueryContext;
 use selection::*;
+use itertools::Itertools;
 
 fn format_available_fields(fields: &[GqlObjectField]) -> String {
-    fields
-        .iter()
-        .map(|ref field| &field.name)
-        .fold(String::new(), |mut acc, item| {
-            acc.push_str(item);
-            acc.push_str(", ");
-            acc
-        })
-        .trim_end_matches(", ")
-        .to_owned()
+    fields.iter().map(|ref field| &field.name).format("`, `").to_string()
 }
 
 pub(crate) fn render_object_field(
@@ -94,7 +86,7 @@ pub(crate) fn field_impls_for_selection(
                         format_err!(
                             "Could not find field `{}`. Available fields: `{}`.",
                             name,
-                            format_available_fields(fields).as_str()
+                            format_available_fields(fields)
                         )
                     })?
                     .type_
@@ -130,7 +122,7 @@ pub(crate) fn response_fields_for_selection(
                             "Could not find field `{}` on `{}`. Available fields: `{}`.",
                             *name,
                             type_name,
-                            format_available_fields(schema_fields).as_str()
+                            format_available_fields(schema_fields)
                         )
                     })?;
                 let ty = schema_field.type_.to_rust(
