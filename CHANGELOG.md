@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.8.0
+
+This release is only compatible with Rust 1.31.0 and later.
+
+## 0.7.1
+
 ### Fixed
 
 - In the CLI, both --selected-operation and --output used the -o shorthand. --output now uses -out.
