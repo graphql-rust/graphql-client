@@ -7,6 +7,7 @@ use failure;
 use graphql_parser;
 use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 use std::cell::Cell;
 use std::collections::HashMap;
 
@@ -109,7 +110,7 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::InputObjectT
 {
     fn from(schema_input: &'schema graphql_parser::schema::InputObjectType) -> GqlInput<'schema> {
         GqlInput {
-            description: schema_input.description.as_ref().map(|s| s.as_str()),
+            description: schema_input.description.as_ref().map(String::as_str),
             name: &schema_input.name,
             fields: schema_input
                 .fields
@@ -146,7 +147,7 @@ impl<'schema> ::std::convert::From<&'schema introspection_response::FullType>
                 .as_ref()
                 .expect("fields on input object")
                 .iter()
-                .filter_map(|a| a.as_ref())
+                .filter_map(Option::as_ref)
                 .map(|f| {
                     let name = f
                         .input_value

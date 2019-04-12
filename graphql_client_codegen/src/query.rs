@@ -2,9 +2,10 @@ use crate::deprecation::DeprecationStrategy;
 use crate::fragments::GqlFragment;
 use crate::schema::Schema;
 use crate::selection::Selection;
-use failure;
+use failure::*;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
+use quote::quote;
 use std::collections::{BTreeMap, BTreeSet};
 use syn::Ident;
 
@@ -103,7 +104,6 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     }
 
     pub(crate) fn variables_derives(&self) -> TokenStream {
-        use std::collections::BTreeSet;
         let derives: BTreeSet<&Ident> = self.variables_derives.iter().collect();
         let derives = derives.iter();
 
@@ -113,7 +113,6 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     }
 
     pub(crate) fn response_derives(&self) -> TokenStream {
-        use std::collections::BTreeSet;
         let derives: BTreeSet<&Ident> = self.response_derives.iter().collect();
         let derives = derives.iter();
 

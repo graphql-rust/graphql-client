@@ -1,12 +1,10 @@
 use futures::Future;
+use graphql_client_web::*;
 use lazy_static::*;
 use std::cell::RefCell;
 use std::sync::Mutex;
-
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
-
-use graphql_client_web::*;
 
 #[derive(GraphQLQuery)]
 #[graphql(

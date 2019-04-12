@@ -1,4 +1,4 @@
-use proc_macro2;
+use quote::quote;
 use std::cell::Cell;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]

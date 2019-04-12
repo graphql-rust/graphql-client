@@ -5,6 +5,7 @@ use crate::variables::Variable;
 use graphql_parser::query::OperationDefinition;
 use heck::SnakeCase;
 use proc_macro2::{Span, TokenStream};
+use quote::quote;
 use syn::Ident;
 
 #[derive(Debug, Clone)]

@@ -1,9 +1,4 @@
-#[macro_use]
-extern crate graphql_client;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+use graphql_client::*;
 
 const RESPONSE: &str = include_str!("subscription/subscription_query_response.json");
 

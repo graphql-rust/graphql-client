@@ -1,6 +1,7 @@
 use crate::codegen_options::*;
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 
 /// This struct contains the parameters necessary to generate code for a given operation.
 pub(crate) struct GeneratedModule<'a> {

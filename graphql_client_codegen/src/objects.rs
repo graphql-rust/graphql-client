@@ -8,6 +8,7 @@ use crate::shared::{field_impls_for_selection, response_fields_for_selection};
 use failure;
 use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 use std::cell::Cell;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -84,7 +85,7 @@ impl<'schema> GqlObject<'schema> {
     pub fn from_introspected_schema_json(
         obj: &'schema crate::introspection_response::FullType,
     ) -> Self {
-        let description = obj.description.as_ref().map(|s| s.as_str());
+        let description = obj.description.as_ref().map(String::as_str);
         let mut item = GqlObject::new(obj.name.as_ref().expect("missing object name"), description);
         let fields = obj.fields.as_ref().unwrap().iter().filter_map(|t| {
             t.as_ref().map(|t| {

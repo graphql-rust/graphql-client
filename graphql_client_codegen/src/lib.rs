@@ -1,25 +1,17 @@
 #![recursion_limit = "512"]
 #![deny(missing_docs)]
+#![deny(warnings)]
 
 //! Crate for internal use by other graphql-client crates, for code generation.
 //!
 //! It is not meant to be used directly by users of the library.
 
-#[macro_use]
-extern crate failure;
+use failure::*;
 use graphql_parser;
-
-#[macro_use]
-extern crate lazy_static;
-
+use lazy_static::*;
 use proc_macro2;
-#[macro_use]
-extern crate serde_derive;
-
-#[macro_use]
-extern crate quote;
-
 use proc_macro2::TokenStream;
+use quote::*;
 
 mod codegen;
 mod codegen_options;
@@ -100,7 +92,7 @@ pub fn generate_module_token_stream(
 
     let schema_extension = schema_path
         .extension()
-        .and_then(|e| e.to_str())
+        .and_then(std::ffi::OsStr::to_str)
         .unwrap_or("INVALID");
 
     // Check the schema cache.

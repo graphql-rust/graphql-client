@@ -1,9 +1,4 @@
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate graphql_client;
-
+use graphql_client::*;
 pub mod custom_scalars;
 
 use custom_scalars::*;

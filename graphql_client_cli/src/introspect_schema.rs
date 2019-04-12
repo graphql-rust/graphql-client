@@ -1,5 +1,5 @@
 use failure;
-use graphql_client;
+use graphql_client::GraphQLQuery;
 use reqwest;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
 use serde_json;

@@ -1,11 +1,11 @@
-use failure;
+use failure::*;
 use graphql_client_codegen::{
     generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
 };
 use std::fs::File;
 use std::io::Write as _;
 use std::path::PathBuf;
-use syn;
+use syn::Token;
 
 pub(crate) struct CliCodegenParams {
     pub query_path: PathBuf,

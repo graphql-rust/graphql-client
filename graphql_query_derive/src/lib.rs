@@ -1,9 +1,4 @@
-#[macro_use]
-extern crate failure;
-
 extern crate proc_macro;
-
-use syn;
 
 /// Derive-related code. This will be moved into graphql_query_derive.
 mod attributes;

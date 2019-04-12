@@ -4,11 +4,10 @@
 
 #![deny(warnings)]
 #![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
 
-use serde;
-#[macro_use]
-extern crate serde_derive;
 pub use graphql_query_derive;
+use serde::*;
 
 #[cfg(test)]
 use serde_json::json;
@@ -26,14 +25,8 @@ use std::fmt::{self, Display};
 /// Example:
 ///
 /// ```
-/// extern crate failure;
-/// #[macro_use]
-/// extern crate graphql_client;
-/// #[macro_use]
-/// extern crate serde_derive;
-/// #[macro_use]
-/// extern crate serde_json;
-/// extern crate serde;
+/// use graphql_client::*;
+/// use serde_json::json;
 ///
 /// #[derive(GraphQLQuery)]
 /// #[graphql(
@@ -127,12 +120,9 @@ impl Display for PathFragment {
 ///
 ///
 /// ```
-/// # extern crate failure;
-/// # #[macro_use]
-/// # extern crate serde_json;
-/// # extern crate graphql_client;
-/// # #[macro_use]
-/// # extern crate serde_derive;
+/// # use serde_json::json;
+/// # use serde::Deserialize;
+/// # use graphql_client::GraphQLQuery;
 /// #
 /// # #[derive(Debug, Deserialize, PartialEq)]
 /// # struct ResponseData {
@@ -236,12 +226,9 @@ impl Display for Error {
 /// [Spec](https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md)
 ///
 /// ```
-/// # extern crate failure;
-/// # #[macro_use]
-/// # extern crate serde_json;
-/// # extern crate graphql_client;
-/// # #[macro_use]
-/// # extern crate serde_derive;
+/// # use serde_json::json;
+/// # use serde::Deserialize;
+/// # use graphql_client::GraphQLQuery;
 /// #
 /// # #[derive(Debug, Deserialize, PartialEq)]
 /// # struct User {

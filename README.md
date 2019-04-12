@@ -33,12 +33,9 @@ A typed GraphQL client library for Rust.
 
 - We now have everything we need to derive Rust types for our query. This is achieved through a procedural macro, as in the following snippet:
 
-  ```rust,skt-empty-main
-  extern crate serde;
-  #[macro_use]
-  extern crate serde_derive;
-  #[macro_use]
-  extern crate graphql_client;
+  ```rust
+  use serde::{Serialize, Deserialize};
+  use graphql_client::GraphQLQuery;
 
   // The paths are relative to the directory where your `Cargo.toml` is located.
   // Both json and the GraphQL schema language are supported as sources for the schema
@@ -60,12 +57,7 @@ A typed GraphQL client library for Rust.
 
 * We now need to create the complete payload that we are going to send to the server. For convenience, the [GraphQLQuery trait](https://docs.rs/graphql_client/latest/graphql_client/trait.GraphQLQuery.html), is implemented for the struct under derive, so a complete query body can be created this way:
 
-  ```rust,skt-empty-main
-  extern crate failure;
-  #[macro_use]
-  extern crate graphql_client;
-  extern crate reqwest;
-
+  ```rust
   use graphql_client::{GraphQLQuery, Response};
 
   #[derive(GraphQLQuery)]
@@ -95,9 +87,8 @@ A typed GraphQL client library for Rust.
 
 The generated response types always derive `serde::Deserialize` but you may want to print them (`Debug`), compare them (`PartialEq`) or derive any other trait on it. You can achieve this with the `response_derives` option of the `graphql` attribute. Example:
 
-```rust,skt-empty-main
-#[macro_use]
-extern crate graphql_client;
+```rust
+use graphql_client::GraphQLQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -117,9 +108,8 @@ The generated code will reference the scalar types as defined in the server sche
 The generated code has support for [`@deprecated`](http://facebook.github.io/graphql/June2018/#sec-Field-Deprecation)
 field annotations. You can configure how deprecations are handled via the `deprecated` argument in the `GraphQLQuery` derive:
 
-```rust,skt-empty-main
-#[macro_use]
-extern crate graphql_client;
+```rust
+use graphql_client::GraphQLQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -145,9 +135,8 @@ You can write multiple operations in one query document (one `.graphql` file). Y
 
 Note that the struct and the operation in the GraphQL file *must* have the same name. We enforce this to make the generated code more predictable.
 
-```rust,skt-empty-main
-#[macro_use]
-extern crate graphql_client;
+```rust
+use graphql_client::GraphQLQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(

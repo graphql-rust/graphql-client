@@ -1,10 +1,5 @@
-#[macro_use]
-extern crate graphql_client;
-
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate serde_json;
+use graphql_client::*;
+use serde_json::*;
 
 #[derive(GraphQLQuery)]
 #[graphql(

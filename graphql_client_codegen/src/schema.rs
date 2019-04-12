@@ -6,7 +6,7 @@ use crate::interfaces::GqlInterface;
 use crate::objects::{GqlObject, GqlObjectField};
 use crate::scalars::Scalar;
 use crate::unions::GqlUnion;
-use failure;
+use failure::*;
 use graphql_parser::{self, schema};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -274,7 +274,7 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
                         .collect();
                     let enm = GqlEnum {
                         name,
-                        description: ty.description.as_ref().map(|s| s.as_str()),
+                        description: ty.description.as_ref().map(String::as_str),
                         variants,
                         is_required: false.into(),
                     };
@@ -317,7 +317,7 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
                     for implementing in ty
                         .interfaces
                         .as_ref()
-                        .map(|s| s.as_slice())
+                        .map(Vec::as_slice)
                         .unwrap_or_else(|| &[])
                         .iter()
                         .filter_map(|t| t.as_ref())
@@ -346,9 +346,9 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
                             .as_ref()
                             .expect("interface fields")
                             .iter()
-                            .filter_map(|f| f.as_ref())
+                            .filter_map(Option::as_ref)
                             .map(|f| GqlObjectField {
-                                description: f.description.as_ref().map(|s| s.as_str()),
+                                description: f.description.as_ref().map(String::as_str),
                                 name: f.name.as_ref().expect("field name").as_str(),
                                 type_: FieldType::from(f.type_.as_ref().expect("field type")),
                                 deprecation: DeprecationStatus::Current,

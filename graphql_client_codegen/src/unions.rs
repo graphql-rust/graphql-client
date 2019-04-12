@@ -1,7 +1,8 @@
 use crate::query::QueryContext;
 use crate::selection::Selection;
-use failure;
+use failure::*;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 use std::cell::Cell;
 use std::collections::BTreeSet;
 
