@@ -1,14 +1,14 @@
-use deprecation::DeprecationStatus;
-use enums::{EnumVariant, GqlEnum};
+use crate::deprecation::DeprecationStatus;
+use crate::enums::{EnumVariant, GqlEnum};
+use crate::field_type::FieldType;
+use crate::inputs::GqlInput;
+use crate::interfaces::GqlInterface;
+use crate::objects::{GqlObject, GqlObjectField};
+use crate::scalars::Scalar;
+use crate::unions::GqlUnion;
 use failure;
-use field_type::FieldType;
 use graphql_parser::{self, schema};
-use inputs::GqlInput;
-use interfaces::GqlInterface;
-use objects::{GqlObject, GqlObjectField};
-use scalars::Scalar;
 use std::collections::{BTreeMap, BTreeSet};
-use unions::GqlUnion;
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
@@ -207,11 +207,11 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> fo
     }
 }
 
-impl<'schema> ::std::convert::From<&'schema ::introspection_response::IntrospectionResponse>
+impl<'schema> ::std::convert::From<&'schema crate::introspection_response::IntrospectionResponse>
     for Schema<'schema>
 {
-    fn from(src: &'schema ::introspection_response::IntrospectionResponse) -> Self {
-        use introspection_response::__TypeKind;
+    fn from(src: &'schema crate::introspection_response::IntrospectionResponse) -> Self {
+        use crate::introspection_response::__TypeKind;
 
         let mut schema = Schema::new();
         let root = src
@@ -255,7 +255,7 @@ impl<'schema> ::std::convert::From<&'schema ::introspection_response::Introspect
 
             match ty.kind {
                 Some(__TypeKind::ENUM) => {
-                    let variants: Vec<EnumVariant> = ty
+                    let variants: Vec<EnumVariant<'_>> = ty
                         .enum_values
                         .as_ref()
                         .expect("enum variants")
@@ -272,7 +272,7 @@ impl<'schema> ::std::convert::From<&'schema ::introspection_response::Introspect
                         })
                         .filter_map(|t| t)
                         .collect();
-                    let mut enm = GqlEnum {
+                    let enm = GqlEnum {
                         name,
                         description: ty.description.as_ref().map(|s| s.as_str()),
                         variants,
@@ -373,7 +373,7 @@ impl<'schema> ::std::convert::From<&'schema ::introspection_response::Introspect
 
 pub(crate) enum ParsedSchema {
     GraphQLParser(graphql_parser::schema::Document),
-    Json(::introspection_response::IntrospectionResponse),
+    Json(crate::introspection_response::IntrospectionResponse),
 }
 
 impl<'schema> From<&'schema ParsedSchema> for Schema<'schema> {
@@ -388,7 +388,7 @@ impl<'schema> From<&'schema ParsedSchema> for Schema<'schema> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use constants::*;
+    use crate::constants::*;
 
     #[test]
     fn build_schema_works() {

@@ -7,17 +7,15 @@
 
 #[macro_use]
 extern crate failure;
-extern crate graphql_parser;
-extern crate heck;
+use graphql_parser;
+
 #[macro_use]
 extern crate lazy_static;
-extern crate proc_macro;
-extern crate proc_macro2;
-extern crate serde;
+
+use proc_macro2;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
-extern crate syn;
+
 #[macro_use]
 extern crate quote;
 
@@ -50,7 +48,7 @@ mod variables;
 #[cfg(test)]
 mod tests;
 
-pub use codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
+pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
 use std::collections::HashMap;
 

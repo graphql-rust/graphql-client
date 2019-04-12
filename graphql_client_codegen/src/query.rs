@@ -1,10 +1,10 @@
-use deprecation::DeprecationStrategy;
+use crate::deprecation::DeprecationStrategy;
+use crate::fragments::GqlFragment;
+use crate::schema::Schema;
+use crate::selection::Selection;
 use failure;
-use fragments::GqlFragment;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
-use schema::Schema;
-use selection::Selection;
 use std::collections::{BTreeMap, BTreeSet};
 use syn::Ident;
 
@@ -41,7 +41,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
 
     /// For testing only. creates an empty QueryContext with an empty Schema.
     #[cfg(test)]
-    pub(crate) fn new_empty(schema: &'schema Schema) -> QueryContext<'query, 'schema> {
+    pub(crate) fn new_empty(schema: &'schema Schema<'_>) -> QueryContext<'query, 'schema> {
         QueryContext {
             fragments: BTreeMap::new(),
             schema,
@@ -55,7 +55,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     pub(crate) fn maybe_expand_field(
         &self,
         ty: &str,
-        selection: &Selection,
+        selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
         if self.schema.contains_scalar(ty) {
@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn response_derives_ingestion_works() {
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let mut context = QueryContext::new_empty(&schema);
 
         context
@@ -163,7 +163,7 @@ mod tests {
 
     #[test]
     fn response_enum_derives_does_not_produce_empty_list() {
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let context = QueryContext::new_empty(&schema);
         assert_eq!(
             context.response_enum_derives().to_string(),
@@ -173,7 +173,7 @@ mod tests {
 
     #[test]
     fn response_enum_derives_works() {
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let mut context = QueryContext::new_empty(&schema);
 
         context
@@ -188,7 +188,7 @@ mod tests {
 
     #[test]
     fn response_derives_fails_when_called_twice() {
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let mut context = QueryContext::new_empty(&schema);
 
         assert!(context

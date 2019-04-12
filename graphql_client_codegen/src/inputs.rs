@@ -1,12 +1,12 @@
-use deprecation::DeprecationStatus;
+use crate::deprecation::DeprecationStatus;
+use crate::introspection_response;
+use crate::objects::GqlObjectField;
+use crate::query::QueryContext;
+use crate::schema::Schema;
 use failure;
 use graphql_parser;
 use heck::SnakeCase;
-use introspection_response;
-use objects::GqlObjectField;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
-use schema::Schema;
 use std::cell::Cell;
 use std::collections::HashMap;
 
@@ -30,7 +30,11 @@ impl<'schema> GqlInput<'schema> {
         })
     }
 
-    fn contains_type_without_indirection(&self, context: &QueryContext, type_name: &str) -> bool {
+    fn contains_type_without_indirection(
+        &self,
+        context: &QueryContext<'_, '_>,
+        type_name: &str,
+    ) -> bool {
         // the input type is recursive if any of its members contains it, without indirection
         self.fields.values().any(|field| {
             // the field is indirected, so no boxing is needed
@@ -56,13 +60,16 @@ impl<'schema> GqlInput<'schema> {
         })
     }
 
-    fn is_recursive_without_indirection(&self, context: &QueryContext) -> bool {
+    fn is_recursive_without_indirection(&self, context: &QueryContext<'_, '_>) -> bool {
         self.contains_type_without_indirection(context, &self.name)
     }
 
-    pub(crate) fn to_rust(&self, context: &QueryContext) -> Result<TokenStream, failure::Error> {
+    pub(crate) fn to_rust(
+        &self,
+        context: &QueryContext<'_, '_>,
+    ) -> Result<TokenStream, failure::Error> {
         let name = Ident::new(&self.name, Span::call_site());
-        let mut fields: Vec<&GqlObjectField> = self.fields.values().collect();
+        let mut fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
             let ty = field.type_.to_rust(&context, "");
@@ -81,7 +88,7 @@ impl<'schema> GqlInput<'schema> {
             context.schema.require(&field.type_.inner_name_str());
             let original_name = &field.name;
             let snake_case_name = field.name.to_snake_case();
-            let rename = ::shared::field_rename_annotation(&original_name, &snake_case_name);
+            let rename = crate::shared::field_rename_annotation(&original_name, &snake_case_name);
             let name = Ident::new(&snake_case_name, Span::call_site());
 
             quote!(#rename pub #name: #ty)
@@ -169,8 +176,8 @@ impl<'schema> ::std::convert::From<&'schema introspection_response::FullType>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use constants::*;
-    use field_type::FieldType;
+    use crate::constants::*;
+    use crate::field_type::FieldType;
 
     #[test]
     fn gql_input_to_rust() {
@@ -223,7 +230,7 @@ mod tests {
         .into_iter()
         .collect();
 
-        let mut schema = ::schema::Schema::new();
+        let mut schema = crate::schema::Schema::new();
         schema.inputs.insert(cat.name, cat);
         let mut context = QueryContext::new_empty(&schema);
         context.ingest_additional_derives("Clone").unwrap();

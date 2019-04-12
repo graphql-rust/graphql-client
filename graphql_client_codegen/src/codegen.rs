@@ -1,11 +1,11 @@
+use crate::fragments::GqlFragment;
+use crate::operations::Operation;
+use crate::query::QueryContext;
+use crate::schema;
+use crate::selection::Selection;
 use failure;
-use fragments::GqlFragment;
 use graphql_parser::query;
-use operations::Operation;
 use proc_macro2::TokenStream;
-use query::QueryContext;
-use schema;
-use selection::Selection;
 
 /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'query>(
@@ -20,8 +20,8 @@ pub(crate) fn select_operation<'query>(
         .map(|i| i.to_owned())
 }
 
-pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation> {
-    let mut operations: Vec<Operation> = Vec::new();
+pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation<'_>> {
+    let mut operations: Vec<Operation<'_>> = Vec::new();
 
     for definition in &query.definitions {
         if let query::Definition::Operation(op) = definition {
@@ -33,10 +33,10 @@ pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation> {
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
-    schema: &schema::Schema,
+    schema: &schema::Schema<'_>,
     query: &query::Document,
-    operation: &Operation,
-    options: &::GraphQLClientCodegenOptions,
+    operation: &Operation<'_>,
+    options: &crate::GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, failure::Error> {
     let mut context = QueryContext::new(schema, options.deprecation_strategy());
 
@@ -88,7 +88,7 @@ pub(crate) fn response_for_query(
         if operation.is_subscription() && selection.len() > 1 {
             Err(format_err!(
                 "{}",
-                ::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
+                crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
             ))?
         }
 

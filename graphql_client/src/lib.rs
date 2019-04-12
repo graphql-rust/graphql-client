@@ -5,13 +5,13 @@
 #![deny(warnings)]
 #![deny(missing_docs)]
 
-extern crate serde;
+use serde;
 #[macro_use]
 extern crate serde_derive;
-pub extern crate graphql_query_derive;
+pub use graphql_query_derive;
 
-#[cfg_attr(test, macro_use)]
-extern crate serde_json;
+#[cfg(test)]
+use serde_json::json;
 
 #[doc(hidden)]
 pub use graphql_query_derive::*;
@@ -111,7 +111,7 @@ pub enum PathFragment {
 }
 
 impl Display for PathFragment {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             PathFragment::Key(ref key) => write!(f, "{}", key),
             PathFragment::Index(ref idx) => write!(f, "{}", idx),
@@ -200,7 +200,7 @@ pub struct Error {
 }
 
 impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Use `/` as a separator like JSON Pointer.
         let path = self
             .path

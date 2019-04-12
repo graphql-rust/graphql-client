@@ -1,6 +1,6 @@
-use deprecation::DeprecationStatus;
-use field_type::FieldType;
-use objects::GqlObjectField;
+use crate::deprecation::DeprecationStatus;
+use crate::field_type::FieldType;
+use crate::objects::GqlObjectField;
 
 pub(crate) const TYPENAME_FIELD: &str = "__typename";
 

@@ -52,7 +52,7 @@ fn type_refining_fragment_on_union() {
 
 #[test]
 fn type_refining_fragment_on_interface() {
-    use query_on_interface::*;
+    use crate::query_on_interface::*;
 
     const RESPONSE: &'static str = include_str!("interfaces/interface_response.json");
 

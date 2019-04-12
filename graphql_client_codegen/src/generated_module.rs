@@ -4,17 +4,17 @@ use proc_macro2::{Ident, Span, TokenStream};
 
 /// This struct contains the parameters necessary to generate code for a given operation.
 pub(crate) struct GeneratedModule<'a> {
-    pub operation: &'a ::operations::Operation<'a>,
+    pub operation: &'a crate::operations::Operation<'a>,
     pub query_string: &'a str,
     pub query_document: &'a graphql_parser::query::Document,
-    pub schema: &'a ::schema::Schema<'a>,
+    pub schema: &'a crate::schema::Schema<'a>,
     pub options: &'a crate::GraphQLClientCodegenOptions,
 }
 
 impl<'a> GeneratedModule<'a> {
     /// Generate the items for the variables and the response that will go inside the module.
     fn build_impls(&self) -> Result<TokenStream, failure::Error> {
-        Ok(::codegen::response_for_query(
+        Ok(crate::codegen::response_for_query(
             &self.schema,
             &self.query_document,
             &self.operation,

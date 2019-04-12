@@ -1,7 +1,7 @@
-use field_type::FieldType;
+use crate::field_type::FieldType;
+use crate::query::QueryContext;
 use graphql_parser;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
@@ -12,7 +12,10 @@ pub struct Variable<'query> {
 }
 
 impl<'query> Variable<'query> {
-    pub(crate) fn generate_default_value_constructor(&self, context: &QueryContext) -> TokenStream {
+    pub(crate) fn generate_default_value_constructor(
+        &self,
+        context: &QueryContext<'_, '_>,
+    ) -> TokenStream {
         context.schema.require(&self.ty.inner_name_str());
         match &self.default {
             Some(default) => {
@@ -50,8 +53,8 @@ impl<'query> ::std::convert::From<&'query graphql_parser::query::VariableDefinit
 
 fn graphql_parser_value_to_literal(
     value: &graphql_parser::query::Value,
-    context: &QueryContext,
-    ty: &FieldType,
+    context: &QueryContext<'_, '_>,
+    ty: &FieldType<'_>,
     is_optional: bool,
 ) -> TokenStream {
     use graphql_parser::query::Value;
@@ -95,8 +98,8 @@ fn graphql_parser_value_to_literal(
 
 fn render_object_literal(
     object: &BTreeMap<String, graphql_parser::query::Value>,
-    ty: &FieldType,
-    context: &QueryContext,
+    ty: &FieldType<'_>,
+    context: &QueryContext<'_, '_>,
 ) -> TokenStream {
     let type_name = ty.inner_name_str();
     let constructor = Ident::new(&type_name, Span::call_site());

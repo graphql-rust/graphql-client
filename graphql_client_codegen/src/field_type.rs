@@ -1,9 +1,9 @@
-use enums::ENUMS_PREFIX;
+use crate::enums::ENUMS_PREFIX;
+use crate::introspection_response;
+use crate::query::QueryContext;
+use crate::schema::DEFAULT_SCALARS;
 use graphql_parser;
-use introspection_response;
 use proc_macro2::{Ident, Span, TokenStream};
-use query::QueryContext;
-use schema::DEFAULT_SCALARS;
 
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub enum FieldType<'a> {
@@ -14,7 +14,7 @@ pub enum FieldType<'a> {
 
 impl<'a> FieldType<'a> {
     /// Takes a field type with its name
-    pub(crate) fn to_rust(&self, context: &QueryContext, prefix: &str) -> TokenStream {
+    pub(crate) fn to_rust(&self, context: &QueryContext<'_, '_>, prefix: &str) -> TokenStream {
         let prefix: &str = if prefix.is_empty() {
             self.inner_name_str()
         } else {
@@ -94,7 +94,7 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Type> for Fi
     }
 }
 
-fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) -> FieldType {
+fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) -> FieldType<'_> {
     match inner {
         graphql_parser::schema::Type::ListType(inner) => {
             let inner = from_schema_type_inner(&*inner, false);
@@ -117,8 +117,8 @@ fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) 
     }
 }
 
-fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool) -> FieldType {
-    use introspection_response::*;
+fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool) -> FieldType<'_> {
+    use crate::introspection_response::*;
 
     match inner.kind {
         Some(__TypeKind::NON_NULL) => from_json_type_inner(
@@ -167,8 +167,8 @@ impl<'a> ::std::convert::From<&'a introspection_response::InputValueType> for Fi
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::introspection_response::{FullTypeFieldsType, TypeRef, __TypeKind};
     use graphql_parser::schema::Type as GqlParserType;
-    use introspection_response::{FullTypeFieldsType, TypeRef, __TypeKind};
 
     #[test]
     fn field_type_from_graphql_parser_schema_type_works() {

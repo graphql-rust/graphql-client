@@ -1,4 +1,4 @@
-use constants::*;
+use crate::constants::*;
 use graphql_parser::query::SelectionSet;
 use std::collections::BTreeMap;
 
@@ -32,7 +32,7 @@ pub enum SelectionItem<'query> {
 }
 
 impl<'query> SelectionItem<'query> {
-    pub fn as_typename(&self) -> Option<&SelectionField> {
+    pub fn as_typename(&self) -> Option<&SelectionField<'_>> {
         if let SelectionItem::Field(f) = self {
             if f.name == TYPENAME_FIELD {
                 return Some(f);
@@ -48,8 +48,8 @@ pub struct Selection<'query>(Vec<SelectionItem<'query>>);
 impl<'query> Selection<'query> {
     pub(crate) fn extract_typename<'s, 'context: 's>(
         &'s self,
-        context: &'context crate::query::QueryContext,
-    ) -> Option<&SelectionField> {
+        context: &'context crate::query::QueryContext<'_, '_>,
+    ) -> Option<&SelectionField<'_>> {
         // __typename is selected directly
         if let Some(field) = self.0.iter().filter_map(|f| f.as_typename()).next() {
             return Some(field);
@@ -75,7 +75,7 @@ impl<'query> Selection<'query> {
     // Implementation helper for `selected_variants_on_union`.
     fn selected_variants_on_union_inner<'s>(
         &'s self,
-        context: &'s crate::query::QueryContext,
+        context: &'s crate::query::QueryContext<'_, '_>,
         selected_variants: &mut BTreeMap<&'s str, Selection<'s>>,
         // the name of the type the selection applies to
         selection_on: &str,
@@ -132,7 +132,7 @@ impl<'query> Selection<'query> {
     /// The `context` argument is required so we can expand the fragments.
     pub(crate) fn selected_variants_on_union<'s>(
         &'s self,
-        context: &'s crate::query::QueryContext,
+        context: &'s crate::query::QueryContext<'_, '_>,
         // the name of the type the selection applies to
         selection_on: &str,
     ) -> Result<BTreeMap<&'s str, Selection<'s>>, failure::Error> {
@@ -169,7 +169,7 @@ impl<'query> Selection<'query> {
 }
 
 impl<'query> ::std::convert::From<&'query SelectionSet> for Selection<'query> {
-    fn from(selection_set: &SelectionSet) -> Selection {
+    fn from(selection_set: &SelectionSet) -> Selection<'_> {
         use graphql_parser::query::Selection;
 
         let mut items = Vec::with_capacity(selection_set.items.len());
@@ -227,8 +227,8 @@ mod tests {
     #[test]
     fn selection_extract_typename_simple_case() {
         let selection = Selection::new_empty();
-        let schema = ::schema::Schema::new();
-        let context = ::query::QueryContext::new_empty(&schema);
+        let schema = crate::schema::Schema::new();
+        let context = crate::query::QueryContext::new_empty(&schema);
 
         assert!(selection.extract_typename(&context).is_none());
     }
@@ -251,9 +251,9 @@ mod tests {
                 fields: Selection::new_empty(),
             }));
 
-        let schema = ::schema::Schema::new();
+        let schema = crate::schema::Schema::new();
         let obj = crate::objects::GqlObject::new("MyObject", None);
-        let mut context = ::query::QueryContext::new_empty(&schema);
+        let mut context = crate::query::QueryContext::new_empty(&schema);
         context.fragments.insert(
             "MyFragment",
             crate::fragments::GqlFragment {
@@ -301,7 +301,7 @@ mod tests {
             .next()
             .unwrap();
 
-        let selection: Selection = selection_set.into();
+        let selection: Selection<'_> = selection_set.into();
 
         assert_eq!(
             selection,
