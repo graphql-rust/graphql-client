@@ -90,12 +90,7 @@ fn main() -> Result<(), failure::Error> {
             output,
             authorization,
             headers,
-        } => introspect_schema::introspect_schema(
-            &schema_location,
-            output,
-            authorization,
-            headers,
-        ),
+        } => introspect_schema::introspect_schema(&schema_location, output, authorization, headers),
         Cli::Generate {
             additional_derives,
             deprecation_strategy,

@@ -39,10 +39,7 @@ pub fn introspect_schema(
     let mut req_builder = client.post(location).headers(construct_headers());
 
     for custom_header in headers {
-        req_builder = req_builder.header(
-            custom_header.name.as_str(),
-            custom_header.value.as_str(),
-        );
+        req_builder = req_builder.header(custom_header.name.as_str(), custom_header.value.as_str());
     }
 
     if let Some(token) = authorization {
@@ -79,11 +76,14 @@ pub struct Header {
 
 impl FromStr for Header {
     type Err = failure::Error;
-    
+
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         // error: colon required for name/value pair
-        if ! input.contains(":") {
-            return Err(format_err!("Invalid header input. A colon is required to separate the name and value. [{}]", input));
+        if !input.contains(":") {
+            return Err(format_err!(
+                "Invalid header input. A colon is required to separate the name and value. [{}]",
+                input
+            ));
         }
 
         // split on first colon and trim whitespace from name and value
@@ -93,15 +93,24 @@ impl FromStr for Header {
 
         // error: field name must be
         if name.len() == 0 {
-            return Err(format_err!("Invalid header input. Field name is required before colon. [{}]", input));
-        }
-        
-        // error: no whitespace in field name
-        if name.split_whitespace().count() > 1 {
-            return Err(format_err!("Invalid header input. Whitespace not allowed in field name. [{}]", input));
+            return Err(format_err!(
+                "Invalid header input. Field name is required before colon. [{}]",
+                input
+            ));
         }
 
-        Ok(Self{name: name.to_string(), value: value.to_string()})
+        // error: no whitespace in field name
+        if name.split_whitespace().count() > 1 {
+            return Err(format_err!(
+                "Invalid header input. Whitespace not allowed in field name. [{}]",
+                input
+            ));
+        }
+
+        Ok(Self {
+            name: name.to_string(),
+            value: value.to_string(),
+        })
     }
 }
 
@@ -129,8 +138,14 @@ mod tests {
     fn it_parses_valid_headers() {
         // https://tools.ietf.org/html/rfc7230#section-3.2
 
-        let expected1 = Header{name: "X-Name".to_string(), value: "Value".to_string()};
-        let expected2 = Header{name: "X-Name".to_string(), value: "Value:".to_string()};
+        let expected1 = Header {
+            name: "X-Name".to_string(),
+            value: "Value".to_string(),
+        };
+        let expected2 = Header {
+            name: "X-Name".to_string(),
+            value: "Value:".to_string(),
+        };
 
         for (input, expected) in vec![
             ("X-Name: Value", &expected1),  // ideal
