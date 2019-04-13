@@ -39,6 +39,10 @@ enum Cli {
         /// Set the contents of the Authorizaiton header.
         #[structopt(long = "authorization")]
         authorization: Option<String>,
+        /// Specify custom headers.
+        /// --header 'X-Name: Value'
+        #[structopt(long = "header")]
+        headers: Vec<introspect_schema::Header>,
     },
     #[structopt(name = "generate")]
     Generate {
@@ -85,7 +89,8 @@ fn main() -> Result<(), failure::Error> {
             schema_location,
             output,
             authorization,
-        } => introspect_schema::introspect_schema(&schema_location, output, authorization),
+            headers,
+        } => introspect_schema::introspect_schema(&schema_location, output, authorization, headers),
         Cli::Generate {
             additional_derives,
             deprecation_strategy,

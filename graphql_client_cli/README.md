@@ -22,6 +22,7 @@ FLAGS:
 
 OPTIONS:
         --authorization <authorization>    Set the contents of the Authorizaiton header.
+        --header <headers>...              Specify custom headers. --header 'X-Name: Value'
         --output <output>                  Where to write the JSON for the introspected schema.
 
 ARGS:
