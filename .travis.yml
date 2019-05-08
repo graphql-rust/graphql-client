@@ -15,7 +15,7 @@ before_script:
   - if [ "$TRAVIS_RUST_VERSION" = "beta" ]; then (sudo apt-get update) fi
   - if [ "$TRAVIS_RUST_VERSION" = "beta" ]; then (sudo apt-get install -y nodejs) fi
   - if [ "$TRAVIS_RUST_VERSION" = "beta" ]; then (npm i -g prettier) fi
-  - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (rustup component add rustfmt-preview clippy-preview) fi
+  - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (rustup component add rustfmt clippy) fi
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (rustup target add wasm32-unknown-unknown) fi
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (cargo install -f wasm-bindgen-cli) fi
 script:
