@@ -68,7 +68,7 @@ impl<'schema> GqlObject<'schema> {
     }
 
     pub fn from_graphql_parser_object(obj: &'schema schema::ObjectType) -> Self {
-        let description = obj.description.as_ref().map(|s| s.as_str());
+        let description = obj.description.as_ref().map(String::as_str);
         let mut item = GqlObject::new(&obj.name, description);
         item.fields.extend(obj.fields.iter().map(|f| {
             let deprecation = parse_deprecation_info(&f);

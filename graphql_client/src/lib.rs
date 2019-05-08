@@ -2,9 +2,9 @@
 //!
 //! The main interface to this library is the custom derive that generates modules from a GraphQL query and schema. See the docs for the [`GraphQLQuery`] trait for a full example.
 
-#![deny(warnings)]
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
+#![deny(warnings)]
 
 #[allow(unused_imports)]
 #[macro_use]

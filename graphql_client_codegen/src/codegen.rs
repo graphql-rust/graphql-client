@@ -18,7 +18,7 @@ pub(crate) fn select_operation<'query>(
     operations
         .iter()
         .find(|op| op.name == struct_name)
-        .map(|i| i.to_owned())
+        .map(ToOwned::to_owned)
 }
 
 pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation<'_>> {

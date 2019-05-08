@@ -91,13 +91,13 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
         self.variables_derives.extend(
             attribute_value
                 .split(',')
-                .map(|s| s.trim())
+                .map(str::trim)
                 .map(|s| Ident::new(s, Span::call_site())),
         );
         self.response_derives.extend(
             attribute_value
                 .split(',')
-                .map(|s| s.trim())
+                .map(str::trim)
                 .map(|s| Ident::new(s, Span::call_site())),
         );
         Ok(())

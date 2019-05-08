@@ -1,5 +1,6 @@
 #![recursion_limit = "512"]
 #![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
 #![deny(warnings)]
 
 //! Crate for internal use by other graphql-client crates, for code generation.
@@ -167,7 +168,7 @@ fn derive_operation_not_found_error(
 ) -> failure::Error {
     use graphql_parser::query::*;
 
-    let operation_name = ident.map(|i| i.to_string());
+    let operation_name = ident.map(ToString::to_string);
     let struct_ident = operation_name.as_ref().map(String::as_str).unwrap_or("");
 
     let available_operations = query

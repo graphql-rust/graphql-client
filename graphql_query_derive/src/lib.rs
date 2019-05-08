@@ -36,7 +36,7 @@ fn graphql_query_derive_inner(
     let options = build_graphql_client_derive_options(&ast, query_path.to_path_buf())?;
     Ok(
         generate_module_token_stream(query_path, &schema_path, options)
-            .map(|module| module.into())
+            .map(Into::into)
             .context("Code generation failed.")?,
     )
 }
