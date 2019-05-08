@@ -1,8 +1,6 @@
-use failure;
+use failure::format_err;
 use graphql_client::GraphQLQuery;
-use reqwest;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
-use serde_json;
 use std::path::PathBuf;
 use std::str::FromStr;
 

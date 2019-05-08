@@ -34,7 +34,6 @@ A typed GraphQL client library for Rust.
 - We now have everything we need to derive Rust types for our query. This is achieved through a procedural macro, as in the following snippet:
 
   ```rust
-  use serde::{Serialize, Deserialize};
   use graphql_client::GraphQLQuery;
 
   // The paths are relative to the directory where your `Cargo.toml` is located.
@@ -142,7 +141,6 @@ use graphql_client::GraphQLQuery;
 #[graphql(
     schema_path = "tests/unions/union_schema.graphql",
     query_path = "tests/unions/union_query.graphql",
-    selected_operation = "SearchQuery"
 )]
 pub struct UnionQuery;
 ```

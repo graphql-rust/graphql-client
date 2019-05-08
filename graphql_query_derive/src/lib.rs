@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use proc_macro2::TokenStream;
 
 #[proc_macro_derive(GraphQLQuery, attributes(graphql))]
-pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn derive_graphql_query(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     match graphql_query_derive_inner(input) {
         Ok(ts) => ts,
         Err(err) => panic!(

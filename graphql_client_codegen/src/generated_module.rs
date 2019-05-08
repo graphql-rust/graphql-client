@@ -55,11 +55,7 @@ impl<'a> GeneratedModule<'a> {
             #struct_declaration
 
             #module_visibility mod #module_name {
-                #![allow(non_camel_case_types)]
-                #![allow(non_snake_case)]
                 #![allow(dead_code)]
-
-                use serde;
 
                 pub const OPERATION_NAME: &'static str = #operation_name_literal;
                 pub const QUERY: &'static str = #query_string;
@@ -67,19 +63,19 @@ impl<'a> GeneratedModule<'a> {
                 #query_include
 
                 #impls
+            }
 
-                impl ::graphql_client::GraphQLQuery for super::#operation_name_ident {
-                    type Variables = Variables;
-                    type ResponseData = ResponseData;
+            impl graphql_client::GraphQLQuery for #operation_name_ident {
+                type Variables = #module_name::Variables;
+                type ResponseData = #module_name::ResponseData;
 
-                    fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
-                        ::graphql_client::QueryBody {
-                            variables,
-                            query: QUERY,
-                            operation_name: OPERATION_NAME,
-                        }
-
+                fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
+                    graphql_client::QueryBody {
+                        variables,
+                        query: #module_name::QUERY,
+                        operation_name: #module_name::OPERATION_NAME,
                     }
+
                 }
             }
         ))
