@@ -38,7 +38,7 @@ fn main() -> Result<(), failure::Error> {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    let config: Env = envy::from_env()?;
+    let config: Env = envy::from_env().context("while reading from environment")?;
 
     let args = Command::from_args();
 
