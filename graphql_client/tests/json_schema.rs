@@ -1,10 +1,5 @@
-#[macro_use]
-extern crate graphql_client;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-#[macro_use]
-extern crate serde_json;
+use graphql_client::*;
+use serde_json::json;
 
 type Uuid = String;
 

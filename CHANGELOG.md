@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-This release sees the switch to the Rust 2018 edition and is only compatible with Rust 1.31.0 and later.
+This release sees the switch to the Rust 2018 edition - it is
+only compatible with Rust 1.31.0 and later.
 
 ## 0.7.1
 

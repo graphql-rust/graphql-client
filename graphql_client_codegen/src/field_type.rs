@@ -4,6 +4,7 @@ use crate::query::QueryContext;
 use crate::schema::DEFAULT_SCALARS;
 use graphql_parser;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub enum FieldType<'a> {

@@ -1,8 +1,6 @@
-use failure;
-use graphql_client;
-use reqwest;
+use failure::format_err;
+use graphql_client::GraphQLQuery;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
-use serde_json;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -79,7 +77,7 @@ impl FromStr for Header {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         // error: colon required for name/value pair
-        if !input.contains(":") {
+        if !input.contains(':') {
             return Err(format_err!(
                 "Invalid header input. A colon is required to separate the name and value. [{}]",
                 input
@@ -92,7 +90,7 @@ impl FromStr for Header {
         let value = name_value[1].trim();
 
         // error: field name must be
-        if name.len() == 0 {
+        if name.is_empty() {
             return Err(format_err!(
                 "Invalid header input. Field name is required before colon. [{}]",
                 input

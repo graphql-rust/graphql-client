@@ -2,6 +2,7 @@ use crate::field_type::FieldType;
 use crate::query::QueryContext;
 use graphql_parser;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]

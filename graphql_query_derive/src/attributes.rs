@@ -1,4 +1,4 @@
-use failure;
+use failure::*;
 use graphql_client_codegen::deprecation::DeprecationStrategy;
 use syn;
 

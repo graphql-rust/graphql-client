@@ -1,9 +1,4 @@
-#[macro_use]
-extern crate failure;
-
 extern crate proc_macro;
-
-use syn;
 
 /// Derive-related code. This will be moved into graphql_query_derive.
 mod attributes;
@@ -17,7 +12,7 @@ use std::path::{Path, PathBuf};
 use proc_macro2::TokenStream;
 
 #[proc_macro_derive(GraphQLQuery, attributes(graphql))]
-pub fn graphql_query_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn derive_graphql_query(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     match graphql_query_derive_inner(input) {
         Ok(ts) => ts,
         Err(err) => panic!(
@@ -41,7 +36,7 @@ fn graphql_query_derive_inner(
     let options = build_graphql_client_derive_options(&ast, query_path.to_path_buf())?;
     Ok(
         generate_module_token_stream(query_path, &schema_path, options)
-            .map(|module| module.into())
+            .map(Into::into)
             .context("Code generation failed.")?,
     )
 }

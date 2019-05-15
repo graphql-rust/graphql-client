@@ -6,7 +6,7 @@ use crate::interfaces::GqlInterface;
 use crate::objects::{GqlObject, GqlObjectField};
 use crate::scalars::Scalar;
 use crate::unions::GqlUnion;
-use failure;
+use failure::*;
 use graphql_parser::{self, schema};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -159,7 +159,7 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> fo
                     }
                     schema::TypeDefinition::Union(union) => {
                         let variants: BTreeSet<&str> =
-                            union.types.iter().map(|s| s.as_str()).collect();
+                            union.types.iter().map(String::as_str).collect();
                         schema.unions.insert(
                             &union.name,
                             GqlUnion {
@@ -173,12 +173,12 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> fo
                     schema::TypeDefinition::Interface(interface) => {
                         let mut iface = GqlInterface::new(
                             &interface.name,
-                            interface.description.as_ref().map(|d| d.as_str()),
+                            interface.description.as_ref().map(String::as_str),
                         );
                         iface
                             .fields
                             .extend(interface.fields.iter().map(|f| GqlObjectField {
-                                description: f.description.as_ref().map(|s| s.as_str()),
+                                description: f.description.as_ref().map(String::as_str),
                                 name: f.name.as_str(),
                                 type_: FieldType::from(&f.field_type),
                                 deprecation: DeprecationStatus::Current,
@@ -192,9 +192,9 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> fo
                 schema::Definition::DirectiveDefinition(_) => (),
                 schema::Definition::TypeExtension(_extension) => (),
                 schema::Definition::SchemaDefinition(definition) => {
-                    schema.query_type = definition.query.as_ref().map(|s| s.as_str());
-                    schema.mutation_type = definition.mutation.as_ref().map(|s| s.as_str());
-                    schema.subscription_type = definition.subscription.as_ref().map(|s| s.as_str());
+                    schema.query_type = definition.query.as_ref().map(String::as_str);
+                    schema.mutation_type = definition.mutation.as_ref().map(String::as_str);
+                    schema.subscription_type = definition.subscription.as_ref().map(String::as_str);
                 }
             }
         }
@@ -224,17 +224,17 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
             .query_type
             .as_ref()
             .and_then(|ty| ty.name.as_ref())
-            .map(|s| s.as_str());
+            .map(String::as_str);
         schema.mutation_type = root
             .mutation_type
             .as_ref()
             .and_then(|ty| ty.name.as_ref())
-            .map(|s| s.as_str());
+            .map(String::as_str);
         schema.subscription_type = root
             .subscription_type
             .as_ref()
             .and_then(|ty| ty.name.as_ref())
-            .map(|s| s.as_str());
+            .map(String::as_str);
 
         // Holds which objects implement which interfaces so we can populate GqlInterface#implemented_by later.
         // It maps interface names to a vec of implementation names.
@@ -274,7 +274,7 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
                         .collect();
                     let enm = GqlEnum {
                         name,
-                        description: ty.description.as_ref().map(|s| s.as_str()),
+                        description: ty.description.as_ref().map(String::as_str),
                         variants,
                         is_required: false.into(),
                     };
@@ -317,10 +317,10 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
                     for implementing in ty
                         .interfaces
                         .as_ref()
-                        .map(|s| s.as_slice())
+                        .map(Vec::as_slice)
                         .unwrap_or_else(|| &[])
                         .iter()
-                        .filter_map(|t| t.as_ref())
+                        .filter_map(Option::as_ref)
                         .map(|t| &t.type_ref.name)
                     {
                         interface_implementations
@@ -340,15 +340,15 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
                 }
                 Some(__TypeKind::INTERFACE) => {
                     let mut iface =
-                        GqlInterface::new(name, ty.description.as_ref().map(|t| t.as_str()));
+                        GqlInterface::new(name, ty.description.as_ref().map(String::as_str));
                     iface.fields.extend(
                         ty.fields
                             .as_ref()
                             .expect("interface fields")
                             .iter()
-                            .filter_map(|f| f.as_ref())
+                            .filter_map(Option::as_ref)
                             .map(|f| GqlObjectField {
-                                description: f.description.as_ref().map(|s| s.as_str()),
+                                description: f.description.as_ref().map(String::as_str),
                                 name: f.name.as_ref().expect("field name").as_str(),
                                 type_: FieldType::from(f.type_.as_ref().expect("field type")),
                                 deprecation: DeprecationStatus::Current,

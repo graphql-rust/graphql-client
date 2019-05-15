@@ -1,11 +1,11 @@
-use failure;
+use failure::*;
 use graphql_client_codegen::{
     generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
 };
 use std::fs::File;
 use std::io::Write as _;
 use std::path::PathBuf;
-use syn;
+use syn::Token;
 
 pub(crate) struct CliCodegenParams {
     pub query_path: PathBuf,
@@ -64,7 +64,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
 
     let query_file_name: ::std::ffi::OsString = query_path
         .file_name()
-        .map(|s| s.to_owned())
+        .map(ToOwned::to_owned)
         .ok_or_else(|| format_err!("Failed to find a file name in the provided query path."))?;
 
     let dest_file_path: PathBuf = output_directory

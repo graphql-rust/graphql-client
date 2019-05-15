@@ -1,4 +1,5 @@
 use crate::constants::*;
+use failure::*;
 use graphql_parser::query::SelectionSet;
 use std::collections::BTreeMap;
 
@@ -51,7 +52,7 @@ impl<'query> Selection<'query> {
         context: &'context crate::query::QueryContext<'_, '_>,
     ) -> Option<&SelectionField<'_>> {
         // __typename is selected directly
-        if let Some(field) = self.0.iter().filter_map(|f| f.as_typename()).next() {
+        if let Some(field) = self.0.iter().filter_map(SelectionItem::as_typename).next() {
             return Some(field);
         };
 
@@ -177,7 +178,7 @@ impl<'query> ::std::convert::From<&'query SelectionSet> for Selection<'query> {
         for item in &selection_set.items {
             let converted = match item {
                 Selection::Field(f) => SelectionItem::Field(SelectionField {
-                    alias: f.alias.as_ref().map(|s| s.as_str()),
+                    alias: f.alias.as_ref().map(String::as_str),
                     name: &f.name,
                     fields: (&f.selection_set).into(),
                 }),

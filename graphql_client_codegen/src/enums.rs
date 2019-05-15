@@ -1,4 +1,5 @@
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 use std::cell::Cell;
 
 pub const ENUMS_PREFIX: &str = "";

@@ -1,21 +1,5 @@
-extern crate env_logger;
-extern crate log;
 use env_logger::fmt::{Color, Style, StyledValue};
 use log::Level;
-
-#[macro_use]
-extern crate failure;
-extern crate reqwest;
-extern crate structopt;
-#[macro_use]
-extern crate graphql_client;
-extern crate graphql_client_codegen;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
-#[macro_use]
-extern crate syn;
 
 #[cfg(feature = "rustfmt")]
 extern crate rustfmt_nightly as rustfmt;

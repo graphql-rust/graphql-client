@@ -2,13 +2,18 @@
 //!
 //! The main interface to this library is the custom derive that generates modules from a GraphQL query and schema. See the docs for the [`GraphQLQuery`] trait for a full example.
 
-#![deny(warnings)]
 #![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+#![deny(warnings)]
 
-use serde;
+#[allow(unused_imports)]
 #[macro_use]
-extern crate serde_derive;
-pub use graphql_query_derive;
+extern crate graphql_query_derive;
+
+#[doc(hidden)]
+pub use graphql_query_derive::*;
+
+use serde::*;
 
 #[cfg(test)]
 use serde_json::json;
@@ -19,6 +24,8 @@ pub use graphql_query_derive::*;
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 
+doc_comment::doctest!("../../README.md");
+
 /// A convenience trait that can be used to build a GraphQL request body.
 ///
 /// This will be implemented for you by codegen in the normal case. It is implemented on the struct you place the derive on.
@@ -26,14 +33,8 @@ use std::fmt::{self, Display};
 /// Example:
 ///
 /// ```
-/// extern crate failure;
-/// #[macro_use]
-/// extern crate graphql_client;
-/// #[macro_use]
-/// extern crate serde_derive;
-/// #[macro_use]
-/// extern crate serde_json;
-/// extern crate serde;
+/// use graphql_client::*;
+/// use serde_json::json;
 ///
 /// #[derive(GraphQLQuery)]
 /// #[graphql(
@@ -127,12 +128,9 @@ impl Display for PathFragment {
 ///
 ///
 /// ```
-/// # extern crate failure;
-/// # #[macro_use]
-/// # extern crate serde_json;
-/// # extern crate graphql_client;
-/// # #[macro_use]
-/// # extern crate serde_derive;
+/// # use serde_json::json;
+/// # use serde::Deserialize;
+/// # use graphql_client::GraphQLQuery;
 /// #
 /// # #[derive(Debug, Deserialize, PartialEq)]
 /// # struct ResponseData {
@@ -236,12 +234,9 @@ impl Display for Error {
 /// [Spec](https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md)
 ///
 /// ```
-/// # extern crate failure;
-/// # #[macro_use]
-/// # extern crate serde_json;
-/// # extern crate graphql_client;
-/// # #[macro_use]
-/// # extern crate serde_derive;
+/// # use serde_json::json;
+/// # use serde::Deserialize;
+/// # use graphql_client::GraphQLQuery;
 /// #
 /// # #[derive(Debug, Deserialize, PartialEq)]
 /// # struct User {

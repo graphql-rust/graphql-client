@@ -4,8 +4,9 @@ use crate::query::QueryContext;
 use crate::selection::{Selection, SelectionField, SelectionFragmentSpread, SelectionItem};
 use crate::shared::*;
 use crate::unions::union_variants;
-use failure;
+use failure::*;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 use std::cell::Cell;
 use std::collections::HashSet;
 

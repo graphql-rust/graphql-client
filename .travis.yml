@@ -15,7 +15,7 @@ before_script:
   - if [ "$TRAVIS_RUST_VERSION" = "beta" ]; then (sudo apt-get update) fi
   - if [ "$TRAVIS_RUST_VERSION" = "beta" ]; then (sudo apt-get install -y nodejs) fi
   - if [ "$TRAVIS_RUST_VERSION" = "beta" ]; then (npm i -g prettier) fi
-  - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (rustup component add rustfmt-preview clippy-preview) fi
+  - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (rustup component add rustfmt clippy) fi
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (rustup target add wasm32-unknown-unknown) fi
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (cargo install -f wasm-bindgen-cli) fi
 script:
@@ -23,6 +23,6 @@ script:
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (cargo clippy -- -D warnings) fi
   - if [ "$TRAVIS_RUST_VERSION" = "beta" ]; then (prettier --debug-check -l './**/*.json' './**/*.graphql') fi
   - cargo test --all
-  # - cargo build --manifest-path=./examples/github/Cargo.toml
-  # - cargo build --manifest-path=./examples/web/Cargo.toml
+  - cargo build --manifest-path=./examples/github/Cargo.toml
+  - cargo build --manifest-path=./examples/web/Cargo.toml
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (xvfb-run cargo test --manifest-path=./graphql_client_web/Cargo.toml --target wasm32-unknown-unknown) fi

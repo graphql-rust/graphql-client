@@ -3,9 +3,10 @@ use crate::operations::Operation;
 use crate::query::QueryContext;
 use crate::schema;
 use crate::selection::Selection;
-use failure;
+use failure::*;
 use graphql_parser::query;
 use proc_macro2::TokenStream;
+use quote::*;
 
 /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'query>(
@@ -17,7 +18,7 @@ pub(crate) fn select_operation<'query>(
     operations
         .iter()
         .find(|op| op.name == struct_name)
-        .map(|i| i.to_owned())
+        .map(ToOwned::to_owned)
 }
 
 pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation<'_>> {
@@ -147,7 +148,7 @@ pub(crate) fn response_for_query(
     let response_derives = context.response_derives();
 
     Ok(quote! {
-        use serde_derive::*;
+        use serde::{Serialize, Deserialize};
 
         #[allow(dead_code)]
         type Boolean = bool;
