@@ -1,9 +1,10 @@
 use futures::Future;
-use graphql_client_web::*;
+use graphql_client::GraphQLQuery;
 use lazy_static::*;
 use std::cell::RefCell;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 #[derive(GraphQLQuery)]
@@ -23,7 +24,7 @@ lazy_static! {
 }
 
 fn load_more() -> impl Future<Item = JsValue, Error = JsValue> {
-    let client = graphql_client_web::Client::new("https://www.graphqlhub.com/graphql");
+    let client = graphql_client::web::Client::new("https://www.graphqlhub.com/graphql");
     let variables = puppy_smiles::Variables {
         after: LAST_ENTRY
             .lock()
@@ -63,7 +64,10 @@ fn add_load_more_button() {
     );
     btn.add_event_listener_with_callback(
         "click",
-        js_sys::Function::try_from(&on_click.as_ref()).expect("on click is not a Function"),
+        &on_click
+            .as_ref()
+            .dyn_ref()
+            .expect("on click is not a Function"),
     )
     .expect("could not add event listener to load more button");
 
@@ -126,7 +130,7 @@ fn render_response(response: graphql_client_web::Response<puppy_smiles::Response
         .expect("could not append response");
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(start)]
 pub fn run() {
     log("Hello there");
     let message_area = document()

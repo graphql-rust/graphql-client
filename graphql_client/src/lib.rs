@@ -15,11 +15,8 @@ pub use graphql_query_derive::*;
 
 use serde::*;
 
-#[cfg(test)]
-use serde_json::json;
-
-#[doc(hidden)]
-pub use graphql_query_derive::*;
+#[cfg(feature = "web")]
+pub mod web;
 
 use std::collections::HashMap;
 use std::fmt::{self, Display};
@@ -289,6 +286,7 @@ pub struct Response<Data> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn graphql_error_works_with_just_message() {
