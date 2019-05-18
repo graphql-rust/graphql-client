@@ -49,15 +49,15 @@ fn load_more() -> impl Future<Item = JsValue, Error = JsValue> {
 
 fn document() -> web_sys::Document {
     web_sys::window()
-        .expect("no window")
+        .expect_throw("no window")
         .document()
-        .expect("no document")
+        .expect_throw("no document")
 }
 
 fn add_load_more_button() {
     let btn = document()
         .create_element("button")
-        .expect("could not create button");
+        .expect_throw("could not create button");
     btn.set_inner_html("I WANT MORE PUPPIES");
     let on_click = Closure::wrap(
         Box::new(move || future_to_promise(load_more())) as Box<FnMut() -> js_sys::Promise>
@@ -67,12 +67,13 @@ fn add_load_more_button() {
         &on_click
             .as_ref()
             .dyn_ref()
-            .expect("on click is not a Function"),
+            .expect_throw("on click is not a Function"),
     )
-    .expect("could not add event listener to load more button");
+    .expect_throw("could not add event listener to load more button");
 
-    let doc = document().body().expect("no body");
-    doc.append_child(&btn).expect("could not append button");
+    let doc = document().body().expect_throw("no body");
+    doc.append_child(&btn)
+        .expect_throw("could not append button");
 
     on_click.forget();
 }
@@ -82,27 +83,27 @@ fn render_response(response: graphql_client_web::Response<puppy_smiles::Response
 
     log(&format!("response body\n\n{:?}", response));
 
-    let parent = document().body().expect("no body");
+    let parent = document().body().expect_throw("no body");
 
     let json: graphql_client_web::Response<puppy_smiles::ResponseData> = response;
     let response = document()
         .create_element("div")
-        .expect("could not create div");
+        .expect_throw("could not create div");
     let mut inner_html = String::new();
     let listings = json
         .data
-        .expect("response data")
+        .expect_throw("response data")
         .reddit
-        .expect("reddit")
+        .expect_throw("reddit")
         .subreddit
-        .expect("puppy smiles subreddit")
+        .expect_throw("puppy smiles subreddit")
         .new_listings;
 
     let new_cursor: Option<String> = listings[listings.len() - 1]
         .as_ref()
         .map(|puppy| puppy.fullname_id.clone())
         .to_owned();
-    LAST_ENTRY.lock().unwrap().replace(new_cursor);
+    LAST_ENTRY.lock().unwrap_throw().replace(new_cursor);
 
     for puppy in &listings {
         if let Some(puppy) = puppy {
@@ -118,7 +119,7 @@ fn render_response(response: graphql_client_web::Response<puppy_smiles::Response
                     "#,
                 puppy.title, puppy.url, puppy.title
             )
-            .expect("write to string");
+            .expect_throw("write to string");
         }
     }
     response.set_inner_html(&format!(
@@ -127,7 +128,7 @@ fn render_response(response: graphql_client_web::Response<puppy_smiles::Response
     ));
     parent
         .append_child(&response)
-        .expect("could not append response");
+        .expect_throw("could not append response");
 }
 
 #[wasm_bindgen(start)]
@@ -135,12 +136,12 @@ pub fn run() {
     log("Hello there");
     let message_area = document()
         .create_element("div")
-        .expect("could not create div");
+        .expect_throw("could not create div");
     message_area.set_inner_html("<p>good morning</p>");
-    let parent = document().body().unwrap();
+    let parent = document().body().unwrap_throw();
     parent
         .append_child(&message_area)
-        .expect("could not append message area");
+        .expect_throw("could not append message area");
 
     load_more();
     add_load_more_button();
