@@ -8,7 +8,10 @@
 </head>
 
 <body>
-    <script src='./index.js'></script>
+    <script type="module">
+        import init from '/pkg/web.js';
+        init("/pkg/web_bg.wasm");
+    </script>
 </body>
 
 </html>

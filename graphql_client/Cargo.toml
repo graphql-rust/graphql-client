@@ -1,6 +1,6 @@
 [package]
 name = "graphql_client"
-version = "0.7.1"
+version = "0.8.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Typed GraphQL requests and responses"
 repository = "https://github.com/graphql-rust/graphql-client"
@@ -11,10 +11,54 @@ edition = "2018"
 
 [dependencies]
 failure = "0.1"
-graphql_query_derive = { path = "../graphql_query_derive", version = "0.7.1" }
+graphql_query_derive = { path = "../graphql_query_derive", version = "0.8.0" }
 serde = { version = "^1.0.78", features = ["derive"] }
 serde_json = "1.0"
 doc-comment = "0.3.1"
 
-[dev-dependencies]
-reqwest = "*"
+[dependencies.futures]
+version = "0.1"
+optional = true
+
+[dependencies.js-sys]
+version = "0.3.5"
+optional = true
+
+[dependencies.log]
+version = "0.4.6"
+optional = true
+
+[dependencies.web-sys]
+version = "0.3.2"
+optional = true
+features = [
+    "Headers",
+    "Request",
+    "RequestInit",
+    "Response",
+    "Window",
+]
+
+[dependencies.wasm-bindgen]
+version = "0.2.43"
+optional = true
+
+[dependencies.wasm-bindgen-futures]
+version = "0.3.2"
+optional = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies.reqwest]
+version = "*"
+
+[dev-dependencies.wasm-bindgen-test]
+version = "0.2.43"
+
+[features]
+web = [
+    "futures",
+    "js-sys",
+    "log",
+    "wasm-bindgen",
+    "wasm-bindgen-futures",
+    "web-sys",
+]

@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-This release sees the switch to the Rust 2018 edition - it is
-only compatible with Rust 1.31.0 and later.
+## 0.8.0 - 2019-05-24
+
+## Changed
+
+- (BREAKING) This release sees the switch to the Rust 2018 edition - it is only
+  compatible with Rust 1.31.0 and later. In particular, this changes how the
+  derive macro is imported. See the README for more details.
+- `graphql_client_web` is now deprecated. The browser client has been moved to
+  the `graphql_client` crate, under the `web` module. **It is only available
+  with the `web` feature enabled on the `wasm32-unknown-unknown` target.**
 
 ## 0.7.1
 

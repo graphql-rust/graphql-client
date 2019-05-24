@@ -1,6 +1,7 @@
+#![cfg(target_arch = "wasm32")]
+
 use futures::Future;
-use graphql_client_web::Client;
-use graphql_client_web::*;
+use graphql_client::{web::Client, GraphQLQuery};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_test::wasm_bindgen_test_configure;
 use wasm_bindgen_test::*;
@@ -9,6 +10,7 @@ wasm_bindgen_test_configure!(run_in_browser);
 
 #[wasm_bindgen_test]
 fn build_client() {
+    // just to test it doesn't crash
     Client::new("https://example.com/graphql");
     Client::new("/graphql");
 }
@@ -89,7 +91,7 @@ fn test_bad_url() -> impl Future<Item = (), Error = JsValue> {
         .map_err(|err| {
             assert_eq!(
                 err,
-                graphql_client_web::ClientError::Network(
+                graphql_client::web::ClientError::Network(
                     "NetworkError when attempting to fetch resource.".into()
                 )
             );
