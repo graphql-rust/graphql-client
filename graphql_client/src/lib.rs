@@ -21,6 +21,7 @@ pub mod web;
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 
+#[cfg(test)]
 doc_comment::doctest!("../../README.md");
 
 /// A convenience trait that can be used to build a GraphQL request body.
