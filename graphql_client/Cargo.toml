@@ -48,7 +48,7 @@ version = "0.3.2"
 optional = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies.reqwest]
-version = "*"
+version = "0.9.16"
 
 [dev-dependencies.wasm-bindgen-test]
 version = "0.2.43"
