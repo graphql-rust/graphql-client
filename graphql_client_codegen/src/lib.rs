@@ -113,7 +113,7 @@ pub fn generate_module_token_stream(
                             schema::ParsedSchema::GraphQLParser(s)
                         }
                         "json" => {
-                            let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = ::serde_json::from_str(&schema_string)?;
+                            let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string)?;
                             schema::ParsedSchema::Json(parsed)
                         }
                         extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
