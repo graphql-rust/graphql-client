@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## Added
+
+- The introspection query response shape internally
+  used by graphql-client is now its own crate,
+  `graphql-introspection-query`.
+
 ## 0.8.0 - 2019-05-24
 
 ## Changed
