@@ -1,8 +1,6 @@
 #![allow(non_camel_case_types)]
 
-use serde::*;
-
-type Boolean = bool;
+use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Clone, Debug)]
 pub enum __DirectiveLocation {
@@ -27,7 +25,7 @@ pub enum __DirectiveLocation {
     Other(String),
 }
 
-impl ::serde::Serialize for __DirectiveLocation {
+impl Serialize for __DirectiveLocation {
     fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.serialize_str(match *self {
             __DirectiveLocation::QUERY => "QUERY",
@@ -53,8 +51,8 @@ impl ::serde::Serialize for __DirectiveLocation {
     }
 }
 
-impl<'de> ::serde::Deserialize<'de> for __DirectiveLocation {
-    fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+impl<'de> Deserialize<'de> for __DirectiveLocation {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = <&'de str>::deserialize(deserializer)?;
         match s {
             "QUERY" => Ok(__DirectiveLocation::QUERY),
@@ -93,7 +91,7 @@ pub enum __TypeKind {
     Other(String),
 }
 
-impl ::serde::Serialize for __TypeKind {
+impl Serialize for __TypeKind {
     fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.serialize_str(match *self {
             __TypeKind::SCALAR => "SCALAR",
@@ -109,8 +107,8 @@ impl ::serde::Serialize for __TypeKind {
     }
 }
 
-impl<'de> ::serde::Deserialize<'de> for __TypeKind {
-    fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+impl<'de> Deserialize<'de> for __TypeKind {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = <&'de str>::deserialize(deserializer)?;
         match s {
             "SCALAR" => Ok(__TypeKind::SCALAR),
@@ -161,7 +159,7 @@ pub struct FullTypeFields {
     pub args: Option<Vec<Option<FullTypeFieldsArgs>>>,
     #[serde(rename = "type")]
     pub type_: Option<FullTypeFieldsType>,
-    pub is_deprecated: Option<Boolean>,
+    pub is_deprecated: Option<bool>,
     pub deprecation_reason: Option<String>,
 }
 
@@ -184,7 +182,7 @@ pub struct FullTypeInterfaces {
 pub struct FullTypeEnumValues {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub is_deprecated: Option<Boolean>,
+    pub is_deprecated: Option<bool>,
     pub deprecation_reason: Option<String>,
 }
 
