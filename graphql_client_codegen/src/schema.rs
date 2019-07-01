@@ -207,11 +207,15 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> fo
     }
 }
 
-impl<'schema> ::std::convert::From<&'schema crate::introspection_response::IntrospectionResponse>
-    for Schema<'schema>
+impl<'schema>
+    ::std::convert::From<
+        &'schema graphql_introspection_query::introspection_response::IntrospectionResponse,
+    > for Schema<'schema>
 {
-    fn from(src: &'schema crate::introspection_response::IntrospectionResponse) -> Self {
-        use crate::introspection_response::__TypeKind;
+    fn from(
+        src: &'schema graphql_introspection_query::introspection_response::IntrospectionResponse,
+    ) -> Self {
+        use graphql_introspection_query::introspection_response::__TypeKind;
 
         let mut schema = Schema::new();
         let root = src
@@ -373,7 +377,7 @@ impl<'schema> ::std::convert::From<&'schema crate::introspection_response::Intro
 
 pub(crate) enum ParsedSchema {
     GraphQLParser(graphql_parser::schema::Document),
-    Json(crate::introspection_response::IntrospectionResponse),
+    Json(graphql_introspection_query::introspection_response::IntrospectionResponse),
 }
 
 impl<'schema> From<&'schema ParsedSchema> for Schema<'schema> {
