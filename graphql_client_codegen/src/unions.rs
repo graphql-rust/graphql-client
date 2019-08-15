@@ -346,11 +346,11 @@ mod tests {
         assert_eq!(
             result.unwrap().to_string(),
             vec![
-                "# [ derive ( Deserialize ) ] ",
+                "# [ derive ( Debug , Deserialize ) ] ",
                 "pub struct MeowOnOrganization { pub title : String , } ",
-                "# [ derive ( Deserialize ) ] ",
+                "# [ derive ( Debug , Deserialize ) ] ",
                 "pub struct MeowOnUser { # [ serde ( rename = \"firstName\" ) ] pub first_name : String , } ",
-                "# [ derive ( Deserialize ) ] ",
+                "# [ derive ( Debug , Deserialize ) ] ",
                 "# [ serde ( tag = \"__typename\" ) ] ",
                 "pub enum Meow { Organization ( MeowOnOrganization ) , User ( MeowOnUser ) }",
             ].into_iter()

@@ -28,8 +28,8 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
             fragments: BTreeMap::new(),
             schema,
             deprecation_strategy,
-            variables_derives: vec![Ident::new("Serialize", Span::call_site())],
-            response_derives: vec![Ident::new("Deserialize", Span::call_site())],
+            variables_derives: vec![Ident::new("Serialize", Span::call_site()), Ident::new("Debug", Span::call_site())],
+            response_derives: vec![Ident::new("Deserialize", Span::call_site()), Ident::new("Debug", Span::call_site())],
         }
     }
 
@@ -47,8 +47,8 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
             fragments: BTreeMap::new(),
             schema,
             deprecation_strategy: DeprecationStrategy::Allow,
-            variables_derives: vec![Ident::new("Serialize", Span::call_site())],
-            response_derives: vec![Ident::new("Deserialize", Span::call_site())],
+            variables_derives: vec![Ident::new("Serialize", Span::call_site()), Ident::new("Debug", Span::call_site())],
+            response_derives: vec![Ident::new("Deserialize", Span::call_site()), Ident::new("Debug", Span::call_site())],
         }
     }
 
@@ -82,7 +82,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
         &mut self,
         attribute_value: &str,
     ) -> Result<(), failure::Error> {
-        if self.response_derives.len() > 1 {
+        if self.response_derives.len() > 2 {
             return Err(format_err!(
                 "ingest_additional_derives should only be called once"
             ));
@@ -156,7 +156,7 @@ mod tests {
 
         assert_eq!(
             context.response_derives().to_string(),
-            "# [ derive ( Deserialize , PartialEq , PartialOrd , Serialize ) ]"
+            "# [ derive ( Debug , Deserialize , PartialEq , PartialOrd , Serialize ) ]"
         );
     }
 
@@ -166,7 +166,7 @@ mod tests {
         let context = QueryContext::new_empty(&schema);
         assert_eq!(
             context.response_enum_derives().to_string(),
-            "# [ derive ( Eq , PartialEq ) ]"
+            "# [ derive ( Debug , Eq , PartialEq ) ]"
         );
     }
 
@@ -181,7 +181,7 @@ mod tests {
 
         assert_eq!(
             context.response_enum_derives().to_string(),
-            "# [ derive ( Eq , PartialEq , PartialOrd ) ]"
+            "# [ derive ( Debug , Eq , PartialEq , PartialOrd ) ]"
         );
     }
 
