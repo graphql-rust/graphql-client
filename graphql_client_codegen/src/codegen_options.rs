@@ -13,7 +13,6 @@ pub enum CodegenMode {
 }
 
 /// Used to configure code generation.
-#[derive(Debug)]
 pub struct GraphQLClientCodegenOptions {
     /// Which context is this code generation effort taking place.
     pub mode: CodegenMode,

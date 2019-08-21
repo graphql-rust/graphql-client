@@ -82,7 +82,6 @@ fn format(codes: &str) -> String {
     #[cfg(feature = "rustfmt")]
     {
         use rustfmt::{Config, Input, Session};
-        use std::default::Default;
 
         let mut config = Config::default();
 
