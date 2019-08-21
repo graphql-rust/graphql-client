@@ -1,4 +1,5 @@
 use crate::deprecation::DeprecationStrategy;
+use derivative::*;
 use proc_macro2::Ident;
 use std::path::{Path, PathBuf};
 use syn::Visibility;
@@ -13,7 +14,8 @@ pub enum CodegenMode {
 }
 
 /// Used to configure code generation.
-#[derive(Debug)]
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct GraphQLClientCodegenOptions {
     /// Which context is this code generation effort taking place.
     pub mode: CodegenMode,
@@ -28,6 +30,7 @@ pub struct GraphQLClientCodegenOptions {
     /// The deprecation strategy to adopt.
     deprecation_strategy: Option<DeprecationStrategy>,
     /// Target module visibility.
+    #[derivative(Debug = "ignore")]
     module_visibility: Option<Visibility>,
     /// A path to a file to include in the module to force Cargo to take into account changes in
     /// the query files when recompiling.
