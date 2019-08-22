@@ -13,11 +13,22 @@ pub(crate) fn select_operation<'query>(
     query: &'query query::Document,
     struct_name: &str,
 ) -> Option<Operation<'query>> {
+    use heck::CamelCase;
+
     let operations = all_operations(query);
 
     operations
         .iter()
         .find(|op| op.name == struct_name)
+        .or_else(|| {
+            if cfg!(feature = "normalize_query_types") {
+                operations
+                    .iter()
+                    .find(|op| op.name.to_camel_case() == struct_name)
+            } else {
+                None
+            }
+        })
         .map(ToOwned::to_owned)
 }
 

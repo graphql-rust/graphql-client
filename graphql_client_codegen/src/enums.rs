@@ -28,19 +28,37 @@ impl<'schema> GqlEnum<'schema> {
             .variants
             .iter()
             .map(|v| {
-                let name = Ident::new(&v.name, Span::call_site());
+                let name = v.name.to_string();
+                #[cfg(feature = "normalize_query_types")]
+                let name = {
+                    use heck::CamelCase;
+                    name.to_camel_case()
+                };
+                let name = Ident::new(&name, Span::call_site());
                 let description = &v.description;
                 let description = description.as_ref().map(|d| quote!(#[doc = #d]));
                 quote!(#description #name)
             })
             .collect();
         let variant_names = &variant_names;
-        let name_ident = Ident::new(&format!("{}{}", ENUMS_PREFIX, self.name), Span::call_site());
+        let name_ident = format!("{}{}", ENUMS_PREFIX, self.name);
+        #[cfg(feature = "normalize_query_types")]
+        let name_ident = {
+            use heck::CamelCase;
+            name_ident.to_camel_case()
+        };
+        let name_ident = Ident::new(&name_ident, Span::call_site());
         let constructors: Vec<_> = self
             .variants
             .iter()
             .map(|v| {
-                let v = Ident::new(&v.name, Span::call_site());
+                let v = v.name.to_string();
+                #[cfg(feature = "normalize_query_types")]
+                let v = {
+                    use heck::CamelCase;
+                    v.to_camel_case()
+                };
+                let v = Ident::new(&v, Span::call_site());
                 quote!(#name_ident::#v)
             })
             .collect();

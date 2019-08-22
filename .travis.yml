@@ -25,4 +25,5 @@ script:
   - cargo test --all
   - cargo build --manifest-path=./examples/github/Cargo.toml
   - cargo build --manifest-path=./examples/web/Cargo.toml
+  - cargo build --manifest-path=./examples/hasura/Cargo.toml
   - if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then (xvfb-run cargo test --manifest-path=./graphql_client/Cargo.toml --features="web" --target wasm32-unknown-unknown) fi

@@ -69,7 +69,14 @@ impl<'schema> GqlInput<'schema> {
         &self,
         context: &QueryContext<'_, '_>,
     ) -> Result<TokenStream, failure::Error> {
-        let name = Ident::new(&self.name, Span::call_site());
+        let name = self.name;
+        #[cfg(feature = "normalize_query_types")]
+        let name = {
+            use heck::CamelCase;
+
+            name.to_camel_case()
+        };
+        let name = Ident::new(&name, Span::call_site());
         let mut fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {

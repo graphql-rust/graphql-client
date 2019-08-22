@@ -46,6 +46,16 @@ impl<'a> FieldType<'a> {
                     }
                     prefix.to_string()
                 };
+
+                #[cfg(feature = "normalize_query_types")]
+                let full_name = if full_name == "ID" || full_name.starts_with("__") {
+                    full_name
+                } else {
+                    use heck::CamelCase;
+
+                    full_name.to_camel_case()
+                };
+
                 let full_name = Ident::new(&full_name, Span::call_site());
 
                 quote!(#full_name)
