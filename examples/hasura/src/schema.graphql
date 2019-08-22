@@ -1,0 +1,349 @@
+schema {
+  query: query_root
+  mutation: mutation_root
+  subscription: subscription_root
+}
+
+scalar bpchar
+
+# expression to compare columns of type bpchar. All fields are combined with logical 'AND'.
+input bpchar_comparison_exp {
+  _eq: bpchar
+  _gt: bpchar
+  _gte: bpchar
+  _in: [bpchar!]
+  _is_null: Boolean
+  _lt: bpchar
+  _lte: bpchar
+  _neq: bpchar
+  _nin: [bpchar!]
+}
+
+# conflict action
+enum conflict_action {
+  # ignore the insert on this row
+  ignore
+
+  # update the row with the given values
+  update
+}
+
+# columns and relationships of "issues"
+type issues {
+  id: bpchar!
+  name: String!
+  salesforce_updated_at: timestamptz!
+  status: String!
+}
+
+# aggregated selection of "issues"
+type issues_aggregate {
+  aggregate: issues_aggregate_fields
+  nodes: [issues!]!
+}
+
+# aggregate fields of "issues"
+type issues_aggregate_fields {
+  count(columns: [issues_select_column!], distinct: Boolean): Int
+  max: issues_max_fields
+  min: issues_min_fields
+}
+
+# order by aggregate values of table "issues"
+input issues_aggregate_order_by {
+  count: order_by
+  max: issues_max_order_by
+  min: issues_min_order_by
+}
+
+# input type for inserting array relation for remote table "issues"
+input issues_arr_rel_insert_input {
+  data: [issues_insert_input!]!
+  on_conflict: issues_on_conflict
+}
+
+# Boolean expression to filter rows from the table "issues". All fields are combined with a logical 'AND'.
+input issues_bool_exp {
+  _and: [issues_bool_exp]
+  _not: issues_bool_exp
+  _or: [issues_bool_exp]
+  id: bpchar_comparison_exp
+  name: text_comparison_exp
+  salesforce_updated_at: timestamptz_comparison_exp
+  status: text_comparison_exp
+}
+
+# unique or primary key constraints on table "issues"
+enum issues_constraint {
+  # unique or primary key constraint
+  issues_pkey
+}
+
+# input type for inserting data into table "issues"
+input issues_insert_input {
+  id: bpchar
+  name: String
+  salesforce_updated_at: timestamptz
+  status: String
+}
+
+# aggregate max on columns
+type issues_max_fields {
+  name: String
+  salesforce_updated_at: timestamptz
+  status: String
+}
+
+# order by max() on columns of table "issues"
+input issues_max_order_by {
+  name: order_by
+  salesforce_updated_at: order_by
+  status: order_by
+}
+
+# aggregate min on columns
+type issues_min_fields {
+  name: String
+  salesforce_updated_at: timestamptz
+  status: String
+}
+
+# order by min() on columns of table "issues"
+input issues_min_order_by {
+  name: order_by
+  salesforce_updated_at: order_by
+  status: order_by
+}
+
+# response of any mutation on the table "issues"
+type issues_mutation_response {
+  # number of affected rows by the mutation
+  affected_rows: Int!
+
+  # data of the affected rows by the mutation
+  returning: [issues!]!
+}
+
+# input type for inserting object relation for remote table "issues"
+input issues_obj_rel_insert_input {
+  data: issues_insert_input!
+  on_conflict: issues_on_conflict
+}
+
+# on conflict condition type for table "issues"
+input issues_on_conflict {
+  constraint: issues_constraint!
+  update_columns: [issues_update_column!]!
+}
+
+# ordering options when selecting data from "issues"
+input issues_order_by {
+  id: order_by
+  name: order_by
+  salesforce_updated_at: order_by
+  status: order_by
+}
+
+# select columns of table "issues"
+enum issues_select_column {
+  # column name
+  id
+
+  # column name
+  name
+
+  # column name
+  salesforce_updated_at
+
+  # column name
+  status
+}
+
+# input type for updating data in table "issues"
+input issues_set_input {
+  id: bpchar
+  name: String
+  salesforce_updated_at: timestamptz
+  status: String
+}
+
+# update columns of table "issues"
+enum issues_update_column {
+  # column name
+  id
+
+  # column name
+  name
+
+  # column name
+  salesforce_updated_at
+
+  # column name
+  status
+}
+
+# mutation root
+type mutation_root {
+  # delete data from the table: "issues"
+  delete_issues(
+    # filter the rows which have to be deleted
+    where: issues_bool_exp!
+  ): issues_mutation_response
+
+  # insert data into the table: "issues"
+  insert_issues(
+    # the rows to be inserted
+    objects: [issues_insert_input!]!
+
+    # on conflict condition
+    on_conflict: issues_on_conflict
+  ): issues_mutation_response
+
+  # update data of the table: "issues"
+  update_issues(
+    # sets the columns of the filtered rows to the given values
+    _set: issues_set_input
+
+    # filter the rows which have to be updated
+    where: issues_bool_exp!
+  ): issues_mutation_response
+}
+
+# column ordering options
+enum order_by {
+  # in the ascending order, nulls last
+  asc
+
+  # in the ascending order, nulls first
+  asc_nulls_first
+
+  # in the ascending order, nulls last
+  asc_nulls_last
+
+  # in the descending order, nulls first
+  desc
+
+  # in the descending order, nulls first
+  desc_nulls_first
+
+  # in the descending order, nulls last
+  desc_nulls_last
+}
+
+# query root
+type query_root {
+  # fetch data from the table: "issues"
+  issues(
+    # distinct select on columns
+    distinct_on: [issues_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [issues_order_by!]
+
+    # filter the rows returned
+    where: issues_bool_exp
+  ): [issues!]!
+
+  # fetch aggregated fields from the table: "issues"
+  issues_aggregate(
+    # distinct select on columns
+    distinct_on: [issues_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [issues_order_by!]
+
+    # filter the rows returned
+    where: issues_bool_exp
+  ): issues_aggregate!
+
+  # fetch data from the table: "issues" using primary key columns
+  issues_by_pk(id: bpchar!): issues
+}
+
+# subscription root
+type subscription_root {
+  # fetch data from the table: "issues"
+  issues(
+    # distinct select on columns
+    distinct_on: [issues_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [issues_order_by!]
+
+    # filter the rows returned
+    where: issues_bool_exp
+  ): [issues!]!
+
+  # fetch aggregated fields from the table: "issues"
+  issues_aggregate(
+    # distinct select on columns
+    distinct_on: [issues_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [issues_order_by!]
+
+    # filter the rows returned
+    where: issues_bool_exp
+  ): issues_aggregate!
+
+  # fetch data from the table: "issues" using primary key columns
+  issues_by_pk(id: bpchar!): issues
+}
+
+# expression to compare columns of type text. All fields are combined with logical 'AND'.
+input text_comparison_exp {
+  _eq: String
+  _gt: String
+  _gte: String
+  _ilike: String
+  _in: [String!]
+  _is_null: Boolean
+  _like: String
+  _lt: String
+  _lte: String
+  _neq: String
+  _nilike: String
+  _nin: [String!]
+  _nlike: String
+  _nsimilar: String
+  _similar: String
+}
+
+scalar timestamptz
+
+# expression to compare columns of type timestamptz. All fields are combined with logical 'AND'.
+input timestamptz_comparison_exp {
+  _eq: timestamptz
+  _gt: timestamptz
+  _gte: timestamptz
+  _in: [timestamptz!]
+  _is_null: Boolean
+  _lt: timestamptz
+  _lte: timestamptz
+  _neq: timestamptz
+  _nin: [timestamptz!]
+}

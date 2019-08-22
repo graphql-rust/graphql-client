@@ -78,8 +78,18 @@ impl<'a> FieldType<'a> {
             }
         };
 
-        let rust_safe_field_name = crate::shared::keyword_replace(&full_name);
-        let full_name = Ident::new(&rust_safe_field_name, Span::call_site());
+        let full_name = crate::shared::keyword_replace(&full_name);
+
+        #[cfg(feature = "normalize_query_types")]
+        let full_name = if full_name == "ID" || full_name.starts_with("__") {
+            full_name
+        } else {
+            use heck::CamelCase;
+
+            full_name.to_camel_case()
+        };
+
+        let full_name = Ident::new(&full_name, Span::call_site());
         let mut qualified = quote!(#full_name);
 
         let mut non_null = false;

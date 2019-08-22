@@ -12,8 +12,17 @@ impl<'schema> Scalar<'schema> {
     // TODO: do something smarter here
     pub fn to_rust(&self) -> proc_macro2::TokenStream {
         use proc_macro2::{Ident, Span};
-        let ident = Ident::new(&self.name, Span::call_site());
-        let description = self.description.map(|d| quote!(#[doc = #d]));
+
+        let name = self.name;
+        #[cfg(feature = "normalize_query_types")]
+        let name = {
+            use heck::CamelCase;
+
+            name.to_camel_case()
+        };
+        let ident = Ident::new(&name, Span::call_site());
+        let description = &self.description.map(|d| quote!(#[doc = #d]));
+
         quote!(#description type #ident = super::#ident;)
     }
 }

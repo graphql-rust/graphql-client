@@ -84,9 +84,15 @@ impl<'schema> GqlInput<'schema> {
             };
 
             context.schema.require(&field.type_.inner_name_str());
-            let rust_safe_field_name = crate::shared::keyword_replace(&field.name.to_snake_case());
-            let rename = crate::shared::field_rename_annotation(&field.name, &rust_safe_field_name);
-            let name = Ident::new(&rust_safe_field_name, Span::call_site());
+            let name = crate::shared::keyword_replace(&field.name.to_snake_case());
+            let rename = crate::shared::field_rename_annotation(&field.name, &name);
+            #[cfg(feature = "normalize_query_types")]
+            let name = {
+                use heck::CamelCase;
+
+                name.to_camel_case()
+            };
+            let name = Ident::new(&name, Span::call_site());
 
             quote!(#rename pub #name: #ty)
         });
@@ -94,8 +100,14 @@ impl<'schema> GqlInput<'schema> {
 
         // Prevent generated code like "pub struct crate" for a schema input like "input crate { ... }"
         // This works in tandem with renamed struct Variables field types, eg: pub struct Variables { pub criteria : crate_ , }
-        let rust_safe_field_name = crate::shared::keyword_replace(&self.name);
-        let name = Ident::new(&rust_safe_field_name, Span::call_site());
+        let name = crate::shared::keyword_replace(&self.name);
+        #[cfg(feature = "normalize_query_types")]
+        let name = {
+            use heck::CamelCase;
+
+            name.to_camel_case()
+        };
+        let name = Ident::new(&name, Span::call_site());
         Ok(quote! {
             #variables_derives
             pub struct #name {

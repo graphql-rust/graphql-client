@@ -15,3 +15,6 @@ failure = "^0.1"
 syn = { version = "^1.0", features = ["extra-traits"] }
 proc-macro2 = { version = "^1.0", features = [] }
 graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.8.0" }
+
+[features]
+normalize_query_types = [ "graphql_client_codegen/normalize_query_types" ]

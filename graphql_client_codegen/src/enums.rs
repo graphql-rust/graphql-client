@@ -35,21 +35,40 @@ impl<'schema> GqlEnum<'schema> {
             .variants
             .iter()
             .map(|v| {
-                let rust_safe_field_name = crate::shared::keyword_replace(&v.name);
-                let name = Ident::new(&rust_safe_field_name, Span::call_site());
+                let name = crate::shared::keyword_replace(&v.name);
+                #[cfg(feature = "normalize_query_types")]
+                let name = {
+                    use heck::CamelCase;
+                    name.to_camel_case()
+                };
+                let name = Ident::new(&name, Span::call_site());
+
                 let description = &v.description;
                 let description = description.as_ref().map(|d| quote!(#[doc = #d]));
+
                 quote!(#description #name)
             })
             .collect();
         let variant_names = &variant_names;
-        let name_ident = Ident::new(&format!("{}{}", ENUMS_PREFIX, self.name), Span::call_site());
+        let name_ident = format!("{}{}", ENUMS_PREFIX, self.name);
+        #[cfg(feature = "normalize_query_types")]
+        let name_ident = {
+            use heck::CamelCase;
+            name_ident.to_camel_case()
+        };
+        let name_ident = Ident::new(&name_ident, Span::call_site());
         let constructors: Vec<_> = self
             .variants
             .iter()
             .map(|v| {
-                let rust_safe_field_name = crate::shared::keyword_replace(&v.name);
-                let v = Ident::new(&rust_safe_field_name, Span::call_site());
+                let name = crate::shared::keyword_replace(&v.name);
+                #[cfg(feature = "normalize_query_types")]
+                let name = {
+                    use heck::CamelCase;
+                    name.to_camel_case()
+                };
+                let v = Ident::new(&name, Span::call_site());
+
                 quote!(#name_ident::#v)
             })
             .collect();
