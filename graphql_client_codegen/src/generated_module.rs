@@ -28,7 +28,7 @@ impl<'a> GeneratedModule<'a> {
         let module_name = Ident::new(&self.operation.name.to_snake_case(), Span::call_site());
         let module_visibility = &self.options.module_visibility();
         let operation_name_literal = &self.operation.name;
-        let operation_name_ident = Ident::new(&self.operation.name, Span::call_site());
+        let operation_name_ident = Ident::new(&self.operation.name.to_camel_case(), Span::call_site());
 
         // Force cargo to refresh the generated code when the query file changes.
         let query_include = self
@@ -52,6 +52,7 @@ impl<'a> GeneratedModule<'a> {
         };
 
         Ok(quote!(
+            #[allow(dead_code)]
             #struct_declaration
 
             #module_visibility mod #module_name {
