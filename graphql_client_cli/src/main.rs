@@ -36,7 +36,7 @@ enum Cli {
         /// Path to the GraphQL query file.
         query_path: PathBuf,
         /// Name of target query. If you don't set this parameter, cli generate all queries in query file.
-        #[structopt(short = "o", long = "selected-operation")]
+        #[structopt(long = "selected-operation")]
         selected_operation: Option<String>,
         /// Additional derives that will be added to the generated structs and enums for the response and the variables.
         /// --additional-derives='Serialize,PartialEq'
@@ -59,7 +59,7 @@ enum Cli {
         ///
         /// If this option is omitted, the code will be generated next to the .graphql
         /// file, with the same name and the .rs extension.
-        #[structopt(short = "out", long = "output-directory")]
+        #[structopt(short = "o", long = "output-directory")]
         output_directory: Option<PathBuf>,
     },
 }
