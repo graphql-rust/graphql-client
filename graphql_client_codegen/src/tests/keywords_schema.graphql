@@ -1,0 +1,52 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+"""This directive allows results to be deferred during execution"""
+directive @defer on FIELD
+
+"""The top-level Query type."""
+type Query {
+  """Keyword type"""
+  search: Self
+}
+
+"""Keyword type"""
+type Self {
+  """
+  A keyword variable name with a keyword-named input type
+  """
+  transactions(struct: extern!): Result
+}
+
+"""Keyword type"""
+type Result {
+  """Keyword field."""
+  for: String
+  """dummy field with enum"""
+  status: AnEnum
+}
+
+
+"""Keyword input"""
+input extern {
+  """A field"""
+  id: crate
+}
+
+"""Input fields for searching for specific values."""
+input crate {
+  """Keyword field."""
+  enum: String
+
+  """Keyword field."""
+  in: [String!]
+}
+
+
+"""Enum with keywords"""
+enum AnEnum {
+  where
+  self
+}

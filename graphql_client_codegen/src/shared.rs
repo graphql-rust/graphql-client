@@ -7,6 +7,76 @@ use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
+// List of keywords based on https://doc.rust-lang.org/grammar.html#keywords
+const RUST_KEYWORDS: &'static [&'static str] = &[
+    "abstract",
+    "alignof",
+    "as",
+    "async",
+    "await",
+    "become",
+    "box",
+    "break",
+    "const",
+    "continue",
+    "crate",
+    "do",
+    "else",
+    "enum",
+    "extern crate",
+    "extern",
+    "false",
+    "final",
+    "fn",
+    "for",
+    "for",
+    "if let",
+    "if",
+    "if",
+    "impl",
+    "impl",
+    "in",
+    "let",
+    "loop",
+    "macro",
+    "match",
+    "mod",
+    "move",
+    "mut",
+    "offsetof",
+    "override",
+    "priv",
+    "proc",
+    "pub",
+    "pure",
+    "ref",
+    "return",
+    "self",
+    "sizeof",
+    "static",
+    "struct",
+    "super",
+    "trait",
+    "true",
+    "type",
+    "typeof",
+    "unsafe",
+    "unsized",
+    "use",
+    "use",
+    "virtual",
+    "where",
+    "while",
+    "yield",
+];
+
+pub(crate) fn keyword_replace(needle: &str) -> String {
+    match RUST_KEYWORDS.binary_search(&needle) {
+        Ok(index) => [RUST_KEYWORDS[index], "_"].concat(),
+        Err(_) => needle.to_owned(),
+    }
+}
+
 pub(crate) fn render_object_field(
     field_name: &str,
     field_type: &TokenStream,
@@ -35,29 +105,9 @@ pub(crate) fn render_object_field(
     };
 
     let description = description.map(|s| quote!(#[doc = #s]));
-
-    // List of keywords based on https://doc.rust-lang.org/grammar.html#keywords
-    let reserved = &[
-        "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate", "do",
-        "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop",
-        "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv", "proc", "pub",
-        "pure", "ref", "return", "Self", "self", "sizeof", "static", "struct", "super", "trait",
-        "true", "type", "typeof", "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
-    ];
-
-    if reserved.contains(&field_name) {
-        let name_ident = Ident::new(&format!("{}_", field_name), Span::call_site());
-        return Some(quote! {
-            #description
-            #deprecation
-            #[serde(rename = #field_name)]
-            pub #name_ident: #field_type
-        });
-    }
-
-    let snake_case_name = field_name.to_snake_case();
-    let rename = crate::shared::field_rename_annotation(&field_name, &snake_case_name);
-    let name_ident = Ident::new(&snake_case_name, Span::call_site());
+    let rust_safe_field_name = keyword_replace(&field_name.to_snake_case());
+    let name_ident = Ident::new(&rust_safe_field_name, Span::call_site());
+    let rename = crate::shared::field_rename_annotation(&field_name, &rust_safe_field_name);
 
     Some(quote!(#description #deprecation #rename pub #name_ident: #field_type))
 }
@@ -177,5 +227,16 @@ pub(crate) fn field_rename_annotation(graphql_name: &str, rust_name: &str) -> Op
         Some(quote!(#[serde(rename = #graphql_name)]))
     } else {
         None
+    }
+}
+
+mod tests {
+    #[test]
+    fn keyword_replace() {
+        use super::keyword_replace;
+        assert_eq!("fora", keyword_replace("fora"));
+        assert_eq!("in_", keyword_replace("in"));
+        assert_eq!("fn_", keyword_replace("fn"));
+        assert_eq!("struct_", keyword_replace("struct"));
     }
 }

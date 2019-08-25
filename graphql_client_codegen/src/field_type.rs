@@ -78,7 +78,8 @@ impl<'a> FieldType<'a> {
             }
         };
 
-        let full_name = Ident::new(&full_name, Span::call_site());
+        let rust_safe_field_name = crate::shared::keyword_replace(&full_name);
+        let full_name = Ident::new(&rust_safe_field_name, Span::call_site());
         let mut qualified = quote!(#full_name);
 
         let mut non_null = false;

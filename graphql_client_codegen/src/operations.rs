@@ -55,11 +55,12 @@ impl<'query> Operation<'query> {
         }
 
         let fields = variables.iter().map(|variable| {
-            let name = &variable.name;
             let ty = variable.ty.to_rust(context, "");
-            let snake_case_name = name.to_snake_case();
-            let rename = crate::shared::field_rename_annotation(&name, &snake_case_name);
-            let name = Ident::new(&snake_case_name, Span::call_site());
+            let rust_safe_field_name =
+                crate::shared::keyword_replace(&variable.name.to_snake_case());
+            let rename =
+                crate::shared::field_rename_annotation(&variable.name, &rust_safe_field_name);
+            let name = Ident::new(&rust_safe_field_name, Span::call_site());
 
             quote!(#rename pub #name: #ty)
         });
