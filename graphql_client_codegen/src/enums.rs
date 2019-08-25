@@ -19,6 +19,13 @@ pub struct GqlEnum<'schema> {
 }
 
 impl<'schema> GqlEnum<'schema> {
+    /**
+     * About rust keyword escaping: variant_names and constructors must be escaped,
+     * variant_str not.
+     * Example schema:                  enum AnEnum { where \n self }
+     * Generated "variant_names" enum:  pub enum AnEnum { where_, self_, Other(String), }
+     * Generated serialize line: "AnEnum::where_ => "where","
+     */
     pub(crate) fn to_rust(
         &self,
         query_context: &crate::query::QueryContext<'_, '_>,
@@ -28,7 +35,8 @@ impl<'schema> GqlEnum<'schema> {
             .variants
             .iter()
             .map(|v| {
-                let name = Ident::new(&v.name, Span::call_site());
+                let rust_safe_field_name = crate::shared::keyword_replace(&v.name);
+                let name = Ident::new(&rust_safe_field_name, Span::call_site());
                 let description = &v.description;
                 let description = description.as_ref().map(|d| quote!(#[doc = #d]));
                 quote!(#description #name)
@@ -40,7 +48,8 @@ impl<'schema> GqlEnum<'schema> {
             .variants
             .iter()
             .map(|v| {
-                let v = Ident::new(&v.name, Span::call_site());
+                let rust_safe_field_name = crate::shared::keyword_replace(&v.name);
+                let v = Ident::new(&rust_safe_field_name, Span::call_site());
                 quote!(#name_ident::#v)
             })
             .collect();

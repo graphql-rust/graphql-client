@@ -1,0 +1,7 @@
+query searchQuery($criteria: extern!) {
+  search {
+    transactions(criteria:$searchID) {
+      for,status
+    }
+  }
+}

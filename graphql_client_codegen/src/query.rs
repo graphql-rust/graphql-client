@@ -115,7 +115,6 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     pub(crate) fn response_derives(&self) -> TokenStream {
         let derives: BTreeSet<&Ident> = self.response_derives.iter().collect();
         let derives = derives.iter();
-
         quote! {
             #[derive( #(#derives),* )]
         }
@@ -130,8 +129,9 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
             .response_derives
             .iter()
             .filter(|derive| {
-                !derive.to_string().contains("erialize")
-                    && !derive.to_string().contains("Deserialize")
+                // Do not apply the "Default" derive to enums.
+                let derive = derive.to_string();
+                derive != "Serialize" && derive != "Deserialize" && derive != "Default"
             })
             .collect();
         enum_derives.extend(always_derives.iter());

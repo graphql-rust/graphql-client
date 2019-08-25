@@ -69,7 +69,6 @@ impl<'schema> GqlInput<'schema> {
         &self,
         context: &QueryContext<'_, '_>,
     ) -> Result<TokenStream, failure::Error> {
-        let name = Ident::new(&self.name, Span::call_site());
         let mut fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
@@ -87,15 +86,18 @@ impl<'schema> GqlInput<'schema> {
             };
 
             context.schema.require(&field.type_.inner_name_str());
-            let original_name = &field.name;
-            let snake_case_name = field.name.to_snake_case();
-            let rename = crate::shared::field_rename_annotation(&original_name, &snake_case_name);
-            let name = Ident::new(&snake_case_name, Span::call_site());
+            let rust_safe_field_name = crate::shared::keyword_replace(&field.name.to_snake_case());
+            let rename = crate::shared::field_rename_annotation(&field.name, &rust_safe_field_name);
+            let name = Ident::new(&rust_safe_field_name, Span::call_site());
 
             quote!(#rename pub #name: #ty)
         });
         let variables_derives = context.variables_derives();
 
+        // Prevent generated code like "pub struct crate" for a schema input like "input crate { ... }"
+        // This works in tandem with renamed struct Variables field types, eg: pub struct Variables { pub criteria : crate_ , }
+        let rust_safe_field_name = crate::shared::keyword_replace(&self.name);
+        let name = Ident::new(&rust_safe_field_name, Span::call_site());
         Ok(quote! {
             #variables_derives
             pub struct #name {
