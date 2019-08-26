@@ -58,14 +58,14 @@ fn recursive_input_objects_can_be_constructed() {
 
     RecursiveInput {
         head: "hello".to_string(),
-        tail: Box::new(None),
+        tail: None,
     };
 
     RecursiveInput {
         head: "hi".to_string(),
-        tail: Box::new(Some(RecursiveInput {
+        tail: Some(Box::new(RecursiveInput {
             head: "this is crazy".to_string(),
-            tail: Box::new(None),
+            tail: None,
         })),
     };
 }
@@ -84,14 +84,14 @@ fn indirectly_recursive_input_objects_can_be_constructed() {
 
     IndirectlyRecursiveInput {
         head: "hello".to_string(),
-        tail: Box::new(None),
+        tail: None,
     };
 
     IndirectlyRecursiveInput {
         head: "hi".to_string(),
-        tail: Box::new(Some(IndirectlyRecursiveInputTailPart {
+        tail: Some(Box::new(IndirectlyRecursiveInputTailPart {
             name: "this is crazy".to_string(),
-            recursed_field: Box::new(None),
+            recursed_field: None,
         })),
     };
 }

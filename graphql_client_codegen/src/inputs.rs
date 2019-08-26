@@ -65,33 +65,74 @@ impl<'schema> GqlInput<'schema> {
         self.contains_type_without_indirection(context, &self.name)
     }
 
+    fn map_field(
+        &self,
+        context: &QueryContext<'_, '_>,
+        field: &GqlObjectField<'_>,
+        required_fields: &mut Vec<TokenStream>,
+        struct_field_assignments: &mut Vec<TokenStream>,
+    ) -> TokenStream {
+        let is_recursive =
+            if let Some(input) = context.schema.inputs.get(field.type_.inner_name_str()) {
+                input.is_recursive_without_indirection(context)
+            } else {
+                false
+            };
+
+        // If the type is recursive, we have to box it
+        let ty = if is_recursive {
+            match &field.type_ {
+                // If it's an optional field: Wrap the boxed inner type in an Option
+                crate::field_type::FieldType::Optional(inner) => {
+                    let ty = inner.to_rust(&context, "");
+                    quote! { Option<Box<#ty>> }
+                }
+                _ => {
+                    let ty = field.type_.to_rust(&context, "");
+                    quote! { Box<#ty> }
+                }
+            }
+        } else {
+            let ty = field.type_.to_rust(&context, "");
+            quote!(#ty)
+        };
+
+        context.schema.require(&field.type_.inner_name_str());
+        let rust_safe_field_name = crate::shared::keyword_replace(&field.name.to_snake_case());
+        let rename = crate::shared::field_rename_annotation(&field.name, &rust_safe_field_name);
+        let name = Ident::new(&rust_safe_field_name, Span::call_site());
+
+        match &field.type_ {
+            crate::field_type::FieldType::Optional(_) => {
+                struct_field_assignments.push(quote!(#name: None));
+            }
+            _ => {
+                required_fields.push(quote!(#name: #ty));
+                struct_field_assignments.push(quote!(#name: #name));
+            }
+        };
+        quote!(#rename pub #name: #ty)
+    }
+
     pub(crate) fn to_rust(
         &self,
         context: &QueryContext<'_, '_>,
     ) -> Result<TokenStream, failure::Error> {
-        let mut fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
-        fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
-        let fields = fields.iter().map(|field| {
-            let ty = field.type_.to_rust(&context, "");
+        let mut obj_fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
+        obj_fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
 
-            // If the type is recursive, we have to box it
-            let ty = if let Some(input) = context.schema.inputs.get(field.type_.inner_name_str()) {
-                if input.is_recursive_without_indirection(context) {
-                    quote! { Box<#ty> }
-                } else {
-                    quote!(#ty)
-                }
-            } else {
-                quote!(#ty)
-            };
+        let mut fields: Vec<TokenStream> = vec![];
+        let mut required_fields: Vec<TokenStream> = vec![];
+        let mut struct_field_assignments: Vec<TokenStream> = vec![];
 
-            context.schema.require(&field.type_.inner_name_str());
-            let rust_safe_field_name = crate::shared::keyword_replace(&field.name.to_snake_case());
-            let rename = crate::shared::field_rename_annotation(&field.name, &rust_safe_field_name);
-            let name = Ident::new(&rust_safe_field_name, Span::call_site());
-
-            quote!(#rename pub #name: #ty)
-        });
+        for field in obj_fields.iter() {
+            fields.push(self.map_field(
+                context,
+                field,
+                &mut required_fields,
+                &mut struct_field_assignments,
+            ));
+        }
         let variables_derives = context.variables_derives();
 
         // Prevent generated code like "pub struct crate" for a schema input like "input crate { ... }"
@@ -102,6 +143,13 @@ impl<'schema> GqlInput<'schema> {
             #variables_derives
             pub struct #name {
                 #(#fields,)*
+            }
+            impl #name {
+                pub fn new(#(#required_fields),*) -> Self {
+                    Self {
+                        #(#struct_field_assignments,)*
+                    }
+                }
             }
         })
     }
@@ -228,7 +276,8 @@ mod tests {
             "# [ serde ( rename = \"pawsCount\" ) ] ",
             "pub paws_count : Float , ",
             "pub requirements : Option < CatRequirements > , ",
-            "}",
+            "} ",
+            "impl Cat { pub fn new ( offsprings : Vec < Cat > , paws_count : Float ) -> Self { Self { offsprings : offsprings , paws_count : paws_count , requirements : None , } } }"
         ]
         .into_iter()
         .collect();
