@@ -91,6 +91,7 @@ mod tests {
 pub(crate) fn render_object_field(
     field_name: &str,
     field_type: &TokenStream,
+    field_is_optional: bool,
     description: Option<&str>,
     status: &DeprecationStatus,
     strategy: &DeprecationStrategy,
@@ -119,7 +120,14 @@ pub(crate) fn render_object_field(
 
     let rust_safe_field_name = keyword_replace(&field_name.to_snake_case());
     let name_ident = Ident::new(&rust_safe_field_name, Span::call_site());
-    let rename = crate::shared::field_rename_annotation(&field_name, &rust_safe_field_name);
+    let mut rename = crate::shared::field_rename_annotation(&field_name, &rust_safe_field_name);
+
+    if field_is_optional {
+        rename = quote!(
+            #[serde(skip_serializing_if = "Option::is_none")]
+            #rename
+        )
+    }
     quote!(#description #deprecation #rename pub #name_ident: #field_type)
 }
 
@@ -192,6 +200,10 @@ pub(crate) fn response_fields_for_selection(
                 Ok(render_object_field(
                     alias,
                     &ty,
+                    match &schema_field.type_ {
+                        crate::field_type::FieldType::Optional(_) => true,
+                        _ => false,
+                    },
                     schema_field.description.as_ref().cloned(),
                     &schema_field.deprecation,
                     &context.deprecation_strategy,

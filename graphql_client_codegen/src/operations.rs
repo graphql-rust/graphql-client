@@ -55,9 +55,16 @@ impl<'query> Operation<'query> {
             let ty = variable.ty.to_rust(context, "");
             let rust_safe_field_name =
                 crate::shared::keyword_replace(&variable.name.to_snake_case());
-            let rename =
+            let mut rename =
                 crate::shared::field_rename_annotation(&variable.name, &rust_safe_field_name);
             let name = Ident::new(&rust_safe_field_name, Span::call_site());
+
+            if let crate::field_type::FieldType::Optional(_) = &variable.ty {
+                rename = quote!(
+                    #[serde(skip_serializing_if = "Option::is_none")]
+                    #rename
+                )
+            }
 
             quote!(#rename pub #name: #ty)
         });

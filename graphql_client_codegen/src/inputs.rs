@@ -99,12 +99,16 @@ impl<'schema> GqlInput<'schema> {
 
         context.schema.require(&field.type_.inner_name_str());
         let rust_safe_field_name = crate::shared::keyword_replace(&field.name.to_snake_case());
-        let rename = crate::shared::field_rename_annotation(&field.name, &rust_safe_field_name);
+        let mut rename = crate::shared::field_rename_annotation(&field.name, &rust_safe_field_name);
         let name = Ident::new(&rust_safe_field_name, Span::call_site());
 
         match &field.type_ {
             crate::field_type::FieldType::Optional(_) => {
                 struct_field_assignments.push(quote!(#name: None));
+                rename = quote!(
+                    #[serde(skip_serializing_if = "Option::is_none")]
+                    #rename
+                )
             }
             _ => {
                 required_fields.push(quote!(#name: #ty));
