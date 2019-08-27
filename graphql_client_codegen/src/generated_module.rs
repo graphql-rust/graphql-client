@@ -52,6 +52,13 @@ impl<'a> GeneratedModule<'a> {
             CodegenMode::Derive => quote!(),
         };
 
+        let variables_type = match self.operation.variables.len() {
+            0 => quote!(()),
+            _ => quote!(
+            #module_name::Variables
+            ),
+        };
+
         Ok(quote!(
             #[allow(dead_code)]
             #struct_declaration
@@ -68,7 +75,7 @@ impl<'a> GeneratedModule<'a> {
             }
 
             impl graphql_client::GraphQLQuery for #operation_name_ident {
-                type Variables = #module_name::Variables;
+                type Variables = #variables_type;
                 type ResponseData = #module_name::ResponseData;
 
                 fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {

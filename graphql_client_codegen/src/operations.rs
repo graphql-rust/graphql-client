@@ -48,10 +48,7 @@ impl<'query> Operation<'query> {
         let variables_derives = context.variables_derives();
 
         if variables.is_empty() {
-            return quote! {
-                #variables_derives
-                pub struct Variables;
-            };
+            return quote! {};
         }
 
         let fields = variables.iter().map(|variable| {
