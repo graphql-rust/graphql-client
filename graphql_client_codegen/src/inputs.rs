@@ -1,9 +1,9 @@
 use crate::deprecation::DeprecationStatus;
-use crate::introspection_response;
 use crate::objects::GqlObjectField;
 use crate::query::QueryContext;
 use crate::schema::Schema;
 use failure;
+use graphql_introspection_query::introspection_response;
 use graphql_parser;
 use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};

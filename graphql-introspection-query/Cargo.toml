@@ -1,0 +1,12 @@
+[package]
+name = "graphql-introspection-query"
+version = "0.1.0"
+authors = ["Tom Houlé <tom@tomhoule.com>"]
+edition = "2018"
+keywords = ["graphql", "api", "web"]
+categories = ["web-programming"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }

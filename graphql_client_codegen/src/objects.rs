@@ -83,7 +83,7 @@ impl<'schema> GqlObject<'schema> {
     }
 
     pub fn from_introspected_schema_json(
-        obj: &'schema crate::introspection_response::FullType,
+        obj: &'schema graphql_introspection_query::introspection_response::FullType,
     ) -> Self {
         let description = obj.description.as_ref().map(String::as_str);
         let mut item = GqlObject::new(obj.name.as_ref().expect("missing object name"), description);

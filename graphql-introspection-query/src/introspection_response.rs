@@ -1,8 +1,6 @@
 #![allow(non_camel_case_types)]
 
-use serde::*;
-
-type Boolean = bool;
+use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Clone, Debug)]
 pub enum __DirectiveLocation {
@@ -27,7 +25,7 @@ pub enum __DirectiveLocation {
     Other(String),
 }
 
-impl ::serde::Serialize for __DirectiveLocation {
+impl Serialize for __DirectiveLocation {
     fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.serialize_str(match *self {
             __DirectiveLocation::QUERY => "QUERY",
@@ -53,8 +51,8 @@ impl ::serde::Serialize for __DirectiveLocation {
     }
 }
 
-impl<'de> ::serde::Deserialize<'de> for __DirectiveLocation {
-    fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+impl<'de> Deserialize<'de> for __DirectiveLocation {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = <&'de str>::deserialize(deserializer)?;
         match s {
             "QUERY" => Ok(__DirectiveLocation::QUERY),
@@ -93,7 +91,7 @@ pub enum __TypeKind {
     Other(String),
 }
 
-impl ::serde::Serialize for __TypeKind {
+impl Serialize for __TypeKind {
     fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.serialize_str(match *self {
             __TypeKind::SCALAR => "SCALAR",
@@ -109,8 +107,8 @@ impl ::serde::Serialize for __TypeKind {
     }
 }
 
-impl<'de> ::serde::Deserialize<'de> for __TypeKind {
-    fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+impl<'de> Deserialize<'de> for __TypeKind {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = <&'de str>::deserialize(deserializer)?;
         match s {
             "SCALAR" => Ok(__TypeKind::SCALAR),
@@ -161,7 +159,7 @@ pub struct FullTypeFields {
     pub args: Option<Vec<Option<FullTypeFieldsArgs>>>,
     #[serde(rename = "type")]
     pub type_: Option<FullTypeFieldsType>,
-    pub is_deprecated: Option<Boolean>,
+    pub is_deprecated: Option<bool>,
     pub deprecation_reason: Option<String>,
 }
 
@@ -184,7 +182,7 @@ pub struct FullTypeInterfaces {
 pub struct FullTypeEnumValues {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub is_deprecated: Option<Boolean>,
+    pub is_deprecated: Option<bool>,
     pub deprecation_reason: Option<String>,
 }
 
@@ -222,133 +220,85 @@ pub struct TypeRef {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType {
-    pub kind: Option<__TypeKind>,
+pub struct SchemaQueryType {
     pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType {
-    pub kind: Option<__TypeKind>,
-    pub name: Option<String>,
-    pub of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TypeRefOfTypeOfTypeOfTypeOfTypeOfType {
-    pub kind: Option<__TypeKind>,
-    pub name: Option<String>,
-    pub of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfTypeOfType>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TypeRefOfTypeOfTypeOfTypeOfType {
-    pub kind: Option<__TypeKind>,
-    pub name: Option<String>,
-    pub of_type: Option<TypeRefOfTypeOfTypeOfTypeOfTypeOfType>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TypeRefOfTypeOfTypeOfType {
-    pub kind: Option<__TypeKind>,
-    pub name: Option<String>,
-    pub of_type: Option<TypeRefOfTypeOfTypeOfTypeOfType>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TypeRefOfTypeOfType {
-    pub kind: Option<__TypeKind>,
-    pub name: Option<String>,
-    pub of_type: Option<TypeRefOfTypeOfTypeOfType>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TypeRefOfType {
-    pub kind: Option<__TypeKind>,
-    pub name: Option<String>,
-    pub of_type: Option<TypeRefOfTypeOfType>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RustIntrospectionQuerySchemaQueryType {
+pub struct SchemaMutationType {
     pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RustIntrospectionQuerySchemaMutationType {
+pub struct SchemaSubscriptionType {
     pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RustIntrospectionQuerySchemaSubscriptionType {
-    pub name: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RustIntrospectionQuerySchemaTypes {
+pub struct SchemaTypes {
     #[serde(flatten)]
     pub full_type: FullType,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RustIntrospectionQuerySchemaDirectivesArgs {
+pub struct SchemaDirectivesArgs {
     #[serde(flatten)]
     input_value: InputValue,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RustIntrospectionQuerySchemaDirectives {
+pub struct SchemaDirectives {
     pub name: Option<String>,
     pub description: Option<String>,
     pub locations: Option<Vec<Option<__DirectiveLocation>>>,
-    pub args: Option<Vec<Option<RustIntrospectionQuerySchemaDirectivesArgs>>>,
+    pub args: Option<Vec<Option<SchemaDirectivesArgs>>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RustIntrospectionQuerySchema {
-    pub query_type: Option<RustIntrospectionQuerySchemaQueryType>,
-    pub mutation_type: Option<RustIntrospectionQuerySchemaMutationType>,
-    pub subscription_type: Option<RustIntrospectionQuerySchemaSubscriptionType>,
-    pub types: Option<Vec<Option<RustIntrospectionQuerySchemaTypes>>>,
-    directives: Option<Vec<Option<RustIntrospectionQuerySchemaDirectives>>>,
+pub struct Schema {
+    pub query_type: Option<SchemaQueryType>,
+    pub mutation_type: Option<SchemaMutationType>,
+    pub subscription_type: Option<SchemaSubscriptionType>,
+    pub types: Option<Vec<Option<SchemaTypes>>>,
+    directives: Option<Vec<Option<SchemaDirectives>>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(crate) struct Schema {
+pub struct SchemaContainer {
     #[serde(rename = "__schema")]
-    pub schema: Option<RustIntrospectionQuerySchema>,
+    pub schema: Option<Schema>,
 }
 
 #[derive(Deserialize, Debug)]
-pub(crate) struct FullResponse<T> {
+pub struct FullResponse<T> {
     data: T,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-pub(crate) enum IntrospectionResponse {
-    FullResponse(FullResponse<Schema>),
-    Schema(Schema),
+pub enum IntrospectionResponse {
+    FullResponse(FullResponse<SchemaContainer>),
+    Schema(SchemaContainer),
 }
 
 impl IntrospectionResponse {
-    pub(crate) fn as_schema(&self) -> &Schema {
+    pub fn as_schema(&self) -> &SchemaContainer {
         match self {
             IntrospectionResponse::FullResponse(full_response) => &full_response.data,
             IntrospectionResponse::Schema(schema) => &schema,
+        }
+    }
+
+    pub fn into_schema(self) -> SchemaContainer {
+        match self {
+            IntrospectionResponse::FullResponse(full_response) => full_response.data,
+            IntrospectionResponse::Schema(schema) => schema,
         }
     }
 }

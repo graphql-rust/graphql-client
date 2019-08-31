@@ -1,4 +1,4 @@
-#![recursion_limit = "512"]
+#![recursion_limit = "128"]
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 #![deny(warnings)]
@@ -18,7 +18,6 @@ mod codegen;
 mod codegen_options;
 /// Deprecation-related code
 pub mod deprecation;
-mod introspection_response;
 mod query;
 /// Contains the [Schema] type and its implementation.
 pub mod schema;
@@ -114,7 +113,7 @@ pub fn generate_module_token_stream(
                             schema::ParsedSchema::GraphQLParser(s)
                         }
                         "json" => {
-                            let parsed: introspection_response::IntrospectionResponse = ::serde_json::from_str(&schema_string)?;
+                            let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string)?;
                             schema::ParsedSchema::Json(parsed)
                         }
                         extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)

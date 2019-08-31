@@ -1,7 +1,7 @@
 use crate::enums::ENUMS_PREFIX;
-use crate::introspection_response;
 use crate::query::QueryContext;
 use crate::schema::DEFAULT_SCALARS;
+use graphql_introspection_query::introspection_response;
 use graphql_parser;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -119,7 +119,7 @@ fn from_schema_type_inner(inner: &graphql_parser::schema::Type, non_null: bool) 
 }
 
 fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool) -> FieldType<'_> {
-    use crate::introspection_response::*;
+    use graphql_introspection_query::introspection_response::*;
 
     match inner.kind {
         Some(__TypeKind::NON_NULL) => from_json_type_inner(
@@ -168,7 +168,9 @@ impl<'a> ::std::convert::From<&'a introspection_response::InputValueType> for Fi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::introspection_response::{FullTypeFieldsType, TypeRef, __TypeKind};
+    use graphql_introspection_query::introspection_response::{
+        FullTypeFieldsType, TypeRef, __TypeKind,
+    };
     use graphql_parser::schema::Type as GqlParserType;
 
     #[test]
