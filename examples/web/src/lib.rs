@@ -60,7 +60,7 @@ fn add_load_more_button() {
         .expect_throw("could not create button");
     btn.set_inner_html("I WANT MORE PUPPIES");
     let on_click = Closure::wrap(
-        Box::new(move || future_to_promise(load_more())) as Box<FnMut() -> js_sys::Promise>
+        Box::new(move || future_to_promise(load_more())) as Box<dyn FnMut() -> js_sys::Promise>
     );
     btn.add_event_listener_with_callback(
         "click",
