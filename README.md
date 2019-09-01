@@ -145,7 +145,7 @@ use graphql_client::GraphQLQuery;
 pub struct UnionQuery;
 ```
 
-There is an example [in the tests](./tests/operation_selection).
+There is an example [in the tests](./graphql_client/tests/operation_selection).
 
 ## Documentation for the generated modules
 
