@@ -169,7 +169,7 @@ impl<'query> Selection<'query> {
     }
 }
 
-impl<'query> ::std::convert::From<&'query SelectionSet> for Selection<'query> {
+impl<'query> std::convert::From<&'query SelectionSet> for Selection<'query> {
     fn from(selection_set: &SelectionSet) -> Selection<'_> {
         use graphql_parser::query::Selection;
 

@@ -105,7 +105,7 @@ impl<'schema> Schema<'schema> {
     }
 }
 
-impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> for Schema<'schema> {
+impl<'schema> std::convert::From<&'schema graphql_parser::schema::Document> for Schema<'schema> {
     fn from(ast: &'schema graphql_parser::schema::Document) -> Schema<'schema> {
         let mut schema = Schema::new();
 
@@ -208,7 +208,7 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Document> fo
 }
 
 impl<'schema>
-    ::std::convert::From<
+    std::convert::From<
         &'schema graphql_introspection_query::introspection_response::IntrospectionResponse,
     > for Schema<'schema>
 {

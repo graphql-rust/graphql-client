@@ -40,7 +40,7 @@ impl<'query> Variable<'query> {
     }
 }
 
-impl<'query> ::std::convert::From<&'query graphql_parser::query::VariableDefinition>
+impl<'query> std::convert::From<&'query graphql_parser::query::VariableDefinition>
     for Variable<'query>
 {
     fn from(def: &'query graphql_parser::query::VariableDefinition) -> Variable<'query> {

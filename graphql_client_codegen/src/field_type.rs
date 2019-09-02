@@ -89,7 +89,7 @@ impl<'a> FieldType<'a> {
     }
 }
 
-impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::Type> for FieldType<'schema> {
+impl<'schema> std::convert::From<&'schema graphql_parser::schema::Type> for FieldType<'schema> {
     fn from(schema_type: &'schema graphql_parser::schema::Type) -> FieldType<'schema> {
         from_schema_type_inner(schema_type, false)
     }
@@ -149,7 +149,7 @@ fn from_json_type_inner(inner: &introspection_response::TypeRef, non_null: bool)
     }
 }
 
-impl<'schema> ::std::convert::From<&'schema introspection_response::FullTypeFieldsType>
+impl<'schema> std::convert::From<&'schema introspection_response::FullTypeFieldsType>
     for FieldType<'schema>
 {
     fn from(
@@ -159,7 +159,7 @@ impl<'schema> ::std::convert::From<&'schema introspection_response::FullTypeFiel
     }
 }
 
-impl<'a> ::std::convert::From<&'a introspection_response::InputValueType> for FieldType<'a> {
+impl<'a> std::convert::From<&'a introspection_response::InputValueType> for FieldType<'a> {
     fn from(schema_type: &'a introspection_response::InputValueType) -> FieldType<'a> {
         from_json_type_inner(&schema_type.type_ref, false)
     }

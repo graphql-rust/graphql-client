@@ -81,7 +81,7 @@ impl<'query> Operation<'query> {
     }
 }
 
-impl<'query> ::std::convert::From<&'query OperationDefinition> for Operation<'query> {
+impl<'query> std::convert::From<&'query OperationDefinition> for Operation<'query> {
     fn from(definition: &'query OperationDefinition) -> Operation<'query> {
         match *definition {
             OperationDefinition::Query(ref q) => Operation {
