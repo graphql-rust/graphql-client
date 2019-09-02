@@ -10,10 +10,10 @@ categories = ["network-programming", "web-programming", "wasm"]
 edition = "2018"
 
 [dependencies]
+doc-comment = "0.3.1"
 graphql_query_derive = { path = "../graphql_query_derive", version = "0.8.0" }
 serde = { version = "^1.0.78", features = ["derive"] }
 serde_json = "1.0"
-doc-comment = "0.3.1"
 
 [dependencies.futures]
 version = "0.1"
