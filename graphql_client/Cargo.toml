@@ -10,7 +10,6 @@ categories = ["network-programming", "web-programming", "wasm"]
 edition = "2018"
 
 [dependencies]
-failure = "0.1"
 graphql_query_derive = { path = "../graphql_query_derive", version = "0.8.0" }
 serde = { version = "^1.0.78", features = ["derive"] }
 serde_json = "1.0"
@@ -50,8 +49,9 @@ optional = true
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies.reqwest]
 version = "0.9.16"
 
-[dev-dependencies.wasm-bindgen-test]
-version = "0.2.43"
+[dev-dependencies]
+failure = "0.1"
+wasm-bindgen-test = "0.2.43"
 
 [features]
 web = [
