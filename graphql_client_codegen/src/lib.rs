@@ -44,7 +44,7 @@ pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
 use std::collections::HashMap;
 
-type CacheMap<T> = ::std::sync::Mutex<HashMap<::std::path::PathBuf, T>>;
+type CacheMap<T> = std::sync::Mutex<HashMap<std::path::PathBuf, T>>;
 
 lazy_static! {
     static ref SCHEMA_CACHE: CacheMap<String> = CacheMap::default();
@@ -141,7 +141,7 @@ pub fn generate_module_token_stream(
     Ok(modules)
 }
 
-fn read_file(path: &::std::path::Path) -> Result<String, failure::Error> {
+fn read_file(path: &std::path::Path) -> Result<String, failure::Error> {
     use std::fs;
     use std::io::prelude::*;
 

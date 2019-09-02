@@ -105,7 +105,7 @@ impl<'schema> GqlInput<'schema> {
     }
 }
 
-impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::InputObjectType>
+impl<'schema> std::convert::From<&'schema graphql_parser::schema::InputObjectType>
     for GqlInput<'schema>
 {
     fn from(schema_input: &'schema graphql_parser::schema::InputObjectType) -> GqlInput<'schema> {
@@ -131,9 +131,7 @@ impl<'schema> ::std::convert::From<&'schema graphql_parser::schema::InputObjectT
     }
 }
 
-impl<'schema> ::std::convert::From<&'schema introspection_response::FullType>
-    for GqlInput<'schema>
-{
+impl<'schema> std::convert::From<&'schema introspection_response::FullType> for GqlInput<'schema> {
     fn from(schema_input: &'schema introspection_response::FullType) -> GqlInput<'schema> {
         GqlInput {
             description: schema_input.description.as_ref().map(String::as_str),
