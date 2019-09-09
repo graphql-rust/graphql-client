@@ -13,10 +13,7 @@ impl<'schema> Scalar<'schema> {
     pub fn to_rust(&self) -> proc_macro2::TokenStream {
         use proc_macro2::{Ident, Span};
         let ident = Ident::new(&self.name, Span::call_site());
-        let description = match &self.description {
-            Some(d) => quote!(#[doc = #d]),
-            None => quote!(),
-        };
+        let description = self.description.map(|d| quote!(#[doc = #d]));
         quote!(#description type #ident = super::#ident;)
     }
 }

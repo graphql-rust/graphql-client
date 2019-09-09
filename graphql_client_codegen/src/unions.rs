@@ -70,7 +70,9 @@ pub(crate) fn union_variants<'selection>(
             .map(|_f| context.maybe_expand_field(&on, fields, &new_prefix));
 
         match field_object_type.or(field_interface).or(field_union_type) {
-            Some(tokens) => children_definitions.push(tokens?),
+            Some(Ok(Some(tokens))) => children_definitions.push(tokens),
+            Some(Err(err)) => Err(err)?,
+            Some(Ok(None)) => (),
             None => Err(UnionError::UnknownType { ty: on.to_string() })?,
         };
 

@@ -15,7 +15,7 @@ impl<'query> Variable<'query> {
     pub(crate) fn generate_default_value_constructor(
         &self,
         context: &QueryContext<'_, '_>,
-    ) -> TokenStream {
+    ) -> Option<TokenStream> {
         context.schema.require(&self.ty.inner_name_str());
         match &self.default {
             Some(default) => {
@@ -27,14 +27,14 @@ impl<'query> Variable<'query> {
                     &self.ty,
                     self.ty.is_optional(),
                 );
-                quote! {
+                Some(quote! {
                     pub fn #fn_name() -> #ty {
                         #value
                     }
 
-                }
+                })
             }
-            None => quote!(),
+            None => None,
         }
     }
 }
