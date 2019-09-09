@@ -223,7 +223,6 @@ impl<'a> std::iter::FromIterator<SelectionItem<'a>> for Selection<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use graphql_parser;
 
     #[test]
     fn selection_extract_typename_simple_case() {

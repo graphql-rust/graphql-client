@@ -1,6 +1,4 @@
 use crate::schema::Schema;
-use graphql_parser;
-use serde_json;
 use std::collections::HashSet;
 
 const SCHEMA_JSON: &str = include_str!("github_schema.json");
