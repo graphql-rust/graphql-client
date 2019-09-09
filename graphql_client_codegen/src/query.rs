@@ -58,21 +58,25 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
         ty: &str,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<TokenStream, failure::Error> {
+    ) -> Result<Option<TokenStream>, failure::Error> {
         if self.schema.contains_scalar(ty) {
-            Ok(quote!())
+            Ok(None)
         } else if let Some(enm) = self.schema.enums.get(ty) {
             enm.is_required.set(true);
-            Ok(quote!()) // we already expand enums separately
+            Ok(None) // we already expand enums separately
         } else if let Some(obj) = self.schema.objects.get(ty) {
             obj.is_required.set(true);
             obj.response_for_selection(self, &selection, prefix)
+                .map(Some)
         } else if let Some(iface) = self.schema.interfaces.get(ty) {
             iface.is_required.set(true);
-            iface.response_for_selection(self, &selection, prefix)
+            iface
+                .response_for_selection(self, &selection, prefix)
+                .map(Some)
         } else if let Some(unn) = self.schema.unions.get(ty) {
             unn.is_required.set(true);
             unn.response_for_selection(self, &selection, prefix)
+                .map(Some)
         } else {
             Err(format_err!("Unknown type: {}", ty))
         }

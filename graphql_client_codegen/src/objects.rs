@@ -5,7 +5,6 @@ use crate::query::QueryContext;
 use crate::schema::Schema;
 use crate::selection::*;
 use crate::shared::{field_impls_for_selection, response_fields_for_selection};
-use failure;
 use graphql_parser::schema;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;

@@ -2,9 +2,7 @@ use crate::deprecation::DeprecationStatus;
 use crate::objects::GqlObjectField;
 use crate::query::QueryContext;
 use crate::schema::Schema;
-use failure;
 use graphql_introspection_query::introspection_response;
-use graphql_parser;
 use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -189,7 +187,7 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "pawsCount",
-                        type_: FieldType::Named(float_type()),
+                        type_: FieldType::new(float_type()).nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),
@@ -198,7 +196,7 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "offsprings",
-                        type_: FieldType::Vector(Box::new(FieldType::Named("Cat"))),
+                        type_: FieldType::new("Cat").nonnull().list().nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),
@@ -207,7 +205,7 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "requirements",
-                        type_: FieldType::Optional(Box::new(FieldType::Named("CatRequirements"))),
+                        type_: FieldType::new("CatRequirements"),
                         deprecation: DeprecationStatus::Current,
                     },
                 ),

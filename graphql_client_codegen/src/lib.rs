@@ -8,9 +8,7 @@
 //! It is not meant to be used directly by users of the library.
 
 use failure::*;
-use graphql_parser;
 use lazy_static::*;
-use proc_macro2;
 use proc_macro2::TokenStream;
 use quote::*;
 

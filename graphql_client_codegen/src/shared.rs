@@ -13,13 +13,13 @@ pub(crate) fn render_object_field(
     description: Option<&str>,
     status: &DeprecationStatus,
     strategy: &DeprecationStrategy,
-) -> TokenStream {
+) -> Option<TokenStream> {
     #[allow(unused_assignments)]
     let mut deprecation = quote!();
     match (status, strategy) {
         // If the field is deprecated and we are denying usage, don't generate the
         // field in rust at all and short-circuit.
-        (DeprecationStatus::Deprecated(_), DeprecationStrategy::Deny) => return quote!(),
+        (DeprecationStatus::Deprecated(_), DeprecationStrategy::Deny) => return None,
         // Everything is allowed so there is nothing to do.
         (_, DeprecationStrategy::Allow) => deprecation = quote!(),
         // Current so there is nothing to do.
@@ -47,19 +47,19 @@ pub(crate) fn render_object_field(
 
     if reserved.contains(&field_name) {
         let name_ident = Ident::new(&format!("{}_", field_name), Span::call_site());
-        return quote! {
+        return Some(quote! {
             #description
             #deprecation
             #[serde(rename = #field_name)]
             pub #name_ident: #field_type
-        };
+        });
     }
 
     let snake_case_name = field_name.to_snake_case();
     let rename = crate::shared::field_rename_annotation(&field_name, &snake_case_name);
     let name_ident = Ident::new(&snake_case_name, Span::call_site());
 
-    quote!(#description #deprecation #rename pub #name_ident: #field_type)
+    Some(quote!(#description #deprecation #rename pub #name_ident: #field_type))
 }
 
 pub(crate) fn field_impls_for_selection(
@@ -84,9 +84,10 @@ pub(crate) fn field_impls_for_selection(
                 let prefix = format!("{}{}", prefix.to_camel_case(), alias.to_camel_case());
                 context.maybe_expand_field(&ty, &selected.fields, &prefix)
             } else {
-                Ok(quote!())
+                Ok(None)
             }
         })
+        .filter_map(|i| i.transpose())
         .collect()
 }
 
@@ -150,20 +151,20 @@ pub(crate) fn response_fields_for_selection(
                 } else {
                     quote!(#type_name)
                 };
-                Ok(quote! {
+                Ok(Some(quote! {
                     #[serde(flatten)]
                     pub #field_name: #type_name
-                })
+                }))
             }
             SelectionItem::InlineFragment(_) => Err(format_err!(
                 "unimplemented: inline fragment on object field"
             ))?,
         })
-        .filter(|x| match x {
+        .filter_map(|x| match x {
             // Remove empty fields so callers always know a field has some
             // tokens.
-            Ok(f) => !f.is_empty(),
-            Err(_) => true,
+            Ok(f) => f.map(Ok),
+            Err(err) => Some(Err(err)),
         })
         .collect()
 }
@@ -171,10 +172,10 @@ pub(crate) fn response_fields_for_selection(
 /// Given the GraphQL schema name for an object/interface/input object field and
 /// the equivalent rust name, produces a serde annotation to map them during
 /// (de)serialization if it is necessary, otherwise an empty TokenStream.
-pub(crate) fn field_rename_annotation(graphql_name: &str, rust_name: &str) -> TokenStream {
+pub(crate) fn field_rename_annotation(graphql_name: &str, rust_name: &str) -> Option<TokenStream> {
     if graphql_name != rust_name {
-        quote!(#[serde(rename = #graphql_name)])
+        Some(quote!(#[serde(rename = #graphql_name)]))
     } else {
-        quote!()
+        None
     }
 }

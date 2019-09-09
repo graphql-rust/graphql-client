@@ -70,7 +70,9 @@ pub(crate) fn union_variants<'selection>(
             .map(|_f| context.maybe_expand_field(&on, fields, &new_prefix));
 
         match field_object_type.or(field_interface).or(field_union_type) {
-            Some(tokens) => children_definitions.push(tokens?),
+            Some(Ok(Some(tokens))) => children_definitions.push(tokens),
+            Some(Err(err)) => Err(err)?,
+            Some(Ok(None)) => (),
             None => Err(UnionError::UnknownType { ty: on.to_string() })?,
         };
 
@@ -175,20 +177,20 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "firstName",
-                        type_: FieldType::Named("String"),
+                        type_: FieldType::new("String").nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "lastName",
-                        type_: FieldType::Named("String"),
+                        type_: FieldType::new("String").nonnull(),
 
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "createdAt",
-                        type_: FieldType::Named("Date"),
+                        type_: FieldType::new("Date").nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
@@ -205,13 +207,13 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "title",
-                        type_: FieldType::Named("String"),
+                        type_: FieldType::new("String").nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "created_at",
-                        type_: FieldType::Named("Date"),
+                        type_: FieldType::new("Date").nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
@@ -280,25 +282,25 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "__typename",
-                        type_: FieldType::Named(string_type()),
+                        type_: FieldType::new(string_type()).nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "firstName",
-                        type_: FieldType::Named(string_type()),
+                        type_: FieldType::new(string_type()).nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "lastName",
-                        type_: FieldType::Named(string_type()),
+                        type_: FieldType::new(string_type()).nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "createdAt",
-                        type_: FieldType::Named("Date"),
+                        type_: FieldType::new("Date").nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],
@@ -315,19 +317,19 @@ mod tests {
                     GqlObjectField {
                         description: None,
                         name: "__typename",
-                        type_: FieldType::Named(string_type()),
+                        type_: FieldType::new(string_type()).nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "title",
-                        type_: FieldType::Named("String"),
+                        type_: FieldType::new("String").nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                     GqlObjectField {
                         description: None,
                         name: "createdAt",
-                        type_: FieldType::Named("Date"),
+                        type_: FieldType::new("Date").nonnull(),
                         deprecation: DeprecationStatus::Current,
                     },
                 ],

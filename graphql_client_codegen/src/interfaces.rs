@@ -179,9 +179,9 @@ impl<'schema> GqlInterface<'schema> {
                     }
                 };
                 let last_object_field = quote!(#[serde(flatten)] pub on: #attached_enum_name,);
-                (attached_enum, last_object_field)
+                (Some(attached_enum), Some(last_object_field))
             } else {
-                (quote!(), quote!())
+                (None, None)
             };
 
         Ok(quote! {

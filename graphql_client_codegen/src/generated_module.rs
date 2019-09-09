@@ -45,10 +45,10 @@ impl<'a> GeneratedModule<'a> {
         let query_string = &self.query_string;
         let impls = self.build_impls()?;
 
-        let struct_declaration = match self.options.mode {
-            CodegenMode::Cli => quote!(#module_visibility struct #operation_name_ident;),
+        let struct_declaration: Option<_> = match self.options.mode {
+            CodegenMode::Cli => Some(quote!(#module_visibility struct #operation_name_ident;)),
             // The struct is already present in derive mode.
-            CodegenMode::Derive => quote!(),
+            CodegenMode::Derive => None,
         };
 
         Ok(quote!(
