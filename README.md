@@ -167,6 +167,7 @@ Warmest thanks to all those who contributed in any way (not only code) to this p
 - Ben Boeckel (@mathstuf)
 - Chris Fung (@aergonaut)
 - Christian Legnitto (@LegNeato)
+- David Gräff (@davidgraeff)
 - Dirkjan Ochtman (@djc)
 - Fausto Nunez Alberro (@brainlessdeveloper)
 - Hirokazu Hata (@h-michael)
