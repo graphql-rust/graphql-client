@@ -15,5 +15,5 @@ path = "../graphql_client"
 features = ["web"]
 
 [dev-dependencies]
-serde = { version = "1", features = ["derive"] }
-wasm-bindgen-test = "0.2.25"
+serde = { version = "^1.0", features = ["derive"] }
+wasm-bindgen-test = "0.2.50"
