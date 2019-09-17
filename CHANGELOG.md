@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   used by graphql-client is now its own crate,
   `graphql-introspection-query`.
 
+## Fixed
+
+- (BREAKING) In the CLI, there was a conflict between the short forms
+  `--output-directory` and `--selected-operation` since they were both `-o`.
+  After this fix, `-o` is the short form of `--output-directory`.
+
 ## 0.8.0 - 2019-05-24
 
 ## Changed
