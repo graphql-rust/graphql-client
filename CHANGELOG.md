@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - (BREAKING) In the CLI, there was a conflict between the short forms
   `--output-directory` and `--selected-operation` since they were both `-o`.
-  After this fix, `-o` is the short form of `--output-directory`.
+  After this fix, `-o` is the short form of `--output-directory`. (thanks @davidgraeff!)
+- Catch more cases where a rust keyword in schemas or queries would break code generation (thanks @davidgraeff!)
 
 ## 0.8.0 - 2019-05-24
 
