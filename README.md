@@ -157,7 +157,7 @@ There is an [`include`](https://doc.rust-lang.org/cargo/reference/manifest.html#
 
 ## Examples
 
-See the [examples directory](./graphql_client/examples) in this repository.
+See the [examples directory](https://github.com/graphql-rust/graphql-client/tree/master/examples) in this repository.
 
 ## Contributors
 
