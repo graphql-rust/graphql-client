@@ -22,6 +22,8 @@ pub(crate) struct GqlUnion<'schema> {
 enum UnionError {
     #[fail(display = "Unknown type: {}", ty)]
     UnknownType { ty: String },
+    #[fail(display = "Unknown variant on union {}: {}", ty, var)]
+    UnknownVariant { var: String, ty: String },
     #[fail(display = "Missing __typename in selection for {}", union_name)]
     MissingTypename { union_name: String },
 }
@@ -105,6 +107,15 @@ impl<'schema> GqlUnion<'schema> {
 
         let (mut variants, children_definitions, used_variants) =
             union_variants(selection, query_context, prefix, &self.name)?;
+
+        for used_variant in used_variants.iter() {
+            if !self.variants.contains(used_variant) {
+                Err(UnionError::UnknownVariant {
+                    ty: self.name.into(),
+                    var: used_variant.to_string(),
+                })?;
+            }
+        }
 
         variants.extend(
             self.variants
@@ -261,10 +272,13 @@ mod tests {
         let context = QueryContext::new_empty(&schema);
         let selection: Selection<'_> = fields.into_iter().collect();
         let prefix = "Meow";
+        let mut union_variants = BTreeSet::new();
+        union_variants.insert("User");
+        union_variants.insert("Organization");
         let union = GqlUnion {
             name: "MyUnion",
             description: None,
-            variants: BTreeSet::new(),
+            variants: union_variants,
             is_required: false.into(),
         };
 
@@ -358,5 +372,76 @@ mod tests {
             ].into_iter()
                 .collect::<String>(),
         );
+    }
+
+    #[test]
+    fn union_rejects_selection_on_non_member_type() {
+        let fields = vec![
+            SelectionItem::Field(SelectionField {
+                alias: None,
+                name: "__typename",
+                fields: Selection::new_empty(),
+            }),
+            SelectionItem::InlineFragment(SelectionInlineFragment {
+                on: "SomeNonUnionType",
+                fields: Selection::from_vec(vec![SelectionItem::Field(SelectionField {
+                    alias: None,
+                    name: "field",
+                    fields: Selection::new_empty(),
+                })]),
+            }),
+        ];
+        let schema = crate::schema::Schema::new();
+        let context = QueryContext::new_empty(&schema);
+        let selection: Selection<'_> = fields.into_iter().collect();
+        let prefix = "Meow";
+        let mut union_variants = BTreeSet::new();
+        union_variants.insert("Int");
+        union_variants.insert("String");
+        let union = GqlUnion {
+            name: "MyUnion",
+            description: None,
+            variants: union_variants,
+            is_required: false.into(),
+        };
+
+        let result = union.response_for_selection(&context, &selection, &prefix);
+
+        assert!(result.is_err());
+
+        let mut schema = crate::schema::Schema::new();
+        schema.unions.insert("MyUnion", union.clone());
+        schema.objects.insert(
+            "SomeNonUnionType",
+            GqlObject {
+                description: None,
+                name: "SomeNonUnionType",
+                fields: vec![
+                    GqlObjectField {
+                        description: None,
+                        name: "field",
+                        type_: FieldType::new(string_type()),
+                        deprecation: DeprecationStatus::Current,
+                    },
+                ],
+                is_required: false.into(),
+            },
+        );
+
+        let context = QueryContext::new_empty(&schema);
+
+        let result = union.response_for_selection(&context, &selection, &prefix);
+
+        println!("{:?}", result);
+
+        assert!(result.is_err());
+
+        match result.unwrap_err().downcast::<UnionError>() {
+            Ok(UnionError::UnknownVariant { var, ty }) => {
+                assert_eq!(var, "SomeNonUnionType");
+                assert_eq!(ty, "MyUnion");
+            },
+            err => panic!("Unexpected error type: {:?}", err),
+        }
     }
 }

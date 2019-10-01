@@ -157,6 +157,16 @@ impl<'schema> GqlInterface<'schema> {
         let (mut union_variants, union_children, used_variants) =
             union_variants(&union_selection, query_context, prefix, &self.name)?;
 
+        for used_variant in used_variants.iter() {
+            if !self.implemented_by.contains(used_variant) {
+                Err(format_err!(
+                    "Type {} does not implement the {} interface",
+                    used_variant,
+                    self.name,
+                ))?;
+            }
+        }
+
         // Add the non-selected variants to the generated enum's variants.
         union_variants.extend(
             self.implemented_by
