@@ -76,10 +76,7 @@ pub trait GraphQLQuery {
 
 /// The form in which queries are sent over HTTP in most implementations. This will be built using the [`GraphQLQuery`] trait normally.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryBody<Variables>
-where
-    Variables: serde::Serialize,
-{
+pub struct QueryBody<Variables> {
     /// The values for the variables. They must match those declared in the queries. This should be the `Variables` struct from the generated module corresponding to the query.
     pub variables: Variables,
     /// The GraphQL query, as a string.
