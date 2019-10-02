@@ -22,10 +22,10 @@ fn main() -> Result<(), failure::Error> {
 
     let q = UpsertIssue::build_query(Variables {
         issues: vec![IssuesInsertInput {
-            id: Some("001000000000000".to_string()),
-            name: Some("Name".to_string()),
-            status: Some("Draft".to_string()),
-            salesforce_updated_at: Some("2019-06-11T08:14:28Z".to_string()),
+            Id: Some("001000000000000".to_string()),
+            Name: Some("Name".to_string()),
+            Status: Some("Draft".to_string()),
+            SalesforceUpdatedAt: Some("2019-06-11T08:14:28Z".to_string()),
         }],
         update_columns: vec![Name, Status, SalesforceUpdatedAt],
     });
