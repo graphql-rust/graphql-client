@@ -98,10 +98,10 @@ pub(crate) fn response_for_query(
         let selection = &operation.selection;
 
         if operation.is_subscription() && selection.len() > 1 {
-            Err(format_err!(
+            return Err(format_err!(
                 "{}",
                 crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
-            ))?
+            ));
         }
 
         definitions.extend(definition.field_impls_for_selection(&context, &selection, &prefix)?);

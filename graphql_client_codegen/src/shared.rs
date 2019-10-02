@@ -208,7 +208,7 @@ pub(crate) fn response_fields_for_selection(
             }
             SelectionItem::InlineFragment(_) => Err(format_err!(
                 "unimplemented: inline fragment on object field"
-            ))?,
+            )),
         })
         .filter_map(|x| match x {
             // Remove empty fields so callers always know a field has some

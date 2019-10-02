@@ -32,7 +32,7 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failur
         }
     }
 
-    Err(format_err!("attribute not found"))?
+    Err(format_err!("attribute not found"))
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
