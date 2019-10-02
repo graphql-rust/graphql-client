@@ -8,7 +8,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
 // List of keywords based on https://doc.rust-lang.org/grammar.html#keywords
-const RUST_KEYWORDS: &'static [&'static str] = &[
+const RUST_KEYWORDS: &[&str] = &[
     "abstract",
     "alignof",
     "as",
