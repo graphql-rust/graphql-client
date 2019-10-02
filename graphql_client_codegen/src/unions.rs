@@ -416,14 +416,12 @@ mod tests {
             GqlObject {
                 description: None,
                 name: "SomeNonUnionType",
-                fields: vec![
-                    GqlObjectField {
-                        description: None,
-                        name: "field",
-                        type_: FieldType::new(string_type()),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                ],
+                fields: vec![GqlObjectField {
+                    description: None,
+                    name: "field",
+                    type_: FieldType::new(string_type()),
+                    deprecation: DeprecationStatus::Current,
+                }],
                 is_required: false.into(),
             },
         );
@@ -440,7 +438,7 @@ mod tests {
             Ok(UnionError::UnknownVariant { var, ty }) => {
                 assert_eq!(var, "SomeNonUnionType");
                 assert_eq!(ty, "MyUnion");
-            },
+            }
             err => panic!("Unexpected error type: {:?}", err),
         }
     }
