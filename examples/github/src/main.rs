@@ -16,6 +16,7 @@ type URI = String;
 struct RepoView;
 
 #[derive(StructOpt)]
+#[structopt(author, about)]
 struct Command {
     #[structopt(name = "repository")]
     repo: String,
