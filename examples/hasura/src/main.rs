@@ -2,7 +2,6 @@
 use graphql_client::*;
 use log::*;
 use prettytable::*;
-// use structopt::StructOpt;
 
 type Bpchar = String;
 type Timestamptz = String;
