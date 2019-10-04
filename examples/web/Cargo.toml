@@ -4,13 +4,11 @@ version = "0.1.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 edition = "2018"
 
-[profile.release]
-lto = "thin"
+# https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#profile-overrides
+#[profile.release]
+#lto = "thin"
 
-[lib]
-crate-type = ["cdylib"]
-
-[dependencies]
+[dev-dependencies]
 graphql_client = { path = "../../graphql_client" }
 graphql_client_web = { path = "../../graphql_client_web" }
 wasm-bindgen = "0.2.43"
@@ -21,7 +19,7 @@ js-sys = "0.3.6"
 futures = "0.1.25"
 wasm-bindgen-futures = "0.3.6"
 
-[dependencies.web-sys]
+[dev-dependencies.web-sys]
 version = "0.3.6"
 features = [
     "console",
@@ -34,5 +32,6 @@ features = [
     "HtmlElement",
 ]
 
-[workspace]
-members = ["."]
+[[example]]
+name = "web"
+crate-type = ["cdylib"]

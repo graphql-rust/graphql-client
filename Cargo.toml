@@ -6,4 +6,7 @@ members = [
     "graphql_client_web",
     "graphql-introspection-query",
     "graphql_query_derive",
+
+    # Example crates.
+    "examples/*",
 ]

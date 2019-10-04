@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Mark Catley <mark@catley.net.nz>"]
 edition = "2018"
 
-[dependencies]
+[dev-dependencies]
 failure = "*"
 graphql_client = { path = "../../graphql_client" }
 serde = "1.0"
@@ -16,6 +16,3 @@ dotenv = "0.13.0"
 envy = "0.3.2"
 log = "0.4.3"
 env_logger = "0.5.10"
-
-[workspace]
-members = ["."]
