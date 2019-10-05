@@ -1,4 +1,3 @@
-// use failure::*;
 use graphql_client::*;
 use log::*;
 use prettytable::*;

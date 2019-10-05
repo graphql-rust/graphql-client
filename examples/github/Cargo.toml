@@ -8,8 +8,6 @@ edition = "2018"
 failure = "*"
 graphql_client = { path = "../../graphql_client" }
 serde = "^1.0"
-serde_derive = "^1.0"
-serde_json = "^1.0"
 reqwest = "^0.9"
 prettytable-rs = "^0.7"
 structopt = "^0.3"
