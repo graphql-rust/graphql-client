@@ -18,7 +18,7 @@ pub struct QueryOnUnion;
 
 #[test]
 fn type_refining_fragment_on_union() {
-    const RESPONSE: &'static str = include_str!("unions/union_query_response.json");
+    const RESPONSE: &str = include_str!("unions/union_query_response.json");
 
     let response_data: query_on_union::ResponseData = serde_json::from_str(RESPONSE).unwrap();
 
@@ -49,7 +49,7 @@ fn type_refining_fragment_on_union() {
 fn type_refining_fragment_on_interface() {
     use crate::query_on_interface::*;
 
-    const RESPONSE: &'static str = include_str!("interfaces/interface_response.json");
+    const RESPONSE: &str = include_str!("interfaces/interface_response.json");
 
     let response_data: query_on_interface::ResponseData = serde_json::from_str(RESPONSE).unwrap();
 

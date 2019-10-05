@@ -17,7 +17,7 @@ fn schema_with_keywords_works() {
     let operations = codegen::all_operations(&query);
     for operation in &operations {
         let generated_tokens = generated_module::GeneratedModule {
-            query_string: query_string,
+            query_string,
             schema: &schema,
             query_document: &query,
             operation,

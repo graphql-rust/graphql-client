@@ -34,5 +34,5 @@ script:
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (cargo fmt --all -- --check) fi
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (cargo clippy -- -D warnings) fi
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (prettier --debug-check -l './**/*.json' './**/*.graphql') fi
-  - if [ "$GRAPHQL_STYLE" = "false" ] && [ "$GRAPHQL_WASM" = "false" ]; then (cargo test --all) fi
+  - if [ "$GRAPHQL_STYLE" = "false" ] && [ "$GRAPHQL_WASM" = "false" ]; then (cargo test --all --tests --examples) fi
   - if [ "$GRAPHQL_WASM" = "true" ]; then (xvfb-run cargo test --manifest-path=./graphql_client/Cargo.toml --features="web" --target wasm32-unknown-unknown) fi
