@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
+#[structopt(author, about)]
 enum Cli {
     /// Get the schema from a live GraphQL API. The schema is printed to stdout.
     #[structopt(name = "introspect-schema")]
