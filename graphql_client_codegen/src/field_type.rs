@@ -78,16 +78,8 @@ impl<'a> FieldType<'a> {
             }
         };
 
-        let full_name = crate::shared::keyword_replace(&full_name);
-
-        #[cfg(feature = "normalize_query_types")]
-        let full_name = if full_name == "ID" || full_name.starts_with("__") {
-            full_name
-        } else {
-            use heck::CamelCase;
-
-            full_name.to_camel_case()
-        };
+        let norm = context.normalization;
+        let full_name = norm.field_type(crate::shared::keyword_replace(&full_name));
 
         let full_name = Ident::new(&full_name, Span::call_site());
         let mut qualified = quote!(#full_name);

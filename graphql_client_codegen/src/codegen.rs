@@ -1,4 +1,5 @@
 use crate::fragments::GqlFragment;
+use crate::normalization::Normalization;
 use crate::operations::Operation;
 use crate::query::QueryContext;
 use crate::schema;
@@ -12,23 +13,13 @@ use quote::*;
 pub(crate) fn select_operation<'query>(
     query: &'query query::Document,
     struct_name: &str,
+    norm: Normalization,
 ) -> Option<Operation<'query>> {
-    use heck::CamelCase;
-
     let operations = all_operations(query);
 
     operations
         .iter()
-        .find(|op| op.name == struct_name)
-        .or_else(|| {
-            if cfg!(feature = "normalize_query_types") {
-                operations
-                    .iter()
-                    .find(|op| op.name.to_camel_case() == struct_name)
-            } else {
-                None
-            }
-        })
+        .find(|op| norm.operation(&op.name) == struct_name)
         .map(ToOwned::to_owned)
 }
 
@@ -50,7 +41,11 @@ pub(crate) fn response_for_query(
     operation: &Operation<'_>,
     options: &crate::GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, failure::Error> {
-    let mut context = QueryContext::new(schema, options.deprecation_strategy());
+    let mut context = QueryContext::new(
+        schema,
+        options.deprecation_strategy(),
+        options.normalization(),
+    );
 
     if let Some(derives) = options.additional_derives() {
         context.ingest_additional_derives(&derives)?;
@@ -149,7 +144,7 @@ pub(crate) fn response_for_query(
         .values()
         .filter_map(|s| {
             if s.is_required.get() {
-                Some(s.to_rust())
+                Some(s.to_rust(context.normalization))
             } else {
                 None
             }

@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The introspection query response shape internally
   used by graphql-client is now its own crate,
   `graphql-introspection-query`.
-- A new experimental `normalize_query_types` feature, that renames all
-  generated types to camel case. This may become the default in future
-  versions, since not normalizing names can lead to invalid code.
-  (thanks @markcatley!)
+- A new experimental `normalization` attribute, that renames all
+  generated names to camel case. By default, the `"none"` naming conventions
+  are used, however, if set to `"rust"`, Rust naming rules will be used
+  instead. This may become the default in future versions, since not normalizing
+  names can lead to invalid code. (thanks @markcatley!)
 
 ## Fixed
 

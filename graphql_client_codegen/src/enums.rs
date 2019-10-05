@@ -31,16 +31,12 @@ impl<'schema> GqlEnum<'schema> {
         query_context: &crate::query::QueryContext<'_, '_>,
     ) -> TokenStream {
         let derives = query_context.response_enum_derives();
+        let norm = query_context.normalization;
         let variant_names: Vec<TokenStream> = self
             .variants
             .iter()
             .map(|v| {
-                let name = crate::shared::keyword_replace(&v.name);
-                #[cfg(feature = "normalize_query_types")]
-                let name = {
-                    use heck::CamelCase;
-                    name.to_camel_case()
-                };
+                let name = norm.enum_variant(crate::shared::keyword_replace(&v.name));
                 let name = Ident::new(&name, Span::call_site());
 
                 let description = &v.description;
@@ -50,23 +46,13 @@ impl<'schema> GqlEnum<'schema> {
             })
             .collect();
         let variant_names = &variant_names;
-        let name_ident = format!("{}{}", ENUMS_PREFIX, self.name);
-        #[cfg(feature = "normalize_query_types")]
-        let name_ident = {
-            use heck::CamelCase;
-            name_ident.to_camel_case()
-        };
+        let name_ident = norm.enum_name(format!("{}{}", ENUMS_PREFIX, self.name));
         let name_ident = Ident::new(&name_ident, Span::call_site());
         let constructors: Vec<_> = self
             .variants
             .iter()
             .map(|v| {
-                let name = crate::shared::keyword_replace(&v.name);
-                #[cfg(feature = "normalize_query_types")]
-                let name = {
-                    use heck::CamelCase;
-                    name.to_camel_case()
-                };
+                let name = norm.enum_variant(crate::shared::keyword_replace(&v.name));
                 let v = Ident::new(&name, Span::call_site());
 
                 quote!(#name_ident::#v)

@@ -28,14 +28,10 @@ impl<'a> GeneratedModule<'a> {
         let module_name = Ident::new(&self.operation.name.to_snake_case(), Span::call_site());
         let module_visibility = &self.options.module_visibility();
         let operation_name_literal = &self.operation.name;
-        let operation_name_ident = operation_name_literal.clone();
-        #[cfg(feature = "normalize_query_types")]
-        let operation_name_ident =
-            if Some(operation_name_ident.to_camel_case()) == self.options.operation_name {
-                operation_name_ident.to_camel_case()
-            } else {
-                operation_name_ident
-            };
+        let operation_name_ident = self
+            .options
+            .normalization()
+            .operation(operation_name_literal);
         let operation_name_ident = Ident::new(&operation_name_ident, Span::call_site());
 
         // Force cargo to refresh the generated code when the query file changes.

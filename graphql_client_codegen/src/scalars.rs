@@ -1,3 +1,4 @@
+use crate::normalization::Normalization;
 use quote::quote;
 use std::cell::Cell;
 
@@ -10,16 +11,10 @@ pub struct Scalar<'schema> {
 
 impl<'schema> Scalar<'schema> {
     // TODO: do something smarter here
-    pub fn to_rust(&self) -> proc_macro2::TokenStream {
+    pub fn to_rust(&self, norm: Normalization) -> proc_macro2::TokenStream {
         use proc_macro2::{Ident, Span};
 
-        let name = self.name;
-        #[cfg(feature = "normalize_query_types")]
-        let name = {
-            use heck::CamelCase;
-
-            name.to_camel_case()
-        };
+        let name = norm.scalar_name(self.name);
         let ident = Ident::new(&name, Span::call_site());
         let description = &self.description.map(|d| quote!(#[doc = #d]));
 
