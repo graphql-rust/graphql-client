@@ -63,4 +63,3 @@ web = [
     "wasm-bindgen-futures",
     "web-sys",
 ]
-normalize_query_types = [ "graphql_query_derive/normalize_query_types" ]
