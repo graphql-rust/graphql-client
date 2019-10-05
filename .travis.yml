@@ -29,7 +29,10 @@ before_script:
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (npm i -g prettier) fi
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (rustup component add rustfmt clippy) fi
   - if [ "$GRAPHQL_WASM" = "true" ]; then (rustup target add wasm32-unknown-unknown) fi
-  - if [ "$GRAPHQL_WASM" = "true" ]; then (cargo install -f wasm-bindgen-cli) fi
+  - if [ "$GRAPHQL_WASM" = "true" ]; then (wget https://github.com/rustwasm/wasm-bindgen/releases/download/0.2.51/wasm-bindgen-0.2.51-x86_64-unknown-linux-musl.tar.gz) fi
+  - if [ "$GRAPHQL_WASM" = "true" ]; then (mkdir wasm-bindgen) fi
+  - if [ "$GRAPHQL_WASM" = "true" ]; then (tar -xzf wasm-bindgen-0.2.51-x86_64-unknown-linux-musl.tar.gz -C wasm-bindgen) fi
+  - export PATH=$PATH:$PWD/wasm-bindgen/wasm-bindgen-0.2.51-x86_64-unknown-linux-musl
 script:
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (cargo fmt --all -- --check) fi
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (cargo clippy -- -D warnings) fi
