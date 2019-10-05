@@ -1,8 +1,10 @@
 use failure::*;
 use graphql_client_codegen::deprecation::DeprecationStrategy;
+use graphql_client_codegen::normalization::Normalization;
 use syn;
 
 const DEPRECATION_ERROR: &str = "deprecated must be one of 'allow', 'deny', or 'warn'";
+const NORMALIZATION_ERROR: &str = "normalization must be one of 'none' or 'rust'";
 
 /// The `graphql` attribute as a `syn::Path`.
 fn path_to_match() -> syn::Path {
@@ -32,7 +34,7 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failur
         }
     }
 
-    Err(format_err!("attribute not found"))?
+    Err(format_err!("attribute not found"))
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
@@ -44,6 +46,15 @@ pub fn extract_deprecation_strategy(
         .as_str()
         .parse()
         .map_err(|_| format_err!("{}", DEPRECATION_ERROR))
+}
+
+/// Get the deprecation from a struct attribute in the derive case.
+pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, failure::Error> {
+    extract_attr(&ast, "normalization")?
+        .to_lowercase()
+        .as_str()
+        .parse()
+        .map_err(|_| format_err!("{}", NORMALIZATION_ERROR))
 }
 
 #[cfg(test)]

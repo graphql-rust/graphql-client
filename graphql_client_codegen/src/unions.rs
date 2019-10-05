@@ -73,9 +73,9 @@ pub(crate) fn union_variants<'selection>(
 
         match field_object_type.or(field_interface).or(field_union_type) {
             Some(Ok(Some(tokens))) => children_definitions.push(tokens),
-            Some(Err(err)) => Err(err)?,
+            Some(Err(err)) => return Err(err),
             Some(Ok(None)) => (),
-            None => Err(UnionError::UnknownType { ty: on.to_string() })?,
+            None => return Err(UnionError::UnknownType { ty: on.to_string() }.into()),
         };
 
         variants.push(quote! {
@@ -97,9 +97,10 @@ impl<'schema> GqlUnion<'schema> {
         let typename_field = selection.extract_typename(query_context);
 
         if typename_field.is_none() {
-            Err(UnionError::MissingTypename {
+            return Err(UnionError::MissingTypename {
                 union_name: prefix.into(),
-            })?;
+            }
+            .into());
         }
 
         let struct_name = Ident::new(prefix, Span::call_site());
@@ -110,10 +111,11 @@ impl<'schema> GqlUnion<'schema> {
 
         for used_variant in used_variants.iter() {
             if !self.variants.contains(used_variant) {
-                Err(UnionError::UnknownVariant {
+                return Err(UnionError::UnknownVariant {
                     ty: self.name.into(),
                     var: used_variant.to_string(),
-                })?;
+                }
+                .into());
             }
         }
 
@@ -416,14 +418,12 @@ mod tests {
             GqlObject {
                 description: None,
                 name: "SomeNonUnionType",
-                fields: vec![
-                    GqlObjectField {
-                        description: None,
-                        name: "field",
-                        type_: FieldType::new(string_type()),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                ],
+                fields: vec![GqlObjectField {
+                    description: None,
+                    name: "field",
+                    type_: FieldType::new(string_type()),
+                    deprecation: DeprecationStatus::Current,
+                }],
                 is_required: false.into(),
             },
         );
@@ -440,7 +440,7 @@ mod tests {
             Ok(UnionError::UnknownVariant { var, ty }) => {
                 assert_eq!(var, "SomeNonUnionType");
                 assert_eq!(ty, "MyUnion");
-            },
+            }
             err => panic!("Unexpected error type: {:?}", err),
         }
     }

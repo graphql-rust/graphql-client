@@ -1,4 +1,5 @@
 use crate::deprecation::DeprecationStrategy;
+use crate::normalization::Normalization;
 use proc_macro2::Ident;
 use std::path::{Path, PathBuf};
 use syn::Visibility;
@@ -34,6 +35,8 @@ pub struct GraphQLClientCodegenOptions {
     /// A path to a file to include in the module to force Cargo to take into account changes in
     /// the schema files when recompiling.
     schema_file: Option<PathBuf>,
+    /// Normalization pattern for query types and names.
+    normalization: Normalization,
 }
 
 impl GraphQLClientCodegenOptions {
@@ -49,6 +52,7 @@ impl GraphQLClientCodegenOptions {
             struct_name: Default::default(),
             query_file: Default::default(),
             schema_file: Default::default(),
+            normalization: Normalization::None,
         }
     }
 
@@ -121,5 +125,15 @@ impl GraphQLClientCodegenOptions {
     /// The identifier to use when referring to the struct implementing GraphQLQuery, if any.
     pub fn struct_ident(&self) -> Option<&proc_macro2::Ident> {
         self.struct_ident.as_ref()
+    }
+
+    /// Set the normalization mode for the generated code.
+    pub fn set_normalization(&mut self, norm: Normalization) {
+        self.normalization = norm;
+    }
+
+    /// The normalization mode for the generated code.
+    pub fn normalization(&self) -> Normalization {
+        self.normalization
     }
 }

@@ -1,5 +1,6 @@
 use crate::deprecation::DeprecationStrategy;
 use crate::fragments::GqlFragment;
+use crate::normalization::Normalization;
 use crate::schema::Schema;
 use crate::selection::Selection;
 use failure::*;
@@ -14,6 +15,7 @@ pub(crate) struct QueryContext<'query, 'schema: 'query> {
     pub fragments: BTreeMap<&'query str, GqlFragment<'query>>,
     pub schema: &'schema Schema<'schema>,
     pub deprecation_strategy: DeprecationStrategy,
+    pub normalization: Normalization,
     variables_derives: Vec<Ident>,
     response_derives: Vec<Ident>,
 }
@@ -23,11 +25,13 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     pub(crate) fn new(
         schema: &'schema Schema<'schema>,
         deprecation_strategy: DeprecationStrategy,
+        normalization: Normalization,
     ) -> QueryContext<'query, 'schema> {
         QueryContext {
             fragments: BTreeMap::new(),
             schema,
             deprecation_strategy,
+            normalization,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
         }
@@ -47,6 +51,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
             fragments: BTreeMap::new(),
             schema,
             deprecation_strategy: DeprecationStrategy::Allow,
+            normalization: Normalization::None,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
         }

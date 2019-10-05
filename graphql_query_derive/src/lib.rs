@@ -75,6 +75,11 @@ fn build_graphql_client_derive_options(
         options.set_deprecation_strategy(deprecation_strategy);
     };
 
+    // The user can specify the normalization strategy.
+    if let Ok(normalization) = attributes::extract_normalization(input) {
+        options.set_normalization(normalization);
+    };
+
     options.set_struct_ident(input.ident.clone());
     options.set_module_visibility(input.vis.clone());
     options.set_operation_name(input.ident.to_string());

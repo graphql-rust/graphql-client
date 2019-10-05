@@ -67,6 +67,7 @@ impl<'schema> GqlInput<'schema> {
         &self,
         context: &QueryContext<'_, '_>,
     ) -> Result<TokenStream, failure::Error> {
+        let norm = context.normalization;
         let mut fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         let fields = fields.iter().map(|field| {
@@ -86,12 +87,7 @@ impl<'schema> GqlInput<'schema> {
             context.schema.require(&field.type_.inner_name_str());
             let name = crate::shared::keyword_replace(&field.name.to_snake_case());
             let rename = crate::shared::field_rename_annotation(&field.name, &name);
-            #[cfg(feature = "normalize_query_types")]
-            let name = {
-                use heck::CamelCase;
-
-                name.to_camel_case()
-            };
+            let name = norm.field_name(name);
             let name = Ident::new(&name, Span::call_site());
 
             quote!(#rename pub #name: #ty)
@@ -101,12 +97,7 @@ impl<'schema> GqlInput<'schema> {
         // Prevent generated code like "pub struct crate" for a schema input like "input crate { ... }"
         // This works in tandem with renamed struct Variables field types, eg: pub struct Variables { pub criteria : crate_ , }
         let name = crate::shared::keyword_replace(&self.name);
-        #[cfg(feature = "normalize_query_types")]
-        let name = {
-            use heck::CamelCase;
-
-            name.to_camel_case()
-        };
+        let name = norm.input_name(name);
         let name = Ident::new(&name, Span::call_site());
         Ok(quote! {
             #variables_derives

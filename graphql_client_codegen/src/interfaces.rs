@@ -159,11 +159,11 @@ impl<'schema> GqlInterface<'schema> {
 
         for used_variant in used_variants.iter() {
             if !self.implemented_by.contains(used_variant) {
-                Err(format_err!(
+                return Err(format_err!(
                     "Type {} does not implement the {} interface",
                     used_variant,
                     self.name,
-                ))?;
+                ));
             }
         }
 

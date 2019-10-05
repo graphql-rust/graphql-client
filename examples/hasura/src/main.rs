@@ -10,7 +10,8 @@ type Timestamptz = String;
 #[graphql(
     schema_path = "src/schema.graphql",
     query_path = "src/query_1.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug",
+    normalization = "rust"
 )]
 struct UpsertIssue;
 
