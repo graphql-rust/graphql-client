@@ -23,8 +23,10 @@ pub struct GraphQLClientCodegenOptions {
     pub struct_name: Option<String>,
     /// The struct for which we derive GraphQLQuery.
     struct_ident: Option<Ident>,
-    /// Comma-separated list of additional traits we want to derive.
-    additional_derives: Option<String>,
+    /// Comma-separated list of additional traits we want to derive for variables.
+    variables_derives: Option<String>,
+    /// Comma-separated list of additional traits we want to derive for responses.
+    response_derives: Option<String>,
     /// The deprecation strategy to adopt.
     deprecation_strategy: Option<DeprecationStrategy>,
     /// Target module visibility.
@@ -44,7 +46,8 @@ impl GraphQLClientCodegenOptions {
     pub fn new(mode: CodegenMode) -> GraphQLClientCodegenOptions {
         GraphQLClientCodegenOptions {
             mode,
-            additional_derives: Default::default(),
+            variables_derives: Default::default(),
+            response_derives: Default::default(),
             deprecation_strategy: Default::default(),
             module_visibility: Default::default(),
             operation_name: Default::default(),
@@ -74,14 +77,24 @@ impl GraphQLClientCodegenOptions {
         self.query_file = Some(path);
     }
 
-    /// Comma-separated list of additional traits we want to derive.
-    pub fn additional_derives(&self) -> Option<&str> {
-        self.additional_derives.as_ref().map(String::as_str)
+    /// Comma-separated list of additional traits we want to derive for variables.
+    pub fn variables_derives(&self) -> Option<&str> {
+        self.variables_derives.as_ref().map(String::as_str)
     }
 
-    /// Comma-separated list of additional traits we want to derive.
-    pub fn set_additional_derives(&mut self, additional_derives: String) {
-        self.additional_derives = Some(additional_derives);
+    /// Comma-separated list of additional traits we want to derive for variables.
+    pub fn set_variables_derives(&mut self, variables_derives: String) {
+        self.variables_derives = Some(variables_derives);
+    }
+
+    /// Comma-separated list of additional traits we want to derive for responses.
+    pub fn response_derives(&self) -> Option<&str> {
+        self.response_derives.as_ref().map(String::as_str)
+    }
+
+    /// Comma-separated list of additional traits we want to derive for responses.
+    pub fn set_response_derives(&mut self, response_derives: String) {
+        self.response_derives = Some(response_derives);
     }
 
     /// The deprecation strategy to adopt.

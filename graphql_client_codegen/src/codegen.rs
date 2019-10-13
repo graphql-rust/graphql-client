@@ -47,8 +47,12 @@ pub(crate) fn response_for_query(
         options.normalization(),
     );
 
-    if let Some(derives) = options.additional_derives() {
-        context.ingest_additional_derives(&derives)?;
+    if let Some(derives) = options.variables_derives() {
+        context.ingest_variables_derives(&derives)?;
+    }
+
+    if let Some(derives) = options.response_derives() {
+        context.ingest_response_derives(&derives)?;
     }
 
     let mut definitions = Vec::new();
