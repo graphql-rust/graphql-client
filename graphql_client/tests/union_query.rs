@@ -1,6 +1,6 @@
 use graphql_client::*;
 
-const RESPONSE: &'static str = include_str!("unions/union_query_response.json");
+const RESPONSE: &str = include_str!("unions/union_query_response.json");
 
 #[derive(GraphQLQuery)]
 #[graphql(

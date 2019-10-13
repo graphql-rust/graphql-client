@@ -56,12 +56,12 @@ pub struct RecursiveInputQuery;
 fn recursive_input_objects_can_be_constructed() {
     use recursive_input_query::*;
 
-    RecursiveInput {
+    let _ = RecursiveInput {
         head: "hello".to_string(),
         tail: Box::new(None),
     };
 
-    RecursiveInput {
+    let _ = RecursiveInput {
         head: "hi".to_string(),
         tail: Box::new(Some(RecursiveInput {
             head: "this is crazy".to_string(),
@@ -82,12 +82,12 @@ pub struct IndirectlyRecursiveInputQuery;
 fn indirectly_recursive_input_objects_can_be_constructed() {
     use indirectly_recursive_input_query::*;
 
-    IndirectlyRecursiveInput {
+    let _ = IndirectlyRecursiveInput {
         head: "hello".to_string(),
         tail: Box::new(None),
     };
 
-    IndirectlyRecursiveInput {
+    let _ = IndirectlyRecursiveInput {
         head: "hi".to_string(),
         tail: Box::new(Some(IndirectlyRecursiveInputTailPart {
             name: "this is crazy".to_string(),

@@ -1,6 +1,6 @@
 use graphql_client::*;
 
-const RESPONSE: &'static str = include_str!("interfaces/interface_response.json");
+const RESPONSE: &str = include_str!("interfaces/interface_response.json");
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -61,7 +61,7 @@ fn interface_deserialization() {
 )]
 pub struct InterfaceNotOnEverythingQuery;
 
-const RESPONSE_NOT_ON_EVERYTHING: &'static str =
+const RESPONSE_NOT_ON_EVERYTHING: &str =
     include_str!("interfaces/interface_response_not_on_everything.json");
 
 #[test]
@@ -115,8 +115,7 @@ fn interface_not_on_everything_deserialization() {
 )]
 pub struct InterfaceWithFragmentQuery;
 
-const RESPONSE_FRAGMENT: &'static str =
-    include_str!("interfaces/interface_with_fragment_response.json");
+const RESPONSE_FRAGMENT: &str = include_str!("interfaces/interface_with_fragment_response.json");
 
 #[test]
 fn fragment_in_interface() {

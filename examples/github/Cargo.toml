@@ -4,12 +4,10 @@ version = "0.1.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 edition = "2018"
 
-[dependencies]
+[dev-dependencies]
 failure = "*"
 graphql_client = { path = "../../graphql_client" }
 serde = "^1.0"
-serde_derive = "^1.0"
-serde_json = "^1.0"
 reqwest = "^0.9"
 prettytable-rs = "^0.7"
 structopt = "^0.3"
@@ -17,6 +15,3 @@ dotenv = "^0.13"
 envy = "^0.3"
 log = "^0.4"
 env_logger = "^0.5"
-
-[workspace]
-members = ["."]

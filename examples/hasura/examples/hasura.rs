@@ -1,4 +1,3 @@
-// use failure::*;
 use graphql_client::*;
 use log::*;
 use prettytable::*;
@@ -8,8 +7,8 @@ type Timestamptz = String;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "src/schema.graphql",
-    query_path = "src/query_1.graphql",
+    schema_path = "examples/schema.graphql",
+    query_path = "examples/query_1.graphql",
     response_derives = "Debug",
     normalization = "rust"
 )]

@@ -120,12 +120,14 @@ mod tests {
     fn it_errors_invalid_headers() {
         // https://tools.ietf.org/html/rfc7230#section-3.2
 
-        for input in vec![
+        for input in [
             "X-Name Value",   // error: colon required for name/value pair
             ": Value",        // error: field name must be
             "X Name: Value",  // error: no whitespace in field name
             "X\tName: Value", // error: no whitespace in field name (tab)
-        ] {
+        ]
+        .iter()
+        {
             let header = Header::from_str(input);
 
             assert!(header.is_err(), "Expected error: [{}]", input);
@@ -145,7 +147,7 @@ mod tests {
             value: "Value:".to_string(),
         };
 
-        for (input, expected) in vec![
+        for (input, expected) in [
             ("X-Name: Value", &expected1),  // ideal
             ("X-Name:Value", &expected1),   // no optional whitespace
             ("X-Name: Value ", &expected1), // with optional whitespace
@@ -154,11 +156,18 @@ mod tests {
             // not allowed per RFC, but we'll forgive
             ("X-Name : Value", &expected1),
             (" X-Name: Value", &expected1),
-        ] {
+        ]
+        .iter()
+        {
             let header = Header::from_str(input);
 
             assert!(header.is_ok(), "Expected ok: [{}]", input);
-            assert_eq!(header.unwrap(), *expected, "Expected equality: [{}]", input);
+            assert_eq!(
+                header.unwrap(),
+                **expected,
+                "Expected equality: [{}]",
+                input
+            );
         }
     }
 }
