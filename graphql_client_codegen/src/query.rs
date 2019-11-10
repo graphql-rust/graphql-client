@@ -40,7 +40,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     /// Mark a fragment as required, so code is actually generated for it.
     pub(crate) fn require_fragment(&self, typename_: &str) {
         if let Some(fragment) = self.fragments.get(typename_) {
-            fragment.is_required.set(true)
+            fragment.require(&self);
         }
     }
 

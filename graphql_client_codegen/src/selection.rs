@@ -167,6 +167,14 @@ impl<'query> Selection<'query> {
     pub(crate) fn len(&self) -> usize {
         self.0.len()
     }
+
+    pub(crate) fn require_items<'s>(&self, context: &crate::query::QueryContext<'query, 's>) {
+        self.0.iter().for_each(|item| {
+            if let SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) = item {
+                context.require_fragment(fragment_name);
+            }
+        })
+    }
 }
 
 impl<'query> std::convert::From<&'query SelectionSet> for Selection<'query> {
