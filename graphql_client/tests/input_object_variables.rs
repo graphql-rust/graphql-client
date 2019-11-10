@@ -41,7 +41,10 @@ fn input_object_variables_default() {
 
     let out = serde_json::to_string(&variables).unwrap();
 
-    assert_eq!(out, r#"{"msg":{"content":null,"to":{"category":null,"email":"rosa.luxemburg@example.com","name":null}}}"#);
+    assert_eq!(
+        out,
+        r#"{"msg":{"content":null,"to":{"category":null,"email":"rosa.luxemburg@example.com","name":null}}}"#,
+    );
 }
 
 #[derive(GraphQLQuery)]

@@ -104,7 +104,7 @@ pub fn generate_module_token_stream(
             hash_map::Entry::Occupied(o) => o.get().clone(),
             hash_map::Entry::Vacant(v) => {
                 let schema_string = read_file(v.key())?;
-                v.insert(schema_string).to_string()
+                (*v.insert(schema_string)).to_string()
             }
         }
     };
