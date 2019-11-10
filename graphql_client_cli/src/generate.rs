@@ -11,7 +11,8 @@ pub(crate) struct CliCodegenParams {
     pub query_path: PathBuf,
     pub schema_path: PathBuf,
     pub selected_operation: Option<String>,
-    pub additional_derives: Option<String>,
+    pub variables_derives: Option<String>,
+    pub response_derives: Option<String>,
     pub deprecation_strategy: Option<String>,
     pub no_formatting: bool,
     pub module_visibility: Option<String>,
@@ -20,7 +21,8 @@ pub(crate) struct CliCodegenParams {
 
 pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Error> {
     let CliCodegenParams {
-        additional_derives,
+        variables_derives,
+        response_derives,
         deprecation_strategy,
         no_formatting,
         output_directory,
@@ -45,8 +47,12 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
         options.set_operation_name(selected_operation);
     }
 
-    if let Some(additional_derives) = additional_derives {
-        options.set_additional_derives(additional_derives);
+    if let Some(variables_derives) = variables_derives {
+        options.set_variables_derives(variables_derives);
+    }
+
+    if let Some(response_derives) = response_derives {
+        options.set_response_derives(response_derives);
     }
 
     if let Some(deprecation_strategy) = deprecation_strategy {

@@ -1,0 +1,6 @@
+query OptQuery($param: Param) {
+  optInput(query: $param) {
+    name
+    __typename
+  }
+}

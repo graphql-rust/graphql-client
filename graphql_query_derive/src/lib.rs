@@ -61,13 +61,18 @@ fn build_graphql_client_derive_options(
     input: &syn::DeriveInput,
     query_path: PathBuf,
 ) -> Result<GraphQLClientCodegenOptions, failure::Error> {
+    let variables_derives = attributes::extract_attr(input, "variables_derives").ok();
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Derive);
     options.set_query_file(query_path);
 
+    if let Some(variables_derives) = variables_derives {
+        options.set_variables_derives(variables_derives);
+    };
+
     if let Some(response_derives) = response_derives {
-        options.set_additional_derives(response_derives);
+        options.set_response_derives(response_derives);
     };
 
     // The user can determine what to do about deprecations.

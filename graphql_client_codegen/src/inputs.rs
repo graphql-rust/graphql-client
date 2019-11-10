@@ -235,7 +235,7 @@ mod tests {
         let mut schema = crate::schema::Schema::new();
         schema.inputs.insert(cat.name, cat);
         let mut context = QueryContext::new_empty(&schema);
-        context.ingest_additional_derives("Clone").unwrap();
+        context.ingest_variables_derives("Clone").unwrap();
 
         assert_eq!(
             format!(

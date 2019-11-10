@@ -1,0 +1,21 @@
+schema {
+  query: Query
+}
+
+# The query type, represents all of the entry points into our object graph
+type Query {
+  optInput(query: Param): Named
+}
+
+# What can be searched for.
+enum Param {
+  AUTHOR
+}
+
+# A named entity
+type Named {
+  # The ID of the entity
+  id: ID!
+  # The name of the entity
+  name: String!
+}

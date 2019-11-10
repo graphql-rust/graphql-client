@@ -87,23 +87,36 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
         }
     }
 
-    pub(crate) fn ingest_additional_derives(
+    pub(crate) fn ingest_response_derives(
         &mut self,
         attribute_value: &str,
     ) -> Result<(), failure::Error> {
         if self.response_derives.len() > 1 {
             return Err(format_err!(
-                "ingest_additional_derives should only be called once"
+                "ingest_response_derives should only be called once"
             ));
         }
 
-        self.variables_derives.extend(
+        self.response_derives.extend(
             attribute_value
                 .split(',')
                 .map(str::trim)
                 .map(|s| Ident::new(s, Span::call_site())),
         );
-        self.response_derives.extend(
+        Ok(())
+    }
+
+    pub(crate) fn ingest_variables_derives(
+        &mut self,
+        attribute_value: &str,
+    ) -> Result<(), failure::Error> {
+        if self.variables_derives.len() > 1 {
+            return Err(format_err!(
+                "ingest_variables_derives should only be called once"
+            ));
+        }
+
+        self.variables_derives.extend(
             attribute_value
                 .split(',')
                 .map(str::trim)
@@ -160,7 +173,7 @@ mod tests {
         let mut context = QueryContext::new_empty(&schema);
 
         context
-            .ingest_additional_derives("PartialEq, PartialOrd, Serialize")
+            .ingest_response_derives("PartialEq, PartialOrd, Serialize")
             .unwrap();
 
         assert_eq!(
@@ -185,7 +198,7 @@ mod tests {
         let mut context = QueryContext::new_empty(&schema);
 
         context
-            .ingest_additional_derives("PartialEq, PartialOrd, Serialize")
+            .ingest_response_derives("PartialEq, PartialOrd, Serialize")
             .unwrap();
 
         assert_eq!(
@@ -200,8 +213,8 @@ mod tests {
         let mut context = QueryContext::new_empty(&schema);
 
         assert!(context
-            .ingest_additional_derives("PartialEq, PartialOrd")
+            .ingest_response_derives("PartialEq, PartialOrd")
             .is_ok());
-        assert!(context.ingest_additional_derives("Serialize").is_err());
+        assert!(context.ingest_response_derives("Serialize").is_err());
     }
 }
