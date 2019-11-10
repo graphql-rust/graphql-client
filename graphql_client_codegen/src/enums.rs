@@ -62,7 +62,7 @@ impl<'schema> GqlEnum<'schema> {
         let variant_str: Vec<&str> = self.variants.iter().map(|v| v.name).collect();
         let variant_str = &variant_str;
 
-        let name = name_ident.clone();
+        let name = name_ident;
 
         quote! {
             #derives

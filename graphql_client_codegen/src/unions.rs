@@ -75,7 +75,12 @@ pub(crate) fn union_variants<'selection>(
             Some(Ok(Some(tokens))) => children_definitions.push(tokens),
             Some(Err(err)) => return Err(err),
             Some(Ok(None)) => (),
-            None => return Err(UnionError::UnknownType { ty: on.to_string() }.into()),
+            None => {
+                return Err(UnionError::UnknownType {
+                    ty: (*on).to_string(),
+                }
+                .into())
+            }
         };
 
         variants.push(quote! {
@@ -113,7 +118,7 @@ impl<'schema> GqlUnion<'schema> {
             if !self.variants.contains(used_variant) {
                 return Err(UnionError::UnknownVariant {
                     ty: self.name.into(),
-                    var: used_variant.to_string(),
+                    var: (*used_variant).to_string(),
                 }
                 .into());
             }
