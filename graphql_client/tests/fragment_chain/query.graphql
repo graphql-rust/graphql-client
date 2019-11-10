@@ -1,0 +1,11 @@
+query Q {
+  ...FragmentB
+}
+
+fragment FragmentB on Query {
+  ...FragmentA
+}
+
+fragment FragmentA on Query {
+  x
+}
