@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron:  '0 2 * * *'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        rust: ["stable", "beta", "nightly"]
+        os: [ubuntu-18.04, macos-latest]
+    name: Cargo test
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v1
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.rust }}
+        override: true
+    - name: Execute cargo test
+      run: cargo test --all --tests --examples
+  wasm_test:
+    name: Cargo test for wasm
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v1
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    - name: Setup wasm-bindgen
+      run: |
+        rustup target add wasm32-unknown-unknown &&
+        sudo apt update && sudo apt install -y firefox-geckodriver &&
+        wget https://github.com/rustwasm/wasm-bindgen/releases/download/0.2.54/wasm-bindgen-0.2.54-x86_64-unknown-linux-musl.tar.gz &&
+        mkdir wasm-bindgen &&
+        tar -xzf wasm-bindgen-0.2.54-x86_64-unknown-linux-musl.tar.gz -C wasm-bindgen
+    - name: Execute cargo test
+      run: |
+        export PATH=$PATH:$PWD/wasm-bindgen/wasm-bindgen-0.2.54-x86_64-unknown-linux-musl &&
+        xvfb-run cargo test --manifest-path=./graphql_client/Cargo.toml --features="web" --target wasm32-unknown-unknown
+  lint:
+    name: Rustfmt and Clippy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v1
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        components: clippy,rustfmt
+    - name: Execute cargo fmt
+      run: cargo fmt --all -- --check
+    - name: Execute cargo clippy
+      run: cargo clippy -- -D warnings
+  prettier:
+    name: Check prettier
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v1
+    - name: Install node.js
+      run: sudo apt update && sudo apt-get install -y nodejs
+    - name: Execute prettier
+      run: npx prettier --debug-check -l './**/*.json' './**/*.graphql'
