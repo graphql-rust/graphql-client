@@ -33,7 +33,7 @@ ARGS:
 
 ```
 USAGE:
-    graphql-client generate [FLAGS] [OPTIONS] <query_path> --schema-path <schema_path>
+    graphql-client generate [FLAGS] [OPTIONS] <query_path> <schema_path>
 
 FLAGS:
     -h, --help             Prints help information
@@ -48,17 +48,16 @@ OPTIONS:
     -d, --deprecation-strategy <deprecation_strategy>
             You can choose deprecation strategy from allow, deny, or warn. Default value is warn.
 
-    -m, --module-visibility <module_visibility>
+    -m, --module_visibility <module_visibility>
             You can choose module and target struct visibility from pub and private. Default value is pub.
 
-    -o, --output-directory <output_directory>            The directory in which the code will be generated
-    -s, --schema-path <schema_path>                      Path to GraphQL schema file (.json or .graphql).
     -o, --selected-operation <selected_operation>
             Name of target query. If you don't set this parameter, cli generate all queries in query file.
 
 
 ARGS:
-    <query_path>    Path to the GraphQL query file.
+    <query_path>     Path to graphql query file.
+    <schema_path>    Path to graphql schema file.
 ```
 
 If you want to use formatting feature, you should install like this.
