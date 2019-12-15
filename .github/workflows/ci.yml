@@ -41,12 +41,9 @@ jobs:
       run: |
         rustup target add wasm32-unknown-unknown &&
         sudo apt update && sudo apt install -y firefox-geckodriver &&
-        wget https://github.com/rustwasm/wasm-bindgen/releases/download/0.2.54/wasm-bindgen-0.2.54-x86_64-unknown-linux-musl.tar.gz &&
-        mkdir wasm-bindgen &&
-        tar -xzf wasm-bindgen-0.2.54-x86_64-unknown-linux-musl.tar.gz -C wasm-bindgen
+        cargo install wasm-bindgen-cli
     - name: Execute cargo test
       run: |
-        export PATH=$PATH:$PWD/wasm-bindgen/wasm-bindgen-0.2.54-x86_64-unknown-linux-musl &&
         xvfb-run cargo test --manifest-path=./graphql_client/Cargo.toml --features="web" --target wasm32-unknown-unknown
   lint:
     name: Rustfmt and Clippy

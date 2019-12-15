@@ -52,7 +52,7 @@ reqwest = "^0.9"
 
 [dev-dependencies]
 # Note: If we bumpup wasm-bindge-test version, we should change CI setting.
-wasm-bindgen-test = "0.2.43"
+wasm-bindgen-test = "^0.2"
 
 [features]
 web = [

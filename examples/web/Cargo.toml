@@ -11,7 +11,7 @@ edition = "2018"
 [dev-dependencies]
 graphql_client = { path = "../../graphql_client" }
 graphql_client_web = { path = "../../graphql_client_web" }
-wasm-bindgen = "0.2.43"
+wasm-bindgen = "^0.2"
 serde = { version = "1.0.67", features = ["derive"] }
 lazy_static = "1.0.1"
 js-sys = "0.3.6"
