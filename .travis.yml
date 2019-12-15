@@ -29,7 +29,7 @@ before_script:
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (npm i -g prettier) fi
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (rustup component add rustfmt clippy) fi
   - if [ "$GRAPHQL_WASM" = "true" ]; then (rustup target add wasm32-unknown-unknown) fi
-  - if [ "$GRAPHQL_WASM" = "true" ]; then (cargo install wasm-bindgen-cli) fi
+  - if [ "$GRAPHQL_WASM" = "true" ]; then (cargo install wasm-bindgen-cli --force) fi
 script:
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (cargo fmt --all -- --check) fi
   - if [ "$GRAPHQL_STYLE" = "true" ]; then (cargo clippy -- -D warnings) fi
