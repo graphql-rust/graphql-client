@@ -143,7 +143,6 @@ pub fn run() {
         .append_child(&message_area)
         .expect_throw("could not append message area");
 
-    load_more();
     add_load_more_button();
 
     log("Bye");
