@@ -23,8 +23,6 @@ jobs:
         profile: minimal
         toolchain: ${{ matrix.rust }}
         override: true
-    - name: Execute cargo test
-      run: cargo test --all --tests --examples
     - name: Cache cargo registry
       uses: actions/cache@v1
       with:
@@ -40,6 +38,8 @@ jobs:
       with:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+    - name: Execute cargo test
+      run: cargo test --all --tests --examples
   wasm_test:
     name: Cargo test for wasm
     runs-on: ubuntu-18.04
@@ -52,14 +52,6 @@ jobs:
         profile: minimal
         toolchain: stable
         override: true
-    - name: Setup wasm-bindgen
-      run: |
-        rustup target add wasm32-unknown-unknown &&
-        sudo apt update && sudo apt install -y firefox-geckodriver &&
-        cargo install wasm-bindgen-cli
-    - name: Execute cargo test
-      run: |
-        xvfb-run cargo test --manifest-path=./graphql_client/Cargo.toml --features="web" --target wasm32-unknown-unknown
     - name: Cache cargo registry
       uses: actions/cache@v1
       with:
@@ -75,6 +67,14 @@ jobs:
       with:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+    - name: Setup wasm-bindgen
+      run: |
+        rustup target add wasm32-unknown-unknown &&
+        sudo apt update && sudo apt install -y firefox-geckodriver &&
+        cargo install wasm-bindgen-cli
+    - name: Execute cargo test
+      run: |
+        xvfb-run cargo test --manifest-path=./graphql_client/Cargo.toml --features="web" --target wasm32-unknown-unknown
   lint:
     name: Rustfmt and Clippy
     runs-on: ubuntu-latest
@@ -88,10 +88,6 @@ jobs:
         toolchain: stable
         override: true
         components: clippy,rustfmt
-    - name: Execute cargo fmt
-      run: cargo fmt --all -- --check
-    - name: Execute cargo clippy
-      run: cargo clippy --tests --examples -- -D warnings
     - name: Cache cargo registry
       uses: actions/cache@v1
       with:
@@ -107,6 +103,10 @@ jobs:
       with:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+    - name: Execute cargo fmt
+      run: cargo fmt --all -- --check
+    - name: Execute cargo clippy
+      run: cargo clippy --tests --examples -- -D warnings
   prettier:
     name: Check prettier
     runs-on: ubuntu-latest
