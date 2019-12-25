@@ -101,8 +101,7 @@ fn render_response(response: graphql_client_web::Response<puppy_smiles::Response
 
     let new_cursor: Option<String> = listings[listings.len() - 1]
         .as_ref()
-        .map(|puppy| puppy.fullname_id.clone())
-        .to_owned();
+        .map(|puppy| puppy.fullname_id.clone());
     LAST_ENTRY.lock().unwrap_throw().replace(new_cursor);
 
     for puppy in &listings {
