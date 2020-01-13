@@ -2,7 +2,7 @@ use crate::deprecation::{DeprecationStatus, DeprecationStrategy};
 use crate::objects::GqlObjectField;
 use crate::query::QueryContext;
 use crate::selection::*;
-use failure::*;
+use anyhow::*;
 use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -117,7 +117,7 @@ pub(crate) fn field_impls_for_selection(
     context: &QueryContext<'_, '_>,
     selection: &Selection<'_>,
     prefix: &str,
-) -> Result<Vec<TokenStream>, failure::Error> {
+) -> Result<Vec<TokenStream>, anyhow::Error> {
     (&selection)
         .into_iter()
         .map(|selected| {
@@ -147,7 +147,7 @@ pub(crate) fn response_fields_for_selection(
     context: &QueryContext<'_, '_>,
     selection: &Selection<'_>,
     prefix: &str,
-) -> Result<Vec<TokenStream>, failure::Error> {
+) -> Result<Vec<TokenStream>, anyhow::Error> {
     (&selection)
         .into_iter()
         .map(|item| match item {

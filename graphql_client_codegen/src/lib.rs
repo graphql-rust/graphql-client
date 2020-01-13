@@ -7,7 +7,7 @@
 //!
 //! It is not meant to be used directly by users of the library.
 
-use failure::*;
+use anyhow::*;
 use lazy_static::*;
 use proc_macro2::TokenStream;
 use quote::*;
@@ -57,7 +57,7 @@ pub fn generate_module_token_stream(
     query_path: std::path::PathBuf,
     schema_path: &std::path::Path,
     options: GraphQLClientCodegenOptions,
-) -> Result<TokenStream, failure::Error> {
+) -> Result<TokenStream, anyhow::Error> {
     use std::collections::hash_map;
     // We need to qualify the query with the path to the crate it is part of
     let (query_string, query) = {
@@ -66,7 +66,8 @@ pub fn generate_module_token_stream(
             hash_map::Entry::Occupied(o) => o.get().clone(),
             hash_map::Entry::Vacant(v) => {
                 let query_string = read_file(v.key())?;
-                let query = graphql_parser::parse_query(&query_string)?;
+                let query = graphql_parser::parse_query(&query_string)
+                    .map_err(|err| anyhow::anyhow!("{}", err))?;
                 v.insert((query_string, query)).clone()
             }
         }
@@ -111,7 +112,7 @@ pub fn generate_module_token_stream(
 
     let parsed_schema = match schema_extension {
                         "graphql" | "gql" => {
-                            let s = graphql_parser::schema::parse_schema(&schema_string)?;
+                            let s = graphql_parser::schema::parse_schema(&schema_string).map_err(|err| anyhow::anyhow!("{}", err))?;
                             schema::ParsedSchema::GraphQLParser(s)
                         }
                         "json" => {
@@ -143,13 +144,13 @@ pub fn generate_module_token_stream(
     Ok(modules)
 }
 
-fn read_file(path: &std::path::Path) -> Result<String, failure::Error> {
+fn read_file(path: &std::path::Path) -> Result<String, anyhow::Error> {
     use std::fs;
     use std::io::prelude::*;
 
     let mut out = String::new();
     let mut file = fs::File::open(path).map_err(|io_err| {
-        let err: failure::Error = io_err.into();
+        let err: anyhow::Error = io_err.into();
         err.context(format!(
             r#"
             Could not find file with path: {}
@@ -166,7 +167,7 @@ fn read_file(path: &std::path::Path) -> Result<String, failure::Error> {
 fn derive_operation_not_found_error(
     ident: Option<&proc_macro2::Ident>,
     query: &graphql_parser::query::Document,
-) -> failure::Error {
+) -> anyhow::Error {
     use graphql_parser::query::*;
 
     let operation_name = ident.map(ToString::to_string);

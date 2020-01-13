@@ -4,7 +4,7 @@ use crate::operations::Operation;
 use crate::query::QueryContext;
 use crate::schema;
 use crate::selection::Selection;
-use failure::*;
+use anyhow::*;
 use graphql_parser::query;
 use proc_macro2::TokenStream;
 use quote::*;
@@ -40,7 +40,7 @@ pub(crate) fn response_for_query(
     query: &query::Document,
     operation: &Operation<'_>,
     options: &crate::GraphQLClientCodegenOptions,
-) -> Result<TokenStream, failure::Error> {
+) -> Result<TokenStream, anyhow::Error> {
     let mut context = QueryContext::new(
         schema,
         options.deprecation_strategy(),

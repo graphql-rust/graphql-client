@@ -1,5 +1,5 @@
 use crate::constants::*;
-use failure::*;
+use anyhow::*;
 use graphql_parser::query::SelectionSet;
 use std::collections::BTreeMap;
 
@@ -80,7 +80,7 @@ impl<'query> Selection<'query> {
         selected_variants: &mut BTreeMap<&'s str, Selection<'s>>,
         // the name of the type the selection applies to
         selection_on: &str,
-    ) -> Result<(), failure::Error> {
+    ) -> Result<(), anyhow::Error> {
         for item in self.0.iter() {
             match item {
                 SelectionItem::Field(_) => (),
@@ -136,7 +136,7 @@ impl<'query> Selection<'query> {
         context: &'s crate::query::QueryContext<'_, '_>,
         // the name of the type the selection applies to
         selection_on: &str,
-    ) -> Result<BTreeMap<&'s str, Selection<'s>>, failure::Error> {
+    ) -> Result<BTreeMap<&'s str, Selection<'s>>, anyhow::Error> {
         let mut selected_variants = BTreeMap::new();
 
         self.selected_variants_on_union_inner(context, &mut selected_variants, selection_on)?;

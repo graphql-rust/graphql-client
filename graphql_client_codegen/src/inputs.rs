@@ -66,7 +66,7 @@ impl<'schema> GqlInput<'schema> {
     pub(crate) fn to_rust(
         &self,
         context: &QueryContext<'_, '_>,
-    ) -> Result<TokenStream, failure::Error> {
+    ) -> Result<TokenStream, anyhow::Error> {
         let norm = context.normalization;
         let mut fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));

@@ -1,3 +1,4 @@
+use anyhow::format_err;
 use graphql_client::*;
 
 const RESPONSE: &str = include_str!("interfaces/interface_response.json");

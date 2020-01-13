@@ -14,7 +14,7 @@ pub(crate) struct GeneratedModule<'a> {
 
 impl<'a> GeneratedModule<'a> {
     /// Generate the items for the variables and the response that will go inside the module.
-    fn build_impls(&self) -> Result<TokenStream, failure::Error> {
+    fn build_impls(&self) -> Result<TokenStream, anyhow::Error> {
         Ok(crate::codegen::response_for_query(
             &self.schema,
             &self.query_document,
@@ -24,7 +24,7 @@ impl<'a> GeneratedModule<'a> {
     }
 
     /// Generate the module and all the code inside.
-    pub(crate) fn to_token_stream(&self) -> Result<TokenStream, failure::Error> {
+    pub(crate) fn to_token_stream(&self) -> Result<TokenStream, anyhow::Error> {
         let module_name = Ident::new(&self.operation.name.to_snake_case(), Span::call_site());
         let module_visibility = &self.options.module_visibility();
         let operation_name_literal = &self.operation.name;

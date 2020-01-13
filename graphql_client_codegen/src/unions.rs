@@ -1,10 +1,10 @@
 use crate::query::QueryContext;
 use crate::selection::Selection;
-use failure::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::cell::Cell;
 use std::collections::BTreeSet;
+use thiserror::*;
 
 /// A GraphQL union (simplified schema representation).
 ///
@@ -17,19 +17,19 @@ pub(crate) struct GqlUnion<'schema> {
     pub is_required: Cell<bool>,
 }
 
-#[derive(Debug, Fail)]
-#[fail(display = "UnionError")]
+#[derive(Debug, Error)]
+#[error("UnionError")]
 enum UnionError {
-    #[fail(display = "Unknown type: {}", ty)]
+    #[error("Unknown type: {}", ty)]
     UnknownType { ty: String },
-    #[fail(display = "Unknown variant on union {}: {}", ty, var)]
+    #[error("Unknown variant on union {}: {}", ty, var)]
     UnknownVariant { var: String, ty: String },
-    #[fail(display = "Missing __typename in selection for {}", union_name)]
+    #[error("Missing __typename in selection for {}", union_name)]
     MissingTypename { union_name: String },
 }
 
 type UnionVariantResult<'selection> =
-    Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<&'selection str>), failure::Error>;
+    Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<&'selection str>), anyhow::Error>;
 
 /// Returns a triple.
 ///
@@ -98,7 +98,7 @@ impl<'schema> GqlUnion<'schema> {
         query_context: &QueryContext<'_, '_>,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<TokenStream, failure::Error> {
+    ) -> Result<TokenStream, anyhow::Error> {
         let typename_field = selection.extract_typename(query_context);
 
         if typename_field.is_none() {

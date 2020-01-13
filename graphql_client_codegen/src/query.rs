@@ -3,7 +3,7 @@ use crate::fragments::GqlFragment;
 use crate::normalization::Normalization;
 use crate::schema::Schema;
 use crate::selection::Selection;
-use failure::*;
+use anyhow::*;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -63,7 +63,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
         ty: &str,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<Option<TokenStream>, failure::Error> {
+    ) -> Result<Option<TokenStream>, anyhow::Error> {
         if self.schema.contains_scalar(ty) {
             Ok(None)
         } else if let Some(enm) = self.schema.enums.get(ty) {
@@ -90,7 +90,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     pub(crate) fn ingest_response_derives(
         &mut self,
         attribute_value: &str,
-    ) -> Result<(), failure::Error> {
+    ) -> Result<(), anyhow::Error> {
         if self.response_derives.len() > 1 {
             return Err(format_err!(
                 "ingest_response_derives should only be called once"
@@ -109,7 +109,7 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
     pub(crate) fn ingest_variables_derives(
         &mut self,
         attribute_value: &str,
-    ) -> Result<(), failure::Error> {
+    ) -> Result<(), anyhow::Error> {
         if self.variables_derives.len() > 1 {
             return Err(format_err!(
                 "ingest_variables_derives should only be called once"

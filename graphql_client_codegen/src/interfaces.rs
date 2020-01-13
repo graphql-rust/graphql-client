@@ -4,7 +4,7 @@ use crate::query::QueryContext;
 use crate::selection::{Selection, SelectionField, SelectionFragmentSpread, SelectionItem};
 use crate::shared::*;
 use crate::unions::union_variants;
-use failure::*;
+use anyhow::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::cell::Cell;
@@ -104,7 +104,7 @@ impl<'schema> GqlInterface<'schema> {
         context: &QueryContext<'_, '_>,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<Vec<TokenStream>, failure::Error> {
+    ) -> Result<Vec<TokenStream>, anyhow::Error> {
         crate::shared::field_impls_for_selection(
             &self.fields,
             context,
@@ -119,7 +119,7 @@ impl<'schema> GqlInterface<'schema> {
         context: &QueryContext<'_, '_>,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<Vec<TokenStream>, failure::Error> {
+    ) -> Result<Vec<TokenStream>, anyhow::Error> {
         response_fields_for_selection(
             &self.name,
             &self.fields,
@@ -135,7 +135,7 @@ impl<'schema> GqlInterface<'schema> {
         query_context: &QueryContext<'_, '_>,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<TokenStream, failure::Error> {
+    ) -> Result<TokenStream, anyhow::Error> {
         let name = Ident::new(&prefix, Span::call_site());
         let derives = query_context.response_derives();
 

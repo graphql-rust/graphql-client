@@ -39,7 +39,7 @@ impl<'query> GqlFragment<'query> {
     pub(crate) fn to_rust(
         &self,
         context: &QueryContext<'_, '_>,
-    ) -> Result<TokenStream, failure::Error> {
+    ) -> Result<TokenStream, anyhow::Error> {
         match self.on {
             FragmentTarget::Object(obj) => {
                 obj.response_for_selection(context, &self.selection, &self.name)

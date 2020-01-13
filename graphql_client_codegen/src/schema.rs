@@ -6,8 +6,8 @@ use crate::interfaces::GqlInterface;
 use crate::objects::{GqlObject, GqlObjectField};
 use crate::scalars::Scalar;
 use crate::unions::GqlUnion;
-use failure::*;
-use graphql_parser::{self, schema};
+use anyhow::*;
+use graphql_parser::schema;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
@@ -44,7 +44,7 @@ impl<'schema> Schema<'schema> {
     pub(crate) fn ingest_interface_implementations(
         &mut self,
         impls: BTreeMap<&'schema str, Vec<&'schema str>>,
-    ) -> Result<(), failure::Error> {
+    ) -> Result<(), anyhow::Error> {
         impls
             .into_iter()
             .map(|(iface_name, implementors)| {
