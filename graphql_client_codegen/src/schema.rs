@@ -12,9 +12,31 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
+#[derive(Debug, PartialEq, Clone)]
+struct StoredObjectField {
+    name: String,
+    object: ObjectId,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+struct StoredObject {
+    name: String,
+    fields: Vec<ObjectFieldId>,
+}
+
+impl StoredObject {}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct ObjectId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct ObjectFieldId(usize);
+
 /// Intermediate representation for a parsed GraphQL schema used during code generation.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Schema<'schema> {
+    stored_objects: Vec<StoredObject>,
+    stored_object_fields: Vec<StoredObjectField>,
     pub(crate) enums: BTreeMap<&'schema str, GqlEnum<'schema>>,
     pub(crate) inputs: BTreeMap<&'schema str, GqlInput<'schema>>,
     pub(crate) interfaces: BTreeMap<&'schema str, GqlInterface<'schema>>,
@@ -29,6 +51,8 @@ pub(crate) struct Schema<'schema> {
 impl<'schema> Schema<'schema> {
     pub(crate) fn new() -> Schema<'schema> {
         Schema {
+            stored_objects: Vec::new(),
+            stored_object_fields: Vec::new(),
             enums: BTreeMap::new(),
             inputs: BTreeMap::new(),
             interfaces: BTreeMap::new(),
@@ -103,31 +127,77 @@ impl<'schema> Schema<'schema> {
                     .map(crate::fragments::FragmentTarget::Union)
             })
     }
+
+    fn get_object_mut(&mut self, object_id: ObjectId) -> &mut StoredObject {
+        self.stored_objects.get_mut(object_id.0).unwrap()
+    }
+
+    fn push_object(&mut self, object: StoredObject) -> ObjectId {
+        let id = ObjectId(self.stored_objects.len());
+        self.stored_objects.push(object);
+
+        id
+    }
+
+    fn push_object_field(&mut self, object_field: StoredObjectField) -> ObjectFieldId {
+        let id = ObjectFieldId(self.stored_object_fields.len());
+
+        self.stored_object_fields.push(object_field);
+
+        id
+    }
+
+    fn ingest_graphql_parser_object(&mut self, obj: &mut graphql_parser::schema::ObjectType) {
+        let object = StoredObject {
+            name: std::mem::replace(&mut obj.name, String::new()),
+            fields: Vec::new(),
+        };
+
+        let object_id = self.push_object(object);
+
+        for graphql_field in &mut obj.fields {
+            let field = StoredObjectField {
+                name: std::mem::replace(&mut graphql_field.name, String::new()),
+                object: object_id,
+            };
+
+            let field_id = self.push_object_field(field);
+
+            let object = self.get_object_mut(object_id);
+
+            object.fields.push(field_id);
+        }
+    }
 }
 
-impl<'schema> std::convert::From<&'schema graphql_parser::schema::Document> for Schema<'schema> {
-    fn from(ast: &'schema graphql_parser::schema::Document) -> Schema<'schema> {
+impl<'schema> std::convert::From<&'schema mut graphql_parser::schema::Document>
+    for Schema<'schema>
+{
+    fn from(ast: &'schema mut graphql_parser::schema::Document) -> Schema<'schema> {
         let mut schema = Schema::new();
 
         // Holds which objects implement which interfaces so we can populate GqlInterface#implemented_by later.
         // It maps interface names to a vec of implementation names.
-        let mut interface_implementations: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+        let interface_implementations: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
 
-        for definition in &ast.definitions {
+        for definition in ast.definitions.iter_mut() {
             match definition {
-                schema::Definition::TypeDefinition(ty_definition) => match ty_definition {
-                    schema::TypeDefinition::Object(obj) => {
-                        for implementing in &obj.implements_interfaces {
-                            let name = &obj.name;
-                            interface_implementations
-                                .entry(implementing)
-                                .and_modify(|objects| objects.push(name))
-                                .or_insert_with(|| vec![name]);
-                        }
+                schema::Definition::TypeDefinition(ref mut ty_definition) => match ty_definition {
+                    schema::TypeDefinition::Object(ref mut obj) => {
+                        // for implementing in &mut obj.implements_interfaces {
+                        //     // let name = &mut obj.name;
+                        //     // interface_implementations
+                        //     //     .entry(implementing)
+                        //     //     .and_modify(|objects| objects.push(name))
+                        //     //     .or_insert_with(|| vec![name]);
+                        // }
 
-                        schema
-                            .objects
-                            .insert(&obj.name, GqlObject::from_graphql_parser_object(&obj));
+                        // schema.objects.insert(
+                        //     &mut obj.name,
+                        //     GqlObject::from_graphql_parser_object(&mut obj),
+                        // );
+
+                        schema.ingest_graphql_parser_object(obj);
                     }
                     schema::TypeDefinition::Enum(enm) => {
                         schema.enums.insert(
@@ -183,8 +253,8 @@ impl<'schema> std::convert::From<&'schema graphql_parser::schema::Document> for 
                             }));
                         schema.interfaces.insert(&interface.name, iface);
                     }
-                    schema::TypeDefinition::InputObject(input) => {
-                        schema.inputs.insert(&input.name, GqlInput::from(input));
+                    schema::TypeDefinition::InputObject(ref mut _input) => {
+                        // schema.inputs.insert(&input.name, GqlInput::from(input));
                     }
                 },
                 schema::Definition::DirectiveDefinition(_) => (),
@@ -207,11 +277,11 @@ impl<'schema> std::convert::From<&'schema graphql_parser::schema::Document> for 
 
 impl<'schema>
     std::convert::From<
-        &'schema graphql_introspection_query::introspection_response::IntrospectionResponse,
+        &'schema mut graphql_introspection_query::introspection_response::IntrospectionResponse,
     > for Schema<'schema>
 {
     fn from(
-        src: &'schema graphql_introspection_query::introspection_response::IntrospectionResponse,
+        src: &'schema mut graphql_introspection_query::introspection_response::IntrospectionResponse,
     ) -> Self {
         use graphql_introspection_query::introspection_response::__TypeKind;
 
@@ -360,8 +430,8 @@ pub(crate) enum ParsedSchema {
     Json(graphql_introspection_query::introspection_response::IntrospectionResponse),
 }
 
-impl<'schema> From<&'schema ParsedSchema> for Schema<'schema> {
-    fn from(parsed_schema: &'schema ParsedSchema) -> Schema<'schema> {
+impl<'schema> From<&'schema mut ParsedSchema> for Schema<'schema> {
+    fn from(parsed_schema: &'schema mut ParsedSchema) -> Schema<'schema> {
         match parsed_schema {
             ParsedSchema::GraphQLParser(s) => s.into(),
             ParsedSchema::Json(s) => s.into(),

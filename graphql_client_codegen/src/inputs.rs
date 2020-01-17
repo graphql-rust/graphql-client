@@ -108,10 +108,12 @@ impl<'schema> GqlInput<'schema> {
     }
 }
 
-impl<'schema> std::convert::From<&'schema graphql_parser::schema::InputObjectType>
+impl<'schema> std::convert::From<&'schema mut graphql_parser::schema::InputObjectType>
     for GqlInput<'schema>
 {
-    fn from(schema_input: &'schema graphql_parser::schema::InputObjectType) -> GqlInput<'schema> {
+    fn from(
+        schema_input: &'schema mut graphql_parser::schema::InputObjectType,
+    ) -> GqlInput<'schema> {
         GqlInput {
             description: schema_input.description.as_deref(),
             name: &schema_input.name,

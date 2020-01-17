@@ -108,7 +108,7 @@ pub fn generate_module_token_stream(
         }
     };
 
-    let parsed_schema = match schema_extension {
+    let mut parsed_schema = match schema_extension {
                         "graphql" | "gql" => {
                             let s = graphql_parser::schema::parse_schema(&schema_string)?;
                             schema::ParsedSchema::GraphQLParser(s)
@@ -120,7 +120,7 @@ pub fn generate_module_token_stream(
                         extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
                     };
 
-    let schema = schema::Schema::from(&parsed_schema);
+    let schema = schema::Schema::from(&mut parsed_schema);
 
     // The generated modules.
     let mut modules = Vec::with_capacity(operations.len());
