@@ -27,7 +27,7 @@ pub(crate) struct GqlFragment<'query> {
     /// The name of the fragment, matching one-to-one with the name in the GraphQL query document.
     pub name: &'query str,
     /// The `on` clause of the fragment.
-    pub on: FragmentTarget<'query>,
+    pub on: crate::schema::TypeId,
     /// The selected fields.
     pub selection: Selection<'query>,
     /// Whether the fragment is used in the current query
@@ -38,26 +38,27 @@ impl<'query> GqlFragment<'query> {
     /// Generate all the Rust code required by the fragment's object selection.
     pub(crate) fn to_rust(
         &self,
-        context: &QueryContext<'_, '_>,
+        context: &QueryContext<'_>,
     ) -> Result<TokenStream, failure::Error> {
-        match self.on {
-            FragmentTarget::Object(obj) => {
-                obj.response_for_selection(context, &self.selection, &self.name)
-            }
-            FragmentTarget::Interface(iface) => {
-                iface.response_for_selection(context, &self.selection, &self.name)
-            }
-            FragmentTarget::Union(_) => {
-                unreachable!("Wrong code path. Fragment on unions are treated differently.")
-            }
-        }
+        todo!()
+        // match self.on {
+        //     FragmentTarget::Object(obj) => {
+        //         obj.response_for_selection(context, &self.selection, &self.name)
+        //     }
+        //     FragmentTarget::Interface(iface) => {
+        //         iface.response_for_selection(context, &self.selection, &self.name)
+        //     }
+        //     FragmentTarget::Union(_) => {
+        //         unreachable!("Wrong code path. Fragment on unions are treated differently.")
+        //     }
+        // }
     }
 
     pub(crate) fn is_recursive(&self) -> bool {
         self.selection.contains_fragment(&self.name)
     }
 
-    pub(crate) fn require<'schema>(&self, context: &QueryContext<'query, 'schema>) {
+    pub(crate) fn require<'schema>(&self, context: &QueryContext<'query>) {
         self.is_required.set(true);
         self.selection.require_items(context);
     }

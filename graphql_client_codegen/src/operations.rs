@@ -26,12 +26,12 @@ pub struct Operation<'query> {
 impl<'query> Operation<'query> {
     pub(crate) fn root_name<'schema>(
         &self,
-        schema: &'schema crate::schema::Schema<'_>,
+        schema: &'schema crate::schema::Schema,
     ) -> &'schema str {
         match self.operation_type {
-            OperationType::Query => schema.query_type.unwrap_or("Query"),
-            OperationType::Mutation => schema.mutation_type.unwrap_or("Mutation"),
-            OperationType::Subscription => schema.subscription_type.unwrap_or("Subscription"),
+            OperationType::Query => schema.query_type().name(),
+            OperationType::Mutation => schema.mutation_type().name(),
+            OperationType::Subscription => schema.subscription_type().name(),
         }
     }
 
@@ -43,42 +43,43 @@ impl<'query> Operation<'query> {
     }
 
     /// Generate the Variables struct and all the necessary supporting code.
-    pub(crate) fn expand_variables(&self, context: &QueryContext<'_, '_>) -> TokenStream {
-        let variables = &self.variables;
-        let variables_derives = context.variables_derives();
+    pub(crate) fn expand_variables(&self, context: &QueryContext<'_>) -> TokenStream {
+        todo!()
+        //     let variables = &self.variables;
+        //     let variables_derives = context.variables_derives();
 
-        if variables.is_empty() {
-            return quote! {
-                #variables_derives
-                pub struct Variables;
-            };
-        }
+        //     if variables.is_empty() {
+        //         return quote! {
+        //             #variables_derives
+        //             pub struct Variables;
+        //         };
+        //     }
 
-        let fields = variables.iter().map(|variable| {
-            let ty = variable.ty.to_rust(context, "");
-            let rust_safe_field_name =
-                crate::shared::keyword_replace(&variable.name.to_snake_case());
-            let rename =
-                crate::shared::field_rename_annotation(&variable.name, &rust_safe_field_name);
-            let name = Ident::new(&rust_safe_field_name, Span::call_site());
+        //     let fields = variables.iter().map(|variable| {
+        //         let ty = variable.ty.to_rust(context, "");
+        //         let rust_safe_field_name =
+        //             crate::shared::keyword_replace(&variable.name.to_snake_case());
+        //         let rename =
+        //             crate::shared::field_rename_annotation(&variable.name, &rust_safe_field_name);
+        //         let name = Ident::new(&rust_safe_field_name, Span::call_site());
 
-            quote!(#rename pub #name: #ty)
-        });
+        //         quote!(#rename pub #name: #ty)
+        //     });
 
-        let default_constructors = variables
-            .iter()
-            .map(|variable| variable.generate_default_value_constructor(context));
+        //     let default_constructors = variables
+        //         .iter()
+        //         .map(|variable| variable.generate_default_value_constructor(context));
 
-        quote! {
-            #variables_derives
-            pub struct Variables {
-                #(#fields,)*
-            }
+        //     quote! {
+        //         #variables_derives
+        //         pub struct Variables {
+        //             #(#fields,)*
+        //         }
 
-            impl Variables {
-                #(#default_constructors)*
-            }
-        }
+        //         impl Variables {
+        //             #(#default_constructors)*
+        //         }
+        //     }
     }
 }
 

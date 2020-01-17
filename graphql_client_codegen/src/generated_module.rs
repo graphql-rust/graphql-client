@@ -8,7 +8,7 @@ pub(crate) struct GeneratedModule<'a> {
     pub operation: &'a crate::operations::Operation<'a>,
     pub query_string: &'a str,
     pub query_document: &'a graphql_parser::query::Document,
-    pub schema: &'a crate::schema::Schema<'a>,
+    pub schema: &'a crate::schema::Schema,
     pub options: &'a crate::GraphQLClientCodegenOptions,
 }
 

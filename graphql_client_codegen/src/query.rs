@@ -11,25 +11,25 @@ use std::collections::{BTreeMap, BTreeSet};
 use syn::Ident;
 
 /// This holds all the information we need during the code generation phase.
-pub(crate) struct QueryContext<'query, 'schema: 'query> {
+pub(crate) struct QueryContext<'query> {
     pub fragments: BTreeMap<&'query str, GqlFragment<'query>>,
-    pub schema: &'schema Schema<'schema>,
+    // pub schema: &'schema Schema,
     pub deprecation_strategy: DeprecationStrategy,
     pub normalization: Normalization,
     variables_derives: Vec<Ident>,
     response_derives: Vec<Ident>,
 }
 
-impl<'query, 'schema> QueryContext<'query, 'schema> {
+impl<'query, 'schema> QueryContext<'query> {
     /// Create a QueryContext with the given Schema.
     pub(crate) fn new(
-        schema: &'schema Schema<'schema>,
+        schema: &'schema Schema,
         deprecation_strategy: DeprecationStrategy,
         normalization: Normalization,
-    ) -> QueryContext<'query, 'schema> {
+    ) -> QueryContext<'query> {
         QueryContext {
             fragments: BTreeMap::new(),
-            schema,
+            // schema,
             deprecation_strategy,
             normalization,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],
@@ -44,12 +44,12 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
         }
     }
 
-    /// For testing only. creates an empty QueryContext with an empty Schema.
+    /// For testing only. creates an empty QueryContext.
     #[cfg(test)]
-    pub(crate) fn new_empty(schema: &'schema Schema<'_>) -> QueryContext<'query, 'schema> {
+    pub(crate) fn new_empty() -> QueryContext<'query> {
         QueryContext {
             fragments: BTreeMap::new(),
-            schema,
+            // schema,
             deprecation_strategy: DeprecationStrategy::Allow,
             normalization: Normalization::None,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],
@@ -64,27 +64,28 @@ impl<'query, 'schema> QueryContext<'query, 'schema> {
         selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<Option<TokenStream>, failure::Error> {
-        if self.schema.contains_scalar(ty) {
-            Ok(None)
-        } else if let Some(enm) = self.schema.enums.get(ty) {
-            enm.is_required.set(true);
-            Ok(None) // we already expand enums separately
-        } else if let Some(obj) = self.schema.objects.get(ty) {
-            obj.is_required.set(true);
-            obj.response_for_selection(self, &selection, prefix)
-                .map(Some)
-        } else if let Some(iface) = self.schema.interfaces.get(ty) {
-            iface.is_required.set(true);
-            iface
-                .response_for_selection(self, &selection, prefix)
-                .map(Some)
-        } else if let Some(unn) = self.schema.unions.get(ty) {
-            unn.is_required.set(true);
-            unn.response_for_selection(self, &selection, prefix)
-                .map(Some)
-        } else {
-            Err(format_err!("Unknown type: {}", ty))
-        }
+        unimplemented!()
+        // if self.schema.contains_scalar(ty) {
+        //     Ok(None)
+        // } else if let Some(enm) = self.schema.enums.get(ty) {
+        //     enm.is_required.set(true);
+        //     Ok(None) // we already expand enums separately
+        // } else if let Some(obj) = self.schema.objects.get(ty) {
+        //     obj.is_required.set(true);
+        //     obj.response_for_selection(self, &selection, prefix)
+        //         .map(Some)
+        // } else if let Some(iface) = self.schema.interfaces.get(ty) {
+        //     iface.is_required.set(true);
+        //     iface
+        //         .response_for_selection(self, &selection, prefix)
+        //         .map(Some)
+        // } else if let Some(unn) = self.schema.unions.get(ty) {
+        //     unn.is_required.set(true);
+        //     unn.response_for_selection(self, &selection, prefix)
+        //         .map(Some)
+        // } else {
+        //     Err(format_err!("Unknown type: {}", ty))
+        // }
     }
 
     pub(crate) fn ingest_response_derives(

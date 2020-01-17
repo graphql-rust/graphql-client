@@ -33,55 +33,57 @@ impl<'schema> GqlInterface<'schema> {
     fn object_selection<'query>(
         &self,
         selection: &'query Selection<'query>,
-        query_context: &QueryContext<'_, '_>,
+        query_context: &QueryContext<'_>,
     ) -> Selection<'query> {
-        (&selection)
-            .into_iter()
-            // Only keep what we can handle
-            .filter(|f| match f {
-                SelectionItem::Field(f) => f.name != TYPENAME_FIELD,
-                SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
-                    // only if the fragment refers to the interface’s own fields (to take into account type-refining fragments)
-                    let fragment = query_context
-                        .fragments
-                        .get(fragment_name)
-                        .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))
-                        // TODO: fix this
-                        .unwrap();
+        todo!()
+        // (&selection)
+        //     .into_iter()
+        //     // Only keep what we can handle
+        //     .filter(|f| match f {
+        //         SelectionItem::Field(f) => f.name != TYPENAME_FIELD,
+        //         SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
+        //             // only if the fragment refers to the interface’s own fields (to take into account type-refining fragments)
+        //             let fragment = query_context
+        //                 .fragments
+        //                 .get(fragment_name)
+        //                 .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))
+        //                 // TODO: fix this
+        //                 .unwrap();
 
-                    fragment.on.name() == self.name
-                }
-                SelectionItem::InlineFragment(_) => false,
-            })
-            .map(|a| (*a).clone())
-            .collect()
+        //             fragment.on.name() == self.name
+        //         }
+        //         SelectionItem::InlineFragment(_) => false,
+        //     })
+        //     .map(|a| (*a).clone())
+        //     .collect()
     }
 
     fn union_selection<'query>(
         &self,
         selection: &'query Selection<'_>,
-        query_context: &QueryContext<'_, '_>,
+        query_context: &QueryContext<'_>,
     ) -> Selection<'query> {
-        (&selection)
-            .into_iter()
-            // Only keep what we can handle
-            .filter(|f| match f {
-                SelectionItem::InlineFragment(_) => true,
-                SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
-                    let fragment = query_context
-                        .fragments
-                        .get(fragment_name)
-                        .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))
-                        // TODO: fix this
-                        .unwrap();
+        todo!()
+        // (&selection)
+        //     .into_iter()
+        //     // Only keep what we can handle
+        //     .filter(|f| match f {
+        //         SelectionItem::InlineFragment(_) => true,
+        //         SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
+        //             let fragment = query_context
+        //                 .fragments
+        //                 .get(fragment_name)
+        //                 .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))
+        //                 // TODO: fix this
+        //                 .unwrap();
 
-                    // only the fragments _not_ on the interface
-                    fragment.on.name() != self.name
-                }
-                SelectionItem::Field(SelectionField { name, .. }) => *name == "__typename",
-            })
-            .map(|a| (*a).clone())
-            .collect()
+        //             // only the fragments _not_ on the interface
+        //             fragment.on.name() != self.name
+        //         }
+        //         SelectionItem::Field(SelectionField { name, .. }) => *name == "__typename",
+        //     })
+        //     .map(|a| (*a).clone())
+        //     .collect()
     }
 
     /// Create an empty interface. This needs to be mutated before it is useful.
@@ -101,7 +103,7 @@ impl<'schema> GqlInterface<'schema> {
     /// The generated code for each of the selected field's types. See [shared::field_impls_for_selection].
     pub(crate) fn field_impls_for_selection(
         &self,
-        context: &QueryContext<'_, '_>,
+        context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
@@ -116,7 +118,7 @@ impl<'schema> GqlInterface<'schema> {
     /// The code for the interface's corresponding struct's fields.
     pub(crate) fn response_fields_for_selection(
         &self,
-        context: &QueryContext<'_, '_>,
+        context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
@@ -132,7 +134,7 @@ impl<'schema> GqlInterface<'schema> {
     /// Generate all the code for the interface.
     pub(crate) fn response_for_selection(
         &self,
-        query_context: &QueryContext<'_, '_>,
+        query_context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {

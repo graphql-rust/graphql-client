@@ -114,7 +114,7 @@ pub(crate) fn render_object_field(
 
 pub(crate) fn field_impls_for_selection(
     fields: &[GqlObjectField<'_>],
-    context: &QueryContext<'_, '_>,
+    context: &QueryContext<'_>,
     selection: &Selection<'_>,
     prefix: &str,
 ) -> Result<Vec<TokenStream>, failure::Error> {
@@ -144,7 +144,7 @@ pub(crate) fn field_impls_for_selection(
 pub(crate) fn response_fields_for_selection(
     type_name: &str,
     schema_fields: &[GqlObjectField<'_>],
-    context: &QueryContext<'_, '_>,
+    context: &QueryContext<'_>,
     selection: &Selection<'_>,
     prefix: &str,
 ) -> Result<Vec<TokenStream>, failure::Error> {

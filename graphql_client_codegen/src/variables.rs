@@ -14,28 +14,31 @@ pub struct Variable<'query> {
 impl<'query> Variable<'query> {
     pub(crate) fn generate_default_value_constructor(
         &self,
-        context: &QueryContext<'_, '_>,
+        context: &QueryContext<'_>,
+        schema: &crate::schema::Schema,
     ) -> Option<TokenStream> {
-        context.schema.require(&self.ty.inner_name_str());
-        match &self.default {
-            Some(default) => {
-                let fn_name = Ident::new(&format!("default_{}", self.name), Span::call_site());
-                let ty = self.ty.to_rust(context, "");
-                let value = graphql_parser_value_to_literal(
-                    default,
-                    context,
-                    &self.ty,
-                    self.ty.is_optional(),
-                );
-                Some(quote! {
-                    pub fn #fn_name() -> #ty {
-                        #value
-                    }
+        todo!()
+        // // TODO
+        // // context.schema.require(&self.ty.inner_name_str());
+        // match &self.default {
+        //     Some(default) => {
+        //         let fn_name = Ident::new(&format!("default_{}", self.name), Span::call_site());
+        //         let ty = self.ty.to_rust(context, "");
+        //         let value = graphql_parser_value_to_literal(
+        //             default,
+        //             context,
+        //             &self.ty,
+        //             self.ty.is_optional(),
+        //         );
+        //         Some(quote! {
+        //             pub fn #fn_name() -> #ty {
+        //                 #value
+        //             }
 
-                })
-            }
-            None => None,
-        }
+        //         })
+        //     }
+        //     None => None,
+        // }
     }
 }
 
@@ -53,7 +56,7 @@ impl<'query> std::convert::From<&'query graphql_parser::query::VariableDefinitio
 
 fn graphql_parser_value_to_literal(
     value: &graphql_parser::query::Value,
-    context: &QueryContext<'_, '_>,
+    context: &QueryContext<'_>,
     ty: &FieldType<'_>,
     is_optional: bool,
 ) -> TokenStream {
@@ -99,37 +102,38 @@ fn graphql_parser_value_to_literal(
 fn render_object_literal(
     object: &BTreeMap<String, graphql_parser::query::Value>,
     ty: &FieldType<'_>,
-    context: &QueryContext<'_, '_>,
+    context: &QueryContext<'_>,
 ) -> TokenStream {
-    let type_name = ty.inner_name_str();
-    let constructor = Ident::new(&type_name, Span::call_site());
-    let schema_type = context
-        .schema
-        .inputs
-        .get(type_name)
-        .expect("unknown input type");
-    let fields: Vec<TokenStream> = schema_type
-        .fields
-        .iter()
-        .map(|(name, field)| {
-            let field_name = Ident::new(&name, Span::call_site());
-            let provided_value = object.get(name.to_owned());
-            match provided_value {
-                Some(default_value) => {
-                    let value = graphql_parser_value_to_literal(
-                        default_value,
-                        context,
-                        &field.type_,
-                        field.type_.is_optional(),
-                    );
-                    quote!(#field_name: #value)
-                }
-                None => quote!(#field_name: None),
-            }
-        })
-        .collect();
+    unimplemented!()
+    // let type_name = ty.inner_name_str();
+    // let constructor = Ident::new(&type_name, Span::call_site());
+    // let schema_type = context
+    //     .schema
+    //     .inputs
+    //     .get(type_name)
+    //     .expect("unknown input type");
+    // let fields: Vec<TokenStream> = schema_type
+    //     .fields
+    //     .iter()
+    //     .map(|(name, field)| {
+    //         let field_name = Ident::new(&name, Span::call_site());
+    //         let provided_value = object.get(name.to_owned());
+    //         match provided_value {
+    //             Some(default_value) => {
+    //                 let value = graphql_parser_value_to_literal(
+    //                     default_value,
+    //                     context,
+    //                     &field.type_,
+    //                     field.type_.is_optional(),
+    //                 );
+    //                 quote!(#field_name: #value)
+    //             }
+    //             None => quote!(#field_name: None),
+    //         }
+    //     })
+    //     .collect();
 
-    quote!(#constructor {
-        #(#fields,)*
-    })
+    // quote!(#constructor {
+    //     #(#fields,)*
+    // })
 }
