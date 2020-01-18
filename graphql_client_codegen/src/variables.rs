@@ -14,9 +14,11 @@ pub struct Variable<'query> {
 impl<'query> Variable<'query> {
     pub(crate) fn generate_default_value_constructor(
         &self,
-        context: &QueryContext<'_, '_>,
+        context: &QueryContext<'_>,
+        schema: &crate::schema::Schema,
     ) -> Option<TokenStream> {
-        context.schema.require(&self.ty.inner_name_str());
+        // TODO
+        // context.schema.require(&self.ty.inner_name_str());
         match &self.default {
             Some(default) => {
                 let fn_name = Ident::new(&format!("default_{}", self.name), Span::call_site());
@@ -53,7 +55,7 @@ impl<'query> std::convert::From<&'query graphql_parser::query::VariableDefinitio
 
 fn graphql_parser_value_to_literal(
     value: &graphql_parser::query::Value,
-    context: &QueryContext<'_, '_>,
+    context: &QueryContext<'_>,
     ty: &FieldType<'_>,
     is_optional: bool,
 ) -> TokenStream {
@@ -99,7 +101,7 @@ fn graphql_parser_value_to_literal(
 fn render_object_literal(
     object: &BTreeMap<String, graphql_parser::query::Value>,
     ty: &FieldType<'_>,
-    context: &QueryContext<'_, '_>,
+    context: &QueryContext<'_>,
 ) -> TokenStream {
     let type_name = ty.inner_name_str();
     let constructor = Ident::new(&type_name, Span::call_site());

@@ -38,7 +38,7 @@ impl<'query> GqlFragment<'query> {
     /// Generate all the Rust code required by the fragment's object selection.
     pub(crate) fn to_rust(
         &self,
-        context: &QueryContext<'_, '_>,
+        context: &QueryContext<'_>,
     ) -> Result<TokenStream, failure::Error> {
         match self.on {
             FragmentTarget::Object(obj) => {
@@ -57,7 +57,7 @@ impl<'query> GqlFragment<'query> {
         self.selection.contains_fragment(&self.name)
     }
 
-    pub(crate) fn require<'schema>(&self, context: &QueryContext<'query, 'schema>) {
+    pub(crate) fn require<'schema>(&self, context: &QueryContext<'query>) {
         self.is_required.set(true);
         self.selection.require_items(context);
     }

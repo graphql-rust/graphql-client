@@ -6,7 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
 #[derive(Clone, Debug, PartialEq, Hash)]
-enum GraphqlTypeQualifier {
+pub(crate) enum GraphqlTypeQualifier {
     Required,
     List,
 }
@@ -45,7 +45,7 @@ impl<'a> FieldType<'a> {
     }
 
     /// Takes a field type with its name.
-    pub(crate) fn to_rust(&self, context: &QueryContext<'_, '_>, prefix: &str) -> TokenStream {
+    pub(crate) fn to_rust(&self, context: &QueryContext<'_>, prefix: &str) -> TokenStream {
         let prefix: &str = if prefix.is_empty() {
             self.inner_name_str()
         } else {
@@ -151,34 +151,11 @@ impl<'schema> std::convert::From<&'schema graphql_parser::schema::Type> for Fiel
     }
 }
 
-fn graphql_parser_depth(schema_type: &graphql_parser::schema::Type) -> usize {
+pub(crate) fn graphql_parser_depth(schema_type: &graphql_parser::schema::Type) -> usize {
     match schema_type {
         graphql_parser::schema::Type::ListType(inner) => 1 + graphql_parser_depth(inner),
         graphql_parser::schema::Type::NonNullType(inner) => 1 + graphql_parser_depth(inner),
         graphql_parser::schema::Type::NamedType(_) => 0,
-    }
-}
-
-fn from_schema_type_inner(inner: &graphql_parser::schema::Type) -> FieldType<'_> {
-    use graphql_parser::schema::Type::*;
-
-    let qualifiers_depth = graphql_parser_depth(inner);
-    let mut qualifiers = Vec::with_capacity(qualifiers_depth);
-
-    let mut inner = inner;
-
-    loop {
-        match inner {
-            ListType(new_inner) => {
-                qualifiers.push(GraphqlTypeQualifier::List);
-                inner = new_inner;
-            }
-            NonNullType(new_inner) => {
-                qualifiers.push(GraphqlTypeQualifier::Required);
-                inner = new_inner;
-            }
-            NamedType(name) => return FieldType { name, qualifiers },
-        }
     }
 }
 

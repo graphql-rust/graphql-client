@@ -101,7 +101,7 @@ impl<'schema> GqlObject<'schema> {
         item
     }
 
-    pub(crate) fn require(&self, schema: &Schema<'_>) {
+    pub(crate) fn require(&self, schema: &Schema) {
         if self.is_required.get() {
             return;
         }
@@ -113,7 +113,7 @@ impl<'schema> GqlObject<'schema> {
 
     pub(crate) fn response_for_selection(
         &self,
-        query_context: &QueryContext<'_, '_>,
+        query_context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
@@ -135,7 +135,7 @@ impl<'schema> GqlObject<'schema> {
 
     pub(crate) fn field_impls_for_selection(
         &self,
-        query_context: &QueryContext<'_, '_>,
+        query_context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {
@@ -144,7 +144,7 @@ impl<'schema> GqlObject<'schema> {
 
     pub(crate) fn response_fields_for_selection(
         &self,
-        query_context: &QueryContext<'_, '_>,
+        query_context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<Vec<TokenStream>, failure::Error> {

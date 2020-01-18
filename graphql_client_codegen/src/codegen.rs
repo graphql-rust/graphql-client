@@ -36,7 +36,7 @@ pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation<'_>> {
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
-    schema: &schema::Schema<'_>,
+    schema: &schema::Schema,
     query: &query::Document,
     operation: &Operation<'_>,
     options: &crate::GraphQLClientCodegenOptions,
