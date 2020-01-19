@@ -35,26 +35,27 @@ impl<'schema> GqlInterface<'schema> {
         selection: &'query Selection<'query>,
         query_context: &QueryContext<'_>,
     ) -> Selection<'query> {
-        (&selection)
-            .into_iter()
-            // Only keep what we can handle
-            .filter(|f| match f {
-                SelectionItem::Field(f) => f.name != TYPENAME_FIELD,
-                SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
-                    // only if the fragment refers to the interface’s own fields (to take into account type-refining fragments)
-                    let fragment = query_context
-                        .fragments
-                        .get(fragment_name)
-                        .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))
-                        // TODO: fix this
-                        .unwrap();
+        todo!()
+        // (&selection)
+        //     .into_iter()
+        //     // Only keep what we can handle
+        //     .filter(|f| match f {
+        //         SelectionItem::Field(f) => f.name != TYPENAME_FIELD,
+        //         SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
+        //             // only if the fragment refers to the interface’s own fields (to take into account type-refining fragments)
+        //             let fragment = query_context
+        //                 .fragments
+        //                 .get(fragment_name)
+        //                 .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))
+        //                 // TODO: fix this
+        //                 .unwrap();
 
-                    fragment.on.name() == self.name
-                }
-                SelectionItem::InlineFragment(_) => false,
-            })
-            .map(|a| (*a).clone())
-            .collect()
+        //             fragment.on.name() == self.name
+        //         }
+        //         SelectionItem::InlineFragment(_) => false,
+        //     })
+        //     .map(|a| (*a).clone())
+        //     .collect()
     }
 
     fn union_selection<'query>(
@@ -62,26 +63,27 @@ impl<'schema> GqlInterface<'schema> {
         selection: &'query Selection<'_>,
         query_context: &QueryContext<'_>,
     ) -> Selection<'query> {
-        (&selection)
-            .into_iter()
-            // Only keep what we can handle
-            .filter(|f| match f {
-                SelectionItem::InlineFragment(_) => true,
-                SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
-                    let fragment = query_context
-                        .fragments
-                        .get(fragment_name)
-                        .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))
-                        // TODO: fix this
-                        .unwrap();
+        todo!()
+        // (&selection)
+        //     .into_iter()
+        //     // Only keep what we can handle
+        //     .filter(|f| match f {
+        //         SelectionItem::InlineFragment(_) => true,
+        //         SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
+        //             let fragment = query_context
+        //                 .fragments
+        //                 .get(fragment_name)
+        //                 .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))
+        //                 // TODO: fix this
+        //                 .unwrap();
 
-                    // only the fragments _not_ on the interface
-                    fragment.on.name() != self.name
-                }
-                SelectionItem::Field(SelectionField { name, .. }) => *name == "__typename",
-            })
-            .map(|a| (*a).clone())
-            .collect()
+        //             // only the fragments _not_ on the interface
+        //             fragment.on.name() != self.name
+        //         }
+        //         SelectionItem::Field(SelectionField { name, .. }) => *name == "__typename",
+        //     })
+        //     .map(|a| (*a).clone())
+        //     .collect()
     }
 
     /// Create an empty interface. This needs to be mutated before it is useful.

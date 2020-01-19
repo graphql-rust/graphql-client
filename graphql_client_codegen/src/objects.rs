@@ -101,15 +101,15 @@ impl<'schema> GqlObject<'schema> {
         item
     }
 
-    pub(crate) fn require(&self, schema: &Schema) {
-        if self.is_required.get() {
-            return;
-        }
-        self.is_required.set(true);
-        self.fields.iter().for_each(|field| {
-            schema.require(&field.type_.inner_name_str());
-        })
-    }
+    // pub(crate) fn require(&self, schema: &Schema) {
+    //     if self.is_required.get() {
+    //         return;
+    //     }
+    //     self.is_required.set(true);
+    //     self.fields.iter().for_each(|field| {
+    //         schema.require(&field.type_.inner_name_str());
+    //     })
+    // }
 
     pub(crate) fn response_for_selection(
         &self,
@@ -117,20 +117,21 @@ impl<'schema> GqlObject<'schema> {
         selection: &Selection<'_>,
         prefix: &str,
     ) -> Result<TokenStream, failure::Error> {
-        let derives = query_context.response_derives();
-        let name = Ident::new(prefix, Span::call_site());
-        let fields = self.response_fields_for_selection(query_context, selection, prefix)?;
-        let field_impls = self.field_impls_for_selection(query_context, selection, &prefix)?;
-        let description = self.description.as_ref().map(|desc| quote!(#[doc = #desc]));
-        Ok(quote! {
-            #(#field_impls)*
+        unimplemented!()
+        // let derives = query_context.response_derives();
+        // let name = Ident::new(prefix, Span::call_site());
+        // let fields = self.response_fields_for_selection(query_context, selection, prefix)?;
+        // let field_impls = self.field_impls_for_selection(query_context, selection, &prefix)?;
+        // let description = self.description.as_ref().map(|desc| quote!(#[doc = #desc]));
+        // Ok(quote! {
+        //     #(#field_impls)*
 
-            #derives
-            #description
-            pub struct #name {
-                #(#fields,)*
-            }
-        })
+        //     #derives
+        //     #description
+        //     pub struct #name {
+        //         #(#fields,)*
+        //     }
+        // })
     }
 
     pub(crate) fn field_impls_for_selection(

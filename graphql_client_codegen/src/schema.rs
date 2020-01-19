@@ -1,14 +1,15 @@
 mod graphql_parser_conversion;
 mod json_conversion;
+use std::collections::HashMap;
 
 use crate::deprecation::DeprecationStatus;
-use crate::enums::{EnumVariant, GqlEnum};
+// use crate::enums::{EnumVariant, GqlEnum};
 use crate::field_type::FieldType;
-use crate::inputs::GqlInput;
-use crate::interfaces::GqlInterface;
-use crate::objects::{GqlObject, GqlObjectField};
-use crate::scalars::Scalar;
-use crate::unions::GqlUnion;
+// use crate::inputs::GqlInput;
+// use crate::interfaces::GqlInterface;
+// use crate::objects::{GqlObject, GqlObjectField};
+// use crate::scalars::Scalar;
+// use crate::unions::GqlUnion;
 use failure::*;
 use graphql_parser::{self, schema};
 use std::collections::{BTreeMap, BTreeSet};
@@ -33,28 +34,28 @@ struct StoredObject {
 impl StoredObject {}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct ObjectId(usize);
+pub(crate) struct ObjectId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct ObjectFieldId(usize);
+pub(crate) struct ObjectFieldId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct InterfaceFieldId(usize);
+pub(crate) struct InterfaceFieldId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct InterfaceId(usize);
+pub(crate) struct InterfaceId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct ScalarId(usize);
+pub(crate) struct ScalarId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct UnionId(usize);
+pub(crate) struct UnionId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct EnumId(usize);
+pub(crate) struct EnumId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct InputObjectId(usize);
+pub(crate) struct InputObjectId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct InputFieldId(usize);
@@ -91,12 +92,18 @@ struct StoredScalar {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum TypeId {
-    ObjectId(ObjectId),
-    ScalarId(ScalarId),
-    InterfaceId(InterfaceId),
-    UnionId(UnionId),
-    EnumId(EnumId),
+pub(crate) enum TypeId {
+    Object(ObjectId),
+    Scalar(ScalarId),
+    Interface(InterfaceId),
+    Union(UnionId),
+    Enum(EnumId),
+}
+
+impl TypeId {
+    fn scalar(id: usize) -> Self {
+        TypeId::Scalar(ScalarId(id))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -118,7 +125,7 @@ impl StoredInputFieldType {
     pub fn is_indirected(&self) -> bool {
         self.qualifiers
             .iter()
-            .any(|qualifier| qualifier == &crate::Field_type::GraphqlTypeQualifier::List)
+            .any(|qualifier| qualifier == &crate::field_type::GraphqlTypeQualifier::List)
     }
 }
 
@@ -145,6 +152,7 @@ pub(crate) struct Schema {
     stored_scalars: Vec<StoredScalar>,
     stored_enums: Vec<StoredEnum>,
     stored_inputs: Vec<StoredInputType>,
+    names: HashMap<String, TypeId>,
     pub(crate) query_type: Option<String>,
     pub(crate) mutation_type: Option<String>,
     pub(crate) subscription_type: Option<String>,
@@ -173,6 +181,7 @@ impl Schema {
             stored_scalars: Self::default_scalars(),
             stored_enums: Vec::new(),
             stored_inputs: Vec::new(),
+            names: HashMap::new(),
             query_type: None,
             mutation_type: None,
             subscription_type: None,
@@ -301,25 +310,47 @@ impl Schema {
     }
 
     pub(crate) fn get_input_type_by_name(&self, name: &str) -> Option<InputRef<'_>> {
-        self.stored_inputs.iter().position(|input| input.name == name).map(InputObjectId).map(|idx| {
-            InputRef {
+        self.stored_inputs
+            .iter()
+            .position(|input| input.name == name)
+            .map(InputObjectId)
+            .map(|idx| InputRef {
                 schema: self,
-                input_id: idx
-            }
-        })
+                input_id: idx,
+            })
+    }
+
+    pub(crate) fn get_object_by_name(&self, name: &str) -> Option<()> {
+        Some(())
+    }
+
+    pub(crate) fn lookup_type(&self, name: &str) -> Option<TypeId> {
+        todo!()
     }
 
     fn get_stored_input(&self, input_id: InputObjectId) -> &StoredInputType {
         self.stored_inputs.get(input_id.0).unwrap()
     }
+
+    fn find_type_id(&self, type_name: &str) -> TypeId {
+        match self.names.get(type_name) {
+            Some(id) => *id,
+            None => {
+                panic!(
+                    "graphql-client-codegen internal error: failed to resolve TypeId for `{}°.",
+                    type_name
+                );
+            }
+        }
+    }
 }
 
-struct InputFieldRef<'a> {
-    schema: SchemaRef<'a>,
-    input_field_id: Input
-}
+// struct InputFieldRef<'a> {
+//     schema: SchemaRef<'a>,
+//     input_field_id: InputObjectId,
+// }
 
-struct InputRef<'a> {
+pub(crate) struct InputRef<'a> {
     schema: SchemaRef<'a>,
     input_id: InputObjectId,
 }
@@ -329,39 +360,34 @@ impl<'a> InputRef<'a> {
         self.schema.get_stored_input(self.input_id)
     }
 
-    pub(crate) fn contains_type_without_indirection(
-        &self,
-        type_name: &str,
-    ) -> bool {
-        let input = self.get();
+    pub(crate) fn contains_type_without_indirection(&self, type_name: &str) -> bool {
+        todo!()
+        // let input = self.get();
 
+        // // the input type is recursive if any of its members contains it, without indirection
+        // input.fields.iter().any(|(name, r#type)| {
+        //     // the field is indirected, so no boxing is needed
+        //     if r#type.is_indirected() {
+        //         return false;
+        //     }
 
-        // the input type is recursive if any of its members contains it, without indirection
-        input.fields.iter().any(|(name, r#type)| {
-            // the field is indirected, so no boxing is needed
-            if r#type.is_indirected() {
-                return false;
-            }
+        //     let field_type_name = field.type_.inner_name_str();
+        //     let input = self.schema.inputs.get(field_type_name);
 
-            let field_type_name = field.type_.inner_name_str();
-            let input = context.schema.inputs.get(field_type_name);
+        //     if let Some(input) = input {
+        //         // the input contains itself, not indirected
+        //         if input.name == type_name {
+        //             return true;
+        //         }
 
-            if let Some(input) = input {
-                // the input contains itself, not indirected
-                if input.name == type_name {
-                    return true;
-                }
-
-                // we check if the other input contains this one (without indirection)
-                input.contains_type_without_indirection(context, type_name)
-            } else {
-                // the field is not referring to an input type
-                false
-            }
-        })
+        //         // we check if the other input contains this one (without indirection)
+        //         input.contains_type_without_indirection(context, type_name)
+        //     } else {
+        //         // the field is not referring to an input type
+        //         false
+        //     }
+        // })
     }
-
-
 }
 
 impl std::convert::From<graphql_parser::schema::Document> for Schema {
@@ -377,6 +403,7 @@ impl std::convert::From<graphql_introspection_query::introspection_response::Int
         src: graphql_introspection_query::introspection_response::IntrospectionResponse,
     ) -> Self {
         json_conversion::build_schema(src)
+    }
 }
 
 pub(crate) enum ParsedSchema {

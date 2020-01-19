@@ -41,151 +41,151 @@ pub(crate) fn response_for_query(
     operation: &Operation<'_>,
     options: &crate::GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, failure::Error> {
-    let mut context = QueryContext::new(
-        schema,
-        options.deprecation_strategy(),
-        options.normalization(),
-    );
+    todo!()
 
-    if let Some(derives) = options.variables_derives() {
-        context.ingest_variables_derives(&derives)?;
-    }
+    // let mut context = QueryContext::new(
+    //     schema,
+    //     options.deprecation_strategy(),
+    //     options.normalization(),
+    // );
 
-    if let Some(derives) = options.response_derives() {
-        context.ingest_response_derives(&derives)?;
-    }
+    // if let Some(derives) = options.variables_derives() {
+    //     context.ingest_variables_derives(&derives)?;
+    // }
 
-    let mut definitions = Vec::new();
+    // if let Some(derives) = options.response_derives() {
+    //     context.ingest_response_derives(&derives)?;
+    // }
 
-    for definition in &query.definitions {
-        match definition {
-            query::Definition::Operation(_op) => (),
-            query::Definition::Fragment(fragment) => {
-                let &query::TypeCondition::On(ref on) = &fragment.type_condition;
-                let on = schema.fragment_target(on).ok_or_else(|| {
-                    format_err!(
-                        "Fragment {} is defined on unknown type: {}",
-                        &fragment.name,
-                        on,
-                    )
-                })?;
-                context.fragments.insert(
-                    &fragment.name,
-                    GqlFragment {
-                        name: &fragment.name,
-                        selection: Selection::from(&fragment.selection_set),
-                        on,
-                        is_required: false.into(),
-                    },
-                );
-            }
-        }
-    }
+    // let mut definitions = Vec::new();
 
-    let response_data_fields = {
-        let root_name = operation.root_name(&context.schema);
-        let opt_definition = context.schema.objects.get(&root_name);
-        let definition = if let Some(definition) = opt_definition {
-            definition
-        } else {
-            panic!(
-                "operation type '{:?}' not in schema",
-                operation.operation_type
-            );
-        };
-        let prefix = &operation.name;
-        let selection = &operation.selection;
+    // for definition in &query.definitions {
+    //     match definition {
+    //         query::Definition::Operation(_op) => (),
+    //         query::Definition::Fragment(fragment) => {
+    //             let &query::TypeCondition::On(ref on) = &fragment.type_condition;
+    //             let on = schema.lookup_type(on).ok_or_else(|| {
+    //                 format_err!(
+    //                     "Fragment {} is defined on unknown type: {}",
+    //                     &fragment.name,
+    //                     on,
+    //                 )
+    //             })?;
+    //             context.fragments.insert(
+    //                 &fragment.name,
+    //                 GqlFragment {
+    //                     name: &fragment.name,
+    //                     selection: Selection::from(&fragment.selection_set),
+    //                     on,
+    //                     is_required: false.into(),
+    //                 },
+    //             );
+    //         }
+    //     }
+    // }
 
-        if operation.is_subscription() && selection.len() > 1 {
-            return Err(format_err!(
-                "{}",
-                crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
-            ));
-        }
+    // let response_data_fields = {
+    //     let root_name = operation.root_name(&schema);
+    //     let opt_definition = schema.get_object_by_name(&root_name);
+    //     let definition = if let Some(definition) = opt_definition {
+    //         definition
+    //     } else {
+    //         panic!(
+    //             "operation type '{:?}' not in schema",
+    //             operation.operation_type
+    //         );
+    //     };
+    //     let prefix = &operation.name;
+    //     let selection = &operation.selection;
 
-        definitions.extend(definition.field_impls_for_selection(&context, &selection, &prefix)?);
-        definition.response_fields_for_selection(&context, &selection, &prefix)?
-    };
+    //     if operation.is_subscription() && selection.len() > 1 {
+    //         return Err(format_err!(
+    //             "{}",
+    //             crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
+    //         ));
+    //     }
 
-    let enum_definitions = context.schema.enums.values().filter_map(|enm| {
-        if enm.is_required.get() {
-            Some(enm.to_rust(&context))
-        } else {
-            None
-        }
-    });
-    let fragment_definitions: Result<Vec<TokenStream>, _> = context
-        .fragments
-        .values()
-        .filter_map(|fragment| {
-            if fragment.is_required.get() {
-                Some(fragment.to_rust(&context))
-            } else {
-                None
-            }
-        })
-        .collect();
-    let fragment_definitions = fragment_definitions?;
-    let variables_struct = operation.expand_variables(&context);
+    //     definitions.extend(definition.field_impls_for_selection(&context, &selection, &prefix)?);
+    //     definition.response_fields_for_selection(&context, &selection, &prefix)?
+    // };
 
-    let input_object_definitions: Result<Vec<TokenStream>, _> = context
-        .schema
-        .inputs
-        .values()
-        .filter_map(|i| {
-            if i.is_required.get() {
-                Some(i.to_rust(&context))
-            } else {
-                None
-            }
-        })
-        .collect();
-    let input_object_definitions = input_object_definitions?;
+    // let enum_definitions = schema.enums.values().filter_map(|enm| {
+    //     if enm.is_required.get() {
+    //         Some(enm.to_rust(&context))
+    //     } else {
+    //         None
+    //     }
+    // });
+    // let fragment_definitions: Result<Vec<TokenStream>, _> = context
+    //     .fragments
+    //     .values()
+    //     .filter_map(|fragment| {
+    //         if fragment.is_required.get() {
+    //             Some(fragment.to_rust(&context))
+    //         } else {
+    //             None
+    //         }
+    //     })
+    //     .collect();
+    // let fragment_definitions = fragment_definitions?;
+    // let variables_struct = operation.expand_variables(&context);
 
-    let scalar_definitions: Vec<TokenStream> = context
-        .schema
-        .scalars
-        .values()
-        .filter_map(|s| {
-            if s.is_required.get() {
-                Some(s.to_rust(context.normalization))
-            } else {
-                None
-            }
-        })
-        .collect();
+    // let input_object_definitions: Result<Vec<TokenStream>, _> = schema
+    //     .inputs
+    //     .values()
+    //     .filter_map(|i| {
+    //         if i.is_required.get() {
+    //             Some(i.to_rust(&context))
+    //         } else {
+    //             None
+    //         }
+    //     })
+    //     .collect();
+    // let input_object_definitions = input_object_definitions?;
 
-    let response_derives = context.response_derives();
+    // let scalar_definitions: Vec<TokenStream> = schema
+    //     .scalars
+    //     .values()
+    //     .filter_map(|s| {
+    //         if s.is_required.get() {
+    //             Some(s.to_rust(context.normalization))
+    //         } else {
+    //             None
+    //         }
+    //     })
+    //     .collect();
 
-    Ok(quote! {
-        use serde::{Serialize, Deserialize};
+    // let response_derives = context.response_derives();
 
-        #[allow(dead_code)]
-        type Boolean = bool;
-        #[allow(dead_code)]
-        type Float = f64;
-        #[allow(dead_code)]
-        type Int = i64;
-        #[allow(dead_code)]
-        type ID = String;
+    // Ok(quote! {
+    //     use serde::{Serialize, Deserialize};
 
-        #(#scalar_definitions)*
+    //     #[allow(dead_code)]
+    //     type Boolean = bool;
+    //     #[allow(dead_code)]
+    //     type Float = f64;
+    //     #[allow(dead_code)]
+    //     type Int = i64;
+    //     #[allow(dead_code)]
+    //     type ID = String;
 
-        #(#input_object_definitions)*
+    //     #(#scalar_definitions)*
 
-        #(#enum_definitions)*
+    //     #(#input_object_definitions)*
 
-        #(#fragment_definitions)*
+    //     #(#enum_definitions)*
 
-        #(#definitions)*
+    //     #(#fragment_definitions)*
 
-        #variables_struct
+    //     #(#definitions)*
 
-        #response_derives
+    //     #variables_struct
 
-        pub struct ResponseData {
-            #(#response_data_fields,)*
-        }
+    //     #response_derives
 
-    })
+    //     pub struct ResponseData {
+    //         #(#response_data_fields,)*
+    //     }
+
+    // })
 }

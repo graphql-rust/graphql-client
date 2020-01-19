@@ -81,49 +81,50 @@ impl<'query> Selection<'query> {
         // the name of the type the selection applies to
         selection_on: &str,
     ) -> Result<(), failure::Error> {
-        for item in self.0.iter() {
-            match item {
-                SelectionItem::Field(_) => (),
-                SelectionItem::InlineFragment(inline_fragment) => {
-                    selected_variants
-                        .entry(inline_fragment.on)
-                        .and_modify(|entry| entry.0.extend(inline_fragment.fields.0.clone()))
-                        .or_insert_with(|| {
-                            let mut items = Vec::with_capacity(inline_fragment.fields.0.len());
-                            items.extend(inline_fragment.fields.0.clone());
-                            Selection(items)
-                        });
-                }
-                SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
-                    let fragment = context
-                        .fragments
-                        .get(fragment_name)
-                        .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))?;
+        unimplemented!()
+        // for item in self.0.iter() {
+        //     match item {
+        //         SelectionItem::Field(_) => (),
+        //         SelectionItem::InlineFragment(inline_fragment) => {
+        //             selected_variants
+        //                 .entry(inline_fragment.on)
+        //                 .and_modify(|entry| entry.0.extend(inline_fragment.fields.0.clone()))
+        //                 .or_insert_with(|| {
+        //                     let mut items = Vec::with_capacity(inline_fragment.fields.0.len());
+        //                     items.extend(inline_fragment.fields.0.clone());
+        //                     Selection(items)
+        //                 });
+        //         }
+        //         SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) => {
+        //             let fragment = context
+        //                 .fragments
+        //                 .get(fragment_name)
+        //                 .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment_name))?;
 
-                    // The fragment can either be on the union/interface itself, or on one of its variants (type-refining fragment).
-                    if fragment.on.name() == selection_on {
-                        // The fragment is on the union/interface itself.
-                        fragment.selection.selected_variants_on_union_inner(
-                            context,
-                            selected_variants,
-                            selection_on,
-                        )?;
-                    } else {
-                        // Type-refining fragment
-                        selected_variants
-                            .entry(fragment.on.name())
-                            .and_modify(|entry| entry.0.extend(fragment.selection.0.clone()))
-                            .or_insert_with(|| {
-                                let mut items = Vec::with_capacity(fragment.selection.0.len());
-                                items.extend(fragment.selection.0.clone());
-                                Selection(items)
-                            });
-                    }
-                }
-            }
-        }
+        //             // The fragment can either be on the union/interface itself, or on one of its variants (type-refining fragment).
+        //             if fragment.on.name() == selection_on {
+        //                 // The fragment is on the union/interface itself.
+        //                 fragment.selection.selected_variants_on_union_inner(
+        //                     context,
+        //                     selected_variants,
+        //                     selection_on,
+        //                 )?;
+        //             } else {
+        //                 // Type-refining fragment
+        //                 selected_variants
+        //                     .entry(fragment.on.name())
+        //                     .and_modify(|entry| entry.0.extend(fragment.selection.0.clone()))
+        //                     .or_insert_with(|| {
+        //                         let mut items = Vec::with_capacity(fragment.selection.0.len());
+        //                         items.extend(fragment.selection.0.clone());
+        //                         Selection(items)
+        //                     });
+        //             }
+        //         }
+        //     }
+        // }
 
-        Ok(())
+        // Ok(())
     }
 
     /// This method should only be invoked on selections on union and interface fields. It returns a map from the name of the selected variants to the corresponding selections.

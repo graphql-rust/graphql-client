@@ -6,6 +6,13 @@ use quote::quote;
 use std::cell::Cell;
 use std::collections::BTreeSet;
 
+pub(crate) fn union_type_to_rust(
+    ctx: &mut QueryContext<'_>,
+    union: (),
+) -> Result<TokenStream, failure::Error> {
+    todo!()
+}
+
 /// A GraphQL union (simplified schema representation).
 ///
 /// For code generation purposes, unions will "flatten" fragment spreads, so there is only one enum for the selection. See the tests in the graphql_client crate for examples.
@@ -42,53 +49,54 @@ pub(crate) fn union_variants<'selection>(
     prefix: &str,
     selection_on: &str,
 ) -> UnionVariantResult<'selection> {
-    let selection = selection.selected_variants_on_union(context, selection_on)?;
-    let mut used_variants: Vec<&str> = selection.keys().cloned().collect();
-    let mut children_definitions = Vec::with_capacity(selection.len());
-    let mut variants = Vec::with_capacity(selection.len());
+    todo!()
+    // let selection = selection.selected_variants_on_union(context, selection_on)?;
+    // let mut used_variants: Vec<&str> = selection.keys().cloned().collect();
+    // let mut children_definitions = Vec::with_capacity(selection.len());
+    // let mut variants = Vec::with_capacity(selection.len());
 
-    for (on, fields) in selection.iter() {
-        let variant_name = Ident::new(&on, Span::call_site());
-        used_variants.push(on);
+    // for (on, fields) in selection.iter() {
+    //     let variant_name = Ident::new(&on, Span::call_site());
+    //     used_variants.push(on);
 
-        let new_prefix = format!("{}On{}", prefix, on);
+    //     let new_prefix = format!("{}On{}", prefix, on);
 
-        let variant_type = Ident::new(&new_prefix, Span::call_site());
+    //     let variant_type = Ident::new(&new_prefix, Span::call_site());
 
-        let field_object_type = context
-            .schema
-            .objects
-            .get(on)
-            .map(|_f| context.maybe_expand_field(&on, fields, &new_prefix));
-        let field_interface = context
-            .schema
-            .interfaces
-            .get(on)
-            .map(|_f| context.maybe_expand_field(&on, fields, &new_prefix));
-        let field_union_type = context
-            .schema
-            .unions
-            .get(on)
-            .map(|_f| context.maybe_expand_field(&on, fields, &new_prefix));
+    //     let field_object_type = context
+    //         .schema
+    //         .objects
+    //         .get(on)
+    //         .map(|_f| context.maybe_expand_field(&on, fields, &new_prefix));
+    //     let field_interface = context
+    //         .schema
+    //         .interfaces
+    //         .get(on)
+    //         .map(|_f| context.maybe_expand_field(&on, fields, &new_prefix));
+    //     let field_union_type = context
+    //         .schema
+    //         .unions
+    //         .get(on)
+    //         .map(|_f| context.maybe_expand_field(&on, fields, &new_prefix));
 
-        match field_object_type.or(field_interface).or(field_union_type) {
-            Some(Ok(Some(tokens))) => children_definitions.push(tokens),
-            Some(Err(err)) => return Err(err),
-            Some(Ok(None)) => (),
-            None => {
-                return Err(UnionError::UnknownType {
-                    ty: (*on).to_string(),
-                }
-                .into())
-            }
-        };
+    //     match field_object_type.or(field_interface).or(field_union_type) {
+    //         Some(Ok(Some(tokens))) => children_definitions.push(tokens),
+    //         Some(Err(err)) => return Err(err),
+    //         Some(Ok(None)) => (),
+    //         None => {
+    //             return Err(UnionError::UnknownType {
+    //                 ty: (*on).to_string(),
+    //             }
+    //             .into())
+    //         }
+    //     };
 
-        variants.push(quote! {
-            #variant_name(#variant_type)
-        })
-    }
+    //     variants.push(quote! {
+    //         #variant_name(#variant_type)
+    //     })
+    // }
 
-    Ok((variants, children_definitions, used_variants))
+    // Ok((variants, children_definitions, used_variants))
 }
 
 impl<'schema> GqlUnion<'schema> {
