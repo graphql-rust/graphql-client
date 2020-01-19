@@ -1,5 +1,5 @@
-use super::Schema;
-use graphql_parser::schema::{self as parser, Definition, TypeDefinition};
+use super::{EnumId, InputObjectId, InterfaceId, ObjectId, ScalarId, Schema, TypeId, UnionId};
+use graphql_parser::schema::{self as parser, Definition, TypeDefinition, UnionType};
 
 pub(super) fn build_schema(src: graphql_parser::schema::Document) -> super::Schema {
     let converter = GraphqlParserSchemaConverter {
@@ -16,196 +16,40 @@ struct GraphqlParserSchemaConverter {
 }
 
 impl GraphqlParserSchemaConverter {
-    fn objects_mut(&mut self) -> impl Iterator<Item = &mut parser::ObjectType> {
-        self.src.definitions.iter_mut().filter_map(|def| match def {
-            Definition::TypeDefinition(TypeDefinition::Object(obj)) => Some(obj),
-            _ => None,
-        })
-    }
-
-    fn interfaces_mut(&mut self) -> impl Iterator<Item = &mut parser::InterfaceType> {
-        self.src.definitions.iter_mut().filter_map(|def| match def {
-            Definition::TypeDefinition(TypeDefinition::Interface(interface)) => Some(interface),
-            _ => None,
-        })
-    }
-
-    fn unions_mut(&mut self) -> impl Iterator<Item = &mut parser::UnionType> {
-        self.src.definitions.iter_mut().filter_map(|def| match def {
-            Definition::TypeDefinition(TypeDefinition::Union(union)) => Some(union),
-            _ => None,
-        })
-    }
-
-    fn enums_mut(&mut self) -> impl Iterator<Item = &mut parser::EnumType> {
-        self.src.definitions.iter_mut().filter_map(|def| match def {
-            Definition::TypeDefinition(TypeDefinition::Enum(r#enum)) => Some(r#enum),
-            _ => None,
-        })
-    }
-
-    // fn find_type_id(&self, type_name: &str) -> super::TypeId {
-    //     if let Some(id) = self
-    //         .schema
-    //         .stored_scalars
-    //         .iter()
-    //         .position(|scalar| scalar.name == type_name)
-    //     {
-    //         return super::TypeId::Scalar(super::ScalarId(id));
-    //     }
-
-    //     if let Some(id) = self.objects_mut().position(|obj| obj.name == type_name) {
-    //         return super::TypeId::Object(super::ObjectId(id));
-    //     }
-
-    //     if let Some(id) = self.interfaces_mut().position(|obj| obj.name == type_name) {
-    //         return super::TypeId::Interface(super::InterfaceId(id));
-    //     }
-
-    //     if let Some(id) = self.unions_mut().position(|union| union.name == type_name) {
-    //         return super::TypeId::Union(super::UnionId(id));
-    //     }
-
-    //     panic!(
-    //         "graphql-client-codegen internal error: failed to resolve TypeId for `{}°.",
-    //         type_name
-    //     );
+    // fn objects_mut(&mut self) -> impl Iterator<Item = &mut parser::ObjectType> {
+    //     self.src.definitions.iter_mut().filter_map(|def| match def {
+    //         Definition::TypeDefinition(TypeDefinition::Object(obj)) => Some(obj),
+    //         _ => None,
+    //     })
     // }
 
-    fn resolve_field_type(
-        &mut self,
-        inner: &graphql_parser::schema::Type,
-    ) -> super::StoredFieldType {
-        use crate::field_type::{graphql_parser_depth, GraphqlTypeQualifier};
-        use graphql_parser::schema::Type::*;
+    // fn interfaces_mut(&mut self) -> impl Iterator<Item = &mut parser::InterfaceType> {
+    //     self.src.definitions.iter_mut().filter_map(|def| match def {
+    //         Definition::TypeDefinition(TypeDefinition::Interface(interface)) => Some(interface),
+    //         _ => None,
+    //     })
+    // }
 
-        let qualifiers_depth = graphql_parser_depth(inner);
-        let mut qualifiers = Vec::with_capacity(qualifiers_depth);
+    // fn unions_mut(&mut self) -> impl Iterator<Item = &mut parser::UnionType> {
+    //     self.src.definitions.iter_mut().filter_map(|def| match def {
+    //         Definition::TypeDefinition(TypeDefinition::Union(union)) => Some(union),
+    //         _ => None,
+    //     })
+    // }
 
-        let mut inner = inner;
+    // fn enums_mut(&mut self) -> impl Iterator<Item = &mut parser::EnumType> {
+    //     self.src.definitions.iter_mut().filter_map(|def| match def {
+    //         Definition::TypeDefinition(TypeDefinition::Enum(r#enum)) => Some(r#enum),
+    //         _ => None,
+    //     })
+    // }
 
-        loop {
-            match inner {
-                ListType(new_inner) => {
-                    qualifiers.push(GraphqlTypeQualifier::List);
-                    inner = new_inner;
-                }
-                NonNullType(new_inner) => {
-                    qualifiers.push(GraphqlTypeQualifier::Required);
-                    inner = new_inner;
-                }
-                NamedType(name) => {
-                    return super::StoredFieldType {
-                        id: self.schema.find_type_id(name),
-                        qualifiers,
-                    }
-                }
-            }
-        }
-    }
 
-    fn ingest_graphql_parser_scalar(&mut self, scalar: &mut graphql_parser::schema::ScalarType) {
-        let scalar = super::StoredScalar {
-            name: std::mem::replace(&mut scalar.name, String::new()),
-        };
 
-        self.schema.push_scalar(scalar);
-    }
 
-    fn ingest_graphql_parser_interface(
-        &mut self,
-        interface: &mut graphql_parser::schema::InterfaceType,
-    ) {
-        let new_interface = super::StoredInterface {
-            name: std::mem::replace(&mut interface.name, String::new()),
-            fields: Vec::new(),
-            implemented_by: Vec::new(),
-        };
-
-        let interface_id = self.schema.push_interface(new_interface);
-
-        for field in &mut interface.fields {
-            let interface_field = super::StoredInterfaceField {
-                name: std::mem::replace(&mut field.name, String::new()),
-                interface: interface_id,
-                r#type: self.resolve_field_type(&field.field_type),
-            };
-            let field_id = self.schema.push_interface_field(interface_field);
-
-            self.schema
-                .get_interface_mut(interface_id)
-                .fields
-                .push(field_id);
-        }
-    }
-
-    fn ingest_graphql_parser_object(&mut self, obj: &mut graphql_parser::schema::ObjectType) {
-        todo!()
-        // // Ingest the object itself
-        // let object = super::StoredObject {
-        //     name: std::mem::replace(&mut obj.name, String::new()),
-        //     fields: Vec::new(),
-        //     implements_interfaces: obj
-        //         .implements_interfaces
-        //         .iter()
-        //         .map(|iface_name| {
-        //             self.interfaces_mut()
-        //                 .position(|iface| iface.name.as_str() == iface_name)
-        //                 .unwrap()
-        //         })
-        //         .map(super::InterfaceId)
-        //         .collect(),
-        // };
-
-        // let object_id = self.schema.push_object(object);
-
-        // // Ingest fields
-        // for graphql_field in &mut obj.fields {
-        //     let field = super::StoredObjectField {
-        //         name: std::mem::replace(&mut graphql_field.name, String::new()),
-        //         object: object_id,
-        //     };
-
-        //     let field_id = self.schema.push_object_field(field);
-
-        //     self.schema.get_object_mut(object_id).fields.push(field_id);
-        // }
-
-        // for id in self
-        //     .schema
-        //     .get_object_mut(object_id)
-        //     .implements_interfaces
-        //     .iter()
-        // {
-        //     self.schema
-        //         .get_interface_mut(*id)
-        //         .implemented_by
-        //         .push(object_id);
-        // }
-    }
-
-    fn ingest_graphql_parser_union(&mut self, union: &mut graphql_parser::schema::UnionType) {
-        let stored_union = super::StoredUnion {
-            name: std::mem::replace(&mut union.name, String::new()),
-            variants: union
-                .types
-                .iter()
-                .map(|name| self.schema.find_type_id(name))
-                .collect(),
-        };
-
-        self.schema.stored_unions.push(stored_union);
-    }
-
-    fn ingest_graphql_parser_input_object(
-        &mut self,
-        input: &mut graphql_parser::schema::InputObjectType,
-    ) {
-        unimplemented!()
-    }
-
-    fn convert(mut self) -> Schema {
-        todo!()
+    fn convert(self) -> Schema {
+        let GraphqlParserSchemaConverter { src, mut schema } = self;
+        populate_names_map(&mut schema, &src.definitions);
         // let definitions = &mut self.src.definitions;
         // self.src
         //     .definitions
@@ -247,6 +91,208 @@ impl GraphqlParserSchemaConverter {
         //     self.schema.subscription_type = schema_definition.subscription;
         // };
 
-        // self.schema
+        schema
     }
+}
+
+fn populate_names_map(schema: &mut Schema, definitions: &[Definition]) {
+    definitions
+        .iter()
+        .filter_map(|def| match def {
+            Definition::TypeDefinition(TypeDefinition::Scalar(scalar)) => {
+                Some(scalar.name.as_str())
+            }
+            _ => None,
+        })
+        .enumerate()
+        .for_each(|(idx, scalar_name)| {
+            schema.names.insert(scalar_name.into(), TypeId::scalar(idx));
+        });
+
+    definitions
+        .iter()
+        .filter_map(|def| match def {
+            Definition::TypeDefinition(TypeDefinition::Enum(enm)) => Some(enm.name.as_str()),
+            _ => None,
+        })
+        .enumerate()
+        .for_each(|(idx, enum_name)| {
+            schema.names.insert(enum_name.into(), TypeId::r#enum(idx));
+        });
+
+    definitions
+        .iter()
+        .filter_map(|def| match def {
+            Definition::TypeDefinition(TypeDefinition::Object(object)) => {
+                Some(object.name.as_str())
+            }
+            _ => None,
+        })
+        .enumerate()
+        .for_each(|(idx, object_name)| {
+            schema
+                .names
+                .insert(object_name.into(), TypeId::r#object(idx));
+        });
+
+    definitions
+        .iter()
+        .filter_map(|def| match def {
+            Definition::TypeDefinition(TypeDefinition::Interface(interface)) => {
+                Some(interface.name.as_str())
+            }
+            _ => None,
+        })
+        .enumerate()
+        .for_each(|(idx, interface_name)| {
+            schema
+                .names
+                .insert(interface_name.into(), TypeId::interface(idx));
+        });
+
+    definitions
+        .iter()
+        .filter_map(|def| match def {
+            Definition::TypeDefinition(TypeDefinition::Union(union)) => Some(union.name.as_str()),
+            _ => None,
+        })
+        .enumerate()
+        .for_each(|(idx, union_name)| {
+            schema.names.insert(union_name.into(), TypeId::union(idx));
+        });
+
+    definitions
+        .iter()
+        .filter_map(|def| match def {
+            Definition::TypeDefinition(TypeDefinition::InputObject(input)) => {
+                Some(input.name.as_str())
+            }
+            _ => None,
+        })
+        .enumerate()
+        .for_each(|(idx, input_name)| {
+            schema.names.insert(input_name.into(), TypeId::input(idx));
+        });
+}
+
+fn ingest_union(schema: &mut Schema, union: &mut graphql_parser::schema::UnionType) {
+    let stored_union = super::StoredUnion {
+        name: std::mem::replace(&mut union.name, String::new()),
+        variants: union
+            .types
+            .iter()
+            .map(|name| schema.find_type_id(name))
+            .collect(),
+    };
+
+    schema.stored_unions.push(stored_union);
+}
+
+fn ingest_object(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectType) {
+    // Ingest the object itself
+    let object = super::StoredObject {
+        name: std::mem::replace(&mut obj.name, String::new()),
+        fields: obj
+            .fields
+            .iter_mut()
+            .map(|graphql_field| super::StoredField {
+                name: std::mem::replace(&mut graphql_field.name, String::new()),
+                r#type: resolve_field_type(schema, &graphql_field.field_type)
+            })
+            .collect(),
+        implements_interfaces: obj
+            .implements_interfaces
+            .iter()
+            .map(|iface_name| schema.find_interface(iface_name))
+            .collect(),
+    };
+
+    let object_id = schema.push_object(object);
+
+    todo!()
+
+    // // Ingest fields
+    // for graphql_field in &mut obj.fields {
+    //     let field = super::StoredObjectField { object: object_id };
+
+    //     let field_id = schema.push_object_field(field);
+
+    //     schema.get_object_mut(object_id).fields.push(field_id);
+    // }
+
+    // TODO: this assumes we ingest interfaces before objects
+    // for id in schema
+    //     .get_object_mut(object_id)
+    //     .implements_interfaces
+    //     .iter()
+    // {
+    //     schema.get_interface_mut(*id).implemented_by.push(object_id);
+    // }
+}
+
+fn resolve_field_type(
+    schema: &mut Schema,
+    inner: &graphql_parser::schema::Type,
+) -> super::StoredFieldType {
+    use crate::field_type::{graphql_parser_depth, GraphqlTypeQualifier};
+    use graphql_parser::schema::Type::*;
+
+    let qualifiers_depth = graphql_parser_depth(inner);
+    let mut qualifiers = Vec::with_capacity(qualifiers_depth);
+
+    let mut inner = inner;
+
+    loop {
+        match inner {
+            ListType(new_inner) => {
+                qualifiers.push(GraphqlTypeQualifier::List);
+                inner = new_inner;
+            }
+            NonNullType(new_inner) => {
+                qualifiers.push(GraphqlTypeQualifier::Required);
+                inner = new_inner;
+            }
+            NamedType(name) => {
+                return super::StoredFieldType {
+                    id: schema.find_type_id(name),
+                    qualifiers,
+                }
+            }
+        }
+    }
+}
+
+fn ingest_scalar(schema: &mut Schema, scalar: &mut graphql_parser::schema::ScalarType) {
+    let scalar = super::StoredScalar {
+        name: std::mem::replace(&mut scalar.name, String::new()),
+    };
+
+    schema.push_scalar(scalar);
+}
+
+fn ingest_interface(
+    schema: &mut Schema,
+    interface: &mut graphql_parser::schema::InterfaceType,
+) {
+    let new_interface = super::StoredInterface {
+        name: std::mem::replace(&mut interface.name, String::new()),
+        fields: todo!(),
+        implemented_by: Vec::new(),
+    };
+
+    let interface_id = schema.push_interface(new_interface);
+
+    // for field in &mut interface.fields {
+    //     let interface_field = super::StoredInterfaceField {
+    //         name: std::mem::replace(&mut field.name, String::new()),
+    //         interface: interface_id,
+    //         r#type: self.resolve_field_type(&field.field_type),
+    //     };
+    //     let field_id = schema.push_interface_field(interface_field);
+
+    //     schema
+    //         .get_interface_mut(interface_id)
+    //         .fields
+    //         .push(field_id);
+    // }
 }

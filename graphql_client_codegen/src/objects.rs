@@ -2,7 +2,7 @@ use crate::constants::*;
 use crate::deprecation::DeprecationStatus;
 use crate::field_type::FieldType;
 use crate::query::QueryContext;
-use crate::schema::Schema;
+// use crate::schema::Schema;
 use crate::selection::*;
 use crate::shared::{field_impls_for_selection, response_fields_for_selection};
 use graphql_parser::schema;
@@ -75,31 +75,31 @@ impl<'schema> GqlObject<'schema> {
         item
     }
 
-    pub fn from_introspected_schema_json(
-        obj: &'schema graphql_introspection_query::introspection_response::FullType,
-    ) -> Self {
-        let description = obj.description.as_deref();
-        let mut item = GqlObject::new(obj.name.as_ref().expect("missing object name"), description);
-        let fields = obj.fields.as_ref().unwrap().iter().filter_map(|t| {
-            t.as_ref().map(|t| {
-                let deprecation = if t.is_deprecated.unwrap_or(false) {
-                    DeprecationStatus::Deprecated(t.deprecation_reason.clone())
-                } else {
-                    DeprecationStatus::Current
-                };
-                GqlObjectField {
-                    description: t.description.as_deref(),
-                    name: t.name.as_ref().expect("field name"),
-                    type_: FieldType::from(t.type_.as_ref().expect("field type")),
-                    deprecation,
-                }
-            })
-        });
+    // pub fn from_introspected_schema_json(
+    //     obj: &'schema graphql_introspection_query::introspection_response::FullType,
+    // ) -> Self {
+    //     let description = obj.description.as_ref().map(String::as_str);
+    //     let mut item = GqlObject::new(obj.name.as_ref().expect("missing object name"), description);
+    //     let fields = obj.fields.as_ref().unwrap().iter().filter_map(|t| {
+    //         t.as_ref().map(|t| {
+    //             let deprecation = if t.is_deprecated.unwrap_or(false) {
+    //                 DeprecationStatus::Deprecated(t.deprecation_reason.clone())
+    //             } else {
+    //                 DeprecationStatus::Current
+    //             };
+    //             GqlObjectField {
+    //                 description: t.description.as_ref().map(String::as_str),
+    //                 name: t.name.as_ref().expect("field name"),
+    //                 type_: FieldType::from(t.type_.as_ref().expect("field type")),
+    //                 deprecation,
+    //             }
+    //         })
+    //     });
 
-        item.fields.extend(fields);
+    //     item.fields.extend(fields);
 
-        item
-    }
+    //     item
+    // }
 
     // pub(crate) fn require(&self, schema: &Schema) {
     //     if self.is_required.get() {

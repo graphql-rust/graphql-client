@@ -4,9 +4,9 @@ use crate::query::QueryContext;
 use crate::schema;
 use crate::schema::{InputObjectId, SchemaRef};
 use graphql_introspection_query::introspection_response;
-use heck::SnakeCase;
+// use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
+// use quote::quote;
 use std::cell::Cell;
 use std::collections::HashMap;
 

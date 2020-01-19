@@ -1,5 +1,5 @@
 use crate::constants::*;
-use failure::*;
+// use failure::*;
 use graphql_parser::query::SelectionSet;
 use std::collections::BTreeMap;
 

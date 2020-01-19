@@ -27,11 +27,16 @@ struct StoredObjectField {
 #[derive(Debug, PartialEq, Clone)]
 struct StoredObject {
     name: String,
-    fields: Vec<ObjectFieldId>,
+    // fields: Vec<ObjectFieldId>,
     implements_interfaces: Vec<InterfaceId>,
+    fields: Vec<StoredField>,
 }
 
-impl StoredObject {}
+#[derive(Debug, PartialEq, Clone)]
+struct StoredField {
+    name: String,
+    r#type: StoredFieldType,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct ObjectId(usize);
@@ -63,7 +68,8 @@ struct InputFieldId(usize);
 #[derive(Debug, Clone, PartialEq)]
 struct StoredInterface {
     name: String,
-    fields: Vec<InterfaceFieldId>,
+    // fields: Vec<InterfaceFieldId>,
+    fields: Vec<StoredField>,
     implemented_by: Vec<ObjectId>,
 }
 
@@ -98,11 +104,39 @@ pub(crate) enum TypeId {
     Interface(InterfaceId),
     Union(UnionId),
     Enum(EnumId),
+    Input(InputObjectId),
 }
 
 impl TypeId {
     fn scalar(id: usize) -> Self {
         TypeId::Scalar(ScalarId(id))
+    }
+
+    fn r#enum(id: usize) -> Self {
+        TypeId::Enum(EnumId(id))
+    }
+
+    fn interface(id: usize) -> Self {
+        TypeId::Interface(InterfaceId(id))
+    }
+
+    fn union(id: usize) -> Self {
+        TypeId::Union(UnionId(id))
+    }
+
+    fn object(id: usize) -> Self {
+        TypeId::Object(ObjectId(id))
+    }
+
+    fn input(id: usize) -> Self {
+        TypeId::Input(InputObjectId(id))
+    }
+
+    fn as_interface_id(&self) -> Option<InterfaceId> {
+        match self {
+            TypeId::Interface(id) => Some(*id),
+            _ => None
+        }
     }
 }
 
@@ -145,9 +179,9 @@ enum InputFieldTypeId {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Schema {
     stored_objects: Vec<StoredObject>,
-    stored_object_fields: Vec<StoredObjectField>,
+    // stored_object_fields: Vec<StoredObjectField>,
     stored_interfaces: Vec<StoredInterface>,
-    stored_interface_fields: Vec<StoredInterfaceField>,
+    // stored_interface_fields: Vec<StoredInterfaceField>,
     stored_unions: Vec<StoredUnion>,
     stored_scalars: Vec<StoredScalar>,
     stored_enums: Vec<StoredEnum>,
@@ -174,9 +208,9 @@ impl Schema {
     pub(crate) fn new() -> Schema {
         Schema {
             stored_objects: Vec::new(),
-            stored_object_fields: Vec::new(),
+            // stored_object_fields: Vec::new(),
             stored_interfaces: Vec::new(),
-            stored_interface_fields: Vec::new(),
+            // stored_interface_fields: Vec::new(),
             stored_unions: Vec::new(),
             stored_scalars: Self::default_scalars(),
             stored_enums: Vec::new(),
@@ -277,13 +311,13 @@ impl Schema {
         id
     }
 
-    fn push_object_field(&mut self, object_field: StoredObjectField) -> ObjectFieldId {
-        let id = ObjectFieldId(self.stored_object_fields.len());
+    // fn push_object_field(&mut self, object_field: StoredObjectField) -> ObjectFieldId {
+    //     let id = ObjectFieldId(self.stored_object_fields.len());
 
-        self.stored_object_fields.push(object_field);
+    //     self.stored_object_fields.push(object_field);
 
-        id
-    }
+    //     id
+    // }
 
     fn push_interface(&mut self, interface: StoredInterface) -> InterfaceId {
         let id = InterfaceId(self.stored_interfaces.len());
@@ -293,18 +327,26 @@ impl Schema {
         id
     }
 
-    fn push_interface_field(&mut self, interface_field: StoredInterfaceField) -> InterfaceFieldId {
-        let id = InterfaceFieldId(self.stored_interface_fields.len());
+    // fn push_interface_field(&mut self, interface_field: StoredInterfaceField) -> InterfaceFieldId {
+    //     let id = InterfaceFieldId(self.stored_interface_fields.len());
 
-        self.stored_interface_fields.push(interface_field);
+    //     self.stored_interface_fields.push(interface_field);
 
-        id
-    }
+    //     id
+    // }
 
     fn push_scalar(&mut self, scalar: StoredScalar) -> ScalarId {
         let id = ScalarId(self.stored_scalars.len());
 
         self.stored_scalars.push(scalar);
+
+        id
+    }
+
+    fn push_enum(&mut self, enm: StoredEnum) -> EnumId {
+        let id = EnumId(self.stored_enums.len());
+
+        self.stored_enums.push(enm);
 
         id
     }
@@ -330,6 +372,10 @@ impl Schema {
 
     fn get_stored_input(&self, input_id: InputObjectId) -> &StoredInputType {
         self.stored_inputs.get(input_id.0).unwrap()
+    }
+
+    fn find_interface(&self, interface_name: &str) -> InterfaceId {
+        self.find_type_id(interface_name).as_interface_id().unwrap()
     }
 
     fn find_type_id(&self, type_name: &str) -> TypeId {

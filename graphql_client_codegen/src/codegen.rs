@@ -3,7 +3,7 @@ use crate::normalization::Normalization;
 use crate::operations::Operation;
 use crate::query::QueryContext;
 use crate::schema;
-use crate::selection::Selection;
+// use crate::selection::Selection;
 use failure::*;
 use graphql_parser::query;
 use proc_macro2::TokenStream;

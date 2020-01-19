@@ -130,11 +130,11 @@ pub struct FullType {
     pub kind: Option<__TypeKind>,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub fields: Option<Vec<Option<FullTypeFields>>>,
-    pub input_fields: Option<Vec<Option<FullTypeInputFields>>>,
-    pub interfaces: Option<Vec<Option<FullTypeInterfaces>>>,
-    pub enum_values: Option<Vec<Option<FullTypeEnumValues>>>,
-    pub possible_types: Option<Vec<Option<FullTypePossibleTypes>>>,
+    pub fields: Option<Vec<FullTypeFields>>,
+    pub input_fields: Option<Vec<FullTypeInputFields>>,
+    pub interfaces: Option<Vec<FullTypeInterfaces>>,
+    pub enum_values: Option<Vec<FullTypeEnumValues>>,
+    pub possible_types: Option<Vec<FullTypePossibleTypes>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
