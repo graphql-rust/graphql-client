@@ -24,23 +24,32 @@ impl JsonSchemaConverter {
         let names = &mut self.schema.names;
 
         unions_mut(&mut self.src)
-        .map(|u| u.name.as_ref().unwrap()).enumerate().for_each(|(idx, name)| {
-            names.insert(name.clone(), TypeId::union(idx));
-        });
+            .map(|u| u.name.as_ref().unwrap())
+            .enumerate()
+            .for_each(|(idx, name)| {
+                names.insert(name.clone(), TypeId::union(idx));
+            });
 
-        interfaces_mut(&mut self.src).map(|iface| iface.name.as_ref().unwrap()).enumerate().for_each(|(idx, name)| {
-            names.insert(name.clone(), TypeId::interface(idx));
-        });
+        interfaces_mut(&mut self.src)
+            .map(|iface| iface.name.as_ref().unwrap())
+            .enumerate()
+            .for_each(|(idx, name)| {
+                names.insert(name.clone(), TypeId::interface(idx));
+            });
 
-        objects_mut(&mut self.src).map(|obj| obj.name.as_ref().unwrap()).enumerate().for_each(|(idx, name)| {
-            names.insert(name.clone(), TypeId::object(idx));
+        objects_mut(&mut self.src)
+            .map(|obj| obj.name.as_ref().unwrap())
+            .enumerate()
+            .for_each(|(idx, name)| {
+                names.insert(name.clone(), TypeId::object(idx));
+            });
 
-        });
-
-        inputs_mut(&mut self.src).map(|obj| obj.name.as_ref().unwrap()).enumerate().for_each(|(idx, name)| {
-            names.insert(name.clone(), TypeId::input(idx));
-
-        });
+        inputs_mut(&mut self.src)
+            .map(|obj| obj.name.as_ref().unwrap())
+            .enumerate()
+            .for_each(|(idx, name)| {
+                names.insert(name.clone(), TypeId::input(idx));
+            });
     }
 
     fn convert(self) -> Schema {
@@ -69,7 +78,9 @@ impl JsonSchemaConverter {
             ingest_enum(&mut schema, enm)
         }
 
-        interfaces_mut(&mut src).for_each(|iface| ingest_interface(&mut schema, iface));
+        for interface in interfaces_mut(&mut src) {
+            ingest_interface(&mut schema, interface);
+        }
 
         // for ty in src
         //     .types
@@ -238,9 +249,7 @@ fn ingest_scalar(schema: &mut Schema, scalar: &mut FullType) {
     let name: String = scalar.name.take().unwrap();
     let names_name = name.clone();
 
-    let id = schema.push_scalar(super::StoredScalar {
-        name,
-    });
+    let id = schema.push_scalar(super::StoredScalar { name });
 
     schema.names.insert(names_name, TypeId::Scalar(id));
 }
@@ -250,32 +259,23 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
     let names_name = name.clone();
 
     let variants = enm
-    .enum_values
-    .as_mut()
-    .unwrap()
-    .into_iter()
-    .map(|v| {
-        std::mem::replace(
-            v.name.as_mut().take().unwrap(),
-            String::new(),
-        )
-    })
-    .collect();
+        .enum_values
+        .as_mut()
+        .unwrap()
+        .into_iter()
+        .map(|v| std::mem::replace(v.name.as_mut().take().unwrap(), String::new()))
+        .collect();
 
-let enm = super::StoredEnum {
-    name,
-    variants,
-};
+    let enm = super::StoredEnum { name, variants };
 
-let id = schema.push_enum(enm);
+    let id = schema.push_enum(enm);
 
-schema.names.insert(names_name, TypeId::Enum(id));
+    schema.names.insert(names_name, TypeId::Enum(id));
 }
 
 fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
     let interface = super::StoredInterface {
         name: std::mem::replace(iface.name.as_mut().unwrap(), String::new()),
-        implemented_by: Vec::new(),
         fields: todo!(),
     };
 
@@ -299,12 +299,19 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
     let object = super::StoredObject {
         name: object.name.take().unwrap(),
         implements_interfaces: Vec::new(),
-        fields: object.fields.as_mut().unwrap().iter_mut().map(|json_field| {
-            super::StoredField {
-                name:  json_field.name.take().unwrap(),
-                r#type: resolve_field_type(schema, &mut json_field.type_.as_mut().unwrap().type_ref)
-            }
-        }).collect(),
+        fields: object
+            .fields
+            .as_mut()
+            .unwrap()
+            .iter_mut()
+            .map(|json_field| super::StoredField {
+                name: json_field.name.take().unwrap(),
+                r#type: resolve_field_type(
+                    schema,
+                    &mut json_field.type_.as_mut().unwrap().type_ref,
+                ),
+            })
+            .collect(),
     };
 
     schema.push_object(object);

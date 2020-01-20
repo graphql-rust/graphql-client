@@ -2,17 +2,15 @@ mod graphql_parser_conversion;
 mod json_conversion;
 use std::collections::HashMap;
 
-use crate::deprecation::DeprecationStatus;
+// use crate::deprecation::DeprecationStatus;
 // use crate::enums::{EnumVariant, GqlEnum};
-use crate::field_type::FieldType;
+// use crate::field_type::FieldType;
 // use crate::inputs::GqlInput;
 // use crate::interfaces::GqlInterface;
 // use crate::objects::{GqlObject, GqlObjectField};
 // use crate::scalars::Scalar;
 // use crate::unions::GqlUnion;
-use failure::*;
-use graphql_parser::{self, schema};
-use std::collections::{BTreeMap, BTreeSet};
+// use failure::*;
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
@@ -70,7 +68,6 @@ struct StoredInterface {
     name: String,
     // fields: Vec<InterfaceFieldId>,
     fields: Vec<StoredField>,
-    implemented_by: Vec<ObjectId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -135,7 +132,7 @@ impl TypeId {
     fn as_interface_id(&self) -> Option<InterfaceId> {
         match self {
             TypeId::Interface(id) => Some(*id),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -187,6 +184,8 @@ pub(crate) struct Schema {
     stored_enums: Vec<StoredEnum>,
     stored_inputs: Vec<StoredInputType>,
     names: HashMap<String, TypeId>,
+
+    // TODO: replace these with object ids (interface/union ids?)
     pub(crate) query_type: Option<String>,
     pub(crate) mutation_type: Option<String>,
     pub(crate) subscription_type: Option<String>,
