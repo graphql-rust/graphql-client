@@ -25,15 +25,21 @@ struct StoredObjectField {
 #[derive(Debug, PartialEq, Clone)]
 struct StoredObject {
     name: String,
-    // fields: Vec<ObjectFieldId>,
+    fields: Vec<StoredFieldId>,
     implements_interfaces: Vec<InterfaceId>,
-    fields: Vec<StoredField>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 struct StoredField {
     name: String,
     r#type: StoredFieldType,
+    parent: StoredFieldParent,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+enum StoredFieldParent {
+    Object(ObjectId),
+    Interface(InterfaceId)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -61,13 +67,15 @@ pub(crate) struct EnumId(usize);
 pub(crate) struct InputObjectId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct StoredFieldId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 struct InputFieldId(usize);
 
 #[derive(Debug, Clone, PartialEq)]
 struct StoredInterface {
     name: String,
-    // fields: Vec<InterfaceFieldId>,
-    fields: Vec<StoredField>,
+    fields: Vec<StoredFieldId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -183,9 +191,8 @@ enum InputFieldTypeId {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Schema {
     stored_objects: Vec<StoredObject>,
-    // stored_object_fields: Vec<StoredObjectField>,
+    stored_fields: Vec<StoredField>,
     stored_interfaces: Vec<StoredInterface>,
-    // stored_interface_fields: Vec<StoredInterfaceField>,
     stored_unions: Vec<StoredUnion>,
     stored_scalars: Vec<StoredScalar>,
     stored_enums: Vec<StoredEnum>,
@@ -201,9 +208,8 @@ impl Schema {
     pub(crate) fn new() -> Schema {
         let mut schema = Schema {
             stored_objects: Vec::new(),
-            // stored_object_fields: Vec::new(),
             stored_interfaces: Vec::new(),
-            // stored_interface_fields: Vec::new(),
+            stored_fields: Vec::new(),
             stored_unions: Vec::new(),
             stored_scalars: Vec::with_capacity(DEFAULT_SCALARS.len()),
             stored_enums: Vec::new(),
@@ -354,6 +360,14 @@ impl Schema {
         let id = EnumId(self.stored_enums.len());
 
         self.stored_enums.push(enm);
+
+        id
+    }
+
+    fn push_field(&mut self, field: StoredField) -> StoredFieldId {
+        let id = StoredFieldId(self.stored_fields.len());
+
+        self.stored_fields.push(field);
 
         id
     }

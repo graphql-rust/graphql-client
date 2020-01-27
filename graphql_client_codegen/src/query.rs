@@ -13,7 +13,7 @@ use syn::Ident;
 /// This holds all the information we need during the code generation phase.
 pub(crate) struct QueryContext<'query> {
     pub fragments: BTreeMap<&'query str, GqlFragment<'query>>,
-    // pub schema: &'schema Schema,
+    pub schema: &'query Schema,
     pub deprecation_strategy: DeprecationStrategy,
     pub normalization: Normalization,
     variables_derives: Vec<Ident>,
@@ -23,13 +23,13 @@ pub(crate) struct QueryContext<'query> {
 impl<'query, 'schema> QueryContext<'query> {
     /// Create a QueryContext with the given Schema.
     pub(crate) fn new(
-        schema: &'schema Schema,
+        schema: &'query Schema,
         deprecation_strategy: DeprecationStrategy,
         normalization: Normalization,
     ) -> QueryContext<'query> {
         QueryContext {
             fragments: BTreeMap::new(),
-            // schema,
+            schema,
             deprecation_strategy,
             normalization,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],

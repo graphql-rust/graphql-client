@@ -133,17 +133,24 @@ fn ingest_union(schema: &mut Schema, union: &mut graphql_parser::schema::UnionTy
 }
 
 fn ingest_object(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectType) {
+    let object_id = schema.find_type_id(&obj.name).as_object_id().unwrap();
+    let mut field_ids = Vec::with_capacity(obj.fields.len());
+
+    for field in obj.fields.iter_mut() {
+        let field = super::StoredField {
+            name: std::mem::replace(&mut field.name, String::new()),
+            r#type: resolve_field_type(schema, &field.field_type),
+            parent: super::StoredFieldParent::Object(object_id),
+        };
+
+        field_ids.push(schema.push_field(field));
+    }
+
+
     // Ingest the object itself
     let object = super::StoredObject {
         name: std::mem::replace(&mut obj.name, String::new()),
-        fields: obj
-            .fields
-            .iter_mut()
-            .map(|graphql_field| super::StoredField {
-                name: std::mem::replace(&mut graphql_field.name, String::new()),
-                r#type: resolve_field_type(schema, &graphql_field.field_type),
-            })
-            .collect(),
+        fields: field_ids,
         implements_interfaces: obj
             .implements_interfaces
             .iter()
@@ -213,16 +220,26 @@ fn ingest_enum(schema: &mut Schema, enm: &mut graphql_parser::schema::EnumType) 
 }
 
 fn ingest_interface(schema: &mut Schema, interface: &mut graphql_parser::schema::InterfaceType) {
+    let interface_id = schema
+        .find_type_id(&interface.name)
+        .as_interface_id()
+        .unwrap();
+
+        let mut field_ids = Vec::with_capacity(interface.fields.len());
+
+    for field in interface.fields.iter_mut() {
+        let field = super::StoredField {
+            name: std::mem::replace(&mut field.name, String::new()),
+            r#type: resolve_field_type(schema, &field.field_type),
+            parent: super::StoredFieldParent::Interface(interface_id),
+        };
+
+        field_ids.push(schema.push_field(field));
+    }
+
     let new_interface = super::StoredInterface {
         name: std::mem::replace(&mut interface.name, String::new()),
-        fields: interface
-            .fields
-            .iter_mut()
-            .map(|graphql_field| super::StoredField {
-                name: std::mem::replace(&mut graphql_field.name, String::new()),
-                r#type: resolve_field_type(schema, &graphql_field.field_type),
-            })
-            .collect(),
+        fields: field_ids,
     };
 
     schema.push_interface(new_interface);
