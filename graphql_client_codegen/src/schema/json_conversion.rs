@@ -284,43 +284,49 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
 }
 
 fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
+    let interface_id = schema.find_type_id(iface.name.as_ref().unwrap()).as_interface_id().unwrap();
+    let fields = iface.fields.as_mut().unwrap();
+    let mut field_ids = Vec::with_capacity(fields.len());
+
+    for field in fields.iter_mut() {
+        let field = super::StoredField {
+            parent: super::StoredFieldParent::Interface(interface_id),
+            name: field.name.take().unwrap(),
+            r#type: resolve_field_type(schema, &mut field.type_.as_mut().unwrap().type_ref),
+        };
+
+        field_ids.push(schema.push_field(field));
+    }
+
     let interface = super::StoredInterface {
         name: std::mem::replace(iface.name.as_mut().unwrap(), String::new()),
-        fields: iface
-            .fields
-            .as_mut()
-            .unwrap()
-            .iter_mut()
-            .map(|json_field| super::StoredField {
-                name: json_field.name.take().unwrap(),
-                r#type: resolve_field_type(
-                    schema,
-                    &mut json_field.type_.as_mut().unwrap().type_ref,
-                ),
-            })
-            .collect(),
+        fields: field_ids,
     };
 
     schema.push_interface(interface);
 }
 
 fn ingest_object(schema: &mut Schema, object: &mut FullType) {
+    let object_id = schema.find_type_id(object.name.as_ref().unwrap()).as_object_id().unwrap();
+
+    let fields = object.fields.as_mut().unwrap();
+    let mut field_ids = Vec::with_capacity(fields.len());
+
+    for field in fields.iter_mut() {
+        let field = super::StoredField {
+            parent: super::StoredFieldParent::Object(object_id),
+            name: field.name.take().unwrap(),
+            r#type: resolve_field_type(schema, &mut field.type_.as_mut().unwrap().type_ref),
+        };
+
+        field_ids.push(schema.push_field(field));
+    }
+
+
     let object = super::StoredObject {
         name: object.name.take().unwrap(),
         implements_interfaces: Vec::new(),
-        fields: object
-            .fields
-            .as_mut()
-            .unwrap()
-            .iter_mut()
-            .map(|json_field| super::StoredField {
-                name: json_field.name.take().unwrap(),
-                r#type: resolve_field_type(
-                    schema,
-                    &mut json_field.type_.as_mut().unwrap().type_ref,
-                ),
-            })
-            .collect(),
+        fields: field_ids,
     };
 
     schema.push_object(object);

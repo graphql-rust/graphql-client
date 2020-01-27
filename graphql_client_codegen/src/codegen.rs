@@ -41,21 +41,21 @@ pub(crate) fn response_for_query(
     operation: &Operation<'_>,
     options: &crate::GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, failure::Error> {
-    todo!()
+    let mut context = QueryContext::new(
+        schema,
+        options.deprecation_strategy(),
+        options.normalization(),
+    );
 
-    // let mut context = QueryContext::new(
-    //     schema,
-    //     options.deprecation_strategy(),
-    //     options.normalization(),
-    // );
+    if let Some(derives) = options.variables_derives() {
+        context.ingest_variables_derives(&derives)?;
+    }
 
-    // if let Some(derives) = options.variables_derives() {
-    //     context.ingest_variables_derives(&derives)?;
-    // }
+    if let Some(derives) = options.response_derives() {
+        context.ingest_response_derives(&derives)?;
+    }
 
-    // if let Some(derives) = options.response_derives() {
-    //     context.ingest_response_derives(&derives)?;
-    // }
+    todo!("response for query");
 
     // let mut definitions = Vec::new();
 

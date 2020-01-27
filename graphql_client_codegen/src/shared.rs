@@ -148,75 +148,76 @@ pub(crate) fn response_fields_for_selection(
     selection: &Selection<'_>,
     prefix: &str,
 ) -> Result<Vec<TokenStream>, failure::Error> {
-    (&selection)
-        .into_iter()
-        .map(|item| match item {
-            SelectionItem::Field(f) => {
-                let name = &f.name;
-                let alias = f.alias.as_ref().unwrap_or(name);
+    todo!("response fields for selection")
+    // (&selection)
+    //     .into_iter()
+    //     .map(|item| match item {
+    //         SelectionItem::Field(f) => {
+    //             let name = &f.name;
+    //             let alias = f.alias.as_ref().unwrap_or(name);
 
-                let schema_field = &schema_fields
-                    .iter()
-                    .find(|field| &field.name == name)
-                    .ok_or_else(|| {
-                        format_err!(
-                            "Could not find field `{}` on `{}`. Available fields: `{}`.",
-                            *name,
-                            type_name,
-                            schema_fields
-                                .iter()
-                                .map(|ref field| &field.name)
-                                .fold(String::new(), |mut acc, item| {
-                                    acc.push_str(item);
-                                    acc.push_str(", ");
-                                    acc
-                                })
-                                .trim_end_matches(", ")
-                        )
-                    })?;
-                let ty = schema_field.type_.to_rust(
-                    context,
-                    &format!("{}{}", prefix.to_camel_case(), alias.to_camel_case()),
-                );
+    //             let schema_field = &schema_fields
+    //                 .iter()
+    //                 .find(|field| &field.name == name)
+    //                 .ok_or_else(|| {
+    //                     format_err!(
+    //                         "Could not find field `{}` on `{}`. Available fields: `{}`.",
+    //                         *name,
+    //                         type_name,
+    //                         schema_fields
+    //                             .iter()
+    //                             .map(|ref field| &field.name)
+    //                             .fold(String::new(), |mut acc, item| {
+    //                                 acc.push_str(item);
+    //                                 acc.push_str(", ");
+    //                                 acc
+    //                             })
+    //                             .trim_end_matches(", ")
+    //                     )
+    //                 })?;
+    //             let ty = schema_field.type_.to_rust(
+    //                 context,
+    //                 &format!("{}{}", prefix.to_camel_case(), alias.to_camel_case()),
+    //             );
 
-                Ok(render_object_field(
-                    alias,
-                    &ty,
-                    schema_field.description.as_ref().cloned(),
-                    &schema_field.deprecation,
-                    &context.deprecation_strategy,
-                ))
-            }
-            SelectionItem::FragmentSpread(fragment) => {
-                let field_name =
-                    Ident::new(&fragment.fragment_name.to_snake_case(), Span::call_site());
-                context.require_fragment(&fragment.fragment_name);
-                let fragment_from_context = context
-                    .fragments
-                    .get(&fragment.fragment_name)
-                    .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment.fragment_name))?;
-                let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
-                let type_name = if fragment_from_context.is_recursive() {
-                    quote!(Box<#type_name>)
-                } else {
-                    quote!(#type_name)
-                };
-                Ok(Some(quote! {
-                    #[serde(flatten)]
-                    pub #field_name: #type_name
-                }))
-            }
-            SelectionItem::InlineFragment(_) => Err(format_err!(
-                "unimplemented: inline fragment on object field"
-            )),
-        })
-        .filter_map(|x| match x {
-            // Remove empty fields so callers always know a field has some
-            // tokens.
-            Ok(f) => f.map(Ok),
-            Err(err) => Some(Err(err)),
-        })
-        .collect()
+    //             Ok(render_object_field(
+    //                 alias,
+    //                 &ty,
+    //                 schema_field.description.as_ref().cloned(),
+    //                 &schema_field.deprecation,
+    //                 &context.deprecation_strategy,
+    //             ))
+    //         }
+    //         SelectionItem::FragmentSpread(fragment) => {
+    //             let field_name =
+    //                 Ident::new(&fragment.fragment_name.to_snake_case(), Span::call_site());
+    //             context.require_fragment(&fragment.fragment_name);
+    //             let fragment_from_context = context
+    //                 .fragments
+    //                 .get(&fragment.fragment_name)
+    //                 .ok_or_else(|| format_err!("Unknown fragment: {}", &fragment.fragment_name))?;
+    //             let type_name = Ident::new(&fragment.fragment_name, Span::call_site());
+    //             let type_name = if fragment_from_context.is_recursive() {
+    //                 quote!(Box<#type_name>)
+    //             } else {
+    //                 quote!(#type_name)
+    //             };
+    //             Ok(Some(quote! {
+    //                 #[serde(flatten)]
+    //                 pub #field_name: #type_name
+    //             }))
+    //         }
+    //         SelectionItem::InlineFragment(_) => Err(format_err!(
+    //             "unimplemented: inline fragment on object field"
+    //         )),
+    //     })
+    //     .filter_map(|x| match x {
+    //         // Remove empty fields so callers always know a field has some
+    //         // tokens.
+    //         Ok(f) => f.map(Ok),
+    //         Err(err) => Some(Err(err)),
+    //     })
+    //     .collect()
 }
 
 /// Given the GraphQL schema name for an object/interface/input object field and

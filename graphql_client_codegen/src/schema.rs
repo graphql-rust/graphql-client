@@ -25,15 +25,21 @@ struct StoredObjectField {
 #[derive(Debug, PartialEq, Clone)]
 struct StoredObject {
     name: String,
-    // fields: Vec<ObjectFieldId>,
+    fields: Vec<StoredFieldId>,
     implements_interfaces: Vec<InterfaceId>,
-    fields: Vec<StoredField>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 struct StoredField {
     name: String,
     r#type: StoredFieldType,
+    parent: StoredFieldParent,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+enum StoredFieldParent {
+    Object(ObjectId),
+    Interface(InterfaceId)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -58,7 +64,10 @@ pub(crate) struct UnionId(usize);
 pub(crate) struct EnumId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) struct InputObjectId(usize);
+pub(crate) struct InputId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct StoredFieldId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct InputFieldId(usize);
@@ -66,8 +75,7 @@ struct InputFieldId(usize);
 #[derive(Debug, Clone, PartialEq)]
 struct StoredInterface {
     name: String,
-    // fields: Vec<InterfaceFieldId>,
-    fields: Vec<StoredField>,
+    fields: Vec<StoredFieldId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -101,7 +109,7 @@ pub(crate) enum TypeId {
     Interface(InterfaceId),
     Union(UnionId),
     Enum(EnumId),
-    Input(InputObjectId),
+    Input(InputId),
 }
 
 impl TypeId {
@@ -126,7 +134,7 @@ impl TypeId {
     }
 
     fn input(id: usize) -> Self {
-        TypeId::Input(InputObjectId(id))
+        TypeId::Input(InputId(id))
     }
 
     fn as_interface_id(&self) -> Option<InterfaceId> {
@@ -176,16 +184,15 @@ struct StoredInputType {
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum InputFieldTypeId {
     Scalar(ScalarId),
-    InputObject(InputObjectId),
+    InputObject(InputId),
 }
 
 /// Intermediate representation for a parsed GraphQL schema used during code generation.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Schema {
     stored_objects: Vec<StoredObject>,
-    // stored_object_fields: Vec<StoredObjectField>,
+    stored_fields: Vec<StoredField>,
     stored_interfaces: Vec<StoredInterface>,
-    // stored_interface_fields: Vec<StoredInterfaceField>,
     stored_unions: Vec<StoredUnion>,
     stored_scalars: Vec<StoredScalar>,
     stored_enums: Vec<StoredEnum>,
@@ -201,9 +208,8 @@ impl Schema {
     pub(crate) fn new() -> Schema {
         let mut schema = Schema {
             stored_objects: Vec::new(),
-            // stored_object_fields: Vec::new(),
             stored_interfaces: Vec::new(),
-            // stored_interface_fields: Vec::new(),
+            stored_fields: Vec::new(),
             stored_unions: Vec::new(),
             stored_scalars: Vec::with_capacity(DEFAULT_SCALARS.len()),
             stored_enums: Vec::new(),
@@ -358,11 +364,19 @@ impl Schema {
         id
     }
 
+    fn push_field(&mut self, field: StoredField) -> StoredFieldId {
+        let id = StoredFieldId(self.stored_fields.len());
+
+        self.stored_fields.push(field);
+
+        id
+    }
+
     // pub(crate) fn get_input_type_by_name(&self, name: &str) -> Option<InputRef<'_>> {
     //     self.stored_inputs
     //         .iter()
     //         .position(|input| input.name == name)
-    //         .map(InputObjectId)
+    //         .map(InputId)
     //         .map(|idx| InputRef {
     //             schema: self,
     //             input_id: idx,
@@ -405,7 +419,7 @@ impl Schema {
         }
     }
 
-    fn get_stored_input(&self, input_id: InputObjectId) -> &StoredInputType {
+    fn get_stored_input(&self, input_id: InputId) -> &StoredInputType {
         self.stored_inputs.get(input_id.0).unwrap()
     }
 
@@ -447,7 +461,7 @@ impl<'a> ObjectRef<'a> {
 
 pub(crate) struct InputRef<'a> {
     schema: SchemaRef<'a>,
-    input_id: InputObjectId,
+    input_id: InputId,
 }
 
 impl<'a> InputRef<'a> {

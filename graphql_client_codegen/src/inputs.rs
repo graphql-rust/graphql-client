@@ -2,7 +2,7 @@ use crate::deprecation::DeprecationStatus;
 use crate::objects::GqlObjectField;
 use crate::query::QueryContext;
 use crate::schema;
-use crate::schema::{InputObjectId, SchemaRef};
+use crate::schema::{InputId, SchemaRef};
 use graphql_introspection_query::introspection_response;
 // use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -17,16 +17,12 @@ pub(crate) fn input_to_rust(
     todo!()
 }
 
-// /// Represents an input object type from a GraphQL schema
-// #[derive(Debug, Clone, PartialEq)]
-// pub struct InputRef<'a> {
-//     schema: SchemaRef<'a>,
-//     input_id: InputObjectId,
-//     //     pub description: Option<&'schema str>,
-//     //     pub name: &'schema str,
-//     //     pub fields: HashMap<&'schema str, GqlObjectField<'schema>>,
-//     //     pub is_required: Cell<bool>,
-// }
+/// Represents an input object type from a GraphQL schema
+#[derive(Debug, Clone, PartialEq)]
+pub struct InputRef<'a> {
+    schema: SchemaRef<'a>,
+    input_id: InputId,
+}
 
 // impl InputRef<'_> {
 //     // pub(crate) fn require(&self, schema: &Schema) {

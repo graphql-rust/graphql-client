@@ -170,11 +170,12 @@ impl<'query> Selection<'query> {
     }
 
     pub(crate) fn require_items(&self, context: &crate::query::QueryContext<'query>) {
-        self.0.iter().for_each(|item| {
-            if let SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) = item {
-                context.require_fragment(fragment_name);
-            }
-        })
+    //     self.0.iter().for_each(|item| {
+    //         if let SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) = item {
+    //             context.require_fragment(fragment_name);
+    //         }
+    //     })
+    todo!("require_items");
     }
 }
 
