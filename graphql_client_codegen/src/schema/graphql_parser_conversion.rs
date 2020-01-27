@@ -1,4 +1,4 @@
-use super::{EnumId, InputObjectId, InterfaceId, ObjectId, ScalarId, Schema, TypeId, UnionId};
+use super::{EnumId, InputId, InterfaceId, ObjectId, ScalarId, Schema, TypeId, UnionId};
 use graphql_parser::schema::{self as parser, Definition, Document, TypeDefinition, UnionType};
 
 pub(super) fn build_schema(mut src: graphql_parser::schema::Document) -> super::Schema {

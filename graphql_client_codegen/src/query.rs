@@ -1,14 +1,30 @@
 use crate::deprecation::DeprecationStrategy;
 use crate::fragments::GqlFragment;
 use crate::normalization::Normalization;
-use crate::schema::Schema;
+use crate::schema::{StoredFieldId, TypeId, EnumId, InputId, Schema};
 use crate::selection::Selection;
 use failure::*;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::{BTreeMap, BTreeSet};
+
 use syn::Ident;
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct FragmentId(usize);
+
+struct Q {
+    operation: &'static str,
+    selection: IdSelection,
+}
+
+#[derive(Debug, Clone)]
+enum IdSelection {
+    Field(StoredFieldId),
+    FragmentSpread(FragmentId),
+    InlineFragment(TypeId, Vec<IdSelection>),
+}
 
 /// This holds all the information we need during the code generation phase.
 pub(crate) struct QueryContext<'query> {
@@ -18,6 +34,9 @@ pub(crate) struct QueryContext<'query> {
     pub normalization: Normalization,
     variables_derives: Vec<Ident>,
     response_derives: Vec<Ident>,
+    used_enums: Vec<EnumId>,
+    used_input_objects: Vec<InputId>,
+    used_fragments: Vec<FragmentId>,
 }
 
 impl<'query, 'schema> QueryContext<'query> {
@@ -34,14 +53,15 @@ impl<'query, 'schema> QueryContext<'query> {
             normalization,
             variables_derives: vec![Ident::new("Serialize", Span::call_site())],
             response_derives: vec![Ident::new("Deserialize", Span::call_site())],
+            used_enums: Vec::new(),
+            used_input_objects: Vec::new(),
+            used_fragments: Vec::new(),
         }
     }
 
     /// Mark a fragment as required, so code is actually generated for it.
-    pub(crate) fn require_fragment(&self, typename_: &str) {
-        if let Some(fragment) = self.fragments.get(typename_) {
-            fragment.require(&self);
-        }
+    pub(crate) fn require_fragment(&mut self, id: FragmentId) {
+        self.used_fragments.push(id);
     }
 
     /// For testing only. creates an empty QueryContext.
