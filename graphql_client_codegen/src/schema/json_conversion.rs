@@ -2,7 +2,6 @@ use super::{Schema, TypeId};
 use graphql_introspection_query::introspection_response::{
     FullType, IntrospectionResponse, Schema as JsonSchema, TypeRef, __TypeKind,
 };
-use std::collections::HashMap;
 
 pub(super) fn build_schema(src: IntrospectionResponse) -> super::Schema {
     let converter = JsonSchemaConverter {
@@ -52,23 +51,12 @@ impl JsonSchemaConverter {
             });
     }
 
-    fn convert(self) -> Schema {
+    fn convert(mut self) -> Schema {
+        self.build_names_map();
         let JsonSchemaConverter {
             mut src,
             mut schema,
         } = self;
-
-        schema.query_type = src.query_type.as_mut().and_then(|q| q.name.take()).take();
-        schema.mutation_type = src
-            .mutation_type
-            .as_mut()
-            .and_then(|m| m.name.take())
-            .take();
-        schema.subscription_type = src
-            .subscription_type
-            .as_mut()
-            .and_then(|s| s.name.take())
-            .take();
 
         for scalar in scalars_mut(&mut src) {
             ingest_scalar(&mut schema, scalar);
@@ -205,6 +193,28 @@ impl JsonSchemaConverter {
         //     }
         // }
 
+        // Define the root operations.
+        {
+            schema.query_type = src
+                .query_type
+                .as_mut()
+                .and_then(|n| n.name.as_mut())
+                .and_then(|n| schema.names.get(n))
+                .and_then(|id| id.as_object_id());
+            schema.mutation_type = src
+                .mutation_type
+                .as_mut()
+                .and_then(|n| n.name.as_mut())
+                .and_then(|n| schema.names.get(n))
+                .and_then(|id| id.as_object_id());
+            schema.subscription_type = src
+                .mutation_type
+                .as_mut()
+                .and_then(|n| n.name.as_mut())
+                .and_then(|n| schema.names.get(n))
+                .and_then(|id| id.as_object_id());
+        }
+
         schema
     }
 }
@@ -276,23 +286,22 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
 fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
     let interface = super::StoredInterface {
         name: std::mem::replace(iface.name.as_mut().unwrap(), String::new()),
-        fields: todo!(),
+        fields: iface
+            .fields
+            .as_mut()
+            .unwrap()
+            .iter_mut()
+            .map(|json_field| super::StoredField {
+                name: json_field.name.take().unwrap(),
+                r#type: resolve_field_type(
+                    schema,
+                    &mut json_field.type_.as_mut().unwrap().type_ref,
+                ),
+            })
+            .collect(),
     };
 
-    let interface_id = schema.push_interface(interface);
-
-    // for field in iface.fields.as_mut().unwrap() {
-    //     let field = field.as_mut().unwrap();
-    //     let f = super::StoredInterfaceField {
-    //         interface: interface_id,
-    //         name: std::mem::replace(field.name.as_mut().unwrap(), String::new()),
-    //         r#type: Self::resolve_field_type(&mut field.type_.as_mut().unwrap().type_ref),
-    //     };
-
-    //     let field_id = schema.push_interface_field(f);
-
-    //     schema.get_interface_mut(interface_id).fields.push(field_id);
-    // }
+    schema.push_interface(interface);
 }
 
 fn ingest_object(schema: &mut Schema, object: &mut FullType) {
@@ -334,5 +343,50 @@ fn ingest_union(schema: &mut Schema, union: &mut FullType) {
 }
 
 fn resolve_field_type(schema: &mut Schema, typeref: &mut TypeRef) -> super::StoredFieldType {
-    todo!()
+    from_json_type_inner(schema, typeref)
+}
+
+fn json_type_qualifiers_depth(typeref: &mut TypeRef) -> usize {
+    use graphql_introspection_query::introspection_response::*;
+
+    match (typeref.kind.as_mut(), typeref.of_type.as_mut()) {
+        (Some(__TypeKind::NON_NULL), Some(inner)) => 1 + json_type_qualifiers_depth(inner),
+        (Some(__TypeKind::LIST), Some(inner)) => 1 + json_type_qualifiers_depth(inner),
+        (Some(_), None) => 0,
+        _ => panic!("Non-convertible type in JSON schema: {:?}", typeref),
+    }
+}
+
+fn from_json_type_inner(schema: &mut Schema, inner: &mut TypeRef) -> super::StoredFieldType {
+    use crate::field_type::GraphqlTypeQualifier;
+    use graphql_introspection_query::introspection_response::*;
+
+    let qualifiers_depth = json_type_qualifiers_depth(inner);
+    let mut qualifiers = Vec::with_capacity(qualifiers_depth);
+
+    let mut inner = inner;
+
+    loop {
+        match (
+            inner.kind.as_mut(),
+            inner.of_type.as_mut(),
+            inner.name.as_mut(),
+        ) {
+            (Some(__TypeKind::NON_NULL), Some(new_inner), _) => {
+                qualifiers.push(GraphqlTypeQualifier::Required);
+                inner = new_inner.as_mut();
+            }
+            (Some(__TypeKind::LIST), Some(new_inner), _) => {
+                qualifiers.push(GraphqlTypeQualifier::List);
+                inner = new_inner.as_mut();
+            }
+            (Some(_), None, Some(name)) => {
+                return super::StoredFieldType {
+                    id: *schema.names.get(name).unwrap(),
+                    qualifiers,
+                }
+            }
+            _ => panic!("Non-convertible type in JSON schema"),
+        }
+    }
 }

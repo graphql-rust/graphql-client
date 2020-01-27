@@ -135,6 +135,13 @@ impl TypeId {
             _ => None,
         }
     }
+
+    fn as_object_id(&self) -> Option<ObjectId> {
+        match self {
+            TypeId::Object(id) => Some(*id),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -185,39 +192,40 @@ pub(crate) struct Schema {
     stored_inputs: Vec<StoredInputType>,
     names: HashMap<String, TypeId>,
 
-    // TODO: replace these with object ids (interface/union ids?)
-    pub(crate) query_type: Option<String>,
-    pub(crate) mutation_type: Option<String>,
-    pub(crate) subscription_type: Option<String>,
+    pub(crate) query_type: Option<ObjectId>,
+    pub(crate) mutation_type: Option<ObjectId>,
+    pub(crate) subscription_type: Option<ObjectId>,
 }
 
 impl Schema {
-    fn default_scalars() -> Vec<StoredScalar> {
-        let mut scalars = Vec::with_capacity(DEFAULT_SCALARS.len());
-
-        for scalar in DEFAULT_SCALARS {
-            scalars.push(StoredScalar {
-                name: (*scalar).to_owned(),
-            });
-        }
-
-        scalars
-    }
-
     pub(crate) fn new() -> Schema {
-        Schema {
+        let mut schema = Schema {
             stored_objects: Vec::new(),
             // stored_object_fields: Vec::new(),
             stored_interfaces: Vec::new(),
             // stored_interface_fields: Vec::new(),
             stored_unions: Vec::new(),
-            stored_scalars: Self::default_scalars(),
+            stored_scalars: Vec::with_capacity(DEFAULT_SCALARS.len()),
             stored_enums: Vec::new(),
             stored_inputs: Vec::new(),
             names: HashMap::new(),
             query_type: None,
             mutation_type: None,
             subscription_type: None,
+        };
+
+        schema.push_default_scalars();
+
+        schema
+    }
+
+    fn push_default_scalars(&mut self) {
+        for scalar in DEFAULT_SCALARS {
+            let id = self.push_scalar(StoredScalar {
+                name: (*scalar).to_owned(),
+            });
+
+            self.names.insert(scalar.to_string(), TypeId::Scalar(id));
         }
     }
 
@@ -350,27 +358,59 @@ impl Schema {
         id
     }
 
-    pub(crate) fn get_input_type_by_name(&self, name: &str) -> Option<InputRef<'_>> {
-        self.stored_inputs
-            .iter()
-            .position(|input| input.name == name)
-            .map(InputObjectId)
-            .map(|idx| InputRef {
-                schema: self,
-                input_id: idx,
-            })
+    // pub(crate) fn get_input_type_by_name(&self, name: &str) -> Option<InputRef<'_>> {
+    //     self.stored_inputs
+    //         .iter()
+    //         .position(|input| input.name == name)
+    //         .map(InputObjectId)
+    //         .map(|idx| InputRef {
+    //             schema: self,
+    //             input_id: idx,
+    //         })
+    // }
+
+    // pub(crate) fn get_object_by_name(&self, name: &str) -> Option<()> {
+    //     Some(())
+    // }
+
+    // pub(crate) fn lookup_type(&self, name: &str) -> Option<TypeId> {
+    //     todo!()
+    // }
+
+    pub(crate) fn query_type(&self) -> ObjectRef<'_> {
+        ObjectRef {
+            object_id: self
+                .query_type
+                .expect("Query operation type must be defined"),
+            schema: self,
+        }
     }
 
-    pub(crate) fn get_object_by_name(&self, name: &str) -> Option<()> {
-        Some(())
+    pub(crate) fn mutation_type(&self) -> ObjectRef<'_> {
+        ObjectRef {
+            object_id: self
+                .mutation_type
+                .expect("Mutation operation type must be defined"),
+            schema: self,
+        }
     }
 
-    pub(crate) fn lookup_type(&self, name: &str) -> Option<TypeId> {
-        todo!()
+    pub(crate) fn subscription_type(&self) -> ObjectRef<'_> {
+        ObjectRef {
+            object_id: self
+                .mutation_type
+                // TODO: make this return an option
+                .expect("Subscription operation type must be defined"),
+            schema: self,
+        }
     }
 
     fn get_stored_input(&self, input_id: InputObjectId) -> &StoredInputType {
         self.stored_inputs.get(input_id.0).unwrap()
+    }
+
+    fn get_object(&self, object_id: ObjectId) -> &StoredObject {
+        self.stored_objects.get(object_id.0).unwrap()
     }
 
     fn find_interface(&self, interface_name: &str) -> InterfaceId {
@@ -390,10 +430,20 @@ impl Schema {
     }
 }
 
-// struct InputFieldRef<'a> {
-//     schema: SchemaRef<'a>,
-//     input_field_id: InputObjectId,
-// }
+pub(crate) struct ObjectRef<'a> {
+    schema: SchemaRef<'a>,
+    object_id: ObjectId,
+}
+
+impl<'a> ObjectRef<'a> {
+    fn get(&self) -> &'a StoredObject {
+        self.schema.get_object(self.object_id)
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+}
 
 pub(crate) struct InputRef<'a> {
     schema: SchemaRef<'a>,

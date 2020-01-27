@@ -29,21 +29,9 @@ impl<'query> Operation<'query> {
         schema: &'schema crate::schema::Schema,
     ) -> &'schema str {
         match self.operation_type {
-            OperationType::Query => schema
-                .query_type
-                .as_ref()
-                .map(String::as_str)
-                .unwrap_or("Query"),
-            OperationType::Mutation => schema
-                .mutation_type
-                .as_ref()
-                .map(String::as_str)
-                .unwrap_or("Mutation"),
-            OperationType::Subscription => schema
-                .subscription_type
-                .as_ref()
-                .map(String::as_str)
-                .unwrap_or("Subscription"),
+            OperationType::Query => schema.query_type().name(),
+            OperationType::Mutation => schema.mutation_type().name(),
+            OperationType::Subscription => schema.subscription_type().name(),
         }
     }
 
