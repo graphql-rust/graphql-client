@@ -420,6 +420,10 @@ impl Schema {
         }
     }
 
+    fn get_interface(&self, interface_id: InterfaceId) -> &StoredInterface {
+        self.stored_interfaces.get(interface_id.0).unwrap()
+    }
+
     fn get_stored_input(&self, input_id: InputId) -> &StoredInputType {
         self.stored_inputs.get(input_id.0).unwrap()
     }
@@ -428,8 +432,30 @@ impl Schema {
         self.stored_objects.get(object_id.0).unwrap()
     }
 
+    fn get_field(&self, field_id: StoredFieldId) -> &StoredField {
+        self.stored_fields.get(field_id.0).unwrap()
+    }
+
+    pub(crate) fn object(&self, id: ObjectId) -> ObjectRef<'_> {
+        ObjectRef {
+            object_id: id,
+            schema: self,
+        }
+    }
+
+    pub(crate) fn interface(&self, interface_id: InterfaceId) -> InterfaceRef<'_> {
+        InterfaceRef {
+            interface_id,
+            schema: self,
+        }
+    }
+
     fn find_interface(&self, interface_name: &str) -> InterfaceId {
         self.find_type_id(interface_name).as_interface_id().unwrap()
+    }
+
+    pub(crate) fn find_type(&self, type_name: &str) -> Option<TypeId> {
+        self.names.get(type_name).map(|id| *id)
     }
 
     fn find_type_id(&self, type_name: &str) -> TypeId {
@@ -445,6 +471,23 @@ impl Schema {
     }
 }
 
+pub(crate) struct FieldsRef<'a> {
+    parent_type: StoredFieldParent,
+    schema: SchemaRef<'a>,
+    fields: &'a [StoredFieldId],
+}
+
+pub(crate) struct InterfaceRef<'a> {
+    schema: SchemaRef<'a>,
+    interface_id: InterfaceId,
+}
+
+impl<'a> InterfaceRef<'a> {
+    fn get(&self) -> &'a StoredInterface {
+        self.schema.get_interface(self.interface_id)
+    }
+}
+
 pub(crate) struct ObjectRef<'a> {
     schema: SchemaRef<'a>,
     object_id: ObjectId,
@@ -455,8 +498,42 @@ impl<'a> ObjectRef<'a> {
         self.schema.get_object(self.object_id)
     }
 
+    fn fields<'b>(&'b self) -> impl Iterator<Item = FieldRef<'a>> + 'b {
+        self.get().fields.iter().map(move |field| FieldRef {
+            schema: self.schema,
+            field_id: *field,
+        })
+    }
+
     pub(crate) fn name(&self) -> &'a str {
         &self.get().name
+    }
+
+    pub(crate) fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
+        self.fields().find(|field| field.name() == name)
+    }
+}
+
+pub(crate) struct FieldRef<'a> {
+    schema: SchemaRef<'a>,
+    field_id: StoredFieldId,
+}
+
+impl<'a> FieldRef<'a> {
+    fn get(&self) -> &'a StoredField {
+        self.schema.get_field(self.field_id)
+    }
+
+    pub(crate) fn id(&self) -> StoredFieldId {
+        self.field_id
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.get().name
+    }
+
+    pub(crate) fn type_id(&self) -> TypeId {
+        self.get().r#type.id
     }
 }
 

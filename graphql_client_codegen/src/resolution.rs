@@ -3,19 +3,117 @@
 use crate::schema::{Schema, StoredFieldId, TypeId};
 
 pub(crate) fn resolve(
-    schema: &crate::schema::Schema,
+    schema: &Schema,
     query: &graphql_parser::query::Document,
 ) -> anyhow::Result<ResolvedQuery> {
     let mut resolved_query: ResolvedQuery = Default::default();
 
     for definition in &query.definitions {
         match definition {
-            graphql_parser::query::Definition::Fragment(fragment) => (),
-            graphql_parser::query::Definition::Operation(operation) => (),
+            graphql_parser::query::Definition::Fragment(fragment) => {
+                resolve_fragment(&mut resolved_query, schema, fragment)?
+            }
+            graphql_parser::query::Definition::Operation(operation) => {
+                resolve_operation(&mut resolved_query, schema, operation)?
+            }
         }
     }
 
-    todo!("resolve")
+    Ok(resolved_query)
+}
+
+fn resolve_fragment(
+    query: &mut ResolvedQuery,
+    schema: &Schema,
+    fragment: &graphql_parser::query::FragmentDefinition,
+) -> anyhow::Result<()> {
+    let graphql_parser::query::TypeCondition::On(on) = &fragment.type_condition;
+    let on = schema.find_type(on).expect("TODO: proper error message");
+    let resolved_fragment = ResolvedFragment {
+        name: fragment.name.clone(),
+        on,
+        selection: resolve_selection(schema, on, &fragment.selection_set)?,
+    };
+
+    query.fragments.push(resolved_fragment);
+
+    Ok(())
+}
+
+fn resolve_selection(
+    schema: &Schema,
+    on: TypeId,
+    selection_set: &graphql_parser::query::SelectionSet,
+) -> anyhow::Result<Vec<IdSelection>> {
+    match on {
+        TypeId::Object(oid) => {
+            let object = schema.object(oid);
+            let id_selection: Vec<IdSelection> = selection_set
+                .items
+                .iter()
+                .map(|item| -> anyhow::Result<_> {
+                    match item {
+                        graphql_parser::query::Selection::Field(field) => {
+                            let field_ref =
+                                object.get_field_by_name(&field.name).ok_or_else(|| {
+                                    anyhow::anyhow!(
+                                        "No field named {} on {}",
+                                        &field.name,
+                                        object.name()
+                                    )
+                                })?;
+                            Ok(IdSelection::Field(
+                                field_ref.id(),
+                                resolve_selection(
+                                    schema,
+                                    field_ref.type_id(),
+                                    &field.selection_set,
+                                )?,
+                            ))
+                        }
+                        graphql_parser::query::Selection::InlineFragment(inline) => {
+                            resolve_inline_fragment(schema, inline)
+                        }
+                        graphql_parser::query::Selection::FragmentSpread(fragment_spread) => Ok(
+                            IdSelection::FragmentSpread(fragment_spread.fragment_name.clone()),
+                        ),
+                    }
+                })
+                .collect::<Result<_, _>>()?;
+
+            Ok(id_selection)
+        }
+        TypeId::Interface(interface_id) => {
+            let interface = schema.interface(interface_id);
+            todo!()
+        }
+        _ => anyhow::bail!("Selection set on non-object, non-interface type."),
+    }
+}
+
+fn resolve_inline_fragment(
+    schema: &Schema,
+    inline_fragment: &graphql_parser::query::InlineFragment,
+) -> anyhow::Result<IdSelection> {
+    let graphql_parser::query::TypeCondition::On(on) = inline_fragment
+        .type_condition
+        .as_ref()
+        .expect("missing type condition");
+    let type_id = schema
+        .find_type(on)
+        .ok_or_else(|| anyhow::anyhow!("TODO: error message"))?;
+    Ok(IdSelection::InlineFragment(
+        type_id,
+        resolve_selection(schema, type_id, &inline_fragment.selection_set)?,
+    ))
+}
+
+fn resolve_operation(
+    query: &mut ResolvedQuery,
+    schema: &Schema,
+    operation: &graphql_parser::query::OperationDefinition,
+) -> anyhow::Result<()> {
+    todo!("resolve_operation")
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -31,7 +129,7 @@ pub(crate) struct ResolvedQuery {
 struct ResolvedFragment {
     name: String,
     on: crate::schema::TypeId,
-    selection: IdSelection,
+    selection: Vec<IdSelection>,
 }
 
 #[derive(Debug)]
@@ -56,7 +154,7 @@ struct ResolvedVariable {
 
 #[derive(Debug, Clone)]
 enum IdSelection {
-    Field(StoredFieldId),
-    FragmentSpread(ResolvedFragmentId),
+    Field(StoredFieldId, Vec<IdSelection>),
+    FragmentSpread(String),
     InlineFragment(TypeId, Vec<IdSelection>),
 }
