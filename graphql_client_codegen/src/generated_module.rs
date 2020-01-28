@@ -5,7 +5,7 @@ use quote::quote;
 
 /// This struct contains the parameters necessary to generate code for a given operation.
 pub(crate) struct GeneratedModule<'a> {
-    pub operation: &'a crate::operations::Operation<'a>,
+    pub operation: &'a str,
     pub query_string: &'a str,
     pub query_document: &'a graphql_parser::query::Document,
     pub schema: &'a crate::schema::Schema,
@@ -14,7 +14,7 @@ pub(crate) struct GeneratedModule<'a> {
 
 impl<'a> GeneratedModule<'a> {
     /// Generate the items for the variables and the response that will go inside the module.
-    fn build_impls(&self) -> Result<TokenStream, failure::Error> {
+    fn build_impls(&self) -> anyhow::Result<TokenStream> {
         Ok(crate::codegen::response_for_query(
             &self.schema,
             &self.query_document,
@@ -24,14 +24,11 @@ impl<'a> GeneratedModule<'a> {
     }
 
     /// Generate the module and all the code inside.
-    pub(crate) fn to_token_stream(&self) -> Result<TokenStream, failure::Error> {
-        let module_name = Ident::new(&self.operation.name.to_snake_case(), Span::call_site());
+    pub(crate) fn to_token_stream(&self) -> anyhow::Result<TokenStream> {
+        let module_name = Ident::new(&self.operation.to_snake_case(), Span::call_site());
         let module_visibility = &self.options.module_visibility();
-        let operation_name_literal = &self.operation.name;
-        let operation_name_ident = self
-            .options
-            .normalization()
-            .operation(operation_name_literal);
+        let operation_name = self.operation;
+        let operation_name_ident = self.options.normalization().operation(self.operation);
         let operation_name_ident = Ident::new(&operation_name_ident, Span::call_site());
 
         // Force cargo to refresh the generated code when the query file changes.
@@ -61,7 +58,7 @@ impl<'a> GeneratedModule<'a> {
             #module_visibility mod #module_name {
                 #![allow(dead_code)]
 
-                pub const OPERATION_NAME: &'static str = #operation_name_literal;
+                pub const OPERATION_NAME: &'static str = #operation_name;
                 pub const QUERY: &'static str = #query_string;
 
                 #query_include

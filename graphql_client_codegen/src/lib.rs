@@ -6,7 +6,7 @@
 //!
 //! It is not meant to be used directly by users of the library.
 
-use failure::*;
+use anyhow::format_err;
 use lazy_static::*;
 use proc_macro2::TokenStream;
 use quote::*;
@@ -15,29 +15,31 @@ mod codegen;
 mod codegen_options;
 /// Deprecation-related code
 pub mod deprecation;
-mod query;
+// mod query;
 /// Contains the [Schema] type and its implementation.
 pub mod schema;
 
 mod constants;
-mod enums;
+// mod enums;
 mod field_type;
-mod fragments;
+// mod fragments;
 mod generated_module;
-mod inputs;
-mod interfaces;
+// mod inputs;
+// mod interfaces;
 /// Normalization-related code
 pub mod normalization;
-mod objects;
+// mod objects;
 mod operations;
+mod rendering;
+mod resolution;
 mod scalars;
-mod selection;
-mod shared;
-mod unions;
-mod variables;
+// mod selection;
+// mod shared;
+// mod unions;
+// mod variables;
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
@@ -56,7 +58,7 @@ pub fn generate_module_token_stream(
     query_path: std::path::PathBuf,
     schema_path: &std::path::Path,
     options: GraphQLClientCodegenOptions,
-) -> Result<TokenStream, failure::Error> {
+) -> anyhow::Result<TokenStream> {
     use std::collections::hash_map;
     // We need to qualify the query with the path to the crate it is part of
     let (query_string, query) = {
@@ -65,31 +67,32 @@ pub fn generate_module_token_stream(
             hash_map::Entry::Occupied(o) => o.get().clone(),
             hash_map::Entry::Vacant(v) => {
                 let query_string = read_file(v.key())?;
-                let query = graphql_parser::parse_query(&query_string)?;
+                let query =
+                    graphql_parser::parse_query(&query_string).expect("TODO: error conversion");
                 v.insert((query_string, query)).clone()
             }
         }
     };
 
-    // Determine which operation we are generating code for. This will be used in operationName.
-    let operations = options
-        .operation_name
-        .as_ref()
-        .and_then(|operation_name| {
-            codegen::select_operation(&query, &operation_name, options.normalization())
-        })
-        .map(|op| vec![op]);
+    // // Determine which operation we are generating code for. This will be used in operationName.
+    // let operations = options
+    //     .operation_name
+    //     .as_ref()
+    //     .and_then(|operation_name| {
+    //         codegen::select_operation(&query, &operation_name, options.normalization())
+    //     })
+    //     .map(|op| vec![op]);
 
-    let operations = match (operations, &options.mode) {
-        (Some(ops), _) => ops,
-        (None, &CodegenMode::Cli) => codegen::all_operations(&query),
-        (None, &CodegenMode::Derive) => {
-            return Err(derive_operation_not_found_error(
-                options.struct_ident(),
-                &query,
-            ));
-        }
-    };
+    // let operations = match (operations, &options.mode) {
+    //     (Some(ops), _) => ops,
+    //     (None, &CodegenMode::Cli) => codegen::all_operations(&query),
+    //     (None, &CodegenMode::Derive) => {
+    //         return Err(derive_operation_not_found_error(
+    //             options.struct_ident(),
+    //             &query,
+    //         ));
+    //     }
+    // };
 
     let schema_extension = schema_path
         .extension()
@@ -110,7 +113,7 @@ pub fn generate_module_token_stream(
 
     let mut parsed_schema = match schema_extension {
                         "graphql" | "gql" => {
-                            let s = graphql_parser::schema::parse_schema(&schema_string)?;
+                            let s = graphql_parser::schema::parse_schema(&schema_string).expect("TODO: error conversion");
                             schema::ParsedSchema::GraphQLParser(s)
                         }
                         "json" => {
@@ -122,33 +125,34 @@ pub fn generate_module_token_stream(
 
     let schema = schema::Schema::from(parsed_schema);
 
+    todo!();
     // The generated modules.
-    let mut modules = Vec::with_capacity(operations.len());
+    // let mut modules = Vec::with_capacity(operations.len());
 
-    for operation in &operations {
-        let generated = generated_module::GeneratedModule {
-            query_string: query_string.as_str(),
-            schema: &schema,
-            query_document: &query,
-            operation,
-            options: &options,
-        }
-        .to_token_stream()?;
-        modules.push(generated);
-    }
+    // for operation in &operations {
+    //     let generated = generated_module::GeneratedModule {
+    //         query_string: query_string.as_str(),
+    //         schema: &schema,
+    //         query_document: &query,
+    //         operation,
+    //         options: &options,
+    //     }
+    //     .to_token_stream()?;
+    //     modules.push(generated);
+    // }
 
-    let modules = quote! { #(#modules)* };
+    // let modules = quote! { #(#modules)* };
 
-    Ok(modules)
+    // Ok(modules)
 }
 
-fn read_file(path: &std::path::Path) -> Result<String, failure::Error> {
+fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
     use std::fs;
     use std::io::prelude::*;
 
     let mut out = String::new();
     let mut file = fs::File::open(path).map_err(|io_err| {
-        let err: failure::Error = io_err.into();
+        let err: anyhow::Error = io_err.into();
         err.context(format!(
             r#"
             Could not find file with path: {}
@@ -165,7 +169,7 @@ fn read_file(path: &std::path::Path) -> Result<String, failure::Error> {
 fn derive_operation_not_found_error(
     ident: Option<&proc_macro2::Ident>,
     query: &graphql_parser::query::Document,
-) -> failure::Error {
+) -> anyhow::Error {
     use graphql_parser::query::*;
 
     let operation_name = ident.map(ToString::to_string);

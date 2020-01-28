@@ -31,13 +31,14 @@ fn graphql_query_derive_inner(
     input: proc_macro::TokenStream,
 ) -> Result<proc_macro::TokenStream, failure::Error> {
     let input = TokenStream::from(input);
-    let ast = syn::parse2(input).context("Derive input parsing.")?;
+    let ast = syn::parse2(input).expect("derive input parsing");
+    // .context("Derive input parsing.")?;
     let (query_path, schema_path) = build_query_and_schema_path(&ast)?;
     let options = build_graphql_client_derive_options(&ast, query_path.to_path_buf())?;
     Ok(
         generate_module_token_stream(query_path, &schema_path, options)
             .map(Into::into)
-            .context("Code generation failed.")?,
+            .expect("TODO handle this better"), // .context("Code generation failed.")?,
     )
 }
 

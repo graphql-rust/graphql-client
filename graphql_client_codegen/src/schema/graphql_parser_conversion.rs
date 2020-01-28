@@ -146,7 +146,6 @@ fn ingest_object(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectTy
         field_ids.push(schema.push_field(field));
     }
 
-
     // Ingest the object itself
     let object = super::StoredObject {
         name: std::mem::replace(&mut obj.name, String::new()),
@@ -225,7 +224,7 @@ fn ingest_interface(schema: &mut Schema, interface: &mut graphql_parser::schema:
         .as_interface_id()
         .unwrap();
 
-        let mut field_ids = Vec::with_capacity(interface.fields.len());
+    let mut field_ids = Vec::with_capacity(interface.fields.len());
 
     for field in interface.fields.iter_mut() {
         let field = super::StoredField {

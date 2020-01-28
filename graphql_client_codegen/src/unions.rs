@@ -1,6 +1,6 @@
 use crate::query::QueryContext;
 use crate::selection::Selection;
-use failure::*;
+use anyhow::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::cell::Cell;
@@ -9,7 +9,7 @@ use std::collections::BTreeSet;
 pub(crate) fn union_type_to_rust(
     ctx: &mut QueryContext<'_>,
     union: (),
-) -> Result<TokenStream, failure::Error> {
+) -> Result<TokenStream, anyhow::Error> {
     todo!()
 }
 
@@ -36,7 +36,7 @@ enum UnionError {
 }
 
 type UnionVariantResult<'selection> =
-    Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<&'selection str>), failure::Error>;
+    Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<&'selection str>), anyhow::Error>;
 
 /// Returns a triple.
 ///
@@ -106,7 +106,7 @@ impl<'schema> GqlUnion<'schema> {
         query_context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<TokenStream, failure::Error> {
+    ) -> Result<TokenStream, anyhow::Error> {
         let typename_field = selection.extract_typename(query_context);
 
         if typename_field.is_none() {

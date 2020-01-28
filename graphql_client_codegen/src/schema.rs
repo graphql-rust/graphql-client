@@ -1,5 +1,6 @@
 mod graphql_parser_conversion;
 mod json_conversion;
+use crate::field_type::GraphqlTypeQualifier;
 use std::collections::HashMap;
 
 // use crate::deprecation::DeprecationStatus;
@@ -39,7 +40,7 @@ struct StoredField {
 #[derive(Debug, PartialEq, Clone)]
 enum StoredFieldParent {
     Object(ObjectId),
-    Interface(InterfaceId)
+    Interface(InterfaceId),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -88,7 +89,7 @@ struct StoredInterfaceField {
 #[derive(Debug, Clone, PartialEq)]
 struct StoredFieldType {
     id: TypeId,
-    qualifiers: Vec<crate::field_type::GraphqlTypeQualifier>,
+    qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -159,9 +160,9 @@ struct StoredEnum {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct StoredInputFieldType {
+pub(crate) struct StoredInputFieldType {
     id: TypeId,
-    qualifiers: Vec<crate::field_type::GraphqlTypeQualifier>,
+    qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
 impl StoredInputFieldType {
@@ -171,7 +172,7 @@ impl StoredInputFieldType {
     pub fn is_indirected(&self) -> bool {
         self.qualifiers
             .iter()
-            .any(|qualifier| qualifier == &crate::field_type::GraphqlTypeQualifier::List)
+            .any(|qualifier| qualifier == &GraphqlTypeQualifier::List)
     }
 }
 
@@ -306,16 +307,16 @@ impl Schema {
         self.stored_interfaces.get_mut(id.0).unwrap()
     }
 
-    fn get_interface_by_name_mut(
-        &mut self,
-        interface_name: &str,
-    ) -> Option<(InterfaceId, &mut StoredInterface)> {
-        self.stored_interfaces
-            .iter_mut()
-            .enumerate()
-            .find(|(idx, iface)| iface.name == interface_name)
-            .map(|(idx, iface)| (InterfaceId(idx), iface))
-    }
+    // fn get_interface_by_name_mut(
+    //     &mut self,
+    //     interface_name: &str,
+    // ) -> Option<(InterfaceId, &mut StoredInterface)> {
+    //     self.stored_interfaces
+    //         .iter_mut()
+    //         .enumerate()
+    //         .find(|(idx, iface)| iface.name == interface_name)
+    //         .map(|(idx, iface)| (InterfaceId(idx), iface))
+    // }
 
     fn push_object(&mut self, object: StoredObject) -> ObjectId {
         let id = ObjectId(self.stored_objects.len());
