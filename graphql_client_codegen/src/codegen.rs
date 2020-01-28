@@ -1,34 +1,46 @@
-// use crate::fragments::GqlFragment;
-use crate::normalization::Normalization;
-// use crate::operations::Operation;
-// use crate::query::QueryContext;
-use crate::schema;
-// use crate::selection::Selection;
-use crate::resolution::{ResolvedOperation, ResolvedQuery};
-use graphql_parser::query;
-use proc_macro2::TokenStream;
-use quote::*;
+use crate::{normalization::Normalization, resolution::*, GraphQLClientCodegenOptions};
+use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 
 /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'a>(
     query: &'a ResolvedQuery,
     struct_name: &str,
     norm: Normalization,
-) -> Option<&'a ResolvedOperation> {
+) -> Option<usize> {
     query
         .operations
         .iter()
-        .find(|op| norm.operation(op.name()) == struct_name)
+        .position(|op| norm.operation(op.name()) == struct_name)
 }
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
-    schema: &schema::Schema,
-    query: &crate::resolution::ResolvedQuery,
-    operation: &str,
-    options: &crate::GraphQLClientCodegenOptions,
+    operation: Operation<'_>,
+    options: &GraphQLClientCodegenOptions,
 ) -> anyhow::Result<TokenStream> {
-    todo!()
+    let all_used_types = operation.all_used_types();
+    let scalar_definitions = generate_scalar_definitions(operation, &all_used_types);
+    let enum_definitions = generate_enum_definitions(operation, &all_used_types, options);
+    let fragment_definitions: Vec<&'static str> = Vec::new();
+    let definitions: Vec<&'static str> = Vec::new();
+    let input_object_definitions: Vec<&'static str> = Vec::new();
+    let variable_derives = options
+        .variables_derives()
+        .unwrap_or("Serialize")
+        .split(",");
+    let variable_derives = render_derives(variable_derives);
+
+    let variables_struct = quote!(
+        #variable_derives
+        pub struct Variables;
+    );
+    let response_derives = options
+        .response_derives()
+        .map(|derives| derives.split(","))
+        .map(render_derives);
+    let response_data_fields: Vec<&'static str> = Vec::new();
+
     // let mut context = QueryContext::new(
     //     schema,
     //     options.deprecation_strategy(),
@@ -123,35 +135,138 @@ pub(crate) fn response_for_query(
 
     // let response_derives = context.response_derives();
 
-    // Ok(quote! {
-    //     use serde::{Serialize, Deserialize};
+    let q = quote! {
+        use serde::{Serialize, Deserialize};
 
-    //     #[allow(dead_code)]
-    //     type Boolean = bool;
-    //     #[allow(dead_code)]
-    //     type Float = f64;
-    //     #[allow(dead_code)]
-    //     type Int = i64;
-    //     #[allow(dead_code)]
-    //     type ID = String;
+        #[allow(dead_code)]
+        type Boolean = bool;
+        #[allow(dead_code)]
+        type Float = f64;
+        #[allow(dead_code)]
+        type Int = i64;
+        #[allow(dead_code)]
+        type ID = String;
 
-    //     #(#scalar_definitions)*
+        #(#scalar_definitions)*
 
-    //     #(#input_object_definitions)*
+        #(#enum_definitions)*
 
-    //     #(#enum_definitions)*
+        #(#fragment_definitions)*
 
-    //     #(#fragment_definitions)*
+        #(#input_object_definitions)*
 
-    //     #(#definitions)*
+        #(#definitions)*
 
-    //     #variables_struct
+        #response_derives
+        pub struct ResponseData {
+            #(#response_data_fields,)*
+        }
 
-    //     #response_derives
+        #variables_struct
+    };
 
-    //     pub struct ResponseData {
-    //         #(#response_data_fields,)*
-    //     }
+    Ok(q)
+}
 
-    // })
+fn generate_scalar_definitions<'a, 'schema: 'a>(
+    operation: Operation<'schema>,
+    all_used_types: &'a crate::resolution::UsedTypes,
+) -> impl Iterator<Item = TokenStream> + 'a {
+    all_used_types.scalars(operation.schema()).map(|scalar| {
+        let ident = syn::Ident::new(scalar.name(), proc_macro2::Span::call_site());
+        quote!(type #ident = super::#ident;)
+    })
+}
+
+/**
+ * About rust keyword escaping: variant_names and constructors must be escaped,
+ * variant_str not.
+ * Example schema:                  enum AnEnum { where \n self }
+ * Generated "variant_names" enum:  pub enum AnEnum { where_, self_, Other(String), }
+ * Generated serialize line: "AnEnum::where_ => "where","
+ */
+fn generate_enum_definitions<'a, 'schema: 'a>(
+    operation: Operation<'schema>,
+    all_used_types: &'a crate::resolution::UsedTypes,
+    options: &'a GraphQLClientCodegenOptions,
+) -> impl Iterator<Item = TokenStream> + 'a {
+    let derives = options
+        .response_derives()
+        .map(|derives| {
+            derives
+                .split(',')
+                .filter(|d| *d != "Serialize" && *d != "Deserialize")
+        })
+        .map(render_derives);
+    let normalization = options.normalization();
+
+    all_used_types.enums(operation.schema()).map(move |r#enum| {
+        let ident = syn::Ident::new(r#enum.name(), proc_macro2::Span::call_site());
+
+        let variant_names: Vec<TokenStream> = r#enum
+            .variants()
+            .iter()
+            .map(|v| {
+                let name = normalization.enum_variant(crate::shared::keyword_replace(&v));
+                let name = Ident::new(&name, Span::call_site());
+
+                // let description = &v.description;
+                // let description = description.as_ref().map(|d| quote!(#[doc = #d]));
+
+                // quote!(#description #name)
+                quote!(#name)
+            })
+            .collect();
+        let variant_names = &variant_names;
+        let name_ident = normalization.enum_name(r#enum.name());
+        let name_ident = Ident::new(&name_ident, Span::call_site());
+        let constructors: Vec<_> = r#enum
+            .variants()
+            .iter()
+            .map(|v| {
+                let name = normalization.enum_variant(crate::shared::keyword_replace(v));
+                let v = Ident::new(&name, Span::call_site());
+
+                quote!(#name_ident::#v)
+            })
+            .collect();
+        let constructors = &constructors;
+        let variant_str: Vec<&str> = r#enum.variants().iter().map(|s| s.as_str()).collect();
+        let variant_str = &variant_str;
+
+        let name = name_ident;
+
+        quote! {
+            #derives
+            pub enum #name {
+                #(#variant_names,)*
+                Other(String),
+            }
+
+            impl ::serde::Serialize for #name {
+                fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+                    ser.serialize_str(match *self {
+                        #(#constructors => #variant_str,)*
+                        #name::Other(ref s) => &s,
+                    })
+                }
+            }
+
+            impl<'de> ::serde::Deserialize<'de> for #name {
+                fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                    let s = <String>::deserialize(deserializer)?;
+
+                    match s.as_str() {
+                        #(#variant_str => Ok(#constructors),)*
+                        _ => Ok(#name::Other(s)),
+                    }
+                }
+            }
+        }})
+}
+
+fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToTokens {
+    let idents = derives.map(|s| Ident::new(s, Span::call_site()));
+
+    quote!(#[derive(#(#idents),*)])
 }

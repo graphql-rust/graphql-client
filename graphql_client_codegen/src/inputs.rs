@@ -13,7 +13,7 @@ use std::collections::HashMap;
 pub(crate) fn input_to_rust(
     ctx: &mut QueryContext<'_>,
     input: crate::schema::InputRef<'_>,
-) -> Result<TokenStream, failure::Error> {
+) -> Result<TokenStream, anyhow::Error> {
     todo!()
 }
 
@@ -42,7 +42,7 @@ pub struct InputRef<'a> {
 //     pub(crate) fn to_rust(
 //         &self,
 //         context: &QueryContext<'_>,
-//     ) -> Result<TokenStream, failure::Error> {
+//     ) -> Result<TokenStream, anyhow::Error> {
 //         let norm = context.normalization;
 //         let mut fields: Vec<&GqlObjectField<'_>> = self.fields.values().collect();
 //         fields.sort_unstable_by(|a, b| a.name.cmp(&b.name));

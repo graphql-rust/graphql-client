@@ -19,13 +19,6 @@ pub struct GqlEnum<'schema> {
 }
 
 impl<'schema> GqlEnum<'schema> {
-    /**
-     * About rust keyword escaping: variant_names and constructors must be escaped,
-     * variant_str not.
-     * Example schema:                  enum AnEnum { where \n self }
-     * Generated "variant_names" enum:  pub enum AnEnum { where_, self_, Other(String), }
-     * Generated serialize line: "AnEnum::where_ => "where","
-     */
     pub(crate) fn to_rust(&self, query_context: &crate::query::QueryContext<'_>) -> TokenStream {
         let derives = query_context.response_enum_derives();
         let norm = query_context.normalization;

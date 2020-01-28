@@ -43,28 +43,28 @@ enum StoredFieldParent {
     Interface(InterfaceId),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct ObjectId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct ObjectFieldId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) struct InterfaceFieldId(usize);
+// #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+// pub(crate) struct InterfaceFieldId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct InterfaceId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct ScalarId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct UnionId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct EnumId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct InputId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -87,7 +87,7 @@ struct StoredInterfaceField {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct StoredFieldType {
+pub(crate) struct StoredFieldType {
     id: TypeId,
     qualifiers: Vec<GraphqlTypeQualifier>,
 }
@@ -103,7 +103,7 @@ struct StoredScalar {
     name: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) enum TypeId {
     Object(ObjectId),
     Scalar(ScalarId),
@@ -111,6 +111,65 @@ pub(crate) enum TypeId {
     Union(UnionId),
     Enum(EnumId),
     Input(InputId),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum TypeRef<'a> {
+    Object(ObjectRef<'a>),
+    Scalar(ScalarRef<'a>),
+    Interface(InterfaceRef<'a>),
+    Union(UnionRef<'a>),
+    Enum(EnumRef<'a>),
+    Input(InputRef<'a>),
+}
+
+impl TypeRef<'_> {
+    pub(crate) fn type_id(&self) -> TypeId {
+        match self {
+            _ => todo!("TypeRef::type_id"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct ScalarRef<'a> {
+    scalar_id: ScalarId,
+    schema: &'a Schema,
+}
+
+impl<'a> ScalarRef<'a> {
+    fn get(&self) -> &StoredScalar {
+        self.schema.get_scalar(self.scalar_id)
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.get().name
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct UnionRef<'a> {
+    union_id: UnionId,
+    schema: &'a Schema,
+}
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct EnumRef<'a> {
+    enum_id: EnumId,
+    schema: &'a Schema,
+}
+
+impl<'a> EnumRef<'a> {
+    fn get(&self) -> &'a StoredEnum {
+        self.schema.get_enum(self.enum_id)
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+
+    pub(crate) fn variants(&self) -> &'a [String] {
+        &self.get().variants
+    }
 }
 
 impl TypeId {
@@ -149,6 +208,49 @@ impl TypeId {
         match self {
             TypeId::Object(id) => Some(*id),
             _ => None,
+        }
+    }
+
+    pub(crate) fn as_scalar_id(&self) -> Option<ScalarId> {
+        match self {
+            TypeId::Scalar(id) => Some(*id),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_enum_id(&self) -> Option<EnumId> {
+        match self {
+            TypeId::Enum(id) => Some(*id),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn upgrade(self, schema: &Schema) -> TypeRef<'_> {
+        match self {
+            TypeId::Enum(id) => TypeRef::Enum(EnumRef {
+                enum_id: id,
+                schema,
+            }),
+            TypeId::Interface(id) => TypeRef::Interface(InterfaceRef {
+                interface_id: id,
+                schema,
+            }),
+            TypeId::Object(id) => TypeRef::Object(ObjectRef {
+                object_id: id,
+                schema,
+            }),
+            TypeId::Scalar(id) => TypeRef::Scalar(ScalarRef {
+                scalar_id: id,
+                schema,
+            }),
+            TypeId::Union(id) => TypeRef::Union(UnionRef {
+                union_id: id,
+                schema,
+            }),
+            TypeId::Input(id) => TypeRef::Input(InputRef {
+                input_id: id,
+                schema,
+            }),
         }
     }
 }
@@ -239,7 +341,7 @@ impl Schema {
     // pub(crate) fn ingest_interface_implementations(
     //     &mut self,
     //     impls: BTreeMap<&'schema str, Vec<&'schema str>>,
-    // ) -> Result<(), failure::Error> {
+    // ) -> Result<(), anyhow::Error> {
     //     impls
     //         .into_iter()
     //         .map(|(iface_name, implementors)| {
@@ -420,6 +522,10 @@ impl Schema {
         }
     }
 
+    fn get_interface(&self, interface_id: InterfaceId) -> &StoredInterface {
+        self.stored_interfaces.get(interface_id.0).unwrap()
+    }
+
     fn get_stored_input(&self, input_id: InputId) -> &StoredInputType {
         self.stored_inputs.get(input_id.0).unwrap()
     }
@@ -428,8 +534,59 @@ impl Schema {
         self.stored_objects.get(object_id.0).unwrap()
     }
 
+    fn get_field(&self, field_id: StoredFieldId) -> &StoredField {
+        self.stored_fields.get(field_id.0).unwrap()
+    }
+
+    fn get_enum(&self, enum_id: EnumId) -> &StoredEnum {
+        self.stored_enums.get(enum_id.0).unwrap()
+    }
+
+    fn get_scalar(&self, scalar_id: ScalarId) -> &StoredScalar {
+        self.stored_scalars.get(scalar_id.0).unwrap()
+    }
+
+    pub(crate) fn object(&self, id: ObjectId) -> ObjectRef<'_> {
+        ObjectRef {
+            object_id: id,
+            schema: self,
+        }
+    }
+
+    pub(crate) fn interface(&self, interface_id: InterfaceId) -> InterfaceRef<'_> {
+        InterfaceRef {
+            interface_id,
+            schema: self,
+        }
+    }
+
+    pub(crate) fn field(&self, field_id: StoredFieldId) -> FieldRef<'_> {
+        FieldRef {
+            field_id,
+            schema: self,
+        }
+    }
+
+    pub(crate) fn scalar(&self, scalar_id: ScalarId) -> ScalarRef<'_> {
+        ScalarRef {
+            scalar_id,
+            schema: self,
+        }
+    }
+
+    pub(crate) fn r#enum(&self, enum_id: EnumId) -> EnumRef<'_> {
+        EnumRef {
+            enum_id,
+            schema: self,
+        }
+    }
+
     fn find_interface(&self, interface_name: &str) -> InterfaceId {
         self.find_type_id(interface_name).as_interface_id().unwrap()
+    }
+
+    pub(crate) fn find_type(&self, type_name: &str) -> Option<TypeId> {
+        self.names.get(type_name).map(|id| *id)
     }
 
     fn find_type_id(&self, type_name: &str) -> TypeId {
@@ -445,6 +602,25 @@ impl Schema {
     }
 }
 
+pub(crate) struct FieldsRef<'a> {
+    parent_type: StoredFieldParent,
+    schema: SchemaRef<'a>,
+    fields: &'a [StoredFieldId],
+}
+
+#[derive(Clone, Debug, Copy, PartialEq)]
+pub(crate) struct InterfaceRef<'a> {
+    schema: SchemaRef<'a>,
+    interface_id: InterfaceId,
+}
+
+impl<'a> InterfaceRef<'a> {
+    fn get(&self) -> &'a StoredInterface {
+        self.schema.get_interface(self.interface_id)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct ObjectRef<'a> {
     schema: SchemaRef<'a>,
     object_id: ObjectId,
@@ -455,11 +631,51 @@ impl<'a> ObjectRef<'a> {
         self.schema.get_object(self.object_id)
     }
 
+    fn fields<'b>(&'b self) -> impl Iterator<Item = FieldRef<'a>> + 'b {
+        self.get().fields.iter().map(move |field| FieldRef {
+            schema: self.schema,
+            field_id: *field,
+        })
+    }
+
     pub(crate) fn name(&self) -> &'a str {
         &self.get().name
     }
+
+    pub(crate) fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
+        self.fields().find(|field| field.name() == name)
+    }
+
+    pub(crate) fn schema(&self) -> SchemaRef<'a> {
+        self.schema
+    }
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct FieldRef<'a> {
+    schema: SchemaRef<'a>,
+    field_id: StoredFieldId,
+}
+
+impl<'a> FieldRef<'a> {
+    fn get(&self) -> &'a StoredField {
+        self.schema.get_field(self.field_id)
+    }
+
+    pub(crate) fn id(&self) -> StoredFieldId {
+        self.field_id
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.get().name
+    }
+
+    pub(crate) fn type_id(&self) -> TypeId {
+        self.get().r#type.id
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct InputRef<'a> {
     schema: SchemaRef<'a>,
     input_id: InputId,
@@ -471,7 +687,7 @@ impl<'a> InputRef<'a> {
     }
 
     pub(crate) fn contains_type_without_indirection(&self, type_name: &str) -> bool {
-        todo!()
+        todo!("contains type without indirection")
         // let input = self.get();
 
         // // the input type is recursive if any of its members contains it, without indirection
@@ -530,67 +746,34 @@ impl From<ParsedSchema> for Schema {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::constants::*;
+pub(crate) fn resolve_field_type(
+    schema: &Schema,
+    inner: &graphql_parser::schema::Type,
+) -> StoredFieldType {
+    use crate::field_type::{graphql_parser_depth, GraphqlTypeQualifier};
+    use graphql_parser::schema::Type::*;
 
-    #[test]
-    fn build_schema_works() {
-        let gql_schema = include_str!("tests/star_wars_schema.graphql");
-        let gql_schema = graphql_parser::parse_schema(gql_schema).unwrap();
-        let built = Schema::from(&gql_schema);
-        assert_eq!(
-            built.objects.get("Droid"),
-            Some(&GqlObject {
-                description: None,
-                name: "Droid",
-                fields: vec![
-                    GqlObjectField {
-                        description: None,
-                        name: TYPENAME_FIELD,
-                        type_: FieldType::new(string_type()),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "id",
-                        type_: FieldType::new("ID").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "name",
-                        type_: FieldType::new("String").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "friends",
-                        type_: FieldType::new("Character").list(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "friendsConnection",
-                        type_: FieldType::new("FriendsConnection").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "appearsIn",
-                        type_: FieldType::new("Episode").list().nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "primaryFunction",
-                        type_: FieldType::new("String"),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                ],
-                is_required: false.into(),
-            })
-        )
+    let qualifiers_depth = graphql_parser_depth(inner);
+    let mut qualifiers = Vec::with_capacity(qualifiers_depth);
+
+    let mut inner = inner;
+
+    loop {
+        match inner {
+            ListType(new_inner) => {
+                qualifiers.push(GraphqlTypeQualifier::List);
+                inner = new_inner;
+            }
+            NonNullType(new_inner) => {
+                qualifiers.push(GraphqlTypeQualifier::Required);
+                inner = new_inner;
+            }
+            NamedType(name) => {
+                return StoredFieldType {
+                    id: schema.find_type_id(name),
+                    qualifiers,
+                }
+            }
+        }
     }
 }

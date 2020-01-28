@@ -4,14 +4,14 @@ use crate::deprecation::DeprecationStatus;
 
 pub(crate) const TYPENAME_FIELD: &str = "__typename";
 
-pub(crate) fn string_type() -> &'static str {
-    "String"
-}
+// pub(crate) fn string_type() -> &'static str {
+//     "String"
+// }
 
-#[cfg(test)]
-pub(crate) fn float_type() -> &'static str {
-    "Float"
-}
+// #[cfg(test)]
+// pub(crate) fn float_type() -> &'static str {
+//     "Float"
+// }
 
 // pub(crate) fn typename_field() -> GqlObjectField<'static> {
 //     GqlObjectField {

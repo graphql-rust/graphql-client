@@ -80,7 +80,7 @@ impl<'query> Selection<'query> {
         selected_variants: &mut BTreeMap<&'s str, Selection<'s>>,
         // the name of the type the selection applies to
         selection_on: &str,
-    ) -> Result<(), failure::Error> {
+    ) -> Result<(), anyhow::Error> {
         unimplemented!()
         // for item in self.0.iter() {
         //     match item {
@@ -137,7 +137,7 @@ impl<'query> Selection<'query> {
         context: &'s crate::query::QueryContext<'_>,
         // the name of the type the selection applies to
         selection_on: &str,
-    ) -> Result<BTreeMap<&'s str, Selection<'s>>, failure::Error> {
+    ) -> Result<BTreeMap<&'s str, Selection<'s>>, anyhow::Error> {
         let mut selected_variants = BTreeMap::new();
 
         self.selected_variants_on_union_inner(context, &mut selected_variants, selection_on)?;
@@ -170,12 +170,12 @@ impl<'query> Selection<'query> {
     }
 
     pub(crate) fn require_items(&self, context: &crate::query::QueryContext<'query>) {
-    //     self.0.iter().for_each(|item| {
-    //         if let SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) = item {
-    //             context.require_fragment(fragment_name);
-    //         }
-    //     })
-    todo!("require_items");
+        //     self.0.iter().for_each(|item| {
+        //         if let SelectionItem::FragmentSpread(SelectionFragmentSpread { fragment_name }) = item {
+        //             context.require_fragment(fragment_name);
+        //         }
+        //     })
+        todo!("require_items");
     }
 }
 

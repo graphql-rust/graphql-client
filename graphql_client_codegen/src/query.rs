@@ -54,9 +54,9 @@ impl<'query, 'schema> QueryContext<'query> {
         }
     }
 
-    pub(crate) fn resolve_query(query: &graphql_parser::query::Document) -> ResolvedQuery {
-        todo!("resolve query")
-    }
+    // pub(crate) fn resolve_query(query: &graphql_parser::query::Document) -> ResolvedQuery {
+    //     todo!("resolve query")
+    // }
 
     /// Mark a fragment as required, so code is actually generated for it.
     pub(crate) fn require_fragment(&mut self, id: FragmentId) {

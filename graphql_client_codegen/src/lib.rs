@@ -30,11 +30,9 @@ mod generated_module;
 pub mod normalization;
 // mod objects;
 mod operations;
-mod rendering;
 mod resolution;
-mod scalars;
 // mod selection;
-// mod shared;
+mod shared;
 // mod unions;
 // mod variables;
 
@@ -114,6 +112,7 @@ pub fn generate_module_token_stream(
         .as_ref()
         .and_then(|operation_name| {
             codegen::select_operation(&query, &operation_name, options.normalization())
+                .and_then(|idx| query.operations.get(idx))
         })
         .map(|op| vec![op]);
 

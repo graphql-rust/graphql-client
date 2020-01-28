@@ -11,7 +11,7 @@ fn path_to_match() -> syn::Path {
 }
 
 /// Extract an configuration parameter specified in the `graphql` attribute.
-pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String> {
+pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, anyhow::Error> {
     let attributes = &ast.attrs;
     let graphql_path = path_to_match();
     let attribute = attributes
@@ -37,7 +37,9 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String> {
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
-pub fn extract_deprecation_strategy(ast: &syn::DeriveInput) -> Result<DeprecationStrategy> {
+pub fn extract_deprecation_strategy(
+    ast: &syn::DeriveInput,
+) -> Result<DeprecationStrategy, anyhow::Error> {
     extract_attr(&ast, "deprecated")?
         .to_lowercase()
         .as_str()
@@ -46,7 +48,7 @@ pub fn extract_deprecation_strategy(ast: &syn::DeriveInput) -> Result<Deprecatio
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
-pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization> {
+pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, anyhow::Error> {
     extract_attr(&ast, "normalization")?
         .to_lowercase()
         .as_str()

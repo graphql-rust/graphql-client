@@ -116,7 +116,7 @@ impl<'schema> GqlObject<'schema> {
         query_context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<TokenStream, failure::Error> {
+    ) -> Result<TokenStream, anyhow::Error> {
         unimplemented!()
         // let derives = query_context.response_derives();
         // let name = Ident::new(prefix, Span::call_site());
@@ -139,7 +139,7 @@ impl<'schema> GqlObject<'schema> {
         query_context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<Vec<TokenStream>, failure::Error> {
+    ) -> Result<Vec<TokenStream>, anyhow::Error> {
         field_impls_for_selection(&self.fields, query_context, selection, prefix)
     }
 
@@ -148,7 +148,7 @@ impl<'schema> GqlObject<'schema> {
         query_context: &QueryContext<'_>,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<Vec<TokenStream>, failure::Error> {
+    ) -> Result<Vec<TokenStream>, anyhow::Error> {
         response_fields_for_selection(&self.name, &self.fields, query_context, selection, prefix)
     }
 }
