@@ -1,7 +1,7 @@
 use crate::deprecation::DeprecationStrategy;
 use crate::fragments::GqlFragment;
 use crate::normalization::Normalization;
-use crate::schema::{StoredFieldId, TypeId, EnumId, InputId, Schema};
+use crate::schema::{EnumId, InputId, ScalarId, Schema, StoredFieldId, TypeId};
 use crate::selection::Selection;
 use failure::*;
 use proc_macro2::Span;
@@ -14,17 +14,10 @@ use syn::Ident;
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct FragmentId(usize);
 
-struct Q {
-    operation: &'static str,
-    selection: IdSelection,
-}
-
-#[derive(Debug, Clone)]
-enum IdSelection {
-    Field(StoredFieldId),
-    FragmentSpread(FragmentId),
-    InlineFragment(TypeId, Vec<IdSelection>),
-}
+// struct Q {
+//     operation: &'static str,
+//     selection: IdSelection,
+// }
 
 /// This holds all the information we need during the code generation phase.
 pub(crate) struct QueryContext<'query> {
@@ -37,6 +30,7 @@ pub(crate) struct QueryContext<'query> {
     used_enums: Vec<EnumId>,
     used_input_objects: Vec<InputId>,
     used_fragments: Vec<FragmentId>,
+    used_scalars: Vec<ScalarId>,
 }
 
 impl<'query, 'schema> QueryContext<'query> {
@@ -56,7 +50,12 @@ impl<'query, 'schema> QueryContext<'query> {
             used_enums: Vec::new(),
             used_input_objects: Vec::new(),
             used_fragments: Vec::new(),
+            used_scalars: Vec::new(),
         }
+    }
+
+    pub(crate) fn resolve_query(query: &graphql_parser::query::Document) -> ResolvedQuery {
+        todo!("resolve query")
     }
 
     /// Mark a fragment as required, so code is actually generated for it.
@@ -83,7 +82,7 @@ impl<'query, 'schema> QueryContext<'query> {
         ty: &str,
         selection: &Selection<'_>,
         prefix: &str,
-    ) -> Result<Option<TokenStream>, failure::Error> {
+    ) -> anyhow::Result<Option<TokenStream>> {
         unimplemented!()
         // if self.schema.contains_scalar(ty) {
         //     Ok(None)
@@ -108,10 +107,7 @@ impl<'query, 'schema> QueryContext<'query> {
         // }
     }
 
-    pub(crate) fn ingest_response_derives(
-        &mut self,
-        attribute_value: &str,
-    ) -> Result<(), failure::Error> {
+    pub(crate) fn ingest_response_derives(&mut self, attribute_value: &str) -> anyhow::Result<()> {
         if self.response_derives.len() > 1 {
             return Err(format_err!(
                 "ingest_response_derives should only be called once"
@@ -127,10 +123,7 @@ impl<'query, 'schema> QueryContext<'query> {
         Ok(())
     }
 
-    pub(crate) fn ingest_variables_derives(
-        &mut self,
-        attribute_value: &str,
-    ) -> Result<(), failure::Error> {
+    pub(crate) fn ingest_variables_derives(&mut self, attribute_value: &str) -> anyhow::Result<()> {
         if self.variables_derives.len() > 1 {
             return Err(format_err!(
                 "ingest_variables_derives should only be called once"

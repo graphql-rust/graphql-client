@@ -8,7 +8,7 @@ repository = "https://github.com/graphql-rust/graphql-client"
 edition = "2018"
 
 [dependencies]
-failure = "0.1"
+anyhow = "1.0"
 graphql-introspection-query = { version = "0.1.0", path = "../graphql-introspection-query" }
 graphql-parser = "^0.2"
 heck = "0.3"

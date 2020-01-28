@@ -117,28 +117,29 @@ pub(crate) fn field_impls_for_selection(
     context: &QueryContext<'_>,
     selection: &Selection<'_>,
     prefix: &str,
-) -> Result<Vec<TokenStream>, failure::Error> {
-    (&selection)
-        .into_iter()
-        .map(|selected| {
-            if let SelectionItem::Field(selected) = selected {
-                let name = &selected.name;
-                let alias = selected.alias.as_ref().unwrap_or(name);
+) -> anyhow::Result<Vec<TokenStream>> {
+    todo!("field_impls_for_selection")
+    // (&selection)
+    //     .into_iter()
+    //     .map(|selected| {
+    //         if let SelectionItem::Field(selected) = selected {
+    //             let name = &selected.name;
+    //             let alias = selected.alias.as_ref().unwrap_or(name);
 
-                let ty = fields
-                    .iter()
-                    .find(|f| &f.name == name)
-                    .ok_or_else(|| format_err!("could not find field `{}`", name))?
-                    .type_
-                    .inner_name_str();
-                let prefix = format!("{}{}", prefix.to_camel_case(), alias.to_camel_case());
-                context.maybe_expand_field(&ty, &selected.fields, &prefix)
-            } else {
-                Ok(None)
-            }
-        })
-        .filter_map(|i| i.transpose())
-        .collect()
+    //             let ty = fields
+    //                 .iter()
+    //                 .find(|f| &f.name == name)
+    //                 .ok_or_else(|| format_err!("could not find field `{}`", name))?
+    //                 .type_
+    //                 .inner_name_str();
+    //             let prefix = format!("{}{}", prefix.to_camel_case(), alias.to_camel_case());
+    //             context.maybe_expand_field(&ty, &selected.fields, &prefix)
+    //         } else {
+    //             Ok(None)
+    //         }
+    //     })
+    //     .filter_map(|i| i.transpose())
+    //     .collect()
 }
 
 pub(crate) fn response_fields_for_selection(
@@ -147,7 +148,7 @@ pub(crate) fn response_fields_for_selection(
     context: &QueryContext<'_>,
     selection: &Selection<'_>,
     prefix: &str,
-) -> Result<Vec<TokenStream>, failure::Error> {
+) -> anyhow::Result<Vec<TokenStream>> {
     todo!("response fields for selection")
     // (&selection)
     //     .into_iter()
