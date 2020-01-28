@@ -4,42 +4,31 @@ use crate::normalization::Normalization;
 // use crate::query::QueryContext;
 use crate::schema;
 // use crate::selection::Selection;
+use crate::resolution::{ResolvedOperation, ResolvedQuery};
 use graphql_parser::query;
 use proc_macro2::TokenStream;
 use quote::*;
 
-// /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
-// pub(crate) fn select_operation<'query>(
-//     query: &'query query::Document,
-//     struct_name: &str,
-//     norm: Normalization,
-// ) -> Option<&str> {
-//     let operations = all_operations(query);
-
-//     operations
-//         .iter()
-//         .find(|op| norm.operation(&op.name) == struct_name)
-//         .map(ToOwned::to_owned)
-// }
-
-// pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation<'_>> {
-//     let mut operations: Vec<Operation<'_>> = Vec::new();
-
-//     for definition in &query.definitions {
-//         if let query::Definition::Operation(op) = definition {
-//             operations.push(op.into());
-//         }
-//     }
-//     operations
-// }
+/// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
+pub(crate) fn select_operation<'a>(
+    query: &'a ResolvedQuery,
+    struct_name: &str,
+    norm: Normalization,
+) -> Option<&'a ResolvedOperation> {
+    query
+        .operations
+        .iter()
+        .find(|op| norm.operation(op.name()) == struct_name)
+}
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
     schema: &schema::Schema,
-    query: &query::Document,
+    query: &crate::resolution::ResolvedQuery,
     operation: &str,
     options: &crate::GraphQLClientCodegenOptions,
 ) -> anyhow::Result<TokenStream> {
+    todo!()
     // let mut context = QueryContext::new(
     //     schema,
     //     options.deprecation_strategy(),
@@ -54,8 +43,8 @@ pub(crate) fn response_for_query(
     //     context.ingest_response_derives(&derives)?;
     // }
 
-    let resolved_query = crate::resolution::resolve(schema, query)?;
-    crate::rendering::render(schema, &resolved_query)
+    // let resolved_query = crate::resolution::resolve(schema, query)?;
+    // crate::rendering::render(schema, &resolved_query)
 
     // context.resolve_fragments(&query.definitions);
 

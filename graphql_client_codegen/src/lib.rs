@@ -60,39 +60,6 @@ pub fn generate_module_token_stream(
     options: GraphQLClientCodegenOptions,
 ) -> anyhow::Result<TokenStream> {
     use std::collections::hash_map;
-    // We need to qualify the query with the path to the crate it is part of
-    let (query_string, query) = {
-        let mut lock = QUERY_CACHE.lock().expect("query cache is poisoned");
-        match lock.entry(query_path) {
-            hash_map::Entry::Occupied(o) => o.get().clone(),
-            hash_map::Entry::Vacant(v) => {
-                let query_string = read_file(v.key())?;
-                let query =
-                    graphql_parser::parse_query(&query_string).expect("TODO: error conversion");
-                v.insert((query_string, query)).clone()
-            }
-        }
-    };
-
-    // // Determine which operation we are generating code for. This will be used in operationName.
-    // let operations = options
-    //     .operation_name
-    //     .as_ref()
-    //     .and_then(|operation_name| {
-    //         codegen::select_operation(&query, &operation_name, options.normalization())
-    //     })
-    //     .map(|op| vec![op]);
-
-    // let operations = match (operations, &options.mode) {
-    //     (Some(ops), _) => ops,
-    //     (None, &CodegenMode::Cli) => codegen::all_operations(&query),
-    //     (None, &CodegenMode::Derive) => {
-    //         return Err(derive_operation_not_found_error(
-    //             options.struct_ident(),
-    //             &query,
-    //         ));
-    //     }
-    // };
 
     let schema_extension = schema_path
         .extension()
@@ -112,38 +79,73 @@ pub fn generate_module_token_stream(
     };
 
     let mut parsed_schema = match schema_extension {
-                        "graphql" | "gql" => {
-                            let s = graphql_parser::schema::parse_schema(&schema_string).expect("TODO: error conversion");
-                            schema::ParsedSchema::GraphQLParser(s)
-                        }
-                        "json" => {
-                            let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string)?;
-                            schema::ParsedSchema::Json(parsed)
-                        }
-                        extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
-                    };
+                    "graphql" | "gql" => {
+                        let s = graphql_parser::schema::parse_schema(&schema_string).expect("TODO: error conversion");
+                        schema::ParsedSchema::GraphQLParser(s)
+                    }
+                    "json" => {
+                        let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string)?;
+                        schema::ParsedSchema::Json(parsed)
+                    }
+                    extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
+                };
 
     let schema = schema::Schema::from(parsed_schema);
 
-    todo!();
+    // We need to qualify the query with the path to the crate it is part of
+    let (query_string, query) = {
+        let mut lock = QUERY_CACHE.lock().expect("query cache is poisoned");
+        match lock.entry(query_path) {
+            hash_map::Entry::Occupied(o) => o.get().clone(),
+            hash_map::Entry::Vacant(v) => {
+                let query_string = read_file(v.key())?;
+                let query =
+                    graphql_parser::parse_query(&query_string).expect("TODO: error conversion");
+                v.insert((query_string, query)).clone()
+            }
+        }
+    };
+
+    let query = resolution::resolve(&schema, &query)?;
+
+    // Determine which operation we are generating code for. This will be used in operationName.
+    let operations = options
+        .operation_name
+        .as_ref()
+        .and_then(|operation_name| {
+            codegen::select_operation(&query, &operation_name, options.normalization())
+        })
+        .map(|op| vec![op]);
+
+    let operations = match (operations, &options.mode) {
+        (Some(ops), _) => ops,
+        (None, &CodegenMode::Cli) => query.operations.iter().collect(),
+        (None, &CodegenMode::Derive) => {
+            return Err(derive_operation_not_found_error(
+                options.struct_ident(),
+                &query,
+            ));
+        }
+    };
+
     // The generated modules.
-    // let mut modules = Vec::with_capacity(operations.len());
+    let mut modules = Vec::with_capacity(operations.len());
 
-    // for operation in &operations {
-    //     let generated = generated_module::GeneratedModule {
-    //         query_string: query_string.as_str(),
-    //         schema: &schema,
-    //         query_document: &query,
-    //         operation,
-    //         options: &options,
-    //     }
-    //     .to_token_stream()?;
-    //     modules.push(generated);
-    // }
+    for operation in &operations {
+        let generated = generated_module::GeneratedModule {
+            query_string: query_string.as_str(),
+            schema: &schema,
+            resolved_query: &query,
+            operation: operation.name(),
+            options: &options,
+        }
+        .to_token_stream()?;
+        modules.push(generated);
+    }
 
-    // let modules = quote! { #(#modules)* };
+    let modules = quote! { #(#modules)* };
 
-    // Ok(modules)
+    Ok(modules)
 }
 
 fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
@@ -168,34 +170,13 @@ fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
 /// In derive mode, build an error when the operation with the same name as the struct is not found.
 fn derive_operation_not_found_error(
     ident: Option<&proc_macro2::Ident>,
-    query: &graphql_parser::query::Document,
+    query: &crate::resolution::ResolvedQuery,
 ) -> anyhow::Error {
-    use graphql_parser::query::*;
-
     let operation_name = ident.map(ToString::to_string);
     let struct_ident = operation_name.as_deref().unwrap_or("");
 
-    let available_operations = query
-        .definitions
-        .iter()
-        .filter_map(|definition| match definition {
-            Definition::Operation(op) => match op {
-                OperationDefinition::Mutation(m) => Some(m.name.as_ref().unwrap()),
-                OperationDefinition::Query(m) => Some(m.name.as_ref().unwrap()),
-                OperationDefinition::Subscription(m) => Some(m.name.as_ref().unwrap()),
-                OperationDefinition::SelectionSet(_) => {
-                    unreachable!("Bare selection sets are not supported.")
-                }
-            },
-            _ => None,
-        })
-        .fold(String::new(), |mut acc, item| {
-            acc.push_str(&item);
-            acc.push_str(", ");
-            acc
-        });
-
-    let available_operations = available_operations.trim_end_matches(", ");
+    let available_operations: Vec<&str> = query.operations.iter().map(|op| op.name()).collect();
+    let available_operations: String = available_operations.join(", ");
 
     return format_err!(
         "The struct name does not match any defined operation in the query file.\nStruct name: {}\nDefined operations: {}",

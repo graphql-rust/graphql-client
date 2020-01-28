@@ -7,7 +7,8 @@ use quote::quote;
 pub(crate) struct GeneratedModule<'a> {
     pub operation: &'a str,
     pub query_string: &'a str,
-    pub query_document: &'a graphql_parser::query::Document,
+    pub resolved_query: &'a crate::resolution::ResolvedQuery,
+    // pub query_document: &'a graphql_parser::query::Document,
     pub schema: &'a crate::schema::Schema,
     pub options: &'a crate::GraphQLClientCodegenOptions,
 }
@@ -17,7 +18,7 @@ impl<'a> GeneratedModule<'a> {
     fn build_impls(&self) -> anyhow::Result<TokenStream> {
         Ok(crate::codegen::response_for_query(
             &self.schema,
-            &self.query_document,
+            &self.resolved_query,
             &self.operation,
             &self.options,
         )?)

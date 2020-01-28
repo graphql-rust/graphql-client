@@ -23,7 +23,7 @@ struct ResolvedFragmentId(usize);
 
 #[derive(Debug, Default)]
 pub(crate) struct ResolvedQuery {
-    operations: Vec<ResolvedOperation>,
+    pub(crate) operations: Vec<ResolvedOperation>,
     fragments: Vec<ResolvedFragment>,
 }
 
@@ -35,10 +35,16 @@ struct ResolvedFragment {
 }
 
 #[derive(Debug)]
-struct ResolvedOperation {
+pub(crate) struct ResolvedOperation {
     name: String,
     operation_type: crate::operations::OperationType,
     variables: Vec<ResolvedVariable>,
+}
+
+impl ResolvedOperation {
+    pub(crate) fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 #[derive(Debug)]

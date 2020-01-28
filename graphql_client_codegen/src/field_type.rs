@@ -5,9 +5,9 @@ use graphql_introspection_query::introspection_response;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
-pub(crate) fn field_type_to_rust() -> TokenStream {
-    todo!()
-}
+// pub(crate) fn field_type_to_rust() -> TokenStream {
+//     todo!()
+// }
 
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub(crate) enum GraphqlTypeQualifier {
@@ -150,12 +150,12 @@ impl<'a> FieldType<'a> {
     }
 }
 
-impl<'schema> std::convert::From<&'schema graphql_parser::schema::Type> for FieldType<'schema> {
-    fn from(schema_type: &'schema graphql_parser::schema::Type) -> FieldType<'schema> {
-        todo!()
-        // from_schema_type_inner(schema_type)
-    }
-}
+// impl<'schema> std::convert::From<&'schema graphql_parser::schema::Type> for FieldType<'schema> {
+//     fn from(schema_type: &'schema graphql_parser::schema::Type) -> FieldType<'schema> {
+//         todo!()
+//         // from_schema_type_inner(schema_type)
+//     }
+// }
 
 pub(crate) fn graphql_parser_depth(schema_type: &graphql_parser::schema::Type) -> usize {
     match schema_type {
