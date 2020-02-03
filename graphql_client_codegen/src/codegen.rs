@@ -1,13 +1,6 @@
-// use crate::fragments::GqlFragment;
-use crate::normalization::Normalization;
-// use crate::operations::Operation;
-// use crate::query::QueryContext;
-use crate::{schema, GraphQLClientCodegenOptions};
-// use crate::selection::Selection;
-use crate::resolution::{Operation, ResolvedQuery};
-use graphql_parser::query;
-use proc_macro2::TokenStream;
-use quote::*;
+use crate::{normalization::Normalization, resolution::*, GraphQLClientCodegenOptions};
+use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 
 /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'a>(
@@ -18,7 +11,7 @@ pub(crate) fn select_operation<'a>(
     query
         .operations
         .iter()
-        .position(|op| norm.operation(op.name()) == struct_name)
+        .position(|op| normalization.operation(op.name()) == struct_name)
 }
 
 /// The main code generation function.
@@ -166,45 +159,53 @@ fn generate_scalar_definitions<'a, 'schema: 'a>(
     })
 }
 
+/**
+ * About rust keyword escaping: variant_names and constructors must be escaped,
+ * variant_str not.
+ * Example schema:                  enum AnEnum { where \n self }
+ * Generated "variant_names" enum:  pub enum AnEnum { where_, self_, Other(String), }
+ * Generated serialize line: "AnEnum::where_ => "where","
+ */
 fn generate_enum_definitions<'a, 'schema: 'a>(
     operation: Operation<'schema>,
     all_used_types: &'a crate::resolution::UsedTypes,
-    options: &GraphqlClientCodegenOptions,
+    options: &GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
-    let derives = options.response_enum_derives();
+    let derives = options.response_derives();
     let normalization = options.normalization();
 
     all_used_types.enums(operation.schema()).map(|r#enum| {
         let ident = syn::Ident::new(r#enum.name(), proc_macro2::Span::call_site());
 
-        let variant_names: Vec<TokenStream> = self
-            .variants
+        let variant_names: Vec<TokenStream> = r#enum
+            .variants()
             .iter()
             .map(|v| {
-                let name = norm.enum_variant(crate::shared::keyword_replace(&v.name));
+                let name = normalization.enum_variant(crate::shared::keyword_replace(&v));
                 let name = Ident::new(&name, Span::call_site());
 
-                let description = &v.description;
-                let description = description.as_ref().map(|d| quote!(#[doc = #d]));
+                // let description = &v.description;
+                // let description = description.as_ref().map(|d| quote!(#[doc = #d]));
 
-                quote!(#description #name)
+                // quote!(#description #name)
+                quote!(#name)
             })
             .collect();
         let variant_names = &variant_names;
-        let name_ident = norm.enum_name(format!("{}{}", ENUMS_PREFIX, self.name));
+        let name_ident = normalization.enum_name(format!("{}{}", ENUMS_PREFIX, r#enum.name()));
         let name_ident = Ident::new(&name_ident, Span::call_site());
-        let constructors: Vec<_> = self
-            .variants
+        let constructors: Vec<_> = r#enum
+            .variants()
             .iter()
             .map(|v| {
-                let name = norm.enum_variant(crate::shared::keyword_replace(&v.name));
+                let name = normalization.enum_variant(crate::shared::keyword_replace(v));
                 let v = Ident::new(&name, Span::call_site());
 
                 quote!(#name_ident::#v)
             })
             .collect();
         let constructors = &constructors;
-        let variant_str: Vec<&str> = self.variants.iter().map(|v| v.name).collect();
+        let variant_str: Vec<&str> = r#enum.variants().iter().map(|s| s.as_str()).collect();
         let variant_str = &variant_str;
 
         let name = name_ident;

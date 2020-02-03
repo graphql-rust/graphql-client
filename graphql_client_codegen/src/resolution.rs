@@ -1,5 +1,6 @@
 //! The responsibility of this module is to resolve and validate a query against a given schema.
 
+use crate::schema::EnumRef;
 use crate::schema::FieldRef;
 use crate::schema::ScalarRef;
 use crate::schema::TypeRef;
@@ -347,5 +348,15 @@ impl UsedTypes {
             .iter()
             .filter_map(TypeId::as_scalar_id)
             .map(|scalar_id| schema.scalar(scalar_id))
+    }
+
+    pub(crate) fn enums<'a, 'schema: 'a>(
+        &'a self,
+        schema: &'schema Schema,
+    ) -> impl Iterator<Item = EnumRef<'schema>> + 'a {
+        self.types
+            .iter()
+            .filter_map(TypeId::as_enum_id)
+            .map(|enum_id| schema.r#enum(enum_id))
     }
 }

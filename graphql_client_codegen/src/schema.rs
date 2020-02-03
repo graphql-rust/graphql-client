@@ -152,8 +152,22 @@ pub(crate) struct UnionRef<'a> {
 }
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct EnumRef<'a> {
-    scalar_id: EnumId,
+    enum_id: EnumId,
     schema: &'a Schema,
+}
+
+impl<'a> EnumRef<'a> {
+    fn get(&self) -> &'a StoredEnum {
+        self.schema.get_enum(self.enum_id)
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+
+    pub(crate) fn variants(&self) -> &'a [String] {
+        &self.get().variants
+    }
 }
 
 impl TypeId {
@@ -202,10 +216,17 @@ impl TypeId {
         }
     }
 
+    pub(crate) fn as_enum_id(&self) -> Option<EnumId> {
+        match self {
+            TypeId::Enum(id) => Some(*id),
+            _ => None,
+        }
+    }
+
     pub(crate) fn upgrade(self, schema: &Schema) -> TypeRef<'_> {
         match self {
             TypeId::Enum(id) => TypeRef::Enum(EnumRef {
-                scalar_id: id,
+                enum_id: id,
                 schema,
             }),
             TypeId::Interface(id) => TypeRef::Interface(InterfaceRef {
@@ -539,6 +560,13 @@ impl Schema {
     pub(crate) fn scalar(&self, scalar_id: ScalarId) -> ScalarRef<'_> {
         ScalarRef {
             scalar_id,
+            schema: self,
+        }
+    }
+
+    pub(crate) fn enum(&self, enum_id: EnumId) -> EnumRef<'_> {
+        EnumRef {
+            enum_id,
             schema: self,
         }
     }
