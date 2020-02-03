@@ -1,6 +1,6 @@
 //! The responsibility of this module is to resolve and validate a query against a given schema.
 
-use crate::schema::{Schema, StoredFieldId, TypeId};
+use crate::schema::{ObjectRef, Schema, StoredFieldId, TypeId};
 
 pub(crate) fn resolve(
     schema: &Schema,
@@ -40,6 +40,41 @@ fn resolve_fragment(
     Ok(())
 }
 
+fn resolve_object_selection(
+    object: ObjectRef<'_>,
+    selection_set: &graphql_parser::query::SelectionSet,
+) -> anyhow::Result<Vec<IdSelection>> {
+    let id_selection: Vec<IdSelection> = selection_set
+        .items
+        .iter()
+        .map(|item| -> anyhow::Result<_> {
+            match item {
+                graphql_parser::query::Selection::Field(field) => {
+                    let field_ref = object.get_field_by_name(&field.name).ok_or_else(|| {
+                        anyhow::anyhow!("No field named {} on {}", &field.name, object.name())
+                    })?;
+                    Ok(IdSelection::Field(
+                        field_ref.id(),
+                        resolve_selection(
+                            object.schema(),
+                            field_ref.type_id(),
+                            &field.selection_set,
+                        )?,
+                    ))
+                }
+                graphql_parser::query::Selection::InlineFragment(inline) => {
+                    resolve_inline_fragment(object.schema(), inline)
+                }
+                graphql_parser::query::Selection::FragmentSpread(fragment_spread) => Ok(
+                    IdSelection::FragmentSpread(fragment_spread.fragment_name.clone()),
+                ),
+            }
+        })
+        .collect::<Result<_, _>>()?;
+
+    Ok(id_selection)
+}
+
 fn resolve_selection(
     schema: &Schema,
     on: TypeId,
@@ -48,44 +83,11 @@ fn resolve_selection(
     match on {
         TypeId::Object(oid) => {
             let object = schema.object(oid);
-            let id_selection: Vec<IdSelection> = selection_set
-                .items
-                .iter()
-                .map(|item| -> anyhow::Result<_> {
-                    match item {
-                        graphql_parser::query::Selection::Field(field) => {
-                            let field_ref =
-                                object.get_field_by_name(&field.name).ok_or_else(|| {
-                                    anyhow::anyhow!(
-                                        "No field named {} on {}",
-                                        &field.name,
-                                        object.name()
-                                    )
-                                })?;
-                            Ok(IdSelection::Field(
-                                field_ref.id(),
-                                resolve_selection(
-                                    schema,
-                                    field_ref.type_id(),
-                                    &field.selection_set,
-                                )?,
-                            ))
-                        }
-                        graphql_parser::query::Selection::InlineFragment(inline) => {
-                            resolve_inline_fragment(schema, inline)
-                        }
-                        graphql_parser::query::Selection::FragmentSpread(fragment_spread) => Ok(
-                            IdSelection::FragmentSpread(fragment_spread.fragment_name.clone()),
-                        ),
-                    }
-                })
-                .collect::<Result<_, _>>()?;
-
-            Ok(id_selection)
+            resolve_object_selection(object, selection_set)
         }
         TypeId::Interface(interface_id) => {
             let interface = schema.interface(interface_id);
-            todo!()
+            todo!("interface thing")
         }
         _ => anyhow::bail!("Selection set on non-object, non-interface type."),
     }
@@ -113,7 +115,21 @@ fn resolve_operation(
     schema: &Schema,
     operation: &graphql_parser::query::OperationDefinition,
 ) -> anyhow::Result<()> {
-    todo!("resolve_operation")
+    match operation {
+        graphql_parser::query::OperationDefinition::Mutation(m) => {
+            let on = schema.mutation_type();
+            let resolved_operation: ResolvedOperation = todo!();
+
+            query.operations.push(resolved_operation);
+        }
+        graphql_parser::query::OperationDefinition::Query(_) => todo!("resolve query"),
+        graphql_parser::query::OperationDefinition::Subscription(_) => {
+            todo!("resolve subscription")
+        }
+        graphql_parser::query::OperationDefinition::SelectionSet(_) => {
+            unreachable!("unnamed queries are not supported")
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

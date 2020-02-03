@@ -512,6 +512,10 @@ impl<'a> ObjectRef<'a> {
     pub(crate) fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
         self.fields().find(|field| field.name() == name)
     }
+
+    pub(crate) fn schema(&self) -> SchemaRef<'a> {
+        self.schema
+    }
 }
 
 pub(crate) struct FieldRef<'a> {
