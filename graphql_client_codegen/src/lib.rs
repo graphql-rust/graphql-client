@@ -32,7 +32,6 @@ pub mod normalization;
 mod operations;
 mod rendering;
 mod resolution;
-mod scalars;
 // mod selection;
 // mod shared;
 // mod unions;
@@ -119,7 +118,7 @@ pub fn generate_module_token_stream(
         .map(|op| vec![op]);
 
     let operations = match (operations, &options.mode) {
-        (Some(ops), _) => opsresolve,
+        (Some(ops), _) => ops,
         (None, &CodegenMode::Cli) => query.operations.iter().collect(),
         (None, &CodegenMode::Derive) => {
             return Err(derive_operation_not_found_error(
