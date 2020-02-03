@@ -114,11 +114,12 @@ pub fn generate_module_token_stream(
         .as_ref()
         .and_then(|operation_name| {
             codegen::select_operation(&query, &operation_name, options.normalization())
+                .and_then(|idx| query.operations.get(idx))
         })
         .map(|op| vec![op]);
 
     let operations = match (operations, &options.mode) {
-        (Some(ops), _) => ops,
+        (Some(ops), _) => opsresolve,
         (None, &CodegenMode::Cli) => query.operations.iter().collect(),
         (None, &CodegenMode::Derive) => {
             return Err(derive_operation_not_found_error(

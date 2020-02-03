@@ -4,7 +4,7 @@ use crate::normalization::Normalization;
 // use crate::query::QueryContext;
 use crate::schema;
 // use crate::selection::Selection;
-use crate::resolution::{ResolvedOperation, ResolvedQuery};
+use crate::resolution::{Operation, ResolvedQuery};
 use graphql_parser::query;
 use proc_macro2::TokenStream;
 use quote::*;
@@ -14,21 +14,19 @@ pub(crate) fn select_operation<'a>(
     query: &'a ResolvedQuery,
     struct_name: &str,
     norm: Normalization,
-) -> Option<&'a ResolvedOperation> {
+) -> Option<usize> {
     query
         .operations
         .iter()
-        .find(|op| norm.operation(op.name()) == struct_name)
+        .position(|op| norm.operation(op.name()) == struct_name)
 }
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
-    schema: &schema::Schema,
-    query: &crate::resolution::ResolvedQuery,
-    operation: &str,
+    operation: Operation<'_>,
     options: &crate::GraphQLClientCodegenOptions,
 ) -> anyhow::Result<TokenStream> {
-    todo!()
+    let scalar_definitions = generate_scalar_definitions(operation);
     // let mut context = QueryContext::new(
     //     schema,
     //     options.deprecation_strategy(),
@@ -123,35 +121,39 @@ pub(crate) fn response_for_query(
 
     // let response_derives = context.response_derives();
 
-    // Ok(quote! {
-    //     use serde::{Serialize, Deserialize};
+    Ok(quote! {
+        use serde::{Serialize, Deserialize};
 
-    //     #[allow(dead_code)]
-    //     type Boolean = bool;
-    //     #[allow(dead_code)]
-    //     type Float = f64;
-    //     #[allow(dead_code)]
-    //     type Int = i64;
-    //     #[allow(dead_code)]
-    //     type ID = String;
+        #[allow(dead_code)]
+        type Boolean = bool;
+        #[allow(dead_code)]
+        type Float = f64;
+        #[allow(dead_code)]
+        type Int = i64;
+        #[allow(dead_code)]
+        type ID = String;
 
-    //     #(#scalar_definitions)*
+        #(#scalar_definitions)*
 
-    //     #(#input_object_definitions)*
+        #(#input_object_definitions)*
 
-    //     #(#enum_definitions)*
+        #(#enum_definitions)*
 
-    //     #(#fragment_definitions)*
+        #(#fragment_definitions)*
 
-    //     #(#definitions)*
+        #(#definitions)*
 
-    //     #variables_struct
+        #variables_struct
 
-    //     #response_derives
+        #response_derives
 
-    //     pub struct ResponseData {
-    //         #(#response_data_fields,)*
-    //     }
+        pub struct ResponseData {
+            #(#response_data_fields,)*
+        }
 
-    // })
+    })
+}
+
+fn generate_scalar_definitions(operation: Operation<'_>) -> impl Iterator<Item = TokenStream> {
+    todo!()
 }

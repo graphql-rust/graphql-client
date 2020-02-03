@@ -43,28 +43,28 @@ enum StoredFieldParent {
     Interface(InterfaceId),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct ObjectId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct ObjectFieldId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) struct InterfaceFieldId(usize);
+// #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+// pub(crate) struct InterfaceFieldId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct InterfaceId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct ScalarId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct UnionId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct EnumId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct InputId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -103,7 +103,7 @@ struct StoredScalar {
     name: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) enum TypeId {
     Object(ObjectId),
     Scalar(ScalarId),
@@ -111,6 +111,39 @@ pub(crate) enum TypeId {
     Union(UnionId),
     Enum(EnumId),
     Input(InputId),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum TypeRef<'a> {
+    Object(ObjectRef<'a>),
+    Scalar(ScalarRef<'a>),
+    Interface(InterfaceRef<'a>),
+    Union(UnionRef<'a>),
+    Enum(EnumRef<'a>),
+    Input(InputRef<'a>),
+}
+
+impl TypeRef<'_> {
+    pub(crate) fn type_id(&self) -> TypeId {
+        todo!("TypeRef::type_id")
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct ScalarRef<'a> {
+    scalar_id: ScalarId,
+    schema: &'a Schema,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct UnionRef<'a> {
+    scalar_id: UnionId,
+    schema: &'a Schema,
+}
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct EnumRef<'a> {
+    scalar_id: EnumId,
+    schema: &'a Schema,
 }
 
 impl TypeId {
@@ -149,6 +182,27 @@ impl TypeId {
         match self {
             TypeId::Object(id) => Some(*id),
             _ => None,
+        }
+    }
+
+    pub(crate) fn upgrade(self, schema: &Schema) -> TypeRef<'_> {
+        match self {
+            TypeId::Enum(id) => TypeRef::Enum(EnumRef {
+                scalar_id: id,
+                schema,
+            }),
+            TypeId::Interface(id) => TypeRef::Interface(InterfaceRef {
+                interface_id: id,
+                schema,
+            }),
+            TypeId::Object(id) => TypeRef::Object(ObjectRef {
+                object_id: id,
+                schema,
+            }),
+            TypeId::Scalar(id) => TypeRef::Scalar(ScalarRef {
+                scalar_id: id,
+                schema,
+            }),
         }
     }
 }
@@ -436,6 +490,10 @@ impl Schema {
         self.stored_fields.get(field_id.0).unwrap()
     }
 
+    fn get_enum(&self, enum_id: EnumId) -> &StoredEnum {
+        self.stored_enums.get(enum_id.0).unwrap()
+    }
+
     pub(crate) fn object(&self, id: ObjectId) -> ObjectRef<'_> {
         ObjectRef {
             object_id: id,
@@ -446,6 +504,13 @@ impl Schema {
     pub(crate) fn interface(&self, interface_id: InterfaceId) -> InterfaceRef<'_> {
         InterfaceRef {
             interface_id,
+            schema: self,
+        }
+    }
+
+    pub(crate) fn field(&self, field_id: StoredFieldId) -> FieldRef<'_> {
+        FieldRef {
+            field_id,
             schema: self,
         }
     }
@@ -477,6 +542,7 @@ pub(crate) struct FieldsRef<'a> {
     fields: &'a [StoredFieldId],
 }
 
+#[derive(Clone, Debug, Copy, PartialEq)]
 pub(crate) struct InterfaceRef<'a> {
     schema: SchemaRef<'a>,
     interface_id: InterfaceId,
@@ -488,6 +554,7 @@ impl<'a> InterfaceRef<'a> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct ObjectRef<'a> {
     schema: SchemaRef<'a>,
     object_id: ObjectId,
@@ -518,6 +585,7 @@ impl<'a> ObjectRef<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub(crate) struct FieldRef<'a> {
     schema: SchemaRef<'a>,
     field_id: StoredFieldId,
@@ -541,6 +609,7 @@ impl<'a> FieldRef<'a> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct InputRef<'a> {
     schema: SchemaRef<'a>,
     input_id: InputId,
@@ -552,7 +621,7 @@ impl<'a> InputRef<'a> {
     }
 
     pub(crate) fn contains_type_without_indirection(&self, type_name: &str) -> bool {
-        todo!()
+        todo!("contains type without indirection")
         // let input = self.get();
 
         // // the input type is recursive if any of its members contains it, without indirection

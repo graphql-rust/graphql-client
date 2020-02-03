@@ -1,6 +1,9 @@
 //! The responsibility of this module is to resolve and validate a query against a given schema.
 
+use crate::schema::FieldRef;
+use crate::schema::TypeRef;
 use crate::schema::{ObjectRef, Schema, StoredFieldId, TypeId};
+use std::collections::HashSet;
 
 pub(crate) fn resolve(
     schema: &Schema,
@@ -89,7 +92,14 @@ fn resolve_selection(
             let interface = schema.interface(interface_id);
             todo!("interface thing")
         }
-        _ => anyhow::bail!("Selection set on non-object, non-interface type."),
+        other => {
+            anyhow::ensure!(
+                selection_set.items.is_empty(),
+                "Selection set on non-object, non-interface type. ({:?})",
+                other
+            );
+            Ok(Vec::new())
+        }
     }
 }
 
@@ -118,11 +128,27 @@ fn resolve_operation(
     match operation {
         graphql_parser::query::OperationDefinition::Mutation(m) => {
             let on = schema.mutation_type();
-            let resolved_operation: ResolvedOperation = todo!();
+            let resolved_operation: ResolvedOperation = ResolvedOperation {
+                name: m.name.as_ref().expect("mutation without name").to_owned(),
+                operation_type: crate::operations::OperationType::Mutation,
+                variables: Vec::new(),
+                selection: resolve_object_selection(on, &m.selection_set)?,
+            };
 
             query.operations.push(resolved_operation);
         }
-        graphql_parser::query::OperationDefinition::Query(_) => todo!("resolve query"),
+        graphql_parser::query::OperationDefinition::Query(q) => {
+            let on = schema.query_type();
+
+            let resolved_operation: ResolvedOperation = ResolvedOperation {
+                name: q.name.as_ref().expect("query without name").to_owned(),
+                operation_type: crate::operations::OperationType::Query,
+                variables: Vec::new(),
+                selection: resolve_object_selection(on, &q.selection_set)?,
+            };
+
+            query.operations.push(resolved_operation);
+        }
         graphql_parser::query::OperationDefinition::Subscription(_) => {
             todo!("resolve subscription")
         }
@@ -130,6 +156,8 @@ fn resolve_operation(
             unreachable!("unnamed queries are not supported")
         }
     }
+
+    Ok(())
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -148,11 +176,45 @@ struct ResolvedFragment {
     selection: Vec<IdSelection>,
 }
 
+pub(crate) struct Operation<'a> {
+    operation_id: usize,
+    schema: &'a Schema,
+    query: &'a ResolvedQuery,
+}
+
+impl<'a> Operation<'a> {
+    fn get(&self) -> &'a ResolvedOperation {
+        self.query.operations.get(self.operation_id).unwrap()
+    }
+
+    fn name(&self) -> &'a str {
+        self.get().name()
+    }
+
+    fn selection(&self) -> impl Iterator<Item = Selection<'_>> {
+        self.get()
+            .selection
+            .iter()
+            .map(|id_selection| id_selection.upgrade(&self.schema, &self.query))
+    }
+
+    pub(crate) fn all_used_types(&self) -> HashSet<TypeId> {
+        let mut all_used_types = HashSet::new();
+
+        for selection in self.selection() {
+            selection.collect_used_types(&mut all_used_types);
+        }
+
+        all_used_types
+    }
+}
+
 #[derive(Debug)]
-pub(crate) struct ResolvedOperation {
+struct ResolvedOperation {
     name: String,
     operation_type: crate::operations::OperationType,
     variables: Vec<ResolvedVariable>,
+    selection: Vec<IdSelection>,
 }
 
 impl ResolvedOperation {
@@ -173,4 +235,85 @@ enum IdSelection {
     Field(StoredFieldId, Vec<IdSelection>),
     FragmentSpread(String),
     InlineFragment(TypeId, Vec<IdSelection>),
+}
+
+impl IdSelection {
+    fn upgrade<'a>(&self, schema: &'a Schema, query: &'a ResolvedQuery) -> Selection<'a> {
+        match self {
+            IdSelection::Field(id, selection) => Selection::Field(
+                schema.field(*id),
+                selection
+                    .iter()
+                    .map(|selection| selection.upgrade(schema, query))
+                    .collect(),
+            ),
+            IdSelection::FragmentSpread(name) => Selection::FragmentSpread(Fragment {
+                fragment_id: query
+                    .fragments
+                    .iter()
+                    .position(|frag| frag.name.as_str() == name.as_str())
+                    .unwrap(),
+                query,
+                schema,
+            }),
+            IdSelection::InlineFragment(typeid, selection) => Selection::InlineFragment(
+                typeid.upgrade(schema),
+                selection
+                    .iter()
+                    .map(|sel| sel.upgrade(schema, query))
+                    .collect(),
+            ),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum Selection<'a> {
+    Field(FieldRef<'a>, Vec<Selection<'a>>),
+    FragmentSpread(Fragment<'a>),
+    InlineFragment(TypeRef<'a>, Vec<Selection<'a>>),
+}
+
+impl Selection<'_> {
+    fn collect_used_types(&self, used_types: &mut HashSet<TypeId>) {
+        match self {
+            Selection::Field(field, selection) => {
+                used_types.insert(field.type_id());
+
+                selection
+                    .iter()
+                    .for_each(|selection| selection.collect_used_types(used_types));
+            }
+            Selection::FragmentSpread(fragment) => fragment
+                .selection()
+                .for_each(|selection| selection.collect_used_types(used_types)),
+            Selection::InlineFragment(on, selection) => {
+                used_types.insert(on.type_id());
+
+                selection
+                    .iter()
+                    .for_each(|selection| selection.collect_used_types(used_types))
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct Fragment<'a> {
+    fragment_id: usize,
+    query: &'a ResolvedQuery,
+    schema: &'a Schema,
+}
+
+impl Fragment<'_> {
+    fn get(&self) -> &ResolvedFragment {
+        self.query.fragments.get(self.fragment_id).unwrap()
+    }
+
+    pub(crate) fn selection(&self) -> impl Iterator<Item = Selection<'_>> {
+        self.get()
+            .selection
+            .iter()
+            .map(|selection| selection.upgrade(&self.schema, &self.query))
+    }
 }

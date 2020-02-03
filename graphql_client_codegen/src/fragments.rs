@@ -40,7 +40,7 @@ impl<'query> GqlFragment<'query> {
         &self,
         context: &QueryContext<'_>,
     ) -> Result<TokenStream, failure::Error> {
-        todo!()
+        todo!("fragment to rust")
         // match self.on {
         //     FragmentTarget::Object(obj) => {
         //         obj.response_for_selection(context, &self.selection, &self.name)
