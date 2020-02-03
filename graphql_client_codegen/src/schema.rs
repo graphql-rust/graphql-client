@@ -135,6 +135,16 @@ pub(crate) struct ScalarRef<'a> {
     schema: &'a Schema,
 }
 
+impl<'a> ScalarRef<'a> {
+    fn get(&self) -> &StoredScalar {
+        self.schema.get_scalar(self.scalar_id)
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.get().name
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct UnionRef<'a> {
     scalar_id: UnionId,
@@ -181,6 +191,13 @@ impl TypeId {
     fn as_object_id(&self) -> Option<ObjectId> {
         match self {
             TypeId::Object(id) => Some(*id),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_scalar_id(&self) -> Option<ScalarId> {
+        match self {
+            TypeId::Scalar(id) => Some(*id),
             _ => None,
         }
     }
@@ -494,6 +511,10 @@ impl Schema {
         self.stored_enums.get(enum_id.0).unwrap()
     }
 
+    fn get_scalar(&self, scalar_id: ScalarId) -> &StoredScalar {
+        self.stored_scalars.get(scalar_id.0).unwrap()
+    }
+
     pub(crate) fn object(&self, id: ObjectId) -> ObjectRef<'_> {
         ObjectRef {
             object_id: id,
@@ -511,6 +532,13 @@ impl Schema {
     pub(crate) fn field(&self, field_id: StoredFieldId) -> FieldRef<'_> {
         FieldRef {
             field_id,
+            schema: self,
+        }
+    }
+
+    pub(crate) fn scalar(&self, scalar_id: ScalarId) -> ScalarRef<'_> {
+        ScalarRef {
+            scalar_id,
             schema: self,
         }
     }

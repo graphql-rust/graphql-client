@@ -1,6 +1,7 @@
 //! The responsibility of this module is to resolve and validate a query against a given schema.
 
 use crate::schema::FieldRef;
+use crate::schema::ScalarRef;
 use crate::schema::TypeRef;
 use crate::schema::{ObjectRef, Schema, StoredFieldId, TypeId};
 use std::collections::HashSet;
@@ -160,7 +161,7 @@ fn resolve_operation(
     Ok(())
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct ResolvedFragmentId(usize);
 
 #[derive(Debug, Default)]
@@ -198,8 +199,16 @@ impl<'a> Operation<'a> {
             .map(|id_selection| id_selection.upgrade(&self.schema, &self.query))
     }
 
-    pub(crate) fn all_used_types(&self) -> HashSet<TypeId> {
-        let mut all_used_types = HashSet::new();
+    pub(crate) fn schema(&self) -> &'a Schema {
+        self.schema
+    }
+
+    pub(crate) fn query(&self) -> &'a ResolvedQuery {
+        self.query
+    }
+
+    pub(crate) fn all_used_types(&self) -> UsedTypes {
+        let mut all_used_types = UsedTypes::default();
 
         for selection in self.selection() {
             selection.collect_used_types(&mut all_used_types);
@@ -248,11 +257,13 @@ impl IdSelection {
                     .collect(),
             ),
             IdSelection::FragmentSpread(name) => Selection::FragmentSpread(Fragment {
-                fragment_id: query
-                    .fragments
-                    .iter()
-                    .position(|frag| frag.name.as_str() == name.as_str())
-                    .unwrap(),
+                fragment_id: ResolvedFragmentId(
+                    query
+                        .fragments
+                        .iter()
+                        .position(|frag| frag.name.as_str() == name.as_str())
+                        .unwrap(),
+                ),
                 query,
                 schema,
             }),
@@ -275,20 +286,23 @@ enum Selection<'a> {
 }
 
 impl Selection<'_> {
-    fn collect_used_types(&self, used_types: &mut HashSet<TypeId>) {
+    fn collect_used_types(&self, used_types: &mut UsedTypes) {
         match self {
             Selection::Field(field, selection) => {
-                used_types.insert(field.type_id());
+                used_types.types.insert(field.type_id());
 
                 selection
                     .iter()
                     .for_each(|selection| selection.collect_used_types(used_types));
             }
-            Selection::FragmentSpread(fragment) => fragment
-                .selection()
-                .for_each(|selection| selection.collect_used_types(used_types)),
+            Selection::FragmentSpread(fragment) => {
+                used_types.fragments.insert(fragment.fragment_id);
+                fragment
+                    .selection()
+                    .for_each(|selection| selection.collect_used_types(used_types))
+            }
             Selection::InlineFragment(on, selection) => {
-                used_types.insert(on.type_id());
+                used_types.types.insert(on.type_id());
 
                 selection
                     .iter()
@@ -300,14 +314,14 @@ impl Selection<'_> {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Fragment<'a> {
-    fragment_id: usize,
+    fragment_id: ResolvedFragmentId,
     query: &'a ResolvedQuery,
     schema: &'a Schema,
 }
 
 impl Fragment<'_> {
     fn get(&self) -> &ResolvedFragment {
-        self.query.fragments.get(self.fragment_id).unwrap()
+        self.query.fragments.get(self.fragment_id.0).unwrap()
     }
 
     pub(crate) fn selection(&self) -> impl Iterator<Item = Selection<'_>> {
@@ -315,5 +329,23 @@ impl Fragment<'_> {
             .selection
             .iter()
             .map(|selection| selection.upgrade(&self.schema, &self.query))
+    }
+}
+
+#[derive(Debug, Default)]
+pub(crate) struct UsedTypes {
+    types: HashSet<TypeId>,
+    fragments: HashSet<ResolvedFragmentId>,
+}
+
+impl UsedTypes {
+    pub(crate) fn scalars<'s, 'a: 's>(
+        &'s self,
+        schema: &'a Schema,
+    ) -> impl Iterator<Item = ScalarRef<'a>> + 's {
+        self.types
+            .iter()
+            .filter_map(TypeId::as_scalar_id)
+            .map(|scalar_id| schema.scalar(scalar_id))
     }
 }

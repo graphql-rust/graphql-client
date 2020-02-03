@@ -26,7 +26,9 @@ pub(crate) fn response_for_query(
     operation: Operation<'_>,
     options: &crate::GraphQLClientCodegenOptions,
 ) -> anyhow::Result<TokenStream> {
-    let scalar_definitions = generate_scalar_definitions(operation);
+    let all_used_types = operation.all_used_types();
+    let scalar_definitions = generate_scalar_definitions(operation, &all_used_types);
+    let enum_definitions = generate_enum_definitions(operation, &all_used_types);
     // let mut context = QueryContext::new(
     //     schema,
     //     options.deprecation_strategy(),
@@ -135,13 +137,13 @@ pub(crate) fn response_for_query(
 
         #(#scalar_definitions)*
 
-        #(#input_object_definitions)*
-
         #(#enum_definitions)*
 
         #(#fragment_definitions)*
 
         #(#definitions)*
+
+        #(#input_object_definitions)*
 
         #variables_struct
 
@@ -154,6 +156,23 @@ pub(crate) fn response_for_query(
     })
 }
 
-fn generate_scalar_definitions(operation: Operation<'_>) -> impl Iterator<Item = TokenStream> {
-    todo!()
+fn generate_scalar_definitions<'a, 'schema: 'a>(
+    operation: Operation<'schema>,
+    all_used_types: &'a crate::resolution::UsedTypes,
+) -> impl Iterator<Item = TokenStream> + 'a {
+    all_used_types.scalars(operation.schema()).map(|scalar| {
+        let ident = syn::Ident::new(scalar.name(), proc_macro2::Span::call_site());
+        quote!(type #ident = super::#ident;)
+    })
+}
+
+fn generate_enum_definitions<'a, 'schema: 'a>(
+    operation: Operation<'schema>,
+    all_used_types: &'a crate::resolution::UsedTypes,
+) -> impl Iterator<Item = TokenStream> + 'a {
+    all_used_types.enums(operation.schema()).map(|r#enum| {
+        let ident = syn::Ident::new(r#enum.name(), proc_macro2::Span::call_site());
+
+        todo!()
+    })
 }
