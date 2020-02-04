@@ -92,17 +92,6 @@ impl GraphQLClientCodegenOptions {
         self.response_derives.as_deref()
     }
 
-    /// The derive attribute for the response structs and enums.
-    pub fn response_derive_tokens(&self) -> Option<impl quote::ToTokens> {
-        self.response_derives().map(|derives| {
-            let idents = derives
-                .split(',')
-                .map(|derive| Ident::new(derive, proc_macro2::Span::call_site()));
-
-            quote::quote!(#[derive(#(#idents),*)])
-        })
-    }
-
     /// Comma-separated list of additional traits we want to derive for responses.
     pub fn set_response_derives(&mut self, response_derives: String) {
         self.response_derives = Some(response_derives);

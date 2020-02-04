@@ -25,10 +25,18 @@ pub(crate) fn response_for_query(
     let fragment_definitions: Vec<&'static str> = Vec::new();
     let definitions: Vec<&'static str> = Vec::new();
     let input_object_definitions: Vec<&'static str> = Vec::new();
+    let variable_derives = options
+        .variables_derives()
+        .map(|derives| derives.split(","))
+        .map(render_derives);
     let variables_struct = quote!(
+        #variable_derives
         pub struct Variables;
     );
-    let response_derives = quote!();
+    let response_derives = options
+        .response_derives()
+        .map(|derives| derives.split(","))
+        .map(render_derives);
     let response_data_fields: Vec<&'static str> = Vec::new();
 
     // let mut context = QueryContext::new(
@@ -143,17 +151,16 @@ pub(crate) fn response_for_query(
 
         #(#fragment_definitions)*
 
-        #(#definitions)*
-
         #(#input_object_definitions)*
 
-        #variables_struct
+        #(#definitions)*
 
         #response_derives
         pub struct ResponseData {
             #(#response_data_fields,)*
         }
 
+        #variables_struct
     };
 
     Ok(q)
@@ -181,7 +188,14 @@ fn generate_enum_definitions<'a, 'schema: 'a>(
     all_used_types: &'a crate::resolution::UsedTypes,
     options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
-    let derives = options.response_derive_tokens();
+    let derives = options
+        .response_derives()
+        .map(|derives| {
+            derives
+                .split(',')
+                .filter(|d| *d != "Serialize" && *d != "Deserialize")
+        })
+        .map(render_derives);
     let normalization = options.normalization();
 
     all_used_types.enums(operation.schema()).map(move |r#enum| {
@@ -247,4 +261,10 @@ fn generate_enum_definitions<'a, 'schema: 'a>(
                 }
             }
         }})
+}
+
+fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToTokens {
+    let idents = derives.map(|s| Ident::new(s, Span::call_site()));
+
+    quote!(#[derive(#(#idents),*)])
 }
