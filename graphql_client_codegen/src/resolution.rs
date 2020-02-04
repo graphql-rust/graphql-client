@@ -363,6 +363,7 @@ impl UsedTypes {
             .iter()
             .filter_map(TypeId::as_scalar_id)
             .map(move |scalar_id| schema.scalar(scalar_id))
+            .filter(|scalar| !crate::schema::DEFAULT_SCALARS.contains(&scalar.name()))
     }
 
     pub(crate) fn enums<'a, 'schema: 'a>(

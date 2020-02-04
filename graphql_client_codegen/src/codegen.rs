@@ -25,7 +25,9 @@ pub(crate) fn response_for_query(
     let fragment_definitions: Vec<&'static str> = Vec::new();
     let definitions: Vec<&'static str> = Vec::new();
     let input_object_definitions: Vec<&'static str> = Vec::new();
-    let variables_struct = quote!();
+    let variables_struct = quote!(
+        pub struct Variables;
+    );
     let response_derives = quote!();
     let response_data_fields: Vec<&'static str> = Vec::new();
 
@@ -123,7 +125,7 @@ pub(crate) fn response_for_query(
 
     // let response_derives = context.response_derives();
 
-    Ok(quote! {
+    let q = quote! {
         use serde::{Serialize, Deserialize};
 
         #[allow(dead_code)]
@@ -152,7 +154,9 @@ pub(crate) fn response_for_query(
             #(#response_data_fields,)*
         }
 
-    })
+    };
+
+    Ok(q)
 }
 
 fn generate_scalar_definitions<'a, 'schema: 'a>(
@@ -177,7 +181,7 @@ fn generate_enum_definitions<'a, 'schema: 'a>(
     all_used_types: &'a crate::resolution::UsedTypes,
     options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
-    let derives = options.response_derives();
+    let derives = options.response_derive_tokens();
     let normalization = options.normalization();
 
     all_used_types.enums(operation.schema()).map(move |r#enum| {

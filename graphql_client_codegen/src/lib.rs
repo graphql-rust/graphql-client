@@ -30,7 +30,6 @@ mod generated_module;
 pub mod normalization;
 // mod objects;
 mod operations;
-mod rendering;
 mod resolution;
 // mod selection;
 mod shared;
