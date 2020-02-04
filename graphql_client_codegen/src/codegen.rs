@@ -27,8 +27,10 @@ pub(crate) fn response_for_query(
     let input_object_definitions: Vec<&'static str> = Vec::new();
     let variable_derives = options
         .variables_derives()
-        .map(|derives| derives.split(","))
-        .map(render_derives);
+        .unwrap_or("Serialize")
+        .split(",");
+    let variable_derives = render_derives(variable_derives);
+
     let variables_struct = quote!(
         #variable_derives
         pub struct Variables;
