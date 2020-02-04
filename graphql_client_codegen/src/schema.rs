@@ -125,7 +125,9 @@ pub(crate) enum TypeRef<'a> {
 
 impl TypeRef<'_> {
     pub(crate) fn type_id(&self) -> TypeId {
-        todo!("TypeRef::type_id")
+        match self {
+            _ => todo!("TypeRef::type_id"),
+        }
     }
 }
 
@@ -564,7 +566,7 @@ impl Schema {
         }
     }
 
-    pub(crate) fn enum(&self, enum_id: EnumId) -> EnumRef<'_> {
+    pub(crate) fn r#enum(&self, enum_id: EnumId) -> EnumRef<'_> {
         EnumRef {
             enum_id,
             schema: self,

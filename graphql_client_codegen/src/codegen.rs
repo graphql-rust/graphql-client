@@ -11,7 +11,7 @@ pub(crate) fn select_operation<'a>(
     query
         .operations
         .iter()
-        .position(|op| normalization.operation(op.name()) == struct_name)
+        .position(|op| norm.operation(op.name()) == struct_name)
 }
 
 /// The main code generation function.
@@ -22,6 +22,13 @@ pub(crate) fn response_for_query(
     let all_used_types = operation.all_used_types();
     let scalar_definitions = generate_scalar_definitions(operation, &all_used_types);
     let enum_definitions = generate_enum_definitions(operation, &all_used_types, options);
+    let fragment_definitions: Vec<&'static str> = Vec::new();
+    let definitions: Vec<&'static str> = Vec::new();
+    let input_object_definitions: Vec<&'static str> = Vec::new();
+    let variables_struct = quote!();
+    let response_derives = quote!();
+    let response_data_fields: Vec<&'static str> = Vec::new();
+
     // let mut context = QueryContext::new(
     //     schema,
     //     options.deprecation_strategy(),
@@ -141,7 +148,6 @@ pub(crate) fn response_for_query(
         #variables_struct
 
         #response_derives
-
         pub struct ResponseData {
             #(#response_data_fields,)*
         }
@@ -169,12 +175,12 @@ fn generate_scalar_definitions<'a, 'schema: 'a>(
 fn generate_enum_definitions<'a, 'schema: 'a>(
     operation: Operation<'schema>,
     all_used_types: &'a crate::resolution::UsedTypes,
-    options: &GraphQLClientCodegenOptions,
+    options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
     let derives = options.response_derives();
     let normalization = options.normalization();
 
-    all_used_types.enums(operation.schema()).map(|r#enum| {
+    all_used_types.enums(operation.schema()).map(move |r#enum| {
         let ident = syn::Ident::new(r#enum.name(), proc_macro2::Span::call_site());
 
         let variant_names: Vec<TokenStream> = r#enum
@@ -192,7 +198,7 @@ fn generate_enum_definitions<'a, 'schema: 'a>(
             })
             .collect();
         let variant_names = &variant_names;
-        let name_ident = normalization.enum_name(format!("{}{}", ENUMS_PREFIX, r#enum.name()));
+        let name_ident = normalization.enum_name(r#enum.name());
         let name_ident = Ident::new(&name_ident, Span::call_site());
         let constructors: Vec<_> = r#enum
             .variants()

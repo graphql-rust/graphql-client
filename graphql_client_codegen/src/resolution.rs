@@ -178,6 +178,7 @@ struct ResolvedFragment {
     selection: Vec<IdSelection>,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct Operation<'a> {
     operation_id: usize,
     schema: &'a Schema,
@@ -197,7 +198,7 @@ impl<'a> Operation<'a> {
         self.get()
             .selection
             .iter()
-            .map(|id_selection| id_selection.upgrade(&self.schema, &self.query))
+            .map(move |id_selection| id_selection.upgrade(&self.schema, &self.query))
     }
 
     pub(crate) fn schema(&self) -> &'a Schema {
@@ -329,7 +330,7 @@ impl Fragment<'_> {
         self.get()
             .selection
             .iter()
-            .map(|selection| selection.upgrade(&self.schema, &self.query))
+            .map(move |selection| selection.upgrade(&self.schema, &self.query))
     }
 }
 
@@ -347,7 +348,7 @@ impl UsedTypes {
         self.types
             .iter()
             .filter_map(TypeId::as_scalar_id)
-            .map(|scalar_id| schema.scalar(scalar_id))
+            .map(move |scalar_id| schema.scalar(scalar_id))
     }
 
     pub(crate) fn enums<'a, 'schema: 'a>(
@@ -357,6 +358,6 @@ impl UsedTypes {
         self.types
             .iter()
             .filter_map(TypeId::as_enum_id)
-            .map(|enum_id| schema.r#enum(enum_id))
+            .map(move |enum_id| schema.r#enum(enum_id))
     }
 }

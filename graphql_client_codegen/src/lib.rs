@@ -33,7 +33,7 @@ mod operations;
 mod rendering;
 mod resolution;
 // mod selection;
-// mod shared;
+mod shared;
 // mod unions;
 // mod variables;
 
