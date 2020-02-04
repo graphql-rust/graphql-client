@@ -186,6 +186,18 @@ pub(crate) struct Operation<'a> {
 }
 
 impl<'a> Operation<'a> {
+    pub(crate) fn new(
+        operation_id: usize,
+        schema: &'a Schema,
+        query: &'a ResolvedQuery,
+    ) -> Operation<'a> {
+        Operation {
+            operation_id,
+            schema,
+            query,
+        }
+    }
+
     fn get(&self) -> &'a ResolvedOperation {
         self.query.operations.get(self.operation_id).unwrap()
     }
@@ -221,7 +233,7 @@ impl<'a> Operation<'a> {
 }
 
 #[derive(Debug)]
-struct ResolvedOperation {
+pub(crate) struct ResolvedOperation {
     name: String,
     operation_type: crate::operations::OperationType,
     variables: Vec<ResolvedVariable>,
@@ -281,7 +293,7 @@ impl IdSelection {
 }
 
 #[derive(Debug, Clone)]
-enum Selection<'a> {
+pub(crate) enum Selection<'a> {
     Field(FieldRef<'a>, Vec<Selection<'a>>),
     FragmentSpread(Fragment<'a>),
     InlineFragment(TypeRef<'a>, Vec<Selection<'a>>),

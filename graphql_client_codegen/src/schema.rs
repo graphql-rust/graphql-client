@@ -149,7 +149,7 @@ impl<'a> ScalarRef<'a> {
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct UnionRef<'a> {
-    scalar_id: UnionId,
+    union_id: UnionId,
     schema: &'a Schema,
 }
 #[derive(Debug, Clone, Copy)]
@@ -241,6 +241,14 @@ impl TypeId {
             }),
             TypeId::Scalar(id) => TypeRef::Scalar(ScalarRef {
                 scalar_id: id,
+                schema,
+            }),
+            TypeId::Union(id) => TypeRef::Union(UnionRef {
+                union_id: id,
+                schema,
+            }),
+            TypeId::Input(id) => TypeRef::Input(InputRef {
+                input_id: id,
                 schema,
             }),
         }

@@ -23,11 +23,7 @@ impl<'a> GeneratedModule<'a> {
         )
         .expect("TODO: handle operation not found");
 
-        let operation = Operation {
-            operation_id: root,
-            query: &self.resolved_query,
-            schema: &self.schema,
-        };
+        let operation = Operation::new(root, self.schema, self.resolved_query);
 
         Ok(crate::codegen::response_for_query(
             operation,
