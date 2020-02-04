@@ -87,7 +87,7 @@ struct StoredInterfaceField {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct StoredFieldType {
+pub(crate) struct StoredFieldType {
     id: TypeId,
     qualifiers: Vec<GraphqlTypeQualifier>,
 }
@@ -808,5 +808,37 @@ mod tests {
                 is_required: false.into(),
             })
         )
+    }
+}
+
+pub(crate) fn resolve_field_type(
+    schema: &Schema,
+    inner: &graphql_parser::schema::Type,
+) -> StoredFieldType {
+    use crate::field_type::{graphql_parser_depth, GraphqlTypeQualifier};
+    use graphql_parser::schema::Type::*;
+
+    let qualifiers_depth = graphql_parser_depth(inner);
+    let mut qualifiers = Vec::with_capacity(qualifiers_depth);
+
+    let mut inner = inner;
+
+    loop {
+        match inner {
+            ListType(new_inner) => {
+                qualifiers.push(GraphqlTypeQualifier::List);
+                inner = new_inner;
+            }
+            NonNullType(new_inner) => {
+                qualifiers.push(GraphqlTypeQualifier::Required);
+                inner = new_inner;
+            }
+            NamedType(name) => {
+                return StoredFieldType {
+                    id: schema.find_type_id(name),
+                    qualifiers,
+                }
+            }
+        }
     }
 }

@@ -1,4 +1,5 @@
 use super::{EnumId, InputId, InterfaceId, ObjectId, ScalarId, Schema, TypeId, UnionId};
+use crate::schema::resolve_field_type;
 use graphql_parser::schema::{self as parser, Definition, Document, TypeDefinition, UnionType};
 
 pub(super) fn build_schema(mut src: graphql_parser::schema::Document) -> super::Schema {
@@ -158,38 +159,6 @@ fn ingest_object(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectTy
     };
 
     schema.push_object(object);
-}
-
-fn resolve_field_type(
-    schema: &mut Schema,
-    inner: &graphql_parser::schema::Type,
-) -> super::StoredFieldType {
-    use crate::field_type::{graphql_parser_depth, GraphqlTypeQualifier};
-    use graphql_parser::schema::Type::*;
-
-    let qualifiers_depth = graphql_parser_depth(inner);
-    let mut qualifiers = Vec::with_capacity(qualifiers_depth);
-
-    let mut inner = inner;
-
-    loop {
-        match inner {
-            ListType(new_inner) => {
-                qualifiers.push(GraphqlTypeQualifier::List);
-                inner = new_inner;
-            }
-            NonNullType(new_inner) => {
-                qualifiers.push(GraphqlTypeQualifier::Required);
-                inner = new_inner;
-            }
-            NamedType(name) => {
-                return super::StoredFieldType {
-                    id: schema.find_type_id(name),
-                    qualifiers,
-                }
-            }
-        }
-    }
 }
 
 fn ingest_scalar(schema: &mut Schema, scalar: &mut graphql_parser::schema::ScalarType) {

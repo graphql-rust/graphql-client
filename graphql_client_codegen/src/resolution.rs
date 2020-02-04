@@ -1,8 +1,10 @@
 //! The responsibility of this module is to resolve and validate a query against a given schema.
 
+use crate::schema::resolve_field_type;
 use crate::schema::EnumRef;
 use crate::schema::FieldRef;
 use crate::schema::ScalarRef;
+use crate::schema::StoredFieldType;
 use crate::schema::TypeRef;
 use crate::schema::{ObjectRef, Schema, StoredFieldId, TypeId};
 use std::collections::HashSet;
@@ -133,7 +135,7 @@ fn resolve_operation(
             let resolved_operation: ResolvedOperation = ResolvedOperation {
                 name: m.name.as_ref().expect("mutation without name").to_owned(),
                 operation_type: crate::operations::OperationType::Mutation,
-                variables: Vec::new(),
+                variables: resolve_variables(&m.variable_definitions, schema)?,
                 selection: resolve_object_selection(on, &m.selection_set)?,
             };
 
@@ -145,7 +147,7 @@ fn resolve_operation(
             let resolved_operation: ResolvedOperation = ResolvedOperation {
                 name: q.name.as_ref().expect("query without name").to_owned(),
                 operation_type: crate::operations::OperationType::Query,
-                variables: Vec::new(),
+                variables: resolve_variables(&q.variable_definitions, schema)?,
                 selection: resolve_object_selection(on, &q.selection_set)?,
             };
 
@@ -250,7 +252,7 @@ impl ResolvedOperation {
 struct ResolvedVariable {
     name: String,
     default: Option<graphql_parser::query::Value>,
-    r#type: crate::schema::StoredInputFieldType,
+    r#type: StoredFieldType,
 }
 
 #[derive(Debug, Clone)]
@@ -372,4 +374,20 @@ impl UsedTypes {
             .filter_map(TypeId::as_enum_id)
             .map(move |enum_id| schema.r#enum(enum_id))
     }
+}
+
+fn resolve_variables(
+    variables: &[graphql_parser::query::VariableDefinition],
+    schema: &Schema,
+) -> Result<Vec<ResolvedVariable>, anyhow::Error> {
+    variables
+        .iter()
+        .map(|var| {
+            Ok(ResolvedVariable {
+                name: var.name.clone(),
+                default: var.default_value.clone(),
+                r#type: resolve_field_type(schema, &var.var_type),
+            })
+        })
+        .collect()
 }
