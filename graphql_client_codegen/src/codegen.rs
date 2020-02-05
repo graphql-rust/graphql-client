@@ -229,7 +229,12 @@ fn generate_enum_definitions<'a, 'schema: 'a>(
     all_used_types: &'a crate::resolution::UsedTypes,
     options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
-    let derives = render_derives(options.additional_response_derives());
+    let derives = render_derives(
+        options
+            .additional_response_derives()
+            .chain(options.variables_derives())
+            .filter(|d| !&["Serialize", "Deserialize"].contains(d)),
+    );
     let normalization = options.normalization();
 
     all_used_types.enums(operation.schema()).map(move |r#enum| {
