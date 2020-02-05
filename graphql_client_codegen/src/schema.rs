@@ -88,8 +88,8 @@ struct StoredInterfaceField {
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StoredFieldType {
-    id: TypeId,
-    qualifiers: Vec<GraphqlTypeQualifier>,
+    pub(crate) id: TypeId,
+    pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -123,10 +123,21 @@ pub(crate) enum TypeRef<'a> {
     Input(InputRef<'a>),
 }
 
-impl TypeRef<'_> {
+impl<'a> TypeRef<'a> {
     pub(crate) fn type_id(&self) -> TypeId {
         match self {
             _ => todo!("TypeRef::type_id"),
+        }
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        match self {
+            TypeRef::Object(obj) => obj.name(),
+            TypeRef::Scalar(s) => s.name(),
+            TypeRef::Interface(s) => s.name(),
+            TypeRef::Union(s) => s.name(),
+            TypeRef::Enum(s) => s.name(),
+            TypeRef::Input(s) => s.name(),
         }
     }
 }
@@ -138,11 +149,11 @@ pub(crate) struct ScalarRef<'a> {
 }
 
 impl<'a> ScalarRef<'a> {
-    fn get(&self) -> &StoredScalar {
+    fn get(&self) -> &'a StoredScalar {
         self.schema.get_scalar(self.scalar_id)
     }
 
-    pub(crate) fn name(&self) -> &str {
+    pub(crate) fn name(&self) -> &'a str {
         &self.get().name
     }
 }
@@ -152,6 +163,17 @@ pub(crate) struct UnionRef<'a> {
     union_id: UnionId,
     schema: &'a Schema,
 }
+
+impl<'a> UnionRef<'a> {
+    fn get(&self) -> &'a StoredUnion {
+        self.schema.stored_unions.get(self.union_id.0).unwrap()
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct EnumRef<'a> {
     enum_id: EnumId,
@@ -264,7 +286,7 @@ struct StoredEnum {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StoredInputFieldType {
     id: TypeId,
-    qualifiers: Vec<GraphqlTypeQualifier>,
+    pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
 impl StoredInputFieldType {
@@ -618,6 +640,10 @@ impl<'a> InterfaceRef<'a> {
     fn get(&self) -> &'a StoredInterface {
         self.schema.get_interface(self.interface_id)
     }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -686,8 +712,12 @@ pub(crate) struct InputRef<'a> {
 }
 
 impl<'a> InputRef<'a> {
-    fn get(&self) -> &StoredInputType {
+    fn get(&self) -> &'a StoredInputType {
         self.schema.get_stored_input(self.input_id)
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
     }
 
     pub(crate) fn contains_type_without_indirection(&self, type_name: &str) -> bool {

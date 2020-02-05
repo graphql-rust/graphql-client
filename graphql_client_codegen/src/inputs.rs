@@ -17,13 +17,6 @@ pub(crate) fn input_to_rust(
     todo!()
 }
 
-/// Represents an input object type from a GraphQL schema
-#[derive(Debug, Clone, PartialEq)]
-pub struct InputRef<'a> {
-    schema: SchemaRef<'a>,
-    input_id: InputId,
-}
-
 // impl InputRef<'_> {
 //     // pub(crate) fn require(&self, schema: &Schema) {
 //     //     if self.is_required.get() {
