@@ -1,4 +1,5 @@
 use crate::{normalization::Normalization, resolution::*, GraphQLClientCodegenOptions};
+use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
@@ -179,10 +180,7 @@ fn generate_variables_struct(
         );
     }
 
-    let variable_fields = operation.variables().map(|v| {
-        let name = v.name_ident();
-        quote!(#name: ())
-    });
+    let variable_fields = operation.variables().map(generate_variable_struct_field);
 
     let variables_struct = quote!(
         #variable_derives
@@ -192,6 +190,17 @@ fn generate_variables_struct(
     );
 
     variables_struct.into()
+}
+
+fn generate_variable_struct_field(variable: Variable<'_>) -> TokenStream {
+    let snake_case_name = variable.name().to_snake_case();
+    let ident = Ident::new(
+        &crate::shared::keyword_replace(&snake_case_name),
+        Span::call_site(),
+    );
+    let annotation = crate::shared::field_rename_annotation(variable.name(), &snake_case_name);
+
+    quote::quote!(#annotation #ident : ())
 }
 
 fn generate_scalar_definitions<'a, 'schema: 'a>(

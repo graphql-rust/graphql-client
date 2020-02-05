@@ -1,16 +1,12 @@
 //! The responsibility of this module is to resolve and validate a query against a given schema.
 
-use crate::schema::resolve_field_type;
-use crate::schema::EnumRef;
-use crate::schema::FieldRef;
-use crate::schema::ScalarRef;
-use crate::schema::StoredFieldType;
-use crate::schema::TypeRef;
 use crate::{
     constants::TYPENAME_FIELD,
-    schema::{ObjectRef, Schema, StoredFieldId, TypeId},
+    schema::{
+        resolve_field_type, EnumRef, FieldRef, ObjectRef, ScalarRef, Schema, StoredFieldId,
+        StoredFieldType, TypeId, TypeRef,
+    },
 };
-use proc_macro2::{Ident, Span};
 use std::collections::HashSet;
 
 pub(crate) fn resolve(
@@ -319,10 +315,6 @@ impl<'a> Variable<'a> {
 
     pub(crate) fn name(&self) -> &'a str {
         &self.get().name
-    }
-
-    pub(crate) fn name_ident(&self) -> Ident {
-        Ident::new(self.name(), Span::call_site())
     }
 }
 
