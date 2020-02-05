@@ -6,7 +6,11 @@ use crate::schema::FieldRef;
 use crate::schema::ScalarRef;
 use crate::schema::StoredFieldType;
 use crate::schema::TypeRef;
-use crate::schema::{ObjectRef, Schema, StoredFieldId, TypeId};
+use crate::{
+    constants::TYPENAME_FIELD,
+    schema::{ObjectRef, Schema, StoredFieldId, TypeId},
+};
+use proc_macro2::{Ident, Span};
 use std::collections::HashSet;
 
 pub(crate) fn resolve(
@@ -57,6 +61,10 @@ fn resolve_object_selection(
         .map(|item| -> anyhow::Result<_> {
             match item {
                 graphql_parser::query::Selection::Field(field) => {
+                    if field.name == TYPENAME_FIELD {
+                        return Ok(IdSelection::Typename);
+                    }
+
                     let field_ref = object.get_field_by_name(&field.name).ok_or_else(|| {
                         anyhow::anyhow!("No field named {} on {}", &field.name, object.name())
                     })?;
@@ -135,7 +143,11 @@ fn resolve_operation(
             let resolved_operation: ResolvedOperation = ResolvedOperation {
                 name: m.name.as_ref().expect("mutation without name").to_owned(),
                 operation_type: crate::operations::OperationType::Mutation,
-                variables: resolve_variables(&m.variable_definitions, schema)?,
+                variables: resolve_variables(
+                    &m.variable_definitions,
+                    schema,
+                    query.operations.len(),
+                )?,
                 selection: resolve_object_selection(on, &m.selection_set)?,
             };
 
@@ -147,7 +159,11 @@ fn resolve_operation(
             let resolved_operation: ResolvedOperation = ResolvedOperation {
                 name: q.name.as_ref().expect("query without name").to_owned(),
                 operation_type: crate::operations::OperationType::Query,
-                variables: resolve_variables(&q.variable_definitions, schema)?,
+                variables: resolve_variables(
+                    &q.variable_definitions,
+                    schema,
+                    query.operations.len(),
+                )?,
                 selection: resolve_object_selection(on, &q.selection_set)?,
             };
 
@@ -162,7 +178,11 @@ fn resolve_operation(
                     .expect("subscription without name")
                     .to_owned(),
                 operation_type: crate::operations::OperationType::Subscription,
-                variables: resolve_variables(&s.variable_definitions, schema)?,
+                variables: resolve_variables(
+                    &s.variable_definitions,
+                    schema,
+                    query.operations.len(),
+                )?,
                 selection: resolve_object_selection(on, &s.selection_set)?,
             };
 
@@ -244,6 +264,21 @@ impl<'a> Operation<'a> {
 
         all_used_types
     }
+
+    pub(crate) fn has_no_variables(&self) -> bool {
+        self.get().variables.is_empty()
+    }
+
+    pub(crate) fn variables<'b>(&'b self) -> impl Iterator<Item = Variable<'a>> + 'b {
+        self.get()
+            .variables
+            .iter()
+            .enumerate()
+            .map(move |(idx, _)| Variable {
+                variable_id: idx,
+                operation: *self,
+            })
+    }
 }
 
 #[derive(Debug)]
@@ -262,13 +297,38 @@ impl ResolvedOperation {
 
 #[derive(Debug)]
 struct ResolvedVariable {
+    operation_id: usize,
     name: String,
     default: Option<graphql_parser::query::Value>,
     r#type: StoredFieldType,
 }
 
+pub(crate) struct Variable<'a> {
+    operation: Operation<'a>,
+    variable_id: usize,
+}
+
+impl<'a> Variable<'a> {
+    fn get(&self) -> &'a ResolvedVariable {
+        self.operation
+            .get()
+            .variables
+            .get(self.variable_id)
+            .unwrap()
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+
+    pub(crate) fn name_ident(&self) -> Ident {
+        Ident::new(self.name(), Span::call_site())
+    }
+}
+
 #[derive(Debug, Clone)]
 enum IdSelection {
+    Typename,
     Field(StoredFieldId, Vec<IdSelection>),
     FragmentSpread(String),
     InlineFragment(TypeId, Vec<IdSelection>),
@@ -277,6 +337,7 @@ enum IdSelection {
 impl IdSelection {
     fn upgrade<'a>(&self, schema: &'a Schema, query: &'a ResolvedQuery) -> Selection<'a> {
         match self {
+            IdSelection::Typename => Selection::Typename,
             IdSelection::Field(id, selection) => Selection::Field(
                 schema.field(*id),
                 selection
@@ -308,6 +369,7 @@ impl IdSelection {
 
 #[derive(Debug, Clone)]
 pub(crate) enum Selection<'a> {
+    Typename,
     Field(FieldRef<'a>, Vec<Selection<'a>>),
     FragmentSpread(Fragment<'a>),
     InlineFragment(TypeRef<'a>, Vec<Selection<'a>>),
@@ -316,6 +378,7 @@ pub(crate) enum Selection<'a> {
 impl Selection<'_> {
     fn collect_used_types(&self, used_types: &mut UsedTypes) {
         match self {
+            Selection::Typename => (),
             Selection::Field(field, selection) => {
                 used_types.types.insert(field.type_id());
 
@@ -392,11 +455,13 @@ impl UsedTypes {
 fn resolve_variables(
     variables: &[graphql_parser::query::VariableDefinition],
     schema: &Schema,
+    operation_id: usize,
 ) -> Result<Vec<ResolvedVariable>, anyhow::Error> {
     variables
         .iter()
         .map(|var| {
             Ok(ResolvedVariable {
+                operation_id,
                 name: var.name.clone(),
                 default: var.default_value.clone(),
                 r#type: resolve_field_type(schema, &var.var_type),

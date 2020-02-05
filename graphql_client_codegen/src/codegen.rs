@@ -29,16 +29,10 @@ pub(crate) fn response_for_query(
         .variables_derives()
         .unwrap_or("Serialize")
         .split(",");
-    let variable_derives = render_derives(variable_derives);
 
-    let variables_struct = quote!(
-        #variable_derives
-        pub struct Variables;
-    );
-    let response_derives = options
-        .response_derives()
-        .map(|derives| derives.split(","))
-        .map(render_derives);
+    let variables_struct = generate_variables_struct(operation, options);
+
+    let response_derives = render_derives(options.all_response_derives());
     let response_data_fields: Vec<&'static str> = Vec::new();
 
     // let mut context = QueryContext::new(
@@ -168,6 +162,38 @@ pub(crate) fn response_for_query(
     Ok(q)
 }
 
+fn generate_variables_struct(
+    operation: Operation<'_>,
+    options: &GraphQLClientCodegenOptions,
+) -> TokenStream {
+    let variable_derives = options
+        .variables_derives()
+        .unwrap_or("Serialize")
+        .split(",");
+    let variable_derives = render_derives(variable_derives);
+
+    if operation.has_no_variables() {
+        return quote!(
+            #variable_derives
+            pub struct Variables;
+        );
+    }
+
+    let variable_fields = operation.variables().map(|v| {
+        let name = v.name_ident();
+        quote!(#name: ())
+    });
+
+    let variables_struct = quote!(
+        #variable_derives
+        pub struct Variables {
+            #(#variable_fields,)*
+        }
+    );
+
+    variables_struct.into()
+}
+
 fn generate_scalar_definitions<'a, 'schema: 'a>(
     operation: Operation<'schema>,
     all_used_types: &'a crate::resolution::UsedTypes,
@@ -190,19 +216,10 @@ fn generate_enum_definitions<'a, 'schema: 'a>(
     all_used_types: &'a crate::resolution::UsedTypes,
     options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
-    let derives = options
-        .response_derives()
-        .map(|derives| {
-            derives
-                .split(',')
-                .filter(|d| *d != "Serialize" && *d != "Deserialize")
-        })
-        .map(render_derives);
+    let derives = render_derives(options.additional_response_derives());
     let normalization = options.normalization();
 
     all_used_types.enums(operation.schema()).map(move |r#enum| {
-        let ident = syn::Ident::new(r#enum.name(), proc_macro2::Span::call_site());
-
         let variant_names: Vec<TokenStream> = r#enum
             .variants()
             .iter()
