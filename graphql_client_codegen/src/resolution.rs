@@ -1,10 +1,11 @@
-//! The responsibility of this module is to resolve and validate a query against a given schema.
+//! The responsibility of this module is to resolve and validate a query
+//! against a given schema.
 
 use crate::{
     constants::TYPENAME_FIELD,
     schema::{
-        resolve_field_type, EnumRef, FieldRef, ObjectRef, ScalarRef, Schema, StoredFieldId,
-        StoredFieldType, TypeId, TypeRef,
+        resolve_field_type, EnumRef, FieldRef, InterfaceRef, ObjectId, ObjectRef, ScalarRef,
+        Schema, StoredFieldId, StoredFieldType, TypeId, TypeRef, UnionRef,
     },
 };
 use std::collections::HashSet;
@@ -137,6 +138,7 @@ fn resolve_operation(
         graphql_parser::query::OperationDefinition::Mutation(m) => {
             let on = schema.mutation_type();
             let resolved_operation: ResolvedOperation = ResolvedOperation {
+                object_id: on.id(),
                 name: m.name.as_ref().expect("mutation without name").to_owned(),
                 operation_type: crate::operations::OperationType::Mutation,
                 variables: resolve_variables(
@@ -160,6 +162,7 @@ fn resolve_operation(
                     schema,
                     query.operations.len(),
                 )?,
+                object_id: on.id(),
                 selection: resolve_object_selection(on, &q.selection_set)?,
             };
 
@@ -179,6 +182,7 @@ fn resolve_operation(
                     schema,
                     query.operations.len(),
                 )?,
+                object_id: on.id(),
                 selection: resolve_object_selection(on, &s.selection_set)?,
             };
 
@@ -237,10 +241,11 @@ impl<'a> Operation<'a> {
     }
 
     fn selection(&self) -> impl Iterator<Item = Selection<'_>> {
-        self.get()
+        let operation = self.get();
+        operation
             .selection
             .iter()
-            .map(move |id_selection| id_selection.upgrade(&self.schema, &self.query))
+            .map(move |id_selection| id_selection.upgrade(&self.schema, &self.query, None))
     }
 
     pub(crate) fn schema(&self) -> &'a Schema {
@@ -283,6 +288,7 @@ pub(crate) struct ResolvedOperation {
     operation_type: crate::operations::OperationType,
     variables: Vec<ResolvedVariable>,
     selection: Vec<IdSelection>,
+    object_id: ObjectId,
 }
 
 impl ResolvedOperation {
@@ -327,17 +333,25 @@ enum IdSelection {
 }
 
 impl IdSelection {
-    fn upgrade<'a>(&self, schema: &'a Schema, query: &'a ResolvedQuery) -> Selection<'a> {
-        match self {
-            IdSelection::Typename => Selection::Typename,
-            IdSelection::Field(id, selection) => Selection::Field(
-                schema.field(*id),
-                selection
-                    .iter()
-                    .map(|selection| selection.upgrade(schema, query))
-                    .collect(),
-            ),
-            IdSelection::FragmentSpread(name) => Selection::FragmentSpread(Fragment {
+    fn upgrade<'a>(
+        &self,
+        schema: &'a Schema,
+        query: &'a ResolvedQuery,
+        parent: Option<FieldRef<'a>>,
+    ) -> Selection<'a> {
+        let selection_set = match self {
+            IdSelection::Typename => SelectionSet::Typename,
+            IdSelection::Field(id, selection) => {
+                let field = schema.field(*id);
+                SelectionSet::Field(
+                    field,
+                    selection
+                        .iter()
+                        .map(|selection| selection.upgrade(schema, query, Some(field)))
+                        .collect(),
+                )
+            }
+            IdSelection::FragmentSpread(name) => SelectionSet::FragmentSpread(Fragment {
                 fragment_id: ResolvedFragmentId(
                     query
                         .fragments
@@ -348,19 +362,30 @@ impl IdSelection {
                 query,
                 schema,
             }),
-            IdSelection::InlineFragment(typeid, selection) => Selection::InlineFragment(
+            IdSelection::InlineFragment(typeid, selection) => SelectionSet::InlineFragment(
                 typeid.upgrade(schema),
                 selection
                     .iter()
-                    .map(|sel| sel.upgrade(schema, query))
+                    .map(|sel| sel.upgrade(schema, query, parent))
                     .collect(),
             ),
+        };
+
+        Selection {
+            selection_set,
+            parent,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub(crate) enum Selection<'a> {
+pub(crate) struct Selection<'a> {
+    parent: Option<FieldRef<'a>>,
+    selection_set: SelectionSet<'a>,
+}
+
+#[derive(Debug, Clone)]
+enum SelectionSet<'a> {
     Typename,
     Field(FieldRef<'a>, Vec<Selection<'a>>),
     FragmentSpread(Fragment<'a>),
@@ -369,22 +394,22 @@ pub(crate) enum Selection<'a> {
 
 impl Selection<'_> {
     fn collect_used_types(&self, used_types: &mut UsedTypes) {
-        match self {
-            Selection::Typename => (),
-            Selection::Field(field, selection) => {
+        match &self.selection_set {
+            SelectionSet::Typename => (),
+            SelectionSet::Field(field, selection) => {
                 used_types.types.insert(field.type_id());
 
                 selection
                     .iter()
                     .for_each(|selection| selection.collect_used_types(used_types));
             }
-            Selection::FragmentSpread(fragment) => {
+            SelectionSet::FragmentSpread(fragment) => {
                 used_types.fragments.insert(fragment.fragment_id);
                 fragment
                     .selection()
                     .for_each(|selection| selection.collect_used_types(used_types))
             }
-            Selection::InlineFragment(on, selection) => {
+            SelectionSet::InlineFragment(on, selection) => {
                 used_types.types.insert(on.type_id());
 
                 selection
@@ -411,7 +436,7 @@ impl Fragment<'_> {
         self.get()
             .selection
             .iter()
-            .map(move |selection| selection.upgrade(&self.schema, &self.query))
+            .map(move |selection| selection.upgrade(&self.schema, &self.query, None))
     }
 }
 

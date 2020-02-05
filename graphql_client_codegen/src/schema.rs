@@ -649,9 +649,13 @@ impl<'a> ObjectRef<'a> {
     pub(crate) fn schema(&self) -> SchemaRef<'a> {
         self.schema
     }
+
+    pub(crate) fn id(&self) -> ObjectId {
+        self.object_id
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct FieldRef<'a> {
     schema: SchemaRef<'a>,
     field_id: StoredFieldId,
