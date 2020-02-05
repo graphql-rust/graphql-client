@@ -87,9 +87,20 @@ impl GraphQLClientCodegenOptions {
         self.variables_derives = Some(variables_derives);
     }
 
-    /// Comma-separated list of additional traits we want to derive for responses.
-    pub fn response_derives(&self) -> Option<&str> {
-        self.response_derives.as_deref()
+    /// Traits we want to derive for responses.
+    pub fn all_response_derives(&self) -> impl Iterator<Item = &str> {
+        let base_derives = std::iter::once("Deserialize");
+
+        base_derives.chain(self.additional_response_derives())
+    }
+
+    /// Additional traits we want to derive for responses.
+    pub fn additional_response_derives(&self) -> impl Iterator<Item = &str> {
+        self.response_derives
+            .as_ref()
+            .map(String::as_str)
+            .unwrap_or("")
+            .split(",")
     }
 
     /// Comma-separated list of additional traits we want to derive for responses.
