@@ -1,7 +1,6 @@
-use failure::*;
+use anyhow::*;
 use graphql_client_codegen::deprecation::DeprecationStrategy;
 use graphql_client_codegen::normalization::Normalization;
-use syn;
 
 const DEPRECATION_ERROR: &str = "deprecated must be one of 'allow', 'deny', or 'warn'";
 const NORMALIZATION_ERROR: &str = "normalization must be one of 'none' or 'rust'";
@@ -12,7 +11,7 @@ fn path_to_match() -> syn::Path {
 }
 
 /// Extract an configuration parameter specified in the `graphql` attribute.
-pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failure::Error> {
+pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, anyhow::Error> {
     let attributes = &ast.attrs;
     let graphql_path = path_to_match();
     let attribute = attributes
@@ -40,7 +39,7 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, failur
 /// Get the deprecation from a struct attribute in the derive case.
 pub fn extract_deprecation_strategy(
     ast: &syn::DeriveInput,
-) -> Result<DeprecationStrategy, failure::Error> {
+) -> Result<DeprecationStrategy, anyhow::Error> {
     extract_attr(&ast, "deprecated")?
         .to_lowercase()
         .as_str()
@@ -49,7 +48,7 @@ pub fn extract_deprecation_strategy(
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
-pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, failure::Error> {
+pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, anyhow::Error> {
     extract_attr(&ast, "normalization")?
         .to_lowercase()
         .as_str()

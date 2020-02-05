@@ -1,4 +1,4 @@
-use failure::*;
+use anyhow::*;
 use graphql_client_codegen::{
     generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
 };
@@ -19,7 +19,7 @@ pub(crate) struct CliCodegenParams {
     pub output_directory: Option<PathBuf>,
 }
 
-pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Error> {
+pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), anyhow::Error> {
     let CliCodegenParams {
         variables_derives,
         response_derives,

@@ -2,10 +2,10 @@
 //! [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen).
 
 use crate::*;
-use failure::*;
 use futures::{Future, IntoFuture};
 use log::*;
 use std::collections::HashMap;
+use thiserror::*;
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
 
@@ -24,33 +24,33 @@ pub struct Client {
 /// All the ways a request can go wrong.
 ///
 /// not exhaustive
-#[derive(Debug, Fail, PartialEq)]
+#[derive(Debug, Error, PartialEq)]
 pub enum ClientError {
     /// The body couldn't be built
-    #[fail(display = "Request body is not a valid string")]
+    #[error("Request body is not a valid string")]
     Body,
     /// An error caused by window.fetch
-    #[fail(display = "Network error")]
+    #[error("Network error")]
     Network(String),
     /// Error in a dynamic JS cast that should have worked
-    #[fail(display = "JS casting error")]
+    #[error("JS casting error")]
     Cast,
     /// No window object could be retrieved
-    #[fail(
-        display = "No Window object available - the client works only in a browser (non-worker) context"
+    #[error(
+        "No Window object available - the client works only in a browser (non-worker) context"
     )]
     NoWindow,
     /// Response shape does not match the generated code
-    #[fail(display = "Response shape error")]
+    #[error("Response shape error")]
     ResponseShape,
     /// Response could not be converted to text
-    #[fail(display = "Response conversion to text failed (Response.text threw)")]
+    #[error("Response conversion to text errored (Response.text threw)")]
     ResponseText,
     /// Exception thrown when building the request
-    #[fail(display = "Error building the request")]
+    #[error("Error building the request")]
     RequestError,
     /// Other JS exception
-    #[fail(display = "Unexpected JS exception")]
+    #[error("Unexpected JS exception")]
     JsException,
 }
 

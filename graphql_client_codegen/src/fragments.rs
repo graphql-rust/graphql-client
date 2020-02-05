@@ -36,10 +36,7 @@ pub(crate) struct GqlFragment<'query> {
 
 impl<'query> GqlFragment<'query> {
     /// Generate all the Rust code required by the fragment's object selection.
-    pub(crate) fn to_rust(
-        &self,
-        context: &QueryContext<'_>,
-    ) -> Result<TokenStream, failure::Error> {
+    pub(crate) fn to_rust(&self, context: &QueryContext<'_>) -> Result<TokenStream, anyhow::Error> {
         todo!("fragment to rust")
         // match self.on {
         //     FragmentTarget::Object(obj) => {

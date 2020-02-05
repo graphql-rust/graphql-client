@@ -39,7 +39,7 @@ doc_comment::doctest!("../../README.md");
 /// )]
 /// struct StarWarsQuery;
 ///
-/// fn main() -> Result<(), failure::Error> {
+/// fn main() -> Result<(), anyhow::Error> {
 ///     use graphql_client::GraphQLQuery;
 ///
 ///     let variables = star_wars_query::Variables {
@@ -130,7 +130,7 @@ impl Display for PathFragment {
 /// #     something: i32
 /// # }
 /// #
-/// # fn main() -> Result<(), failure::Error> {
+/// # fn main() -> Result<(), anyhow::Error> {
 /// use graphql_client::*;
 ///
 /// let body: Response<ResponseData> = serde_json::from_value(json!({
@@ -247,7 +247,7 @@ impl Display for Error {
 /// #     dogs: Vec<Dog>,
 /// # }
 /// #
-/// # fn main() -> Result<(), failure::Error> {
+/// # fn main() -> Result<(), anyhow::Error> {
 /// use graphql_client::Response;
 ///
 /// let body: Response<ResponseData> = serde_json::from_value(json!({

@@ -3,7 +3,7 @@ extern crate proc_macro;
 /// Derive-related code. This will be moved into graphql_query_derive.
 mod attributes;
 
-use failure::ResultExt;
+use anyhow::Context;
 use graphql_client_codegen::{
     generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
 };
@@ -15,21 +15,13 @@ use proc_macro2::TokenStream;
 pub fn derive_graphql_query(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     match graphql_query_derive_inner(input) {
         Ok(ts) => ts,
-        Err(err) => panic!(
-            "{}",
-            err.iter_chain()
-                .fold(String::new(), |mut acc, item| {
-                    acc.push_str(&format!("{}\n", item));
-                    acc
-                })
-                .trim_end_matches('\n')
-        ),
+        Err(err) => panic!("{:?}", err,),
     }
 }
 
 fn graphql_query_derive_inner(
     input: proc_macro::TokenStream,
-) -> Result<proc_macro::TokenStream, failure::Error> {
+) -> Result<proc_macro::TokenStream, anyhow::Error> {
     let input = TokenStream::from(input);
     let ast = syn::parse2(input).expect("derive input parsing");
     // .context("Derive input parsing.")?;
@@ -44,7 +36,7 @@ fn graphql_query_derive_inner(
 
 fn build_query_and_schema_path(
     input: &syn::DeriveInput,
-) -> Result<(PathBuf, PathBuf), failure::Error> {
+) -> Result<(PathBuf, PathBuf), anyhow::Error> {
     let cargo_manifest_dir = ::std::env::var("CARGO_MANIFEST_DIR")
         .context("Checking that the CARGO_MANIFEST_DIR env variable is defined.")?;
 
@@ -61,7 +53,7 @@ fn build_query_and_schema_path(
 fn build_graphql_client_derive_options(
     input: &syn::DeriveInput,
     query_path: PathBuf,
-) -> Result<GraphQLClientCodegenOptions, failure::Error> {
+) -> Result<GraphQLClientCodegenOptions, anyhow::Error> {
     let variables_derives = attributes::extract_attr(input, "variables_derives").ok();
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
 

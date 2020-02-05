@@ -5,7 +5,7 @@ authors = ["Mark Catley <mark@catley.net.nz>"]
 edition = "2018"
 
 [dev-dependencies]
-failure = "*"
+anyhow = "1.0"
 graphql_client = { path = "../../graphql_client" }
 serde = "1.0"
 serde_derive = "1.0"

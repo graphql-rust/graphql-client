@@ -68,7 +68,7 @@ A typed GraphQL client library for Rust.
   )]
   pub struct UnionQuery;
 
-  fn perform_my_query(variables: union_query::Variables) -> Result<(), failure::Error> {
+  fn perform_my_query(variables: union_query::Variables) -> Result<(), anyhow::Error> {
 
       // this is the important line
       let request_body = UnionQuery::build_query(variables);

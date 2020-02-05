@@ -5,7 +5,7 @@ authors = ["Tom Houlé <tom@tomhoule.com>"]
 edition = "2018"
 
 [dev-dependencies]
-failure = "*"
+anyhow = "1.0"
 graphql_client = { path = "../../graphql_client" }
 serde = "^1.0"
 reqwest = "^0.9"

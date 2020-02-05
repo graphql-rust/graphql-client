@@ -341,7 +341,7 @@ impl Schema {
     // pub(crate) fn ingest_interface_implementations(
     //     &mut self,
     //     impls: BTreeMap<&'schema str, Vec<&'schema str>>,
-    // ) -> Result<(), failure::Error> {
+    // ) -> Result<(), anyhow::Error> {
     //     impls
     //         .into_iter()
     //         .map(|(iface_name, implementors)| {
@@ -743,71 +743,6 @@ impl From<ParsedSchema> for Schema {
             ParsedSchema::GraphQLParser(s) => s.into(),
             ParsedSchema::Json(s) => s.into(),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::constants::*;
-
-    #[test]
-    fn build_schema_works() {
-        let gql_schema = include_str!("tests/star_wars_schema.graphql");
-        let gql_schema = graphql_parser::parse_schema(gql_schema).unwrap();
-        let built = Schema::from(&gql_schema);
-        assert_eq!(
-            built.objects.get("Droid"),
-            Some(&GqlObject {
-                description: None,
-                name: "Droid",
-                fields: vec![
-                    GqlObjectField {
-                        description: None,
-                        name: TYPENAME_FIELD,
-                        type_: FieldType::new(string_type()),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "id",
-                        type_: FieldType::new("ID").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "name",
-                        type_: FieldType::new("String").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "friends",
-                        type_: FieldType::new("Character").list(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "friendsConnection",
-                        type_: FieldType::new("FriendsConnection").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "appearsIn",
-                        type_: FieldType::new("Episode").list().nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "primaryFunction",
-                        type_: FieldType::new("String"),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                ],
-                is_required: false.into(),
-            })
-        )
     }
 }
 
