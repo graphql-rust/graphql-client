@@ -325,6 +325,12 @@ impl<'a> Variable<'a> {
 }
 
 #[derive(Debug, Clone)]
+enum SelectionParent<'a> {
+    Field(FieldRef<'a>),
+    InlineFragment(TypeRef<'a>),
+}
+
+#[derive(Debug, Clone)]
 enum IdSelection {
     Typename,
     Field(StoredFieldId, Vec<IdSelection>),
@@ -337,17 +343,23 @@ impl IdSelection {
         &self,
         schema: &'a Schema,
         query: &'a ResolvedQuery,
-        parent: Option<FieldRef<'a>>,
+        parent: Option<SelectionParent<'a>>,
     ) -> Selection<'a> {
         let selection_set = match self {
             IdSelection::Typename => SelectionSet::Typename,
             IdSelection::Field(id, selection) => {
                 let field = schema.field(*id);
                 SelectionSet::Field(
-                    field,
+                    field.clone(),
                     selection
                         .iter()
-                        .map(|selection| selection.upgrade(schema, query, Some(field)))
+                        .map(move |selection| {
+                            selection.upgrade(
+                                schema,
+                                query,
+                                Some(SelectionParent::Field(field.clone())),
+                            )
+                        })
                         .collect(),
                 )
             }
@@ -357,18 +369,27 @@ impl IdSelection {
                         .fragments
                         .iter()
                         .position(|frag| frag.name.as_str() == name.as_str())
-                        .unwrap(),
+                        .expect("fragment not found"),
                 ),
                 query,
                 schema,
             }),
-            IdSelection::InlineFragment(typeid, selection) => SelectionSet::InlineFragment(
-                typeid.upgrade(schema),
-                selection
-                    .iter()
-                    .map(|sel| sel.upgrade(schema, query, parent))
-                    .collect(),
-            ),
+            IdSelection::InlineFragment(typeid, selection) => {
+                let parent = typeid.upgrade(schema);
+                SelectionSet::InlineFragment(
+                    parent,
+                    selection
+                        .iter()
+                        .map(|sel| {
+                            sel.upgrade(
+                                schema,
+                                query,
+                                Some(SelectionParent::InlineFragment(parent)),
+                            )
+                        })
+                        .collect(),
+                )
+            }
         };
 
         Selection {
@@ -380,7 +401,7 @@ impl IdSelection {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Selection<'a> {
-    parent: Option<FieldRef<'a>>,
+    parent: Option<SelectionParent<'a>>,
     selection_set: SelectionSet<'a>,
 }
 
