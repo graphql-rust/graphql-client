@@ -1,4 +1,7 @@
-use crate::{normalization::Normalization, resolution::*, GraphQLClientCodegenOptions};
+use crate::{
+    field_type::GraphqlTypeQualifier, normalization::Normalization, resolution::*,
+    GraphQLClientCodegenOptions,
+};
 use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -199,8 +202,9 @@ fn generate_variable_struct_field(variable: Variable<'_>) -> TokenStream {
         Span::call_site(),
     );
     let annotation = crate::shared::field_rename_annotation(variable.name(), &snake_case_name);
+    let r#type = render_variable_field_type(variable);
 
-    quote::quote!(#annotation #ident : ())
+    quote::quote!(#annotation #ident : #r#type)
 }
 
 fn generate_scalar_definitions<'a, 'schema: 'a>(
@@ -295,4 +299,44 @@ fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToT
     let idents = derives.map(|s| Ident::new(s, Span::call_site()));
 
     quote!(#[derive(#(#idents),*)])
+}
+
+fn render_variable_field_type(variable: Variable<'_>) -> TokenStream {
+    let full_name = Ident::new(variable.type_name(), Span::call_site());
+
+    let mut qualified = quote!(#full_name);
+
+    let mut non_null = false;
+
+    // Note: we iterate over qualifiers in reverse because it is more intuitive. This
+    // means we start from the _inner_ type and make our way to the outside.
+    for qualifier in variable.type_qualifiers().iter().rev() {
+        match (non_null, qualifier) {
+            // We are in non-null context, and we wrap the non-null type into a list.
+            // We switch back to null context.
+            (true, GraphqlTypeQualifier::List) => {
+                qualified = quote!(Vec<#qualified>);
+                non_null = false;
+            }
+            // We are in nullable context, and we wrap the nullable type into a list.
+            (false, GraphqlTypeQualifier::List) => {
+                qualified = quote!(Vec<Option<#qualified>>);
+            }
+            // We are in non-nullable context, but we can't double require a type
+            // (!!).
+            (true, GraphqlTypeQualifier::Required) => panic!("double required annotation"),
+            // We are in nullable context, and we switch to non-nullable context.
+            (false, GraphqlTypeQualifier::Required) => {
+                non_null = true;
+            }
+        }
+    }
+
+    // If we are in nullable context at the end of the iteration, we wrap the whole
+    // type with an Option.
+    if !non_null {
+        qualified = quote!(Option<#qualified>);
+    }
+
+    qualified
 }

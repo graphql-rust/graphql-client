@@ -3,6 +3,7 @@
 
 use crate::{
     constants::TYPENAME_FIELD,
+    field_type::GraphqlTypeQualifier,
     schema::{
         resolve_field_type, EnumRef, FieldRef, InterfaceRef, ObjectId, ObjectRef, ScalarRef,
         Schema, StoredFieldId, StoredFieldType, TypeId, TypeRef, UnionRef,
@@ -321,6 +322,14 @@ impl<'a> Variable<'a> {
 
     pub(crate) fn name(&self) -> &'a str {
         &self.get().name
+    }
+
+    pub(crate) fn type_name(&self) -> &'a str {
+        self.get().r#type.id.upgrade(self.operation.schema()).name()
+    }
+
+    pub(crate) fn type_qualifiers(&self) -> &[GraphqlTypeQualifier] {
+        &self.get().r#type.qualifiers
     }
 }
 
