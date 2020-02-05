@@ -750,7 +750,8 @@ pub(crate) fn resolve_field_type(
     schema: &Schema,
     inner: &graphql_parser::schema::Type,
 ) -> StoredFieldType {
-    use crate::field_type::{graphql_parser_depth, GraphqlTypeQualifier};
+    use crate::field_type::graphql_parser_depth;
+
     use graphql_parser::schema::Type::*;
 
     let qualifiers_depth = graphql_parser_depth(inner);

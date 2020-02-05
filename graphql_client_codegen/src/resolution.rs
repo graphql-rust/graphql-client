@@ -153,8 +153,20 @@ fn resolve_operation(
 
             query.operations.push(resolved_operation);
         }
-        graphql_parser::query::OperationDefinition::Subscription(_) => {
-            todo!("resolve subscription")
+        graphql_parser::query::OperationDefinition::Subscription(s) => {
+            let on = schema.subscription_type();
+            let resolved_operation: ResolvedOperation = ResolvedOperation {
+                name: s
+                    .name
+                    .as_ref()
+                    .expect("subscription without name")
+                    .to_owned(),
+                operation_type: crate::operations::OperationType::Subscription,
+                variables: resolve_variables(&s.variable_definitions, schema)?,
+                selection: resolve_object_selection(on, &s.selection_set)?,
+            };
+
+            query.operations.push(resolved_operation);
         }
         graphql_parser::query::OperationDefinition::SelectionSet(_) => {
             unreachable!("unnamed queries are not supported")
