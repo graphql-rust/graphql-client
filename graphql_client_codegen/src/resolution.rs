@@ -66,14 +66,15 @@ fn resolve_object_selection(
                     let field_ref = object.get_field_by_name(&field.name).ok_or_else(|| {
                         anyhow::anyhow!("No field named {} on {}", &field.name, object.name())
                     })?;
-                    Ok(IdSelection::Field(
-                        field_ref.id(),
-                        resolve_selection(
+                    Ok(IdSelection::Field {
+                        field_id: field_ref.id(),
+                        alias: field.alias.clone(),
+                        selection: resolve_selection(
                             object.schema(),
                             field_ref.type_id(),
                             &field.selection_set,
                         )?,
-                    ))
+                    })
                 }
                 graphql_parser::query::Selection::InlineFragment(inline) => {
                     resolve_inline_fragment(object.schema(), inline)
@@ -342,7 +343,11 @@ enum SelectionParent<'a> {
 #[derive(Debug, Clone)]
 enum IdSelection {
     Typename,
-    Field(StoredFieldId, Vec<IdSelection>),
+    Field {
+        field_id: StoredFieldId,
+        alias: Option<String>,
+        selection: Vec<IdSelection>,
+    },
     FragmentSpread(String),
     InlineFragment(TypeId, Vec<IdSelection>),
 }
@@ -356,11 +361,16 @@ impl IdSelection {
     ) -> Selection<'a> {
         let selection_set = match self {
             IdSelection::Typename => SelectionSet::Typename,
-            IdSelection::Field(id, selection) => {
+            IdSelection::Field {
+                field_id: id,
+                alias,
+                selection,
+            } => {
                 let field = schema.field(*id);
-                SelectionSet::Field(
-                    field.clone(),
-                    selection
+                SelectionSet::Field {
+                    field: field.clone(),
+                    alias: alias.to_owned(),
+                    selection: selection
                         .iter()
                         .map(move |selection| {
                             selection.upgrade(
@@ -370,7 +380,7 @@ impl IdSelection {
                             )
                         })
                         .collect(),
-                )
+                }
             }
             IdSelection::FragmentSpread(name) => SelectionSet::FragmentSpread(Fragment {
                 fragment_id: ResolvedFragmentId(
@@ -417,7 +427,11 @@ pub(crate) struct Selection<'a> {
 #[derive(Debug, Clone)]
 pub(crate) enum SelectionSet<'a> {
     Typename,
-    Field(FieldRef<'a>, Vec<Selection<'a>>),
+    Field {
+        field: FieldRef<'a>,
+        selection: Vec<Selection<'a>>,
+        alias: Option<String>,
+    },
     FragmentSpread(Fragment<'a>),
     InlineFragment(TypeRef<'a>, Vec<Selection<'a>>),
 }
@@ -426,7 +440,11 @@ impl Selection<'_> {
     fn collect_used_types(&self, used_types: &mut UsedTypes) {
         match &self.selection_set {
             SelectionSet::Typename => (),
-            SelectionSet::Field(field, selection) => {
+            SelectionSet::Field {
+                field,
+                selection,
+                alias: _,
+            } => {
                 used_types.types.insert(field.type_id());
 
                 selection
