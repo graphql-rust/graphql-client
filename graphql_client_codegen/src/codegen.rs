@@ -59,78 +59,12 @@ pub(crate) fn response_for_query(
 
     // let module = context.types_for_operation(operation);
 
-    // let response_data_fields = {
-    //     let root_name = operation.root_name(&schema);
-    //     let opt_definition = schema.get_object_by_name(&root_name);
-    //     let definition = if let Some(definition) = opt_definition {
-    //         definition
-    //     } else {
-    //         panic!(
-    //             "operation type '{:?}' not in schema",
-    //             operation.operation_type
-    //         );
-    //     };
-    //     let prefix = &operation.name;
-    //     let selection = &operation.selection;
-
     //     if operation.is_subscription() && selection.len() > 1 {
     //         return Err(format_err!(
     //             "{}",
     //             crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
     //         ));
     //     }
-
-    //     definitions.extend(definition.field_impls_for_selection(&context, &selection, &prefix)?);
-    //     definition.response_fields_for_selection(&context, &selection, &prefix)?
-    // };
-
-    // let enum_definitions = schema.enums.values().filter_map(|enm| {
-    //     if enm.is_required.get() {
-    //         Some(enm.to_rust(&context))
-    //     } else {
-    //         None
-    //     }
-    // });
-    // let fragment_definitions: Result<Vec<TokenStream>, _> = context
-    //     .fragments
-    //     .values()
-    //     .filter_map(|fragment| {
-    //         if fragment.is_required.get() {
-    //             Some(fragment.to_rust(&context))
-    //         } else {
-    //             None
-    //         }
-    //     })
-    //     .collect();
-    // let fragment_definitions = fragment_definitions?;
-    // let variables_struct = operation.expand_variables(&context);
-
-    // let input_object_definitions: Result<Vec<TokenStream>, _> = schema
-    //     .inputs
-    //     .values()
-    //     .filter_map(|i| {
-    //         if i.is_required.get() {
-    //             Some(i.to_rust(&context))
-    //         } else {
-    //             None
-    //         }
-    //     })
-    //     .collect();
-    // let input_object_definitions = input_object_definitions?;
-
-    // let scalar_definitions: Vec<TokenStream> = schema
-    //     .scalars
-    //     .values()
-    //     .filter_map(|s| {
-    //         if s.is_required.get() {
-    //             Some(s.to_rust(context.normalization))
-    //         } else {
-    //             None
-    //         }
-    //     })
-    //     .collect();
-
-    // let response_derives = context.response_derives();
 
     let q = quote! {
         use serde::{Serialize, Deserialize};
@@ -332,21 +266,41 @@ fn render_selection<'a>(
             SelectionSet::Field {
                 field: f,
                 alias,
-                selection: _,
+                selection: subselection,
             } => {
                 let ident = field_ident(f, alias.as_ref().map(String::as_str));
                 let tpe = match f.field_type() {
-                    TypeRef::Enum(enm) => Ident::new(enm.name(), Span::call_site()),
-                    TypeRef::Scalar(scalar) => Ident::new(scalar.name(), Span::call_site()),
+                    TypeRef::Enum(enm) => {
+                        let type_name = Ident::new(enm.name(), Span::call_site());
+                        let type_name = decorate_type(&type_name, f.type_qualifiers());
+
+                        field_buffer.push(quote!(pub #ident: #type_name));
+                    }
+                    TypeRef::Scalar(scalar) => {
+                        let type_name = Ident::new(scalar.name(), Span::call_site());
+                        let type_name = decorate_type(&type_name, f.type_qualifiers());
+
+                        field_buffer.push(quote!(pub #ident: #type_name));
+                    }
                     TypeRef::Input(_) => unreachable!("input object in selection"),
+                    TypeRef::Object(object) => {
+                        let mut fields = Vec::new();
+                        let struct_name = Ident::new(object.name(), Span::call_site());
+
+                        render_selection(
+                            subselection.iter(),
+                            &mut fields,
+                            &mut response_type_buffer,
+                        );
+
+                        field_buffer.push(struct_name);
+                        response_type_buffer.push(quote!(struct #struct_name;));
+                    }
                     other => {
-                        Ident::new("String", Span::call_site())
+                        Ident::new("String", Span::call_site());
                         // unimplemented!("selection on {:?}", other)
                     }
                 };
-                let tpe = decorate_type(&tpe, f.type_qualifiers());
-
-                field_buffer.push(quote!(pub #ident: #tpe))
             }
             _ => todo!("render non-field selection"),
         }
