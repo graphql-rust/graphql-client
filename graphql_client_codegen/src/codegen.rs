@@ -36,7 +36,7 @@ pub(crate) fn response_for_query(
     let variables_struct = generate_variables_struct(operation, options);
 
     let response_derives = render_derives(options.all_response_derives());
-    let response_data_fields = render_response_data_fields(&operation);
+    let (definitions, response_data_fields) = render_response_data_fields(&operation);
 
     // let mut context = QueryContext::new(
     //     schema,
@@ -313,10 +313,22 @@ fn render_variable_field_type(variable: Variable<'_>) -> TokenStream {
 
 fn render_response_data_fields<'a>(
     operation: &'a Operation<'_>,
-) -> impl Iterator<Item = TokenStream> + 'a {
-    operation
-        .selection()
-        .map(|select| match &select.selection_set {
+) -> (Vec<TokenStream>, Vec<TokenStream>) {
+    let mut response_types = Vec::new();
+    let mut fields = Vec::new();
+
+    render_selection(operation.selection(), &mut fields, &mut response_types);
+
+    (response_types, fields)
+}
+
+fn render_selection<'a>(
+    selection: impl Iterator<Item = Selection<'a>>,
+    field_buffer: &mut Vec<TokenStream>,
+    response_type_buffer: &mut Vec<TokenStream>,
+) {
+    for select in selection {
+        match &select.selection_set {
             SelectionSet::Field {
                 field: f,
                 alias,
@@ -334,10 +346,11 @@ fn render_response_data_fields<'a>(
                 };
                 let tpe = decorate_type(&tpe, f.type_qualifiers());
 
-                quote!(pub #ident: #tpe)
+                field_buffer.push(quote!(pub #ident: #tpe))
             }
             _ => todo!("render non-field selection"),
-        })
+        }
+    }
 }
 
 fn field_ident(field: &FieldRef<'_>, alias: Option<&str>) -> Ident {
