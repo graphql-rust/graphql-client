@@ -241,7 +241,7 @@ impl<'a> Operation<'a> {
         self.get().name()
     }
 
-    fn selection(&self) -> impl Iterator<Item = Selection<'_>> {
+    pub(crate) fn selection(&self) -> impl Iterator<Item = Selection<'_>> {
         let operation = self.get();
         operation
             .selection
@@ -411,11 +411,11 @@ impl IdSelection {
 #[derive(Debug, Clone)]
 pub(crate) struct Selection<'a> {
     parent: Option<SelectionParent<'a>>,
-    selection_set: SelectionSet<'a>,
+    pub(crate) selection_set: SelectionSet<'a>,
 }
 
 #[derive(Debug, Clone)]
-enum SelectionSet<'a> {
+pub(crate) enum SelectionSet<'a> {
     Typename,
     Field(FieldRef<'a>, Vec<Selection<'a>>),
     FragmentSpread(Fragment<'a>),

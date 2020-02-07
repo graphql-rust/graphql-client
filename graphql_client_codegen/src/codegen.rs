@@ -1,6 +1,6 @@
 use crate::{
-    field_type::GraphqlTypeQualifier, normalization::Normalization, resolution::*,
-    GraphQLClientCodegenOptions,
+    field_type::GraphqlTypeQualifier, normalization::Normalization, resolution::SelectionSet,
+    resolution::*, schema::FieldRef, GraphQLClientCodegenOptions,
 };
 use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -29,15 +29,10 @@ pub(crate) fn response_for_query(
     let fragment_definitions: Vec<&'static str> = Vec::new();
     let definitions: Vec<&'static str> = Vec::new();
     let input_object_definitions: Vec<&'static str> = Vec::new();
-    let variable_derives = options
-        .variables_derives()
-        .unwrap_or("Serialize")
-        .split(",");
-
     let variables_struct = generate_variables_struct(operation, options);
 
     let response_derives = render_derives(options.all_response_derives());
-    let response_data_fields: Vec<&'static str> = Vec::new();
+    let response_data_fields = render_response_data_fields(&operation);
 
     // let mut context = QueryContext::new(
     //     schema,
@@ -344,4 +339,23 @@ fn render_variable_field_type(variable: Variable<'_>) -> TokenStream {
     }
 
     qualified
+}
+
+fn render_response_data_fields<'a>(
+    operation: &'a Operation<'_>,
+) -> impl Iterator<Item = TokenStream> + 'a {
+    operation
+        .selection()
+        .map(|select| match &select.selection_set {
+            SelectionSet::Field(f, _) => {
+                let ident = field_ident(f);
+
+                quote!(#ident: ())
+            }
+            _ => todo!(),
+        })
+}
+
+fn field_ident(field: &FieldRef<'_>) -> Ident {
+    Ident::new(&field.name().to_snake_case(), Span::call_site())
 }
