@@ -1,6 +1,10 @@
 use crate::{
-    field_type::GraphqlTypeQualifier, normalization::Normalization, resolution::SelectionSet,
-    resolution::*, schema::FieldRef, GraphQLClientCodegenOptions,
+    field_type::GraphqlTypeQualifier,
+    normalization::Normalization,
+    resolution::SelectionSet,
+    resolution::*,
+    schema::{FieldRef, TypeRef},
+    GraphQLClientCodegenOptions,
 };
 use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -304,13 +308,51 @@ fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToT
 fn render_variable_field_type(variable: Variable<'_>) -> TokenStream {
     let full_name = Ident::new(variable.type_name(), Span::call_site());
 
-    let mut qualified = quote!(#full_name);
+    decorate_type(&full_name, variable.type_qualifiers())
+}
+
+fn render_response_data_fields<'a>(
+    operation: &'a Operation<'_>,
+) -> impl Iterator<Item = TokenStream> + 'a {
+    operation
+        .selection()
+        .map(|select| match &select.selection_set {
+            SelectionSet::Field {
+                field: f,
+                alias,
+                selection: _,
+            } => {
+                let ident = field_ident(f, alias.as_ref().map(String::as_str));
+                let tpe = match f.field_type() {
+                    TypeRef::Enum(enm) => Ident::new(enm.name(), Span::call_site()),
+                    TypeRef::Scalar(scalar) => Ident::new(scalar.name(), Span::call_site()),
+                    TypeRef::Input(_) => unreachable!("input object in selection"),
+                    other => {
+                        Ident::new("String", Span::call_site())
+                        // unimplemented!("selection on {:?}", other)
+                    }
+                };
+                let tpe = decorate_type(&tpe, f.type_qualifiers());
+
+                quote!(pub #ident: #tpe)
+            }
+            _ => todo!("render non-field selection"),
+        })
+}
+
+fn field_ident(field: &FieldRef<'_>, alias: Option<&str>) -> Ident {
+    let name = alias.unwrap_or_else(|| field.name()).to_snake_case();
+    Ident::new(&name, Span::call_site())
+}
+
+fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStream {
+    let mut qualified = quote!(#ident);
 
     let mut non_null = false;
 
     // Note: we iterate over qualifiers in reverse because it is more intuitive. This
     // means we start from the _inner_ type and make our way to the outside.
-    for qualifier in variable.type_qualifiers().iter().rev() {
+    for qualifier in qualifiers.iter().rev() {
         match (non_null, qualifier) {
             // We are in non-null context, and we wrap the non-null type into a list.
             // We switch back to null context.
@@ -339,28 +381,4 @@ fn render_variable_field_type(variable: Variable<'_>) -> TokenStream {
     }
 
     qualified
-}
-
-fn render_response_data_fields<'a>(
-    operation: &'a Operation<'_>,
-) -> impl Iterator<Item = TokenStream> + 'a {
-    operation
-        .selection()
-        .map(|select| match &select.selection_set {
-            SelectionSet::Field {
-                field: f,
-                alias,
-                selection: _,
-            } => {
-                let ident = field_ident(f, alias.as_ref().map(String::as_str));
-
-                quote!(#ident: ())
-            }
-            _ => todo!(),
-        })
-}
-
-fn field_ident(field: &FieldRef<'_>, alias: Option<&str>) -> Ident {
-    let name = alias.unwrap_or_else(|| field.name()).to_snake_case();
-    Ident::new(&name, Span::call_site())
 }
