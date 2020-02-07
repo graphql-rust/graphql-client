@@ -537,7 +537,7 @@ impl Schema {
     pub(crate) fn subscription_type(&self) -> ObjectRef<'_> {
         ObjectRef {
             object_id: self
-                .mutation_type
+                .subscription_type
                 // TODO: make this return an option
                 .expect("Subscription operation type must be defined"),
             schema: self,

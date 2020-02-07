@@ -347,8 +347,12 @@ fn render_response_data_fields<'a>(
     operation
         .selection()
         .map(|select| match &select.selection_set {
-            SelectionSet::Field(f, _) => {
-                let ident = field_ident(f);
+            SelectionSet::Field {
+                field: f,
+                alias,
+                selection: _,
+            } => {
+                let ident = field_ident(f, alias.as_ref().map(String::as_str));
 
                 quote!(#ident: ())
             }
@@ -356,6 +360,7 @@ fn render_response_data_fields<'a>(
         })
 }
 
-fn field_ident(field: &FieldRef<'_>) -> Ident {
-    Ident::new(&field.name().to_snake_case(), Span::call_site())
+fn field_ident(field: &FieldRef<'_>, alias: Option<&str>) -> Ident {
+    let name = alias.unwrap_or_else(|| field.name()).to_snake_case();
+    Ident::new(&name, Span::call_site())
 }
