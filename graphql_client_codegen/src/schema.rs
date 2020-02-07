@@ -703,6 +703,14 @@ impl<'a> FieldRef<'a> {
     pub(crate) fn type_id(&self) -> TypeId {
         self.get().r#type.id
     }
+
+    pub(crate) fn field_type(&self) -> TypeRef<'_> {
+        self.get().r#type.id.upgrade(self.schema)
+    }
+
+    pub(crate) fn type_qualifiers(&self) -> &[GraphqlTypeQualifier] {
+        &self.get().r#type.qualifiers
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
