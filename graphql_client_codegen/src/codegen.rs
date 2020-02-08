@@ -293,7 +293,7 @@ fn render_selection<'a>(
                             &mut response_type_buffer,
                         );
 
-                        field_buffer.push(struct_name);
+                        field_buffer.push(quote!(pub #ident: #struct_name));
                         response_type_buffer.push(quote!(struct #struct_name;));
                     }
                     other => {
