@@ -1,7 +1,7 @@
 use crate::{
     field_type::GraphqlTypeQualifier,
     normalization::Normalization,
-    resolution::SelectionSet,
+    resolution::SelectionItem,
     resolution::*,
     schema::{FieldRef, TypeRef},
     GraphQLClientCodegenOptions,
@@ -257,13 +257,13 @@ fn render_response_data_fields<'a>(
 }
 
 fn render_selection<'a>(
-    selection: impl Iterator<Item = Selection<'a>>,
+    selection: impl Iterator<Item = SelectionRef<'a>>,
     field_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
 ) {
     for select in selection {
         match &select.selection_set {
-            SelectionSet::Field {
+            SelectionItem::Field {
                 field: f,
                 alias,
                 selection: subselection,
