@@ -262,13 +262,10 @@ fn render_selection<'a>(
     response_type_buffer: &mut Vec<TokenStream>,
 ) {
     for select in selection {
-        match &select.selection_set {
-            SelectionItem::Field {
-                field: f,
-                alias,
-                selection: subselection,
-            } => {
-                let ident = field_ident(f, alias.as_ref().map(String::as_str));
+        match &select.refine() {
+            SelectionItem::Field(selected_field) => {
+                let f = selected_field.field();
+                let ident = field_ident(&f, selected_field.alias());
                 let tpe = match f.field_type() {
                     TypeRef::Enum(enm) => {
                         let type_name = Ident::new(enm.name(), Span::call_site());
@@ -288,7 +285,7 @@ fn render_selection<'a>(
                         let struct_name = Ident::new(object.name(), Span::call_site());
 
                         render_selection(
-                            subselection.iter(),
+                            selected_field.subselection(),
                             &mut fields,
                             &mut response_type_buffer,
                         );
