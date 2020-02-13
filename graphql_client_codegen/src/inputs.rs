@@ -14,7 +14,7 @@ pub(crate) fn input_to_rust(
     ctx: &mut QueryContext<'_>,
     input: crate::schema::InputRef<'_>,
 ) -> Result<TokenStream, anyhow::Error> {
-    todo!()
+    todo!("input to rust")
 }
 
 // impl InputRef<'_> {

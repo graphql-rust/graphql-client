@@ -17,7 +17,7 @@ impl<'query> Variable<'query> {
         context: &QueryContext<'_>,
         schema: &crate::schema::Schema,
     ) -> Option<TokenStream> {
-        todo!()
+        todo!("generate default value constructor")
         // // TODO
         // // context.schema.require(&self.ty.inner_name_str());
         // match &self.default {

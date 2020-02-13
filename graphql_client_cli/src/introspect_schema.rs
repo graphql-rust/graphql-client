@@ -9,7 +9,7 @@ use std::str::FromStr;
     schema_path = "src/graphql/introspection_schema.graphql",
     query_path = "src/graphql/introspection_query.graphql",
     response_derives = "Serialize",
-    variable_derives = "Serialize"
+    variable_derives = "Deserialize"
 )]
 #[allow(dead_code)]
 struct IntrospectionQuery;
