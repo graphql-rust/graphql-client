@@ -287,7 +287,7 @@ fn render_selection<'a>(
                         render_selection(
                             selected_field.subselection(),
                             &mut fields,
-                            &mut response_type_buffer,
+                            response_type_buffer,
                         );
 
                         field_buffer.push(quote!(pub #ident: #struct_name));

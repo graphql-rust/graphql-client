@@ -63,6 +63,7 @@ pub(crate) fn resolve(
 ) -> anyhow::Result<ResolvedQuery> {
     let mut resolved_query: ResolvedQuery = Default::default();
 
+    // First, give ids to all fragments.
     for definition in &query.definitions {
         match definition {
             graphql_parser::query::Definition::Fragment(fragment) => {
@@ -73,9 +74,11 @@ pub(crate) fn resolve(
                     selection: Vec::new(),
                 });
             }
+            _ => (),
         }
     }
 
+    // Then resolve the selections.
     for definition in &query.definitions {
         match definition {
             graphql_parser::query::Definition::Fragment(fragment) => {
@@ -95,20 +98,25 @@ fn resolve_fragment(
     schema: &Schema,
     fragment_definition: &graphql_parser::query::FragmentDefinition,
 ) -> anyhow::Result<()> {
-    let (_, mut fragment) = query
-        .find_fragment(&fragment_definition.name)
-        .expect("TODO: fragment resolution");
+    let graphql_parser::query::TypeCondition::On(on) = &fragment_definition.type_condition;
+    let on = schema.find_type(&on).unwrap();
 
     let mut acc =
         SelectionAccumulator::with_capacity(fragment_definition.selection_set.items.len());
+
     resolve_selection(
         query,
         schema,
-        fragment.on,
+        on,
         &fragment_definition.selection_set,
         None,
         &mut acc,
     );
+
+    let (_, mut fragment) = query
+        .find_fragment(&fragment_definition.name)
+        .expect("TODO: fragment resolution");
+
     fragment.selection = acc.into_vec();
 
     Ok(())
@@ -419,11 +427,19 @@ pub(crate) struct SelectionRef<'a> {
 
 impl<'a> SelectionRef<'a> {
     fn collect_used_types(&self, used_types: &mut UsedTypes) {
-        match self.selection_id {
-            SelectionId::FieldId(field_id) => todo!(),
-            SelectionId::InlineFragmentId(inline_fragment_id) => todo!(),
-            SelectionId::FragmentSpread(fragment_spread_id) => todo!(),
-            SelectionId::Typename(_) => (),
+        match self.refine() {
+            SelectionItem::Field(selected_field_ref) => {
+                used_types
+                    .types
+                    .insert(selected_field_ref.field().type_id());
+
+                for item in selected_field_ref.subselection() {
+                    item.collect_used_types(used_types)
+                }
+            }
+            SelectionItem::InlineFragment(inline_fragment_id) => todo!(),
+            SelectionItem::FragmentSpread(fragment_spread_id) => todo!(),
+            SelectionItem::Typename(_) => (),
         }
     }
 
