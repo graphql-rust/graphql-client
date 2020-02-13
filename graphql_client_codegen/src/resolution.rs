@@ -108,7 +108,7 @@ fn resolve_fragment(
         &fragment_definition.selection_set,
         None,
         &mut acc,
-    );
+    )?;
 
     let (_, mut fragment) = query
         .find_fragment(&fragment_definition.name)
@@ -152,7 +152,7 @@ fn resolve_object_selection(
                     &field.selection_set,
                     parent,
                     &mut SelectionAccumulator::noop(),
-                );
+                )?;
 
                 acc.push(SelectionId::FieldId(id))
             }
@@ -233,7 +233,7 @@ fn resolve_inline_fragment(
         &inline_fragment.selection_set,
         Some(SelectionParentId::InlineFragmentId(id)),
         &mut SelectionAccumulator::noop(),
-    );
+    )?;
 
     Ok(SelectionId::InlineFragmentId(id))
 }
@@ -601,6 +601,8 @@ impl Fragment<'_> {
     }
 
     fn collect_used_types(&self, used_types: &mut UsedTypes) {
+        used_types.fragments.insert(self.fragment_id);
+
         todo!()
     }
 }
