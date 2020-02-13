@@ -36,7 +36,8 @@ pub(crate) fn response_for_query(
     let variables_struct = generate_variables_struct(operation, options);
 
     let response_derives = render_derives(options.all_response_derives());
-    let (definitions, response_data_fields) = render_response_data_fields(&operation);
+    let (definitions, response_data_fields) =
+        render_response_data_fields(&operation, &response_derives);
 
     // let mut context = QueryContext::new(
     //     schema,
@@ -137,7 +138,7 @@ fn generate_variable_struct_field(variable: Variable<'_>) -> TokenStream {
     let annotation = crate::shared::field_rename_annotation(variable.name(), &snake_case_name);
     let r#type = render_variable_field_type(variable);
 
-    quote::quote!(#annotation #ident : #r#type)
+    quote::quote!(#annotation pub #ident : #r#type)
 }
 
 fn generate_scalar_definitions<'a, 'schema: 'a>(
@@ -164,8 +165,7 @@ fn generate_enum_definitions<'a, 'schema: 'a>(
 ) -> impl Iterator<Item = TokenStream> + 'a {
     let derives = render_derives(
         options
-            .additional_response_derives()
-            .chain(options.variables_derives())
+            .all_response_derives()
             .filter(|d| !&["Serialize", "Deserialize"].contains(d)),
     );
     let normalization = options.normalization();
@@ -247,11 +247,17 @@ fn render_variable_field_type(variable: Variable<'_>) -> TokenStream {
 
 fn render_response_data_fields<'a>(
     operation: &'a Operation<'_>,
+    response_derives: &impl quote::ToTokens,
 ) -> (Vec<TokenStream>, Vec<TokenStream>) {
     let mut response_types = Vec::new();
     let mut fields = Vec::new();
 
-    render_selection(operation.selection(), &mut fields, &mut response_types);
+    render_selection(
+        operation.selection(),
+        &mut fields,
+        &mut response_types,
+        response_derives,
+    );
 
     (response_types, fields)
 }
@@ -260,6 +266,7 @@ fn render_selection<'a>(
     selection: impl Iterator<Item = SelectionRef<'a>>,
     field_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
+    response_derives: &impl quote::ToTokens,
 ) {
     for select in selection {
         match &select.refine() {
@@ -283,15 +290,18 @@ fn render_selection<'a>(
                     TypeRef::Object(object) => {
                         let mut fields = Vec::new();
                         let struct_name = Ident::new(object.name(), Span::call_site());
-
                         render_selection(
                             selected_field.subselection(),
                             &mut fields,
                             response_type_buffer,
+                            response_derives,
                         );
 
-                        field_buffer.push(quote!(pub #ident: #struct_name));
-                        response_type_buffer.push(quote!(struct #struct_name;));
+                        let field_type = decorate_type(&struct_name, f.type_qualifiers());
+
+                        field_buffer.push(quote!(pub #ident: #field_type));
+                        response_type_buffer
+                            .push(quote!(#response_derives pub struct #struct_name;));
                     }
                     other => {
                         Ident::new("String", Span::call_site());

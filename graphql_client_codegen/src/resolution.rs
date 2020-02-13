@@ -536,6 +536,10 @@ impl<'a> InlineFragmentRef<'a> {
             .get(self.inline_fragment_id)
             .unwrap()
     }
+
+    pub(crate) fn on(&self) -> crate::schema::TypeRef<'a> {
+        self.get().on.upgrade(self.schema)
+    }
 }
 
 #[derive(Debug)]
@@ -595,7 +599,7 @@ pub(crate) struct Fragment<'a> {
     fragment_id: ResolvedFragmentId,
 }
 
-impl Fragment<'_> {
+impl<'a> Fragment<'a> {
     fn get(&self) -> &ResolvedFragment {
         self.query.fragments.get(self.fragment_id.0).unwrap()
     }
@@ -603,7 +607,13 @@ impl Fragment<'_> {
     fn collect_used_types(&self, used_types: &mut UsedTypes) {
         used_types.fragments.insert(self.fragment_id);
 
-        todo!()
+        for selection in self.selection() {
+            selection.collect_used_types(used_types);
+        }
+    }
+
+    fn selection(&self) -> impl Iterator<Item = SelectionRef<'a>> {
+        std::iter::empty()
     }
 }
 
