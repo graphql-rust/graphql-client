@@ -11,9 +11,6 @@ use crate::{
 };
 use std::collections::HashSet;
 
-#[derive(Debug)]
-struct FragmentId(usize);
-
 // enum QueryNode {
 //     Field(StoredFieldId),
 //     InlineFragment(TypeId),
@@ -48,7 +45,7 @@ struct Field {
 #[derive(Debug)]
 struct FragmentSpread {
     parent: Option<SelectionParentId>,
-    fragment_id: FragmentId,
+    fragment_id: ResolvedFragmentId,
 }
 
 #[derive(Debug)]
@@ -168,7 +165,7 @@ fn resolve_object_selection(
                     .expect("TODO: fragment resolution");
                 let id = query.fragment_spreads.len();
                 query.fragment_spreads.push(FragmentSpread {
-                    fragment_id: FragmentId(fragment_id),
+                    fragment_id: ResolvedFragmentId(fragment_id),
                     parent,
                 });
 
@@ -191,8 +188,7 @@ fn resolve_selection(
     let selection = match on {
         TypeId::Object(oid) => {
             let object = schema.object(oid);
-            let mut acc = SelectionAccumulator::noop();
-            resolve_object_selection(ctx, object, selection_set, parent, &mut acc)?;
+            resolve_object_selection(ctx, object, selection_set, parent, acc)?;
         }
         TypeId::Interface(interface_id) => {
             let interface = schema.interface(interface_id);
@@ -437,9 +433,13 @@ impl<'a> SelectionRef<'a> {
                     item.collect_used_types(used_types)
                 }
             }
-            SelectionItem::InlineFragment(inline_fragment_id) => todo!(),
-            SelectionItem::FragmentSpread(fragment_spread_id) => todo!(),
-            SelectionItem::Typename(_) => (),
+            SelectionItem::InlineFragment(inline_fragment_ref) => {
+                todo!();
+            }
+            SelectionItem::FragmentSpread(fragment_spread_ref) => fragment_spread_ref
+                .fragment()
+                .collect_used_types(used_types),
+            SelectionItem::Typename => (),
         }
     }
 
@@ -457,7 +457,13 @@ impl<'a> SelectionRef<'a> {
                     inline_fragment_id,
                 })
             }
-            SelectionId::FragmentSpread(fragment_spread_id) => todo!(),
+            SelectionId::FragmentSpread(fragment_spread_id) => {
+                SelectionItem::FragmentSpread(FragmentSpreadRef {
+                    query: self.query,
+                    schema: self.schema,
+                    fragment_spread_id,
+                })
+            }
             SelectionId::Typename(_) => todo!(),
         }
     }
@@ -466,12 +472,37 @@ impl<'a> SelectionRef<'a> {
 pub(crate) enum SelectionItem<'a> {
     Field(SelectedFieldRef<'a>),
     InlineFragment(InlineFragmentRef<'a>),
+    FragmentSpread(FragmentSpreadRef<'a>),
+    Typename,
 }
 
 pub(crate) struct SelectedFieldRef<'a> {
     query: &'a ResolvedQuery,
     schema: &'a Schema,
     field_id: usize,
+}
+
+pub(crate) struct FragmentSpreadRef<'a> {
+    query: &'a ResolvedQuery,
+    schema: &'a Schema,
+    fragment_spread_id: usize,
+}
+
+impl<'a> FragmentSpreadRef<'a> {
+    fn get(&self) -> &'a FragmentSpread {
+        self.query
+            .fragment_spreads
+            .get(self.fragment_spread_id)
+            .unwrap()
+    }
+
+    fn fragment(&self) -> Fragment<'a> {
+        Fragment {
+            query: self.query,
+            schema: self.schema,
+            fragment_id: self.get().fragment_id,
+        }
+    }
 }
 
 impl<'a> SelectedFieldRef<'a> {
@@ -496,6 +527,15 @@ pub(crate) struct InlineFragmentRef<'a> {
     query: &'a ResolvedQuery,
     schema: &'a Schema,
     inline_fragment_id: usize,
+}
+
+impl<'a> InlineFragmentRef<'a> {
+    fn get(&self) -> &'a InlineFragment {
+        self.query
+            .inline_fragments
+            .get(self.inline_fragment_id)
+            .unwrap()
+    }
 }
 
 #[derive(Debug)]
