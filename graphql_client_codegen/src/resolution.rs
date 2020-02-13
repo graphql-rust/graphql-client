@@ -435,31 +435,33 @@ pub(crate) enum SelectionItem<'a> {
 
 impl SelectionRef<'_> {
     fn collect_used_types(&self, used_types: &mut UsedTypes) {
-        match &self.selection_set {
-            SelectionItem::Typename => (),
-            SelectionItem::Field {
-                field,
-                selection,
-                alias: _,
-            } => {
-                used_types.types.insert(field.type_id());
+        for item in &self.selection_set {
+            match item {
+                SelectionItem::Typename => (),
+                SelectionItem::Field {
+                    field,
+                    selection,
+                    alias: _,
+                } => {
+                    used_types.types.insert(field.type_id());
 
-                selection
-                    .iter()
-                    .for_each(|selection| selection.collect_used_types(used_types));
-            }
-            SelectionItem::FragmentSpread(fragment) => {
-                used_types.fragments.insert(fragment.fragment_id);
-                fragment
-                    .selection()
-                    .for_each(|selection| selection.collect_used_types(used_types))
-            }
-            SelectionItem::InlineFragment(on, selection) => {
-                used_types.types.insert(on.type_id());
+                    selection
+                        .iter()
+                        .for_each(|selection| selection.collect_used_types(used_types));
+                }
+                SelectionItem::FragmentSpread(fragment) => {
+                    used_types.fragments.insert(fragment.fragment_id);
+                    fragment
+                        .selection()
+                        .for_each(|selection| selection.collect_used_types(used_types))
+                }
+                SelectionItem::InlineFragment(on, selection) => {
+                    used_types.types.insert(on.type_id());
 
-                selection
-                    .iter()
-                    .for_each(|selection| selection.collect_used_types(used_types))
+                    selection
+                        .iter()
+                        .for_each(|selection| selection.collect_used_types(used_types))
+                }
             }
         }
     }
