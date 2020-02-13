@@ -548,6 +548,23 @@ impl<'a> Variable<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct Fragment<'a> {
+    query: &'a ResolvedQuery,
+    schema: &'a Schema,
+    fragment_id: ResolvedFragmentId,
+}
+
+impl Fragment<'_> {
+    fn get(&self) -> &ResolvedFragment {
+        self.query.fragments.get(self.fragment_id.0).unwrap()
+    }
+
+    fn collect_used_types(&self, used_types: &mut UsedTypes) {
+        todo!()
+    }
+}
+
 #[derive(Debug, Default)]
 pub(crate) struct UsedTypes {
     types: HashSet<TypeId>,
