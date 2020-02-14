@@ -9,21 +9,24 @@ use crate::{
         StoredFieldType, TypeId, TypeRef,
     },
 };
+use heck::CamelCase;
 use petgraph::prelude::EdgeRef;
 use std::collections::HashSet;
 
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct SelectionItem<'a> {
     parent_id: Option<NodeId>,
     node_id: NodeId,
     variant: SelectionVariant<'a>,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum SelectionVariant<'a> {
     SelectedField {
         alias: Option<&'a str>,
         field: FieldRef<'a>,
     },
-    FragmentSpread(&'a ResolvedFragment),
+    FragmentSpread(ResolvedFragmentId),
     InlineFragment(TypeRef<'a>),
     Typename,
 }
@@ -37,6 +40,33 @@ impl<'a> WithQuery<'a, SelectionItem<'a>> {
         self.item
             .parent_id
             .map(|parent_id| self.refocus(parent_id).upgrade())
+    }
+
+    pub(crate) fn full_path_prefix(&self, root_name: &str) -> String {
+        let mut path = vec![self.to_path_segment()];
+
+        let mut item = *self;
+
+        while let Some(parent) = item.parent() {
+            item = parent;
+            path.push(parent.to_path_segment());
+        }
+
+        path.push(root_name.to_owned());
+        path.reverse();
+        path.join("")
+    }
+
+    fn to_path_segment(&self) -> String {
+        match self.item.variant {
+            SelectionVariant::SelectedField { alias, field } => alias
+                .map(|alias| alias.to_camel_case())
+                .unwrap_or_else(|| field.name().to_camel_case()),
+            SelectionVariant::InlineFragment(type_ref) => {
+                format!("On{}", type_ref.name().to_camel_case())
+            }
+            _ => unreachable!(),
+        }
     }
 
     pub(crate) fn subselection<'b>(
@@ -56,7 +86,7 @@ pub(crate) struct WithQuery<'a, T> {
 }
 
 impl<'a, T> WithQuery<'a, T> {
-    fn refocus<U>(&self, new_item: U) -> WithQuery<'a, U> {
+    pub(crate) fn refocus<U>(&self, new_item: U) -> WithQuery<'a, U> {
         WithQuery {
             query: self.query,
             schema: self.schema,
@@ -109,7 +139,7 @@ impl<'a> WithQuery<'a, NodeId> {
             QueryNode::FragmentSpread(fragment_id) => {
                 used_types.fragments.insert(*fragment_id);
 
-                for item in self.refocus(*fragment_id).selection() {
+                for item in self.refocus(*fragment_id).selection_ids() {
                     item.collect_used_types(used_types);
                 }
             }
@@ -121,9 +151,7 @@ impl<'a> WithQuery<'a, NodeId> {
         let node = self.get_node();
 
         let variant = match node.item {
-            QueryNode::FragmentSpread(frag_id) => {
-                SelectionVariant::FragmentSpread(self.query.fragments.get(frag_id.0).unwrap())
-            }
+            QueryNode::FragmentSpread(frag_id) => SelectionVariant::FragmentSpread(*frag_id),
             QueryNode::InlineFragment(type_id) => {
                 SelectionVariant::InlineFragment(type_id.upgrade(self.schema))
             }
@@ -489,7 +517,7 @@ impl<'a> Operation<'a> {
         self.query.operations.get(self.operation_id).unwrap()
     }
 
-    fn name(&self) -> &'a str {
+    pub(crate) fn name(&self) -> &'a str {
         self.get().name()
     }
 
@@ -600,12 +628,26 @@ impl<'a> WithQuery<'a, ResolvedFragmentId> {
         self.query.fragments.get(self.item.0).unwrap()
     }
 
-    fn selection<'b>(&'b self) -> impl Iterator<Item = WithQuery<'a, NodeId>> + 'b {
+    fn selection_ids<'b>(&'b self) -> impl Iterator<Item = WithQuery<'a, NodeId>> + 'b {
         let fragment = self.get();
         fragment
             .selection
             .iter()
             .map(move |item| self.refocus(*item))
+    }
+
+    pub(crate) fn selection<'b>(
+        &'b self,
+    ) -> impl Iterator<Item = WithQuery<'a, SelectionItem<'a>>> + 'b {
+        self.selection_ids().map(|sel| sel.upgrade())
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+
+    pub(crate) fn selection_len(&self) -> usize {
+        self.get().selection.len()
     }
 }
 

@@ -6,6 +6,7 @@
 // use heck::{CamelCase, SnakeCase};
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::borrow::Cow;
 
 // List of keywords based on https://doc.rust-lang.org/grammar.html#keywords
 const RUST_KEYWORDS: &[&str] = &[
@@ -70,10 +71,10 @@ const RUST_KEYWORDS: &[&str] = &[
     "yield",
 ];
 
-pub(crate) fn keyword_replace(needle: &str) -> String {
+pub(crate) fn keyword_replace(needle: &str) -> Cow<'_, str> {
     match RUST_KEYWORDS.binary_search(&needle) {
-        Ok(index) => [RUST_KEYWORDS[index], "_"].concat(),
-        Err(_) => needle.to_owned(),
+        Ok(index) => [RUST_KEYWORDS[index], "_"].concat().into(),
+        Err(_) => Cow::Borrowed(needle),
     }
 }
 
