@@ -9,7 +9,6 @@ use crate::{
         Schema, StoredFieldId, StoredFieldType, TypeId, TypeRef, UnionRef,
     },
 };
-use petgraph::prelude::NodeIndex;
 use std::collections::HashSet;
 
 pub(crate) struct WithQuery<'a, T> {
@@ -18,7 +17,8 @@ pub(crate) struct WithQuery<'a, T> {
     item: &'a T,
 }
 
-type SelectionGraph = petgraph::Graph<QueryNode, QueryEdge, petgraph::Directed, u32>;
+type NodeId = u32;
+type SelectionGraph = petgraph::Graph<QueryNode, QueryEdge, petgraph::Directed, NodeId>;
 
 #[derive(Debug)]
 enum QueryNode {
@@ -33,36 +33,10 @@ enum QueryEdge {
     Selection,
 }
 
-// #[derive(Debug, Clone, Copy)]
-// enum SelectionId {
-//     FieldId(usize),
-//     InlineFragmentId(usize),
-//     FragmentSpread(usize),
-//     Typename(Option<SelectionParentId>),
-// }
-
-// #[derive(Debug, Clone, Copy)]
-// enum SelectionParentId {
-//     FieldId(usize),
-//     InlineFragmentId(usize),
-// }
-
 #[derive(Debug)]
 struct SelectedField {
     alias: Option<String>,
     field_id: StoredFieldId,
-}
-
-#[derive(Debug)]
-struct FragmentSpread {
-    parent: Option<SelectionParentId>,
-    fragment_id: ResolvedFragmentId,
-}
-
-#[derive(Debug)]
-struct InlineFragment {
-    parent: Option<SelectionParentId>,
-    on: TypeId,
 }
 
 pub(crate) fn resolve(
@@ -134,7 +108,7 @@ fn resolve_object_selection<'a>(
     query: &mut ResolvedQuery,
     object: impl crate::schema::ObjectRefLike<'a>,
     selection_set: &graphql_parser::query::SelectionSet,
-    parent: Option<NodeIndex>,
+    parent: Option<NodeId>,
     acc: &mut SelectionAccumulator,
 ) -> anyhow::Result<()> {
     for item in selection_set.items.iter() {
@@ -334,7 +308,7 @@ pub(crate) struct ResolvedQuery {
 }
 
 impl ResolvedQuery {
-    fn push_typename(&mut self, parent: Option<NodeIndex>) -> NodeIndex {
+    fn push_typename(&mut self, parent: Option<NodeId>) -> NodeId {
         let idx = self.selection_graph.add_node(QueryNode::Typename);
 
         if let Some(parent) = parent {
@@ -713,7 +687,7 @@ fn resolve_variables(
         .collect()
 }
 
-struct SelectionAccumulator(Option<Vec<NodeIndex>>);
+struct SelectionAccumulator(Option<Vec<NodeId>>);
 
 impl SelectionAccumulator {
     fn with_capacity(cap: usize) -> Self {
@@ -724,13 +698,13 @@ impl SelectionAccumulator {
         SelectionAccumulator(None)
     }
 
-    fn push(&mut self, item: NodeIndex) {
+    fn push(&mut self, item: NodeId) {
         if let Some(v) = &mut self.0 {
             v.push(item);
         }
     }
 
-    fn into_vec(self) -> Vec<NodeIndex> {
+    fn into_vec(self) -> Vec<NodeId> {
         self.0.unwrap_or_else(Vec::new)
     }
 }
