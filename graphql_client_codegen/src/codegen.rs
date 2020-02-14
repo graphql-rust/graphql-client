@@ -12,6 +12,7 @@ use quote::quote;
 /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'a>(
     query: &'a ResolvedQuery,
+
     struct_name: &str,
     norm: Normalization,
 ) -> Option<usize> {
@@ -30,7 +31,6 @@ pub(crate) fn response_for_query(
     let scalar_definitions = generate_scalar_definitions(operation, &all_used_types);
     let enum_definitions = generate_enum_definitions(operation, &all_used_types, options);
     let fragment_definitions: Vec<&'static str> = Vec::new();
-    let definitions: Vec<&'static str> = Vec::new();
     let input_object_definitions: Vec<&'static str> = Vec::new();
     let variables_struct = generate_variables_struct(operation, options);
 
