@@ -682,7 +682,7 @@ impl<'a> ObjectRef<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct FieldRef<'a> {
     schema: SchemaRef<'a>,
     field_id: StoredFieldId,

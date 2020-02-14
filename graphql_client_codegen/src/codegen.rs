@@ -3,6 +3,7 @@ use crate::{
     normalization::Normalization,
     resolution::*,
     schema::{FieldRef, TypeRef},
+    shared::{field_rename_annotation, keyword_replace},
     GraphQLClientCodegenOptions,
 };
 use heck::SnakeCase;
@@ -241,7 +242,7 @@ fn render_selection<'a>(
             SelectionVariant::SelectedField { field, alias } => {
                 let f = field;
                 let ident = field_ident(&f, *alias);
-                let tpe = match f.field_type() {
+                match f.field_type() {
                     TypeRef::Enum(enm) => {
                         let type_name = Ident::new(enm.name(), Span::call_site());
                         let type_name = decorate_type(&type_name, f.type_qualifiers());
@@ -257,7 +258,7 @@ fn render_selection<'a>(
                     TypeRef::Input(_) => unreachable!("input object in selection"),
                     TypeRef::Object(object) => {
                         let mut fields = Vec::new();
-                        let struct_name = Ident::new(object.name(), Span::call_site());
+                        let struct_name = Ident::new(&select.full_path_prefix(), Span::call_site());
                         render_selection(
                             select.subselection(),
                             &mut fields,
@@ -271,7 +272,7 @@ fn render_selection<'a>(
                         response_type_buffer
                             .push(quote!(#response_derives pub struct #struct_name;));
                     }
-                    other => {
+                    _other => {
                         Ident::new("String", Span::call_site());
                         // unimplemented!("selection on {:?}", other)
                     }
@@ -284,7 +285,35 @@ fn render_selection<'a>(
                 ));
             }
             SelectionVariant::InlineFragment(inline) => todo!("render inline fragment"),
-            SelectionVariant::FragmentSpread(frag) => todo!("render fragment spread"),
+            SelectionVariant::FragmentSpread(frag) => {
+                let original_field_name = frag.name().to_snake_case();
+                let final_field_name = keyword_replace(&original_field_name);
+                let annotation = field_rename_annotation(&original_field_name, &final_field_name);
+                let field_ident = Ident::new(&final_field_name, Span::call_site());
+                let type_name = Ident::new(frag.name(), Span::call_site());
+                field_buffer.push(quote! {
+                    #[serde(flatten)]
+                    pub #annotation #field_ident: #type_name
+                });
+            } // SelectionVariant::FragmentSpread(frag) => {
+              //     let struct_name = frag.name();
+              //     let struct_ident = Ident::new(struct_name, Span::call_site());
+              //     let mut fields = Vec::with_capacity(frag.selection_len());
+
+              //     render_selection(
+              //         frag.selection(),
+              //         &mut fields,
+              //         response_type_buffer,
+              //         response_derives,
+              //     );
+
+              //     let fragment_definition = quote! {
+              //         #response_derives
+              //         struct #struct_ident {
+              //             #(#fields),*
+              //         }
+              //     };
+              // }
         }
     }
 }
