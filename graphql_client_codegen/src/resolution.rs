@@ -5,8 +5,8 @@ use crate::{
     constants::TYPENAME_FIELD,
     field_type::GraphqlTypeQualifier,
     schema::{
-        resolve_field_type, EnumRef, FieldRef, InterfaceRef, ObjectId, ObjectRef, ScalarRef,
-        Schema, StoredFieldId, StoredFieldType, TypeId, TypeRef, UnionRef,
+        resolve_field_type, EnumRef, FieldRef, ObjectId, ScalarRef, Schema, StoredFieldId,
+        StoredFieldType, TypeId, TypeRef,
     },
 };
 use petgraph::prelude::EdgeRef;
@@ -248,7 +248,7 @@ fn resolve_object_selection<'a>(
         match item {
             graphql_parser::query::Selection::Field(field) => {
                 if field.name == TYPENAME_FIELD {
-                    let id = query.push_typename(parent);
+                    let id = query.push_node(QueryNode::Typename, parent);
                     acc.push(id);
                     continue;
                 }
@@ -257,11 +257,11 @@ fn resolve_object_selection<'a>(
                     anyhow::anyhow!("No field named {} on {}", &field.name, object.name())
                 })?;
 
-                let id = query.push_selected_field(
-                    SelectedField {
+                let id = query.push_node(
+                    QueryNode::SelectedField(SelectedField {
                         alias: field.alias.clone(),
                         field_id: field_ref.id(),
-                    },
+                    }),
                     parent,
                 );
 
@@ -286,7 +286,10 @@ fn resolve_object_selection<'a>(
                     .find_fragment(&fragment_spread.fragment_name)
                     .expect("TODO: fragment resolution");
 
-                acc.push(query.push_fragment_spread(ResolvedFragmentId(fragment_id), parent));
+                acc.push(query.push_node(
+                    QueryNode::FragmentSpread(ResolvedFragmentId(fragment_id)),
+                    parent,
+                ));
             }
         }
     }
@@ -337,7 +340,7 @@ fn resolve_inline_fragment(
         .find_type(on)
         .ok_or_else(|| anyhow::anyhow!("TODO: error message"))?;
 
-    let id = query.push_inline_fragment(type_id, parent);
+    let id = query.push_node(QueryNode::InlineFragment(type_id), parent);
 
     resolve_selection(
         query,
@@ -436,48 +439,13 @@ pub(crate) struct ResolvedQuery {
 }
 
 impl ResolvedQuery {
-    fn push_typename(&mut self, parent: Option<NodeId>) -> NodeId {
-        let idx = self.selection_graph.add_node(QueryNode::Typename);
+    fn push_node(&mut self, node: QueryNode, parent: Option<NodeId>) -> NodeId {
+        let id = self.selection_graph.add_node(node);
 
-        self.push_optional_parent(idx, parent);
-
-        idx
-    }
-
-    fn push_fragment_spread(
-        &mut self,
-        fragment_id: ResolvedFragmentId,
-        parent: Option<NodeId>,
-    ) -> NodeId {
-        let id = self
-            .selection_graph
-            .add_node(QueryNode::FragmentSpread(fragment_id));
-
-        self.push_optional_parent(id, parent);
-
-        id
-    }
-
-    fn push_inline_fragment(&mut self, type_id: TypeId, parent: Option<NodeId>) -> NodeId {
-        let id = self
-            .selection_graph
-            .add_node(QueryNode::InlineFragment(type_id));
-
-        self.push_optional_parent(id, parent);
-
-        id
-    }
-
-    fn push_selected_field(
-        &mut self,
-        selected_field: SelectedField,
-        parent: Option<NodeId>,
-    ) -> NodeId {
-        let id = self
-            .selection_graph
-            .add_node(QueryNode::SelectedField(selected_field));
-
-        self.push_optional_parent(id, parent);
+        if let Some(parent) = parent {
+            self.selection_graph
+                .add_edge(parent, id, QueryEdge::Selection);
+        }
 
         id
     }
@@ -487,13 +455,6 @@ impl ResolvedQuery {
             .iter_mut()
             .enumerate()
             .find(|(_, frag)| frag.name == name)
-    }
-
-    fn push_optional_parent(&mut self, id: NodeId, parent: Option<NodeId>) {
-        if let Some(parent) = parent {
-            self.selection_graph
-                .add_edge(parent, id, QueryEdge::Selection);
-        }
     }
 }
 
