@@ -39,34 +39,6 @@ pub(crate) fn response_for_query(
     let (definitions, response_data_fields) =
         render_response_data_fields(&operation, &response_derives);
 
-    // let mut context = QueryContext::new(
-    //     schema,
-    //     options.deprecation_strategy(),
-    //     options.normalization(),
-    // );
-
-    // if let Some(derives) = options.variables_derives() {
-    //     context.ingest_variables_derives(&derives)?;
-    // }
-
-    // if let Some(derives) = options.response_derives() {
-    //     context.ingest_response_derives(&derives)?;
-    // }
-
-    // let resolved_query = crate::resolution::resolve(schema, query)?;
-    // crate::rendering::render(schema, &resolved_query)
-
-    // context.resolve_fragments(&query.definitions);
-
-    // let module = context.types_for_operation(operation);
-
-    //     if operation.is_subscription() && selection.len() > 1 {
-    //         return Err(format_err!(
-    //             "{}",
-    //             crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
-    //         ));
-    //     }
-
     let q = quote! {
         use serde::{Serialize, Deserialize};
 
@@ -104,10 +76,7 @@ fn generate_variables_struct(
     operation: Operation<'_>,
     options: &GraphQLClientCodegenOptions,
 ) -> TokenStream {
-    let variable_derives = options
-        .variables_derives()
-        .unwrap_or("Serialize")
-        .split(",");
+    let variable_derives = options.all_variable_derives();
     let variable_derives = render_derives(variable_derives);
 
     if operation.has_no_variables() {
