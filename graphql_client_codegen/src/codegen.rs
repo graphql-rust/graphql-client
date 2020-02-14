@@ -1,7 +1,6 @@
 use crate::{
     field_type::GraphqlTypeQualifier,
     normalization::Normalization,
-    resolution::SelectionItem,
     resolution::*,
     schema::{FieldRef, TypeRef},
     GraphQLClientCodegenOptions,
@@ -222,7 +221,7 @@ fn render_response_data_fields<'a>(
     let mut fields = Vec::new();
 
     render_selection(
-        operation.selection(),
+        operation.rich_selection(),
         &mut fields,
         &mut response_types,
         response_derives,
@@ -232,16 +231,16 @@ fn render_response_data_fields<'a>(
 }
 
 fn render_selection<'a>(
-    selection: impl Iterator<Item = SelectionRef<'a>>,
+    selection: impl Iterator<Item = WithQuery<'a, SelectionItem<'a>>>,
     field_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
     response_derives: &impl quote::ToTokens,
 ) {
     for select in selection {
-        match &select.refine() {
-            SelectionItem::Field(selected_field) => {
-                let f = selected_field.field();
-                let ident = field_ident(&f, selected_field.alias());
+        match &select.variant() {
+            SelectionVariant::SelectedField { field, alias } => {
+                let f = field;
+                let ident = field_ident(&f, *alias);
                 let tpe = match f.field_type() {
                     TypeRef::Enum(enm) => {
                         let type_name = Ident::new(enm.name(), Span::call_site());
@@ -260,7 +259,7 @@ fn render_selection<'a>(
                         let mut fields = Vec::new();
                         let struct_name = Ident::new(object.name(), Span::call_site());
                         render_selection(
-                            selected_field.subselection(),
+                            select.subselection(),
                             &mut fields,
                             response_type_buffer,
                             response_derives,
@@ -278,14 +277,14 @@ fn render_selection<'a>(
                     }
                 };
             }
-            SelectionItem::Typename => {
+            SelectionVariant::Typename => {
                 field_buffer.push(quote!(
                     #[serde(rename = "__typename")]
                     pub typename: String
                 ));
             }
-            SelectionItem::InlineFragment(inline) => todo!("render inline fragment"),
-            SelectionItem::FragmentSpread(frag) => todo!("render fragment spread"),
+            SelectionVariant::InlineFragment(inline) => todo!("render inline fragment"),
+            SelectionVariant::FragmentSpread(frag) => todo!("render fragment spread"),
         }
     }
 }
