@@ -820,3 +820,39 @@ pub(crate) fn resolve_field_type(
         }
     }
 }
+
+pub(crate) trait ObjectRefLike<'a> {
+    fn name(&self) -> &'a str;
+
+    fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>>;
+
+    fn schema(&self) -> SchemaRef<'a>;
+}
+
+impl<'a> ObjectRefLike<'a> for ObjectRef<'a> {
+    fn name(&self) -> &'a str {
+        self.name()
+    }
+
+    fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
+        self.get_field_by_name(name)
+    }
+
+    fn schema(&self) -> SchemaRef<'a> {
+        self.schema()
+    }
+}
+
+impl<'a> ObjectRefLike<'a> for InterfaceRef<'a> {
+    fn name(&self) -> &'a str {
+        self.name()
+    }
+
+    fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
+        self.get_field_by_name(name)
+    }
+
+    fn schema(&self) -> SchemaRef<'a> {
+        self.schema()
+    }
+}

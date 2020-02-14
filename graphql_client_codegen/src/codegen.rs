@@ -278,7 +278,14 @@ fn render_selection<'a>(
                     }
                 };
             }
-            _ => todo!("render non-field selection"),
+            SelectionItem::Typename => {
+                field_buffer.push(quote!(
+                    #[serde(rename = "__typename")]
+                    pub typename: String
+                ));
+            }
+            SelectionItem::InlineFragment(inline) => todo!("render inline fragment"),
+            SelectionItem::FragmentSpread(frag) => todo!("render fragment spread"),
         }
     }
 }
