@@ -9,41 +9,46 @@ use crate::{
         Schema, StoredFieldId, StoredFieldType, TypeId, TypeRef, UnionRef,
     },
 };
+use petgraph::prelude::NodeIndex;
 use std::collections::HashSet;
 
 pub(crate) struct WithQuery<'a, T> {
     query: &'a ResolvedQuery,
     schema: &'a Schema,
-    item: T,
+    item: &'a T,
 }
 
-// enum QueryNode {
-//     Field(StoredFieldId),
-//     InlineFragment(TypeId),
-//     FragmentSpread(FragmentId),
-// }
+type SelectionGraph = petgraph::Graph<QueryNode, QueryEdge, petgraph::Directed, u32>;
 
-// enum QueryEdge {
-//     Selection,
-// }
-
-#[derive(Debug, Clone, Copy)]
-enum SelectionId {
-    FieldId(usize),
-    InlineFragmentId(usize),
-    FragmentSpread(usize),
-    Typename(Option<SelectionParentId>),
-}
-
-#[derive(Debug, Clone, Copy)]
-enum SelectionParentId {
-    FieldId(usize),
-    InlineFragmentId(usize),
+#[derive(Debug)]
+enum QueryNode {
+    SelectedField(SelectedField),
+    InlineFragment(TypeId),
+    FragmentSpread(ResolvedFragmentId),
+    Typename,
 }
 
 #[derive(Debug)]
-struct Field {
-    parent: Option<SelectionParentId>,
+enum QueryEdge {
+    Selection,
+}
+
+// #[derive(Debug, Clone, Copy)]
+// enum SelectionId {
+//     FieldId(usize),
+//     InlineFragmentId(usize),
+//     FragmentSpread(usize),
+//     Typename(Option<SelectionParentId>),
+// }
+
+// #[derive(Debug, Clone, Copy)]
+// enum SelectionParentId {
+//     FieldId(usize),
+//     InlineFragmentId(usize),
+// }
+
+#[derive(Debug)]
+struct SelectedField {
     alias: Option<String>,
     field_id: StoredFieldId,
 }
@@ -129,14 +134,14 @@ fn resolve_object_selection<'a>(
     query: &mut ResolvedQuery,
     object: impl crate::schema::ObjectRefLike<'a>,
     selection_set: &graphql_parser::query::SelectionSet,
-    parent: Option<SelectionParentId>,
+    parent: Option<NodeIndex>,
     acc: &mut SelectionAccumulator,
 ) -> anyhow::Result<()> {
     for item in selection_set.items.iter() {
         match item {
             graphql_parser::query::Selection::Field(field) => {
                 if field.name == TYPENAME_FIELD {
-                    acc.push(SelectionId::Typename(parent));
+                    let id = query.push_typename(parent);
                     continue;
                 }
 
@@ -145,7 +150,7 @@ fn resolve_object_selection<'a>(
                 })?;
 
                 let id = query.selected_fields.len();
-                query.selected_fields.push(Field {
+                query.selected_fields.push(SelectedField {
                     parent,
                     alias: field.alias.clone(),
                     field_id: field_ref.id(),
@@ -325,12 +330,21 @@ struct ResolvedFragmentId(usize);
 pub(crate) struct ResolvedQuery {
     pub(crate) operations: Vec<ResolvedOperation>,
     fragments: Vec<ResolvedFragment>,
-    selected_fields: Vec<Field>,
-    inline_fragments: Vec<InlineFragment>,
-    fragment_spreads: Vec<FragmentSpread>,
+    selection_graph: SelectionGraph,
 }
 
 impl ResolvedQuery {
+    fn push_typename(&mut self, parent: Option<NodeIndex>) -> NodeIndex {
+        let idx = self.selection_graph.add_node(QueryNode::Typename);
+
+        if let Some(parent) = parent {
+            self.selection_graph
+                .add_edge(parent, idx, QueryEdge::Selection);
+        }
+
+        idx
+    }
+
     fn find_fragment(&mut self, name: &str) -> Option<(usize, &mut ResolvedFragment)> {
         self.fragments
             .iter_mut()
@@ -528,7 +542,7 @@ impl<'a> FragmentSpreadRef<'a> {
 }
 
 impl<'a> SelectedFieldRef<'a> {
-    fn get(&self) -> &'a Field {
+    fn get(&self) -> &'a SelectedField {
         self.query.selected_fields.get(self.field_id).unwrap()
     }
 
@@ -540,10 +554,10 @@ impl<'a> SelectedFieldRef<'a> {
         self.get().alias.as_ref().map(String::as_str)
     }
 
-    pub(crate) fn parent(&self) -> Option<SelectionRef<'a>> {
-        self.query
-            .children_of(SelectionParentId::FieldId(self.field_id), self.schema)
-    }
+    // pub(crate) fn parent(&self) -> Option<SelectionRef<'a>> {
+    //     self.query
+    //         .children_of(SelectionParentId::FieldId(self.field_id), self.schema)
+    // }
 
     pub(crate) fn subselection(&self) -> impl Iterator<Item = SelectionRef<'a>> {
         std::iter::empty()
@@ -699,7 +713,7 @@ fn resolve_variables(
         .collect()
 }
 
-struct SelectionAccumulator(Option<Vec<SelectionId>>);
+struct SelectionAccumulator(Option<Vec<NodeIndex>>);
 
 impl SelectionAccumulator {
     fn with_capacity(cap: usize) -> Self {
@@ -710,13 +724,13 @@ impl SelectionAccumulator {
         SelectionAccumulator(None)
     }
 
-    fn push(&mut self, item: SelectionId) {
+    fn push(&mut self, item: NodeIndex) {
         if let Some(v) = &mut self.0 {
             v.push(item);
         }
     }
 
-    fn into_vec(self) -> Vec<SelectionId> {
+    fn into_vec(self) -> Vec<NodeIndex> {
         self.0.unwrap_or_else(Vec::new)
     }
 }
