@@ -11,6 +11,12 @@ use crate::{
 };
 use std::collections::HashSet;
 
+pub(crate) struct WithQuery<'a, T> {
+    query: &'a ResolvedQuery,
+    schema: &'a Schema,
+    item: T,
+}
+
 // enum QueryNode {
 //     Field(StoredFieldId),
 //     InlineFragment(TypeId),

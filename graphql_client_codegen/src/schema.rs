@@ -1,5 +1,6 @@
 mod graphql_parser_conversion;
 mod json_conversion;
+
 use crate::field_type::GraphqlTypeQualifier;
 use std::collections::HashMap;
 
@@ -855,4 +856,9 @@ impl<'a> ObjectRefLike<'a> for InterfaceRef<'a> {
     fn schema(&self) -> SchemaRef<'a> {
         self.schema()
     }
+}
+
+pub(crate) struct WithSchema<'a, T> {
+    schema: SchemaRef<'a>,
+    item: T,
 }
