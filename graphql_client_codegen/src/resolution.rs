@@ -42,7 +42,7 @@ impl<'a> WithQuery<'a, SelectionItem<'a>> {
             .map(|parent_id| self.refocus(parent_id).upgrade())
     }
 
-    pub(crate) fn full_path_prefix(&self) -> String {
+    pub(crate) fn full_path_prefix(&self, root_name: &str) -> String {
         let mut path = vec![self.to_path_segment()];
 
         let mut item = *self;
@@ -52,6 +52,7 @@ impl<'a> WithQuery<'a, SelectionItem<'a>> {
             path.push(parent.to_path_segment());
         }
 
+        path.push(root_name.to_owned());
         path.reverse();
         path.join("")
     }
@@ -518,7 +519,7 @@ impl<'a> Operation<'a> {
         self.query.operations.get(self.operation_id).unwrap()
     }
 
-    fn name(&self) -> &'a str {
+    pub(crate) fn name(&self) -> &'a str {
         self.get().name()
     }
 

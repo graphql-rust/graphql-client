@@ -69,6 +69,8 @@ pub(crate) fn response_for_query(
         #variables_struct
     };
 
+    // panic!("{}", q);
+
     Ok(q)
 }
 
@@ -226,6 +228,7 @@ fn render_response_data_fields<'a>(
         &mut fields,
         &mut response_types,
         response_derives,
+        operation.name(),
     );
 
     (response_types, fields)
@@ -236,6 +239,7 @@ fn render_selection<'a>(
     field_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
     response_derives: &impl quote::ToTokens,
+    root_name: &str,
 ) {
     for select in selection {
         match &select.variant() {
@@ -258,19 +262,28 @@ fn render_selection<'a>(
                     TypeRef::Input(_) => unreachable!("input object in selection"),
                     TypeRef::Object(object) => {
                         let mut fields = Vec::new();
-                        let struct_name = Ident::new(&select.full_path_prefix(), Span::call_site());
+                        let struct_name =
+                            Ident::new(&select.full_path_prefix(root_name), Span::call_site());
                         render_selection(
                             select.subselection(),
                             &mut fields,
                             response_type_buffer,
                             response_derives,
+                            root_name,
                         );
 
                         let field_type = decorate_type(&struct_name, f.type_qualifiers());
 
                         field_buffer.push(quote!(pub #ident: #field_type));
-                        response_type_buffer
-                            .push(quote!(#response_derives pub struct #struct_name;));
+
+                        let struct_definition = quote! {
+                            #response_derives
+                            pub struct #struct_name {
+                                #(#fields),*
+                            }
+                        };
+
+                        response_type_buffer.push(struct_definition);
                     }
                     _other => {
                         Ident::new("String", Span::call_site());
