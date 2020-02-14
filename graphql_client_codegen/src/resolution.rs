@@ -434,7 +434,11 @@ impl<'a> SelectionRef<'a> {
                 }
             }
             SelectionItem::InlineFragment(inline_fragment_ref) => {
-                todo!();
+                used_types.types.insert(inline_fragment_ref.on().type_id());
+
+                for item in inline_fragment_ref.subselection() {
+                    item.collect_used_types(used_types);
+                }
             }
             SelectionItem::FragmentSpread(fragment_spread_ref) => fragment_spread_ref
                 .fragment()
@@ -539,6 +543,10 @@ impl<'a> InlineFragmentRef<'a> {
 
     pub(crate) fn on(&self) -> crate::schema::TypeRef<'a> {
         self.get().on.upgrade(self.schema)
+    }
+
+    pub(crate) fn subselection(&self) -> impl Iterator<Item = SelectionRef<'a>> {
+        std::iter::empty()
     }
 }
 
