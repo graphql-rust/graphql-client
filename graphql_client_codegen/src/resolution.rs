@@ -26,7 +26,7 @@ pub(crate) enum SelectionVariant<'a> {
         alias: Option<&'a str>,
         field: FieldRef<'a>,
     },
-    FragmentSpread(WithQuery<'a, ResolvedFragmentId>),
+    FragmentSpread(ResolvedFragmentId),
     InlineFragment(TypeRef<'a>),
     Typename,
 }
@@ -86,7 +86,7 @@ pub(crate) struct WithQuery<'a, T> {
 }
 
 impl<'a, T> WithQuery<'a, T> {
-    fn refocus<U>(&self, new_item: U) -> WithQuery<'a, U> {
+    pub(crate) fn refocus<U>(&self, new_item: U) -> WithQuery<'a, U> {
         WithQuery {
             query: self.query,
             schema: self.schema,
@@ -151,9 +151,7 @@ impl<'a> WithQuery<'a, NodeId> {
         let node = self.get_node();
 
         let variant = match node.item {
-            QueryNode::FragmentSpread(frag_id) => {
-                SelectionVariant::FragmentSpread(self.refocus(*frag_id))
-            }
+            QueryNode::FragmentSpread(frag_id) => SelectionVariant::FragmentSpread(*frag_id),
             QueryNode::InlineFragment(type_id) => {
                 SelectionVariant::InlineFragment(type_id.upgrade(self.schema))
             }

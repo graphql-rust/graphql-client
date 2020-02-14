@@ -299,6 +299,7 @@ fn render_selection<'a>(
             }
             SelectionVariant::InlineFragment(inline) => todo!("render inline fragment"),
             SelectionVariant::FragmentSpread(frag) => {
+                let frag = select.refocus(*frag);
                 let original_field_name = frag.name().to_snake_case();
                 let final_field_name = keyword_replace(&original_field_name);
                 let annotation = field_rename_annotation(&original_field_name, &final_field_name);
