@@ -120,9 +120,36 @@ impl<'a> WithQuery<'a, NodeId> {
     fn upgrade(&self) -> WithQuery<'a, SelectionItem<'a>> {
         let node = self.get_node();
 
-        match node {
-            _ => panic!(),
-        }
+        let variant = match node.item {
+            QueryNode::FragmentSpread(frag_id) => {
+                SelectionVariant::FragmentSpread(self.query.fragments.get(frag_id.0).unwrap())
+            }
+            QueryNode::InlineFragment(type_id) => {
+                SelectionVariant::InlineFragment(type_id.upgrade(self.schema))
+            }
+            QueryNode::Typename => SelectionVariant::Typename,
+            QueryNode::SelectedField(f) => SelectionVariant::SelectedField {
+                alias: f.alias.as_ref().map(String::as_str),
+                field: self.schema.field(f.field_id),
+            },
+        };
+
+        self.refocus(SelectionItem {
+            node_id: self.item,
+            parent_id: self.parent_id(),
+            variant,
+        })
+    }
+
+    fn parent_id(&self) -> Option<NodeId> {
+        self.query
+            .selection_graph
+            .edges_directed(self.item, petgraph::Direction::Incoming)
+            .filter(|edge| match edge.weight() {
+                QueryEdge::Selection => true,
+            })
+            .map(|edge| edge.source())
+            .next()
     }
 }
 
@@ -222,6 +249,7 @@ fn resolve_object_selection<'a>(
             graphql_parser::query::Selection::Field(field) => {
                 if field.name == TYPENAME_FIELD {
                     let id = query.push_typename(parent);
+                    acc.push(id);
                     continue;
                 }
 
@@ -250,6 +278,8 @@ fn resolve_object_selection<'a>(
             }
             graphql_parser::query::Selection::InlineFragment(inline) => {
                 let selection_id = resolve_inline_fragment(query, object.schema(), inline, parent)?;
+
+                acc.push(selection_id);
             }
             graphql_parser::query::Selection::FragmentSpread(fragment_spread) => {
                 let (fragment_id, _) = query
