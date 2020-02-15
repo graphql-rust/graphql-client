@@ -1,6 +1,7 @@
 //! The responsibility of this module is to resolve and validate a query
 //! against a given schema.
 
+use crate::schema::InputRef;
 use crate::{
     constants::TYPENAME_FIELD,
     field_type::GraphqlTypeQualifier,
@@ -554,6 +555,10 @@ impl<'a> Operation<'a> {
             selection.collect_used_types(&mut all_used_types);
         }
 
+        for variable in self.variables() {
+            variable.collect_used_types(&mut all_used_types);
+        }
+
         all_used_types
     }
 
@@ -621,6 +626,17 @@ impl<'a> Variable<'a> {
     pub(crate) fn type_qualifiers(&self) -> &[GraphqlTypeQualifier] {
         &self.get().r#type.qualifiers
     }
+
+    fn collect_used_types(&self, used_types: &mut UsedTypes) {
+        match self.get().r#type.id {
+            type_id @ TypeId::Input(_)
+            | type_id @ TypeId::Scalar(_)
+            | type_id @ TypeId::Enum(_) => {
+                used_types.types.insert(type_id);
+            }
+            _ => (),
+        }
+    }
 }
 
 impl<'a> WithQuery<'a, ResolvedFragmentId> {
@@ -658,6 +674,15 @@ pub(crate) struct UsedTypes {
 }
 
 impl UsedTypes {
+    pub(crate) fn inputs<'s, 'a: 's>(
+        &'s self,
+        schema: &'a Schema,
+    ) -> impl Iterator<Item = InputRef<'a>> + 's {
+        schema
+            .inputs()
+            .filter(move |input_ref| self.types.contains(&input_ref.type_id()))
+    }
+
     pub(crate) fn scalars<'s, 'a: 's>(
         &'s self,
         schema: &'a Schema,
