@@ -623,6 +623,13 @@ impl Schema {
             }
         }
     }
+
+    pub(crate) fn inputs<'a>(&'a self) -> impl Iterator<Item = InputRef<'a>> + 'a {
+        (0..self.stored_inputs.len()).map(move |id| InputRef {
+            schema: self,
+            input_id: InputId(id),
+        })
+    }
 }
 
 pub(crate) struct FieldsRef<'a> {
@@ -723,6 +730,10 @@ pub(crate) struct InputRef<'a> {
 impl<'a> InputRef<'a> {
     fn get(&self) -> &'a StoredInputType {
         self.schema.get_stored_input(self.input_id)
+    }
+
+    pub(crate) fn type_id(&self) -> TypeId {
+        TypeId::Input(self.input_id)
     }
 
     pub(crate) fn name(&self) -> &'a str {

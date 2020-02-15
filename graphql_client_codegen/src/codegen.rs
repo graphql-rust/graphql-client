@@ -32,7 +32,8 @@ pub(crate) fn response_for_query(
     let scalar_definitions = generate_scalar_definitions(operation, &all_used_types);
     let enum_definitions = generate_enum_definitions(operation, &all_used_types, options);
     let fragment_definitions: Vec<&'static str> = Vec::new();
-    let input_object_definitions: Vec<&'static str> = Vec::new();
+    let input_object_definitions =
+        generate_input_object_definitions(operation, &all_used_types, options);
     let variables_struct = generate_variables_struct(operation, options);
 
     let response_derives = render_derives(options.all_response_derives());
@@ -373,4 +374,15 @@ fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStr
     }
 
     qualified
+}
+
+fn generate_input_object_definitions(
+    operation: Operation<'_>,
+    all_used_types: &UsedTypes,
+    options: &GraphQLClientCodegenOptions,
+) -> Vec<TokenStream> {
+    all_used_types
+        .inputs(operation.schema())
+        .map(|input| quote!(heh))
+        .collect()
 }
