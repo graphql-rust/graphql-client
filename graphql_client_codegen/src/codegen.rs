@@ -2,7 +2,7 @@ use crate::{
     field_type::GraphqlTypeQualifier,
     normalization::Normalization,
     resolution::*,
-    schema::{FieldRef, TypeId, TypeRef},
+    schema::{FieldRef, TypeId},
     shared::{field_rename_annotation, keyword_replace},
     GraphQLClientCodegenOptions,
 };

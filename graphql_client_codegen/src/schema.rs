@@ -146,33 +146,9 @@ impl<'a> WithSchema<'a, TypeId> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum TypeRef<'a> {
-    Object(ObjectRef<'a>),
-    Scalar(ScalarRef<'a>),
-    Interface(InterfaceRef<'a>),
-    Union(UnionRef<'a>),
-    Enum(EnumRef<'a>),
-}
+pub(crate) type ScalarRef<'a> = WithSchema<'a, ScalarId>;
 
-impl<'a> TypeRef<'a> {
-    pub(crate) fn name(&self) -> &'a str {
-        match self {
-            TypeRef::Object(obj) => obj.name(),
-            TypeRef::Scalar(s) => s.name(),
-            TypeRef::Interface(s) => s.name(),
-            TypeRef::Union(s) => s.name(),
-            TypeRef::Enum(s) => s.name(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct ScalarRef<'a> {
-    scalar_id: ScalarId,
-    schema: &'a Schema,
-}
-impl<'a> WithSchema<'a, ScalarId> {
+impl<'a> ScalarRef<'a> {
     fn get(&self) -> &'a StoredScalar {
         self.schema.get_scalar(self.item)
     }
@@ -182,23 +158,9 @@ impl<'a> WithSchema<'a, ScalarId> {
     }
 }
 
-impl<'a> ScalarRef<'a> {
-    fn get(&self) -> &'a StoredScalar {
-        self.schema.get_scalar(self.scalar_id)
-    }
+pub(crate) type UnionRef<'a> = WithSchema<'a, UnionId>;
 
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct UnionRef<'a> {
-    union_id: UnionId,
-    schema: &'a Schema,
-}
-
-impl<'a> WithSchema<'a, UnionId> {
+impl<'a> UnionRef<'a> {
     fn get(&self) -> &'a StoredUnion {
         self.schema.stored_unions.get(self.item.0).unwrap()
     }
@@ -208,39 +170,11 @@ impl<'a> WithSchema<'a, UnionId> {
     }
 }
 
-impl<'a> UnionRef<'a> {
-    fn get(&self) -> &'a StoredUnion {
-        self.schema.stored_unions.get(self.union_id.0).unwrap()
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct EnumRef<'a> {
-    enum_id: EnumId,
-    schema: &'a Schema,
-}
-
-impl<'a> WithSchema<'a, EnumId> {
-    fn get(&self) -> &'a StoredEnum {
-        self.schema.get_enum(self.item)
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-
-    pub(crate) fn variants(&self) -> &'a [String] {
-        &self.get().variants
-    }
-}
+pub(crate) type EnumRef<'a> = WithSchema<'a, EnumId>;
 
 impl<'a> EnumRef<'a> {
     fn get(&self) -> &'a StoredEnum {
-        self.schema.get_enum(self.enum_id)
+        self.schema.get_enum(self.item)
     }
 
     pub(crate) fn name(&self) -> &'a str {
@@ -414,69 +348,6 @@ impl Schema {
         }
     }
 
-    // pub(crate) fn ingest_interface_implementations(
-    //     &mut self,
-    //     impls: BTreeMap<&'schema str, Vec<&'schema str>>,
-    // ) -> Result<(), anyhow::Error> {
-    //     impls
-    //         .into_iter()
-    //         .map(|(iface_name, implementors)| {
-    //             let iface = self
-    //                 .interfaces
-    //                 .get_mut(&iface_name)
-    //                 .ok_or_else(|| format_err!("interface not found: {}", iface_name))?;
-    //             iface.implemented_by = implementors.iter().cloned().collect();
-    //             Ok(())
-    //         })
-    //         .collect()
-    // }
-
-    // pub(crate) fn require(&self, typename_: &str) {
-    //     DEFAULT_SCALARS
-    //         .iter()
-    //         .find(|&&s| s == typename_)
-    //         .map(|_| ())
-    //         .or_else(|| {
-    //             self.enums
-    //                 .get(typename_)
-    //                 .map(|enm| enm.is_required.set(true))
-    //         })
-    //         .or_else(|| self.inputs.get(typename_).map(|input| input.require(self)))
-    //         .or_else(|| {
-    //             self.objects
-    //                 .get(typename_)
-    //                 .map(|object| object.require(self))
-    //         })
-    //         .or_else(|| {
-    //             self.scalars
-    //                 .get(typename_)
-    //                 .map(|scalar| scalar.is_required.set(true))
-    //         });
-    // }
-
-    // pub(crate) fn contains_scalar(&self, type_name: &str) -> bool {
-    //     DEFAULT_SCALARS.iter().any(|s| s == &type_name) || self.scalars.contains_key(type_name)
-    // }
-
-    // pub(crate) fn fragment_target(
-    //     &self,
-    //     target_name: &str,
-    // ) -> Option<crate::fragments::FragmentTarget<'_>> {
-    //     self.objects
-    //         .get(target_name)
-    //         .map(crate::fragments::FragmentTarget::Object)
-    //         .or_else(|| {
-    //             self.interfaces
-    //                 .get(target_name)
-    //                 .map(crate::fragments::FragmentTarget::Interface)
-    //         })
-    //         .or_else(|| {
-    //             self.unions
-    //                 .get(target_name)
-    //                 .map(crate::fragments::FragmentTarget::Union)
-    //         })
-    // }
-
     fn get_object_mut(&mut self, object_id: ObjectId) -> &mut StoredObject {
         self.stored_objects.get_mut(object_id.0).unwrap()
     }
@@ -485,31 +356,12 @@ impl Schema {
         self.stored_interfaces.get_mut(id.0).unwrap()
     }
 
-    // fn get_interface_by_name_mut(
-    //     &mut self,
-    //     interface_name: &str,
-    // ) -> Option<(InterfaceId, &mut StoredInterface)> {
-    //     self.stored_interfaces
-    //         .iter_mut()
-    //         .enumerate()
-    //         .find(|(idx, iface)| iface.name == interface_name)
-    //         .map(|(idx, iface)| (InterfaceId(idx), iface))
-    // }
-
     fn push_object(&mut self, object: StoredObject) -> ObjectId {
         let id = ObjectId(self.stored_objects.len());
         self.stored_objects.push(object);
 
         id
     }
-
-    // fn push_object_field(&mut self, object_field: StoredObjectField) -> ObjectFieldId {
-    //     let id = ObjectFieldId(self.stored_object_fields.len());
-
-    //     self.stored_object_fields.push(object_field);
-
-    //     id
-    // }
 
     fn push_interface(&mut self, interface: StoredInterface) -> InterfaceId {
         let id = InterfaceId(self.stored_interfaces.len());
@@ -518,14 +370,6 @@ impl Schema {
 
         id
     }
-
-    // fn push_interface_field(&mut self, interface_field: StoredInterfaceField) -> InterfaceFieldId {
-    //     let id = InterfaceFieldId(self.stored_interface_fields.len());
-
-    //     self.stored_interface_fields.push(interface_field);
-
-    //     id
-    // }
 
     fn push_scalar(&mut self, scalar: StoredScalar) -> ScalarId {
         let id = ScalarId(self.stored_scalars.len());
@@ -550,25 +394,6 @@ impl Schema {
 
         id
     }
-
-    // pub(crate) fn get_input_type_by_name(&self, name: &str) -> Option<InputRef<'_>> {
-    //     self.stored_inputs
-    //         .iter()
-    //         .position(|input| input.name == name)
-    //         .map(InputId)
-    //         .map(|idx| InputRef {
-    //             schema: self,
-    //             input_id: idx,
-    //         })
-    // }
-
-    // pub(crate) fn get_object_by_name(&self, name: &str) -> Option<()> {
-    //     Some(())
-    // }
-
-    // pub(crate) fn lookup_type(&self, name: &str) -> Option<TypeId> {
-    //     todo!()
-    // }
 
     pub(crate) fn query_type(&self) -> ObjectRef<'_> {
         WithSchema::new(
@@ -639,10 +464,7 @@ impl Schema {
     }
 
     pub(crate) fn r#enum(&self, enum_id: EnumId) -> EnumRef<'_> {
-        EnumRef {
-            enum_id,
-            schema: self,
-        }
+        WithSchema::new(self, enum_id)
     }
 
     fn find_interface(&self, interface_name: &str) -> InterfaceId {
@@ -671,12 +493,6 @@ impl Schema {
             item: InputId(id),
         })
     }
-}
-
-pub(crate) struct FieldsRef<'a> {
-    parent_type: StoredFieldParent,
-    schema: SchemaRef<'a>,
-    fields: &'a [StoredFieldId],
 }
 
 #[derive(Clone, Debug, Copy, PartialEq)]
@@ -874,7 +690,7 @@ pub(crate) trait ObjectRefLike<'a> {
     fn schema(&self) -> SchemaRef<'a>;
 }
 
-impl<'a> ObjectRefLike<'a> for WithSchema<'a, ObjectId> {
+impl<'a> ObjectRefLike<'a> for ObjectRef<'a> {
     fn name(&self) -> &'a str {
         self.name()
     }
