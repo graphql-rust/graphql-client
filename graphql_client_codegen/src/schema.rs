@@ -451,10 +451,7 @@ impl Schema {
     }
 
     pub(crate) fn interface(&self, interface_id: InterfaceId) -> InterfaceRef<'_> {
-        InterfaceRef {
-            interface_id,
-            schema: self,
-        }
+        WithSchema::new(self, interface_id)
     }
 
     pub(crate) fn field(&self, field_id: StoredFieldId) -> FieldRef<'_> {
@@ -497,25 +494,11 @@ impl Schema {
     }
 }
 
-#[derive(Clone, Debug, Copy, PartialEq)]
-pub(crate) struct InterfaceRef<'a> {
-    schema: SchemaRef<'a>,
-    interface_id: InterfaceId,
-}
+type InterfaceRef<'a> = WithSchema<'a, InterfaceId>;
 
 impl<'a> WithSchema<'a, InterfaceId> {
     fn get(&self) -> &'a StoredInterface {
         self.schema.get_interface(self.item)
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-}
-
-impl<'a> InterfaceRef<'a> {
-    fn get(&self) -> &'a StoredInterface {
-        self.schema.get_interface(self.interface_id)
     }
 
     pub(crate) fn name(&self) -> &'a str {
@@ -713,6 +696,6 @@ impl<'a> ObjectRefLike<'a> for InterfaceRef<'a> {
     }
 
     fn schema(&self) -> SchemaRef<'a> {
-        self.schema()
+        InterfaceRef::schema(self)
     }
 }

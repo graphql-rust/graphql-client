@@ -50,6 +50,18 @@ fn convert(src: &mut graphql_parser::schema::Document, schema: &mut Schema) {
             .as_mut()
             .and_then(|n| schema.names.get(n))
             .and_then(|id| id.as_object_id());
+    } else {
+        schema.query_type = schema.names.get("Query").and_then(|id| id.as_object_id());
+
+        schema.mutation_type = schema
+            .names
+            .get("Mutation")
+            .and_then(|id| id.as_object_id());
+
+        schema.subscription_type = schema
+            .names
+            .get("Subscription")
+            .and_then(|id| id.as_object_id());
     };
 }
 
@@ -120,7 +132,7 @@ fn populate_names_map(schema: &mut Schema, definitions: &[Definition]) {
         });
 }
 
-fn ingest_union(schema: &mut Schema, union: &mut graphql_parser::schema::UnionType) {
+fn ingest_union(schema: &mut Schema, union: &mut UnionType) {
     let stored_union = super::StoredUnion {
         name: std::mem::replace(&mut union.name, String::new()),
         variants: union

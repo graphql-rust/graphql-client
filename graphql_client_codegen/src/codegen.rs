@@ -93,11 +93,26 @@ fn generate_variables_struct(
     }
 
     let variable_fields = operation.variables().map(generate_variable_struct_field);
+    let variable_defaults = operation.variables().map(|variable| {
+        let method_name = format!("default_{}", variable.name());
+        let method_name = Ident::new(&method_name, Span::call_site());
+        let method_return_type = quote!(String);
+
+        quote!(
+            pub fn #method_name() -> #method_return_type {
+                todo!()
+            }
+        )
+    });
 
     let variables_struct = quote!(
         #variable_derives
         pub struct Variables {
             #(#variable_fields,)*
+        }
+
+        impl Variables {
+            #(#variable_defaults)*
         }
     );
 
@@ -249,14 +264,6 @@ fn render_selection<'a>(
     // TODO: if the selection has one item, we can sometimes generate fewer structs (e.g. single fragment spread)
 
     for select in selection {
-        // TODO: handle deprecation here
-
-        // match (options.deprecation_strategy(), select.on().is_deprecated()) {
-        //     DeprecationStrategy::Warn => todo!(),
-        //     DeprecationStrategy::Allow => (),
-        //     DeprecationStrategy::Deny => continue,
-        // }
-
         match &select.get() {
             Selection::Field(field) => {
                 let field = select.refocus(field);
