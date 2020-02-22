@@ -1,12 +1,13 @@
 //! The responsibility of this module is to resolve and validate a query
 //! against a given schema.
 
+use crate::schema::ScalarId;
 use crate::{
     constants::TYPENAME_FIELD,
     field_type::GraphqlTypeQualifier,
     schema::{
-        resolve_field_type, EnumRef, FieldRef, InputId, ObjectId, ScalarRef, Schema, StoredFieldId,
-        StoredFieldType, TypeId, TypeRef, WithSchema,
+        resolve_field_type, EnumRef, InputId, ObjectId, Schema, StoredFieldId, StoredFieldType,
+        TypeId, WithSchema,
     },
 };
 
@@ -256,15 +257,6 @@ impl<'a> WithQuery<'a, &'a SelectedField> {
         self.with_schema(self.item.field_id).name()
     }
 
-    pub(crate) fn selection_set<'b>(
-        &'b self,
-    ) -> impl Iterator<Item = WithQuery<'a, SelectionId>> + 'b {
-        self.item
-            .selection_set
-            .iter()
-            .map(move |id| self.refocus(*id))
-    }
-
     pub(crate) fn schema_field(&self) -> WithSchema<'a, StoredFieldId> {
         self.with_schema(self.item.field_id)
     }
@@ -413,7 +405,7 @@ fn resolve_object_selection<'a>(
                 let id = query.push_selection(
                     Selection::Field(SelectedField {
                         alias: field.alias.clone(),
-                        field_id: field_ref.id(),
+                        field_id: field_ref.item,
                         selection_set: Vec::with_capacity(selection_set.items.len()),
                     }),
                     parent,
@@ -713,10 +705,6 @@ impl<'a> WithQuery<'a, ResolvedFragmentId> {
     pub(crate) fn name(&self) -> &'a str {
         &self.get().name
     }
-
-    pub(crate) fn selection_len(&self) -> usize {
-        self.get().selection.len()
-    }
 }
 
 #[derive(Debug, Default)]
@@ -738,7 +726,7 @@ impl UsedTypes {
     pub(crate) fn scalars<'s, 'a: 's>(
         &'s self,
         schema: &'a Schema,
-    ) -> impl Iterator<Item = ScalarRef<'a>> + 's {
+    ) -> impl Iterator<Item = WithSchema<'a, ScalarId>> + 's {
         self.types
             .iter()
             .filter_map(TypeId::as_scalar_id)

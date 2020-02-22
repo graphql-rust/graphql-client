@@ -571,31 +571,28 @@ impl Schema {
     // }
 
     pub(crate) fn query_type(&self) -> ObjectRef<'_> {
-        ObjectRef {
-            object_id: self
-                .query_type
+        WithSchema::new(
+            self,
+            self.query_type
                 .expect("Query operation type must be defined"),
-            schema: self,
-        }
+        )
     }
 
     pub(crate) fn mutation_type(&self) -> ObjectRef<'_> {
-        ObjectRef {
-            object_id: self
-                .mutation_type
+        WithSchema::new(
+            self,
+            self.mutation_type
                 .expect("Mutation operation type must be defined"),
-            schema: self,
-        }
+        )
     }
 
     pub(crate) fn subscription_type(&self) -> ObjectRef<'_> {
-        ObjectRef {
-            object_id: self
-                .subscription_type
+        WithSchema::new(
+            self,
+            self.subscription_type
                 // TODO: make this return an option
                 .expect("Subscription operation type must be defined"),
-            schema: self,
-        }
+        )
     }
 
     fn get_interface(&self, interface_id: InterfaceId) -> &StoredInterface {
@@ -622,11 +619,8 @@ impl Schema {
         self.stored_scalars.get(scalar_id.0).unwrap()
     }
 
-    pub(crate) fn object(&self, id: ObjectId) -> ObjectRef<'_> {
-        ObjectRef {
-            object_id: id,
-            schema: self,
-        }
+    pub(crate) fn object(&self, id: ObjectId) -> WithSchema<'_, ObjectId> {
+        WithSchema::new(self, id)
     }
 
     pub(crate) fn interface(&self, interface_id: InterfaceId) -> InterfaceRef<'_> {
@@ -637,17 +631,11 @@ impl Schema {
     }
 
     pub(crate) fn field(&self, field_id: StoredFieldId) -> FieldRef<'_> {
-        FieldRef {
-            field_id,
-            schema: self,
-        }
+        WithSchema::new(self, field_id)
     }
 
-    pub(crate) fn scalar(&self, scalar_id: ScalarId) -> ScalarRef<'_> {
-        ScalarRef {
-            scalar_id,
-            schema: self,
-        }
+    pub(crate) fn scalar(&self, scalar_id: ScalarId) -> WithSchema<'_, ScalarId> {
+        WithSchema::new(self, scalar_id)
     }
 
     pub(crate) fn r#enum(&self, enum_id: EnumId) -> EnumRef<'_> {
@@ -717,13 +705,9 @@ impl<'a> InterfaceRef<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) struct ObjectRef<'a> {
-    schema: SchemaRef<'a>,
-    object_id: ObjectId,
-}
+type ObjectRef<'a> = WithSchema<'a, ObjectId>;
 
-impl<'a> WithSchema<'a, ObjectId> {
+impl<'a> ObjectRef<'a> {
     fn get(&self) -> &'a StoredObject {
         self.schema.get_object(self.item)
     }
@@ -752,36 +736,9 @@ impl<'a> WithSchema<'a, ObjectId> {
     }
 }
 
-impl<'a> ObjectRef<'a> {
-    fn get(&self) -> &'a StoredObject {
-        self.schema.get_object(self.object_id)
-    }
+pub(crate) type FieldRef<'a> = WithSchema<'a, StoredFieldId>;
 
-    fn fields<'b>(&'b self) -> impl Iterator<Item = FieldRef<'a>> + 'b {
-        self.get().fields.iter().map(move |field| FieldRef {
-            schema: self.schema,
-            field_id: *field,
-        })
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-
-    pub(crate) fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
-        self.fields().find(|field| field.name() == name)
-    }
-
-    pub(crate) fn schema(&self) -> SchemaRef<'a> {
-        self.schema
-    }
-
-    pub(crate) fn id(&self) -> ObjectId {
-        self.object_id
-    }
-}
-
-impl<'a> WithSchema<'a, StoredFieldId> {
+impl<'a> FieldRef<'a> {
     fn get(&self) -> &'a StoredField {
         self.schema.get_field(self.item)
     }
@@ -797,33 +754,9 @@ impl<'a> WithSchema<'a, StoredFieldId> {
     pub(crate) fn type_qualifiers(&self) -> &[GraphqlTypeQualifier] {
         &self.get().r#type.qualifiers
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct FieldRef<'a> {
-    schema: SchemaRef<'a>,
-    field_id: StoredFieldId,
-}
-
-impl<'a> FieldRef<'a> {
-    fn get(&self) -> &'a StoredField {
-        self.schema.get_field(self.field_id)
-    }
-
-    pub(crate) fn id(&self) -> StoredFieldId {
-        self.field_id
-    }
-
-    pub(crate) fn name(&self) -> &str {
-        &self.get().name
-    }
 
     pub(crate) fn type_id(&self) -> TypeId {
         self.get().r#type.id
-    }
-
-    pub(crate) fn type_qualifiers(&self) -> &[GraphqlTypeQualifier] {
-        &self.get().r#type.qualifiers
     }
 }
 
@@ -941,7 +874,7 @@ pub(crate) trait ObjectRefLike<'a> {
     fn schema(&self) -> SchemaRef<'a>;
 }
 
-impl<'a> ObjectRefLike<'a> for ObjectRef<'a> {
+impl<'a> ObjectRefLike<'a> for WithSchema<'a, ObjectId> {
     fn name(&self) -> &'a str {
         self.name()
     }
