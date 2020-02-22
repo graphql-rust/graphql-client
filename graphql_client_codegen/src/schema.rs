@@ -89,6 +89,12 @@ pub(crate) struct EnumId(usize);
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct InputId(usize);
 
+impl InputId {
+    fn new(idx: usize) -> Self {
+        InputId(idx)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct StoredFieldId(usize);
 

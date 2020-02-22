@@ -6,13 +6,6 @@ use quote::quote;
 use std::cell::Cell;
 use std::collections::BTreeSet;
 
-pub(crate) fn union_type_to_rust(
-    ctx: &mut QueryContext<'_>,
-    union: (),
-) -> Result<TokenStream, anyhow::Error> {
-    todo!()
-}
-
 /// A GraphQL union (simplified schema representation).
 ///
 /// For code generation purposes, unions will "flatten" fragment spreads, so there is only one enum for the selection. See the tests in the graphql_client crate for examples.

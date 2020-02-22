@@ -244,7 +244,15 @@ fn find_deprecation(directives: &[parser::Directive]) -> Option<Option<String>> 
 }
 
 fn ingest_input(schema: &mut Schema, input: &mut parser::InputObjectType) {
-    unimplemented!()
+    let input_id = InputId::new(schema.stored_inputs.len());
+
+    // TODO: input object fields
+    let input = super::StoredInputType {
+        name: std::mem::replace(&mut input.name, String::new()),
+        fields: Vec::new(),
+    };
+
+    schema.stored_inputs.push(input);
 }
 
 fn objects_mut(doc: &mut Document) -> impl Iterator<Item = &mut parser::ObjectType> {
