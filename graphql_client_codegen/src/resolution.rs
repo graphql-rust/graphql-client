@@ -14,6 +14,11 @@ use crate::{
 use heck::CamelCase;
 use std::collections::{HashMap, HashSet};
 
+pub(crate) type OperationRef<'a> = WithQuery<'a, OperationId>;
+pub(crate) type FragmentRef<'a> = WithQuery<'a, ResolvedFragmentId>;
+pub(crate) type VariableRef<'a> = WithQuery<'a, VariableId>;
+pub(crate) type SelectionRef<'a> = WithQuery<'a, SelectionId>;
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub(crate) struct SelectionId(u32);
 
@@ -113,7 +118,7 @@ impl<'a, T> WithQuery<'a, T> {
     }
 }
 
-impl<'a> WithQuery<'a, SelectionId> {
+impl<'a> SelectionRef<'a> {
     pub(crate) fn get(&self) -> &'a Selection {
         self.query
             .selections
@@ -226,19 +231,6 @@ impl Selection {
 pub(crate) struct InlineFragment {
     type_id: TypeId,
     selection_set: Vec<SelectionId>,
-}
-
-#[derive(Debug)]
-enum QueryNode {
-    SelectedField(SelectedField),
-    InlineFragment(TypeId),
-    FragmentSpread(ResolvedFragmentId),
-    Typename,
-}
-
-#[derive(Debug)]
-enum QueryEdge {
-    Selection,
 }
 
 #[derive(Debug)]
@@ -577,14 +569,7 @@ pub(crate) struct ResolvedFragment {
     selection: Vec<SelectionId>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct Operation<'a> {
-    operation_id: usize,
-    schema: &'a Schema,
-    query: &'a ResolvedQuery,
-}
-
-impl<'a> WithQuery<'a, OperationId> {
+impl<'a> OperationRef<'a> {
     fn get(&self) -> &'a ResolvedOperation {
         self.query.operations.get(self.item.0 as usize).unwrap()
     }
@@ -607,7 +592,7 @@ impl<'a> WithQuery<'a, OperationId> {
         all_used_types
     }
 
-    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = WithQuery<'a, SelectionId>> + 'b {
+    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = SelectionRef<'a>> + 'b {
         let operation = self.get();
         operation
             .selection
@@ -615,7 +600,7 @@ impl<'a> WithQuery<'a, OperationId> {
             .map(move |selection_id| self.refocus(*selection_id))
     }
 
-    pub(crate) fn variables<'b>(&'b self) -> impl Iterator<Item = WithQuery<'a, VariableId>> + 'b {
+    pub(crate) fn variables<'b>(&'b self) -> impl Iterator<Item = VariableRef<'a>> + 'b {
         self.query
             .variables
             .iter()
@@ -656,7 +641,7 @@ struct ResolvedVariable {
     r#type: StoredFieldType,
 }
 
-impl<'a> WithQuery<'a, VariableId> {
+impl<'a> VariableRef<'a> {
     fn get(&self) -> &'a ResolvedVariable {
         self.query.variables.get(self.item.0 as usize).unwrap()
     }
@@ -685,12 +670,12 @@ impl<'a> WithQuery<'a, VariableId> {
     }
 }
 
-impl<'a> WithQuery<'a, ResolvedFragmentId> {
+impl<'a> FragmentRef<'a> {
     fn get(&self) -> &'a ResolvedFragment {
         self.query.fragments.get(self.item.0 as usize).unwrap()
     }
 
-    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = WithQuery<'a, SelectionId>> + 'b {
+    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = SelectionRef<'a>> + 'b {
         let fragment = self.get();
         fragment
             .selection
