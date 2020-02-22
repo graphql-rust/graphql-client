@@ -2,7 +2,7 @@ use crate::{
     field_type::GraphqlTypeQualifier,
     normalization::Normalization,
     resolution::*,
-    schema::{FieldRef, TypeRef},
+    schema::{FieldRef, TypeId, TypeRef},
     shared::{field_rename_annotation, keyword_replace},
     GraphQLClientCodegenOptions,
 };
@@ -25,7 +25,7 @@ pub(crate) fn select_operation<'a>(
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
-    operation: Operation<'_>,
+    operation: WithQuery<'_, OperationId>,
     options: &GraphQLClientCodegenOptions,
 ) -> anyhow::Result<TokenStream> {
     let all_used_types = operation.all_used_types();
@@ -76,7 +76,7 @@ pub(crate) fn response_for_query(
 }
 
 fn generate_variables_struct(
-    operation: Operation<'_>,
+    operation: WithQuery<'_, OperationId>,
     options: &GraphQLClientCodegenOptions,
 ) -> TokenStream {
     let variable_derives = options.all_variable_derives();
@@ -101,7 +101,7 @@ fn generate_variables_struct(
     variables_struct.into()
 }
 
-fn generate_variable_struct_field(variable: Variable<'_>) -> TokenStream {
+fn generate_variable_struct_field(variable: WithQuery<'_, VariableId>) -> TokenStream {
     let snake_case_name = variable.name().to_snake_case();
     let ident = Ident::new(
         &crate::shared::keyword_replace(&snake_case_name),
@@ -114,7 +114,7 @@ fn generate_variable_struct_field(variable: Variable<'_>) -> TokenStream {
 }
 
 fn generate_scalar_definitions<'a, 'schema: 'a>(
-    operation: Operation<'schema>,
+    operation: WithQuery<'schema, OperationId>,
     all_used_types: &'a crate::resolution::UsedTypes,
 ) -> impl Iterator<Item = TokenStream> + 'a {
     all_used_types.scalars(operation.schema()).map(|scalar| {
@@ -131,7 +131,7 @@ fn generate_scalar_definitions<'a, 'schema: 'a>(
  * Generated serialize line: "AnEnum::where_ => "where","
  */
 fn generate_enum_definitions<'a, 'schema: 'a>(
-    operation: Operation<'schema>,
+    operation: WithQuery<'schema, OperationId>,
     all_used_types: &'a crate::resolution::UsedTypes,
     options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
@@ -211,21 +211,21 @@ fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToT
     quote!(#[derive(#(#idents),*)])
 }
 
-fn render_variable_field_type(variable: Variable<'_>) -> TokenStream {
+fn render_variable_field_type(variable: WithQuery<'_, VariableId>) -> TokenStream {
     let full_name = Ident::new(variable.type_name(), Span::call_site());
 
     decorate_type(&full_name, variable.type_qualifiers())
 }
 
 fn render_response_data_fields<'a>(
-    operation: &'a Operation<'_>,
+    operation: &WithQuery<'a, OperationId>,
     response_derives: &impl quote::ToTokens,
 ) -> (Vec<TokenStream>, Vec<TokenStream>) {
     let mut response_types = Vec::new();
     let mut fields = Vec::new();
 
     render_selection(
-        operation.rich_selection(),
+        operation.selection(),
         &mut fields,
         &mut response_types,
         response_derives,
@@ -236,35 +236,37 @@ fn render_response_data_fields<'a>(
 }
 
 fn render_selection<'a>(
-    selection: impl Iterator<Item = WithQuery<'a, SelectionItem<'a>>>,
+    selection: impl Iterator<Item = WithQuery<'a, SelectionId>>,
     field_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
     response_derives: &impl quote::ToTokens,
     root_name: &str,
 ) {
     for select in selection {
-        match &select.variant() {
-            SelectionVariant::SelectedField { field, alias } => {
-                let f = field;
-                let ident = field_ident(&f, *alias);
-                match f.field_type() {
-                    TypeRef::Enum(enm) => {
-                        let type_name = Ident::new(enm.name(), Span::call_site());
-                        let type_name = decorate_type(&type_name, f.type_qualifiers());
+        match &select.get() {
+            Selection::Field(field) => {
+                let field = select.refocus(field);
+                let ident = field_ident(&field);
+                match field.schema_field().field_type().item {
+                    TypeId::Enum(enm) => {
+                        let type_name =
+                            Ident::new(field.with_schema(enm).name(), Span::call_site());
+                        let type_name =
+                            decorate_type(&type_name, field.schema_field().type_qualifiers());
 
                         field_buffer.push(quote!(pub #ident: #type_name));
                     }
-                    TypeRef::Scalar(scalar) => {
-                        let type_name = Ident::new(scalar.name(), Span::call_site());
-                        let type_name = decorate_type(&type_name, f.type_qualifiers());
+                    TypeId::Scalar(scalar) => {
+                        let type_name =
+                            Ident::new(field.with_schema(scalar).name(), Span::call_site());
+                        let type_name =
+                            decorate_type(&type_name, field.schema_field().type_qualifiers());
 
                         field_buffer.push(quote!(pub #ident: #type_name));
                     }
-                    TypeRef::Input(_) => unreachable!("input object in selection"),
-                    TypeRef::Object(object) => {
+                    TypeId::Object(object) => {
                         let mut fields = Vec::new();
-                        let struct_name =
-                            Ident::new(&select.full_path_prefix(root_name), Span::call_site());
+                        let struct_name = Ident::new(&select.full_path_prefix(), Span::call_site());
                         render_selection(
                             select.subselection(),
                             &mut fields,
@@ -273,7 +275,8 @@ fn render_selection<'a>(
                             root_name,
                         );
 
-                        let field_type = decorate_type(&struct_name, f.type_qualifiers());
+                        let field_type =
+                            decorate_type(&struct_name, field.schema_field().type_qualifiers());
 
                         field_buffer.push(quote!(pub #ident: #field_type));
 
@@ -292,14 +295,14 @@ fn render_selection<'a>(
                     }
                 };
             }
-            SelectionVariant::Typename => {
+            Selection::Typename => {
                 field_buffer.push(quote!(
                     #[serde(rename = "__typename")]
                     pub typename: String
                 ));
             }
-            SelectionVariant::InlineFragment(inline) => todo!("render inline fragment"),
-            SelectionVariant::FragmentSpread(frag) => {
+            Selection::InlineFragment(inline) => todo!("render inline fragment"),
+            Selection::FragmentSpread(frag) => {
                 let frag = select.refocus(*frag);
                 let original_field_name = frag.name().to_snake_case();
                 let final_field_name = keyword_replace(&original_field_name);
@@ -333,8 +336,11 @@ fn render_selection<'a>(
     }
 }
 
-fn field_ident(field: &FieldRef<'_>, alias: Option<&str>) -> Ident {
-    let name = alias.unwrap_or_else(|| field.name()).to_snake_case();
+fn field_ident(field: &WithQuery<'_, &SelectedField>) -> Ident {
+    let name = field
+        .alias()
+        .unwrap_or_else(|| field.name())
+        .to_snake_case();
     Ident::new(&name, Span::call_site())
 }
 
@@ -377,7 +383,7 @@ fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStr
 }
 
 fn generate_input_object_definitions(
-    operation: Operation<'_>,
+    operation: WithQuery<'_, OperationId>,
     all_used_types: &UsedTypes,
     options: &GraphQLClientCodegenOptions,
 ) -> Vec<TokenStream> {

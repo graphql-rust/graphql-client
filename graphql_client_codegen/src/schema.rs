@@ -4,6 +4,25 @@ mod json_conversion;
 use crate::field_type::GraphqlTypeQualifier;
 use std::collections::HashMap;
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct WithSchema<'a, T> {
+    schema: &'a Schema,
+    pub(crate) item: T,
+}
+
+impl<'a, T> WithSchema<'a, T> {
+    fn refocus<U>(&self, item: U) -> WithSchema<'a, U> {
+        WithSchema {
+            schema: self.schema,
+            item,
+        }
+    }
+
+    pub(crate) fn new(schema: &'a Schema, item: T) -> WithSchema<'a, T> {
+        WithSchema { schema, item }
+    }
+}
+
 // use crate::deprecation::DeprecationStatus;
 // use crate::enums::{EnumVariant, GqlEnum};
 // use crate::field_type::FieldType;
@@ -114,6 +133,19 @@ pub(crate) enum TypeId {
     Input(InputId),
 }
 
+impl<'a> WithSchema<'a, TypeId> {
+    pub(crate) fn name(&self) -> &'a str {
+        match self.item {
+            TypeId::Object(obj) => self.refocus(obj).name(),
+            TypeId::Scalar(s) => self.refocus(s).name(),
+            TypeId::Interface(s) => self.refocus(s).name(),
+            TypeId::Union(s) => self.refocus(s).name(),
+            TypeId::Enum(s) => self.refocus(s).name(),
+            TypeId::Input(s) => self.refocus(s).name(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum TypeRef<'a> {
     Object(ObjectRef<'a>),
@@ -121,16 +153,9 @@ pub(crate) enum TypeRef<'a> {
     Interface(InterfaceRef<'a>),
     Union(UnionRef<'a>),
     Enum(EnumRef<'a>),
-    Input(InputRef<'a>),
 }
 
 impl<'a> TypeRef<'a> {
-    pub(crate) fn type_id(&self) -> TypeId {
-        match self {
-            _ => todo!("TypeRef::type_id"),
-        }
-    }
-
     pub(crate) fn name(&self) -> &'a str {
         match self {
             TypeRef::Object(obj) => obj.name(),
@@ -138,7 +163,6 @@ impl<'a> TypeRef<'a> {
             TypeRef::Interface(s) => s.name(),
             TypeRef::Union(s) => s.name(),
             TypeRef::Enum(s) => s.name(),
-            TypeRef::Input(s) => s.name(),
         }
     }
 }
@@ -147,6 +171,15 @@ impl<'a> TypeRef<'a> {
 pub(crate) struct ScalarRef<'a> {
     scalar_id: ScalarId,
     schema: &'a Schema,
+}
+impl<'a> WithSchema<'a, ScalarId> {
+    fn get(&self) -> &'a StoredScalar {
+        self.schema.get_scalar(self.item)
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
 }
 
 impl<'a> ScalarRef<'a> {
@@ -165,6 +198,16 @@ pub(crate) struct UnionRef<'a> {
     schema: &'a Schema,
 }
 
+impl<'a> WithSchema<'a, UnionId> {
+    fn get(&self) -> &'a StoredUnion {
+        self.schema.stored_unions.get(self.item.0).unwrap()
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+}
+
 impl<'a> UnionRef<'a> {
     fn get(&self) -> &'a StoredUnion {
         self.schema.stored_unions.get(self.union_id.0).unwrap()
@@ -179,6 +222,20 @@ impl<'a> UnionRef<'a> {
 pub(crate) struct EnumRef<'a> {
     enum_id: EnumId,
     schema: &'a Schema,
+}
+
+impl<'a> WithSchema<'a, EnumId> {
+    fn get(&self) -> &'a StoredEnum {
+        self.schema.get_enum(self.item)
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+
+    pub(crate) fn variants(&self) -> &'a [String] {
+        &self.get().variants
+    }
 }
 
 impl<'a> EnumRef<'a> {
@@ -248,34 +305,30 @@ impl TypeId {
         }
     }
 
-    pub(crate) fn upgrade(self, schema: &Schema) -> TypeRef<'_> {
-        match self {
-            TypeId::Enum(id) => TypeRef::Enum(EnumRef {
-                enum_id: id,
-                schema,
-            }),
-            TypeId::Interface(id) => TypeRef::Interface(InterfaceRef {
-                interface_id: id,
-                schema,
-            }),
-            TypeId::Object(id) => TypeRef::Object(ObjectRef {
-                object_id: id,
-                schema,
-            }),
-            TypeId::Scalar(id) => TypeRef::Scalar(ScalarRef {
-                scalar_id: id,
-                schema,
-            }),
-            TypeId::Union(id) => TypeRef::Union(UnionRef {
-                union_id: id,
-                schema,
-            }),
-            TypeId::Input(id) => TypeRef::Input(InputRef {
-                input_id: id,
-                schema,
-            }),
-        }
-    }
+    // pub(crate) fn upgrade(self, schema: &Schema) -> TypeRef<'_> {
+    //     match self {
+    //         TypeId::Enum(id) => TypeRef::Enum(EnumRef {
+    //             enum_id: id,
+    //             schema,
+    //         }),
+    //         TypeId::Interface(id) => TypeRef::Interface(InterfaceRef {
+    //             interface_id: id,
+    //             schema,
+    //         }),
+    //         TypeId::Object(id) => TypeRef::Object(ObjectRef {
+    //             object_id: id,
+    //             schema,
+    //         }),
+    //         TypeId::Scalar(id) => TypeRef::Scalar(ScalarRef {
+    //             scalar_id: id,
+    //             schema,
+    //         }),
+    //         TypeId::Union(id) => TypeRef::Union(UnionRef {
+    //             union_id: id,
+    //             schema,
+    //         }),
+    //     }
+    // }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -624,10 +677,10 @@ impl Schema {
         }
     }
 
-    pub(crate) fn inputs<'a>(&'a self) -> impl Iterator<Item = InputRef<'a>> + 'a {
-        (0..self.stored_inputs.len()).map(move |id| InputRef {
+    pub(crate) fn inputs<'a>(&'a self) -> impl Iterator<Item = WithSchema<'a, InputId>> + 'a {
+        (0..self.stored_inputs.len()).map(move |id| WithSchema {
             schema: self,
-            input_id: InputId(id),
+            item: InputId(id),
         })
     }
 }
@@ -644,6 +697,16 @@ pub(crate) struct InterfaceRef<'a> {
     interface_id: InterfaceId,
 }
 
+impl<'a> WithSchema<'a, InterfaceId> {
+    fn get(&self) -> &'a StoredInterface {
+        self.schema.get_interface(self.item)
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+}
+
 impl<'a> InterfaceRef<'a> {
     fn get(&self) -> &'a StoredInterface {
         self.schema.get_interface(self.interface_id)
@@ -658,6 +721,35 @@ impl<'a> InterfaceRef<'a> {
 pub(crate) struct ObjectRef<'a> {
     schema: SchemaRef<'a>,
     object_id: ObjectId,
+}
+
+impl<'a> WithSchema<'a, ObjectId> {
+    fn get(&self) -> &'a StoredObject {
+        self.schema.get_object(self.item)
+    }
+
+    fn fields<'b>(&'b self) -> impl Iterator<Item = WithSchema<'a, StoredFieldId>> + 'b {
+        self.get()
+            .fields
+            .iter()
+            .map(move |field| self.refocus(*field))
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+
+    pub(crate) fn get_field_by_name(&self, name: &str) -> Option<WithSchema<'a, StoredFieldId>> {
+        self.fields().find(|field| field.name() == name)
+    }
+
+    pub(crate) fn schema(&self) -> SchemaRef<'a> {
+        self.schema
+    }
+
+    pub(crate) fn id(&self) -> ObjectId {
+        self.item
+    }
 }
 
 impl<'a> ObjectRef<'a> {
@@ -689,6 +781,24 @@ impl<'a> ObjectRef<'a> {
     }
 }
 
+impl<'a> WithSchema<'a, StoredFieldId> {
+    fn get(&self) -> &'a StoredField {
+        self.schema.get_field(self.item)
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.get().name
+    }
+
+    pub(crate) fn field_type(&self) -> WithSchema<'a, TypeId> {
+        self.refocus(self.get().r#type.id)
+    }
+
+    pub(crate) fn type_qualifiers(&self) -> &[GraphqlTypeQualifier] {
+        &self.get().r#type.qualifiers
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct FieldRef<'a> {
     schema: SchemaRef<'a>,
@@ -712,28 +822,18 @@ impl<'a> FieldRef<'a> {
         self.get().r#type.id
     }
 
-    pub(crate) fn field_type(&self) -> TypeRef<'_> {
-        self.get().r#type.id.upgrade(self.schema)
-    }
-
     pub(crate) fn type_qualifiers(&self) -> &[GraphqlTypeQualifier] {
         &self.get().r#type.qualifiers
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) struct InputRef<'a> {
-    schema: SchemaRef<'a>,
-    input_id: InputId,
-}
-
-impl<'a> InputRef<'a> {
+impl<'a> WithSchema<'a, InputId> {
     fn get(&self) -> &'a StoredInputType {
-        self.schema.get_stored_input(self.input_id)
+        self.schema.get_stored_input(self.item)
     }
 
     pub(crate) fn type_id(&self) -> TypeId {
-        TypeId::Input(self.input_id)
+        TypeId::Input(self.item)
     }
 
     pub(crate) fn name(&self) -> &'a str {
@@ -867,9 +967,4 @@ impl<'a> ObjectRefLike<'a> for InterfaceRef<'a> {
     fn schema(&self) -> SchemaRef<'a> {
         self.schema()
     }
-}
-
-pub(crate) struct WithSchema<'a, T> {
-    schema: SchemaRef<'a>,
-    item: T,
 }
