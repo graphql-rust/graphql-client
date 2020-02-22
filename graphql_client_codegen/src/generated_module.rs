@@ -1,6 +1,6 @@
 use crate::{
     codegen_options::*,
-    resolution::{Operation, OperationId, WithQuery},
+    resolution::{OperationId, WithQuery},
 };
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
