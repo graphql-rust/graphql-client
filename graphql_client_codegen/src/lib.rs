@@ -46,7 +46,7 @@ use std::collections::HashMap;
 type CacheMap<T> = std::sync::Mutex<HashMap<std::path::PathBuf, T>>;
 
 lazy_static! {
-    static ref SCHEMA_CACHE: CacheMap<String> = CacheMap::default();
+    static ref SCHEMA_CACHE: CacheMap<schema::Schema> = CacheMap::default();
     static ref QUERY_CACHE: CacheMap<(String, graphql_parser::query::Document)> =
         CacheMap::default();
 }
@@ -65,18 +65,13 @@ pub fn generate_module_token_stream(
         .unwrap_or("INVALID");
 
     // Check the schema cache.
-    let schema_string: String = {
+    let schema: schema::Schema = {
         let mut lock = SCHEMA_CACHE.lock().expect("schema cache is poisoned");
         match lock.entry(schema_path.to_path_buf()) {
             hash_map::Entry::Occupied(o) => o.get().clone(),
             hash_map::Entry::Vacant(v) => {
                 let schema_string = read_file(v.key())?;
-                (*v.insert(schema_string)).to_string()
-            }
-        }
-    };
-
-    let schema = match schema_extension {
+                let schema = match schema_extension {
                     "graphql" | "gql" => {
                         let s = graphql_parser::schema::parse_schema(&schema_string).expect("TODO: error conversion");
                         schema::Schema::from(s)
@@ -87,6 +82,11 @@ pub fn generate_module_token_stream(
                     }
                     extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
                 };
+
+                v.insert(schema).clone()
+            }
+        }
+    };
 
     // We need to qualify the query with the path to the crate it is part of
     let (query_string, query) = {
