@@ -242,6 +242,8 @@ fn render_selection<'a>(
     response_derives: &impl quote::ToTokens,
     root_name: &str,
 ) {
+    // TODO: if the selection has one item, we can sometimes generate fewer structs (e.g. single fragment spread)
+
     for select in selection {
         match &select.get() {
             Selection::Field(field) => {
