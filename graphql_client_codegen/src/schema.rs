@@ -452,6 +452,10 @@ impl Schema {
         self.stored_scalars.get(scalar_id.0).unwrap()
     }
 
+    pub(crate) fn union(&self, id: UnionId) -> UnionRef<'_> {
+        WithSchema::new(self, id)
+    }
+
     pub(crate) fn object(&self, id: ObjectId) -> WithSchema<'_, ObjectId> {
         WithSchema::new(self, id)
     }

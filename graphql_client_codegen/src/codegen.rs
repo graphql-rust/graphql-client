@@ -3,7 +3,7 @@ use crate::{
     field_type::GraphqlTypeQualifier,
     normalization::Normalization,
     resolution::*,
-    schema::{FieldRef, TypeId},
+    schema::TypeId,
     shared::{field_rename_annotation, keyword_replace},
     GraphQLClientCodegenOptions,
 };
@@ -14,7 +14,6 @@ use quote::quote;
 /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
 pub(crate) fn select_operation<'a>(
     query: &'a ResolvedQuery,
-
     struct_name: &str,
     norm: Normalization,
 ) -> Option<usize> {
@@ -268,14 +267,21 @@ fn render_selection<'a>(
             Selection::Field(field) => {
                 let field = select.refocus(field);
 
-                match (
+                let deprecation_annotation = match (
                     field.schema_field().is_deprecated(),
                     options.deprecation_strategy(),
                 ) {
-                    (false, _) | (true, DeprecationStrategy::Allow) => (),
-                    (true, DeprecationStrategy::Warn) => todo!("deprecation annotation"),
+                    (false, _) | (true, DeprecationStrategy::Allow) => None,
+                    (true, DeprecationStrategy::Warn) => {
+                        let msg = field
+                            .schema_field()
+                            .deprecation_message()
+                            .unwrap_or("This field is deprecated.");
+
+                        Some(quote!(#[deprecated(note = #msg)]))
+                    }
                     (true, DeprecationStrategy::Deny) => continue,
-                }
+                };
 
                 let ident = field_name(&field);
                 match field.schema_field().field_type().item {
@@ -285,7 +291,7 @@ fn render_selection<'a>(
                         let type_name =
                             decorate_type(&type_name, field.schema_field().type_qualifiers());
 
-                        field_buffer.push(quote!(#ident: #type_name));
+                        field_buffer.push(quote!(#deprecation_annotation #ident: #type_name));
                     }
                     TypeId::Scalar(scalar) => {
                         let type_name =
@@ -293,14 +299,14 @@ fn render_selection<'a>(
                         let type_name =
                             decorate_type(&type_name, field.schema_field().type_qualifiers());
 
-                        field_buffer.push(quote!(#ident: #type_name));
+                        field_buffer.push(quote!(#deprecation_annotation #ident: #type_name));
                     }
                     TypeId::Object(_) => {
                         let struct_name = Ident::new(&select.full_path_prefix(), Span::call_site());
                         let field_type =
                             decorate_type(&struct_name, field.schema_field().type_qualifiers());
 
-                        field_buffer.push(quote!(#ident: #field_type));
+                        field_buffer.push(quote!(#deprecation_annotation #ident: #field_type));
 
                         let mut fields = Vec::new();
                         render_selection(
@@ -332,7 +338,7 @@ fn render_selection<'a>(
                     pub typename: String
                 ));
             }
-            Selection::InlineFragment(inline) => todo!("render inline fragment"),
+            Selection::InlineFragment(_inline) => todo!("render inline fragment"),
             Selection::FragmentSpread(frag) => {
                 let frag = select.refocus(*frag);
                 let original_field_name = frag.name().to_snake_case();

@@ -7,7 +7,7 @@ use crate::{
     field_type::GraphqlTypeQualifier,
     schema::{
         resolve_field_type, EnumRef, InputId, ObjectId, Schema, StoredFieldId, StoredFieldType,
-        TypeId, WithSchema,
+        TypeId, UnionRef, WithSchema,
     },
 };
 
@@ -360,6 +360,15 @@ fn resolve_fragment(
     Ok(())
 }
 
+fn resolve_union_selection(
+    query: &mut ResolvedQuery,
+    union: UnionRef<'_>,
+    selection_set: &graphql_parser::query::SelectionSet,
+    parent: SelectionParent,
+) -> anyhow::Result<()> {
+    Ok(())
+}
+
 fn resolve_object_selection<'a>(
     query: &mut ResolvedQuery,
     object: impl crate::schema::ObjectRefLike<'a>,
@@ -434,6 +443,10 @@ fn resolve_selection(
             let interface = schema.interface(interface_id);
             resolve_object_selection(ctx, interface, selection_set, parent)?;
         }
+        TypeId::Union(union_id) => {
+            let union = schema.union(union_id);
+            resolve_union_selection(ctx, union, selection_set, parent)?;
+        }
         other => {
             anyhow::ensure!(
                 selection_set.items.is_empty(),
@@ -500,7 +513,7 @@ fn resolve_operation(
             resolve_object_selection(query, on, &q.selection_set, SelectionParent::Operation(id))?;
         }
         graphql_parser::query::OperationDefinition::Subscription(s) => {
-            let on = schema.query_type();
+            let on = schema.subscription_type();
             let (id, _) = query.find_operation(s.name.as_ref().unwrap()).unwrap();
 
             resolve_variables(query, &s.variable_definitions, schema, id);
