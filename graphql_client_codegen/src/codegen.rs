@@ -1,4 +1,5 @@
 use crate::{
+    deprecation::DeprecationStrategy,
     field_type::GraphqlTypeQualifier,
     normalization::Normalization,
     resolution::*,
@@ -34,13 +35,13 @@ pub(crate) fn response_for_query(
     let scalar_definitions = generate_scalar_definitions(operation, &all_used_types);
     let enum_definitions = generate_enum_definitions(operation, &all_used_types, options);
     let (fragment_definitions, fragment_nested_definitions) =
-        generate_fragment_definitions(operation, &all_used_types, &response_derives);
+        generate_fragment_definitions(operation, &all_used_types, &response_derives, options);
     let input_object_definitions =
         generate_input_object_definitions(operation, &all_used_types, options);
     let variables_struct = generate_variables_struct(operation, options);
 
     let (definitions, response_data_fields) =
-        render_response_data_fields(&operation, &response_derives);
+        render_response_data_fields(&operation, &response_derives, options);
 
     let q = quote! {
         use serde::{Serialize, Deserialize};
@@ -222,6 +223,7 @@ fn render_variable_field_type(variable: WithQuery<'_, VariableId>) -> TokenStrea
 fn render_response_data_fields<'a>(
     operation: &OperationRef<'a>,
     response_derives: &impl quote::ToTokens,
+    options: &GraphQLClientCodegenOptions,
 ) -> (Vec<TokenStream>, Vec<TokenStream>) {
     let mut response_types = Vec::new();
     let mut fields = Vec::new();
@@ -231,6 +233,7 @@ fn render_response_data_fields<'a>(
         &mut fields,
         &mut response_types,
         response_derives,
+        options,
     );
 
     (response_types, fields)
@@ -241,13 +244,32 @@ fn render_selection<'a>(
     field_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
     response_derives: &impl quote::ToTokens,
+    options: &GraphQLClientCodegenOptions,
 ) {
     // TODO: if the selection has one item, we can sometimes generate fewer structs (e.g. single fragment spread)
 
     for select in selection {
+        // TODO: handle deprecation here
+
+        // match (options.deprecation_strategy(), select.on().is_deprecated()) {
+        //     DeprecationStrategy::Warn => todo!(),
+        //     DeprecationStrategy::Allow => (),
+        //     DeprecationStrategy::Deny => continue,
+        // }
+
         match &select.get() {
             Selection::Field(field) => {
                 let field = select.refocus(field);
+
+                match (
+                    field.schema_field().is_deprecated(),
+                    options.deprecation_strategy(),
+                ) {
+                    (false, _) | (true, DeprecationStrategy::Allow) => (),
+                    (true, DeprecationStrategy::Warn) => todo!("deprecation annotation"),
+                    (true, DeprecationStrategy::Deny) => continue,
+                }
+
                 let ident = field_name(&field);
                 match field.schema_field().field_type().item {
                     TypeId::Enum(enm) => {
@@ -279,6 +301,7 @@ fn render_selection<'a>(
                             &mut fields,
                             response_type_buffer,
                             response_derives,
+                            options,
                         );
 
                         let struct_definition = quote! {
@@ -385,6 +408,7 @@ fn generate_fragment_definitions(
     operation: OperationRef<'_>,
     all_used_types: &UsedTypes,
     response_derives: &impl quote::ToTokens,
+    options: &GraphQLClientCodegenOptions,
 ) -> (Vec<TokenStream>, Vec<TokenStream>) {
     let mut response_type_buffer = Vec::new();
     let mut fragment_definitions = Vec::with_capacity(all_used_types.fragments_len());
@@ -403,6 +427,7 @@ fn generate_fragment_definitions(
             &mut fields,
             &mut response_type_buffer,
             response_derives,
+            options,
         );
 
         let fragment_definition = quote! {

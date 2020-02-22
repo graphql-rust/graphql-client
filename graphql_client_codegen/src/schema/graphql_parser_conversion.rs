@@ -142,6 +142,7 @@ fn ingest_object(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectTy
             name: std::mem::replace(&mut field.name, String::new()),
             r#type: resolve_field_type(schema, &field.field_type),
             parent: super::StoredFieldParent::Object(object_id),
+            deprecation: find_deprecation(&field.directives),
         };
 
         field_ids.push(schema.push_field(field));
@@ -200,6 +201,7 @@ fn ingest_interface(schema: &mut Schema, interface: &mut graphql_parser::schema:
             name: std::mem::replace(&mut field.name, String::new()),
             r#type: resolve_field_type(schema, &field.field_type),
             parent: super::StoredFieldParent::Interface(interface_id),
+            deprecation: find_deprecation(&field.directives),
         };
 
         field_ids.push(schema.push_field(field));
@@ -211,6 +213,22 @@ fn ingest_interface(schema: &mut Schema, interface: &mut graphql_parser::schema:
     };
 
     schema.push_interface(new_interface);
+}
+
+fn find_deprecation(directives: &[parser::Directive]) -> Option<Option<String>> {
+    directives
+        .iter()
+        .find(|directive| directive.name == "deprecated")
+        .map(|directive| {
+            directive
+                .arguments
+                .iter()
+                .find(|(name, _)| name == "reason")
+                .and_then(|(_, value)| match value {
+                    graphql_parser::query::Value::String(s) => Some(s.clone()),
+                    _ => None,
+                })
+        })
 }
 
 fn ingest_input(schema: &mut Schema, input: &mut parser::InputObjectType) {

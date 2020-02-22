@@ -284,7 +284,10 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
 }
 
 fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
-    let interface_id = schema.find_type_id(iface.name.as_ref().unwrap()).as_interface_id().unwrap();
+    let interface_id = schema
+        .find_type_id(iface.name.as_ref().unwrap())
+        .as_interface_id()
+        .unwrap();
     let fields = iface.fields.as_mut().unwrap();
     let mut field_ids = Vec::with_capacity(fields.len());
 
@@ -293,6 +296,9 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
             parent: super::StoredFieldParent::Interface(interface_id),
             name: field.name.take().unwrap(),
             r#type: resolve_field_type(schema, &mut field.type_.as_mut().unwrap().type_ref),
+            deprecation: Some(None)
+                .filter(|_: &Option<()>| !field.is_deprecated.unwrap_or(false))
+                .map(|_: Option<()>| field.deprecation_reason.clone()),
         };
 
         field_ids.push(schema.push_field(field));
@@ -307,7 +313,10 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
 }
 
 fn ingest_object(schema: &mut Schema, object: &mut FullType) {
-    let object_id = schema.find_type_id(object.name.as_ref().unwrap()).as_object_id().unwrap();
+    let object_id = schema
+        .find_type_id(object.name.as_ref().unwrap())
+        .as_object_id()
+        .unwrap();
 
     let fields = object.fields.as_mut().unwrap();
     let mut field_ids = Vec::with_capacity(fields.len());
@@ -317,11 +326,13 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
             parent: super::StoredFieldParent::Object(object_id),
             name: field.name.take().unwrap(),
             r#type: resolve_field_type(schema, &mut field.type_.as_mut().unwrap().type_ref),
+            deprecation: Some(None)
+                .filter(|_: &Option<()>| !field.is_deprecated.unwrap_or(false))
+                .map(|_: Option<()>| field.deprecation_reason.clone()),
         };
 
         field_ids.push(schema.push_field(field));
     }
-
 
     let object = super::StoredObject {
         name: object.name.take().unwrap(),

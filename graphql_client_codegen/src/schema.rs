@@ -55,6 +55,8 @@ struct StoredField {
     name: String,
     r#type: StoredFieldType,
     parent: StoredFieldParent,
+    /// `Some(None)` should be interpreted as "deprecated, without reason"
+    deprecation: Option<Option<String>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -573,6 +575,17 @@ impl<'a> FieldRef<'a> {
 
     pub(crate) fn type_id(&self) -> TypeId {
         self.get().r#type.id
+    }
+
+    pub(crate) fn is_deprecated(&self) -> bool {
+        self.get().deprecation.is_some()
+    }
+
+    pub(crate) fn deprecation_message(&self) -> Option<&'a str> {
+        self.get()
+            .deprecation
+            .as_ref()
+            .and_then(|item| item.as_ref().map(String::as_str))
     }
 }
 
