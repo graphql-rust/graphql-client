@@ -76,19 +76,17 @@ pub fn generate_module_token_stream(
         }
     };
 
-    let mut parsed_schema = match schema_extension {
+    let schema = match schema_extension {
                     "graphql" | "gql" => {
                         let s = graphql_parser::schema::parse_schema(&schema_string).expect("TODO: error conversion");
-                        schema::ParsedSchema::GraphQLParser(s)
+                        schema::Schema::from(s)
                     }
                     "json" => {
                         let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string)?;
-                        schema::ParsedSchema::Json(parsed)
+                        schema::Schema::from(parsed)
                     }
                     extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
                 };
-
-    let schema = schema::Schema::from(parsed_schema);
 
     // We need to qualify the query with the path to the crate it is part of
     let (query_string, query) = {

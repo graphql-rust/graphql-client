@@ -54,9 +54,4 @@ impl<'query> GqlFragment<'query> {
     pub(crate) fn is_recursive(&self) -> bool {
         self.selection.contains_fragment(&self.name)
     }
-
-    pub(crate) fn require<'schema>(&self, context: &QueryContext<'query>) {
-        self.is_required.set(true);
-        self.selection.require_items(context);
-    }
 }

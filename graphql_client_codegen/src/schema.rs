@@ -635,20 +635,6 @@ impl std::convert::From<graphql_introspection_query::introspection_response::Int
     }
 }
 
-pub(crate) enum ParsedSchema {
-    GraphQLParser(graphql_parser::schema::Document),
-    Json(graphql_introspection_query::introspection_response::IntrospectionResponse),
-}
-
-impl From<ParsedSchema> for Schema {
-    fn from(parsed_schema: ParsedSchema) -> Schema {
-        match parsed_schema {
-            ParsedSchema::GraphQLParser(s) => s.into(),
-            ParsedSchema::Json(s) => s.into(),
-        }
-    }
-}
-
 pub(crate) fn resolve_field_type(
     schema: &Schema,
     inner: &graphql_parser::schema::Type,
