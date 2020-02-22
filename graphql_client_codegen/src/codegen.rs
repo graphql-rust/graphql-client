@@ -29,14 +29,16 @@ pub(crate) fn response_for_query(
     options: &GraphQLClientCodegenOptions,
 ) -> anyhow::Result<TokenStream> {
     let all_used_types = operation.all_used_types();
+    let response_derives = render_derives(options.all_response_derives());
+
     let scalar_definitions = generate_scalar_definitions(operation, &all_used_types);
     let enum_definitions = generate_enum_definitions(operation, &all_used_types, options);
-    let fragment_definitions: Vec<&'static str> = todo!("fragment definitions");
+    let (fragment_definitions, fragment_nested_definitions) =
+        generate_fragment_definitions(operation, &all_used_types, &response_derives);
     let input_object_definitions =
         generate_input_object_definitions(operation, &all_used_types, options);
     let variables_struct = generate_variables_struct(operation, options);
 
-    let response_derives = render_derives(options.all_response_derives());
     let (definitions, response_data_fields) =
         render_response_data_fields(&operation, &response_derives);
 
@@ -60,6 +62,8 @@ pub(crate) fn response_for_query(
 
         #(#input_object_definitions)*
 
+        #(#fragment_nested_definitions)*
+
         #(#definitions)*
 
         #response_derives
@@ -69,8 +73,6 @@ pub(crate) fn response_for_query(
 
         #variables_struct
     };
-
-    // panic!("{}", q);
 
     Ok(q)
 }
@@ -218,7 +220,7 @@ fn render_variable_field_type(variable: WithQuery<'_, VariableId>) -> TokenStrea
 }
 
 fn render_response_data_fields<'a>(
-    operation: &WithQuery<'a, OperationId>,
+    operation: &OperationRef<'a>,
     response_derives: &impl quote::ToTokens,
 ) -> (Vec<TokenStream>, Vec<TokenStream>) {
     let mut response_types = Vec::new();
@@ -229,7 +231,6 @@ fn render_response_data_fields<'a>(
         &mut fields,
         &mut response_types,
         response_derives,
-        operation.name(),
     );
 
     (response_types, fields)
@@ -240,7 +241,6 @@ fn render_selection<'a>(
     field_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
     response_derives: &impl quote::ToTokens,
-    root_name: &str,
 ) {
     // TODO: if the selection has one item, we can sometimes generate fewer structs (e.g. single fragment spread)
 
@@ -248,7 +248,7 @@ fn render_selection<'a>(
         match &select.get() {
             Selection::Field(field) => {
                 let field = select.refocus(field);
-                let ident = field_ident(&field);
+                let ident = field_name(&field);
                 match field.schema_field().field_type().item {
                     TypeId::Enum(enm) => {
                         let type_name =
@@ -256,7 +256,7 @@ fn render_selection<'a>(
                         let type_name =
                             decorate_type(&type_name, field.schema_field().type_qualifiers());
 
-                        field_buffer.push(quote!(pub #ident: #type_name));
+                        field_buffer.push(quote!(#ident: #type_name));
                     }
                     TypeId::Scalar(scalar) => {
                         let type_name =
@@ -264,23 +264,22 @@ fn render_selection<'a>(
                         let type_name =
                             decorate_type(&type_name, field.schema_field().type_qualifiers());
 
-                        field_buffer.push(quote!(pub #ident: #type_name));
+                        field_buffer.push(quote!(#ident: #type_name));
                     }
-                    TypeId::Object(object) => {
-                        let mut fields = Vec::new();
+                    TypeId::Object(_) => {
                         let struct_name = Ident::new(&select.full_path_prefix(), Span::call_site());
+                        let field_type =
+                            decorate_type(&struct_name, field.schema_field().type_qualifiers());
+
+                        field_buffer.push(quote!(#ident: #field_type));
+
+                        let mut fields = Vec::new();
                         render_selection(
                             select.subselection(),
                             &mut fields,
                             response_type_buffer,
                             response_derives,
-                            root_name,
                         );
-
-                        let field_type =
-                            decorate_type(&struct_name, field.schema_field().type_qualifiers());
-
-                        field_buffer.push(quote!(pub #ident: #field_type));
 
                         let struct_definition = quote! {
                             #response_derives
@@ -315,35 +314,22 @@ fn render_selection<'a>(
                     #[serde(flatten)]
                     pub #annotation #field_ident: #type_name
                 });
-            } // SelectionVariant::FragmentSpread(frag) => {
-              //     let struct_name = frag.name();
-              //     let struct_ident = Ident::new(struct_name, Span::call_site());
-              //     let mut fields = Vec::with_capacity(frag.selection_len());
-
-              //     render_selection(
-              //         frag.selection(),
-              //         &mut fields,
-              //         response_type_buffer,
-              //         response_derives,
-              //     );
-
-              //     let fragment_definition = quote! {
-              //         #response_derives
-              //         struct #struct_ident {
-              //             #(#fields),*
-              //         }
-              //     };
-              // }
+            }
         }
     }
 }
 
-fn field_ident(field: &WithQuery<'_, &SelectedField>) -> Ident {
+fn field_name(field: &WithQuery<'_, &SelectedField>) -> impl quote::ToTokens {
     let name = field
         .alias()
         .unwrap_or_else(|| field.name())
         .to_snake_case();
-    Ident::new(&name, Span::call_site())
+    let final_name = keyword_replace(&name);
+    let rename_annotation = field_rename_annotation(&name, &final_name);
+
+    let ident = Ident::new(&final_name, Span::call_site());
+
+    quote!(#rename_annotation pub #ident)
 }
 
 fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStream {
@@ -393,4 +379,41 @@ fn generate_input_object_definitions(
         .inputs(operation.schema())
         .map(|input| quote!(heh))
         .collect()
+}
+
+fn generate_fragment_definitions(
+    operation: OperationRef<'_>,
+    all_used_types: &UsedTypes,
+    response_derives: &impl quote::ToTokens,
+) -> (Vec<TokenStream>, Vec<TokenStream>) {
+    let mut response_type_buffer = Vec::new();
+    let mut fragment_definitions = Vec::with_capacity(all_used_types.fragments_len());
+
+    let fragments = all_used_types
+        .fragment_ids()
+        .map(move |id| operation.refocus(id));
+
+    for fragment in fragments {
+        let struct_name = fragment.name();
+        let struct_ident = Ident::new(struct_name, Span::call_site());
+        let mut fields = Vec::with_capacity(fragment.selection_set_len());
+
+        render_selection(
+            fragment.selection(),
+            &mut fields,
+            &mut response_type_buffer,
+            response_derives,
+        );
+
+        let fragment_definition = quote! {
+            #response_derives
+            pub struct #struct_ident {
+                #(#fields),*
+            }
+        };
+
+        fragment_definitions.push(fragment_definition.into())
+    }
+
+    (fragment_definitions, response_type_buffer)
 }
