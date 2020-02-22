@@ -690,6 +690,10 @@ impl<'a> FragmentRef<'a> {
     pub(crate) fn name(&self) -> &'a str {
         &self.get().name
     }
+
+    pub(crate) fn selection_set_len(&self) -> usize {
+        self.get().selection.len()
+    }
 }
 
 #[derive(Debug, Default)]
@@ -727,6 +731,14 @@ impl UsedTypes {
             .iter()
             .filter_map(TypeId::as_enum_id)
             .map(move |enum_id| schema.r#enum(enum_id))
+    }
+
+    pub(crate) fn fragment_ids<'b>(&'b self) -> impl Iterator<Item = ResolvedFragmentId> + 'b {
+        self.fragments.iter().map(|v| *v)
+    }
+
+    pub(crate) fn fragments_len(&self) -> usize {
+        self.fragments.len()
     }
 }
 
