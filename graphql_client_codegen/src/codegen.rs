@@ -2,7 +2,7 @@ use crate::{
     field_type::GraphqlTypeQualifier,
     normalization::Normalization,
     resolution::*,
-    schema::{FieldRef, TypeId, TypeRef},
+    schema::{FieldRef, TypeId},
     shared::{field_rename_annotation, keyword_replace},
     GraphQLClientCodegenOptions,
 };
@@ -31,7 +31,7 @@ pub(crate) fn response_for_query(
     let all_used_types = operation.all_used_types();
     let scalar_definitions = generate_scalar_definitions(operation, &all_used_types);
     let enum_definitions = generate_enum_definitions(operation, &all_used_types, options);
-    let fragment_definitions: Vec<&'static str> = Vec::new();
+    let fragment_definitions: Vec<&'static str> = todo!("fragment definitions");
     let input_object_definitions =
         generate_input_object_definitions(operation, &all_used_types, options);
     let variables_struct = generate_variables_struct(operation, options);
@@ -242,6 +242,8 @@ fn render_selection<'a>(
     response_derives: &impl quote::ToTokens,
     root_name: &str,
 ) {
+    // TODO: if the selection has one item, we can sometimes generate fewer structs (e.g. single fragment spread)
+
     for select in selection {
         match &select.get() {
             Selection::Field(field) => {

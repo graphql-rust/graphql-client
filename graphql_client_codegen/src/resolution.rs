@@ -1,17 +1,23 @@
 //! The responsibility of this module is to resolve and validate a query
 //! against a given schema.
 
+use crate::schema::ScalarId;
 use crate::{
     constants::TYPENAME_FIELD,
     field_type::GraphqlTypeQualifier,
     schema::{
-        resolve_field_type, EnumRef, FieldRef, InputId, ObjectId, ScalarRef, Schema, StoredFieldId,
-        StoredFieldType, TypeId, TypeRef, WithSchema,
+        resolve_field_type, EnumRef, InputId, ObjectId, Schema, StoredFieldId, StoredFieldType,
+        TypeId, WithSchema,
     },
 };
+
 use heck::CamelCase;
-use petgraph::prelude::EdgeRef;
 use std::collections::{HashMap, HashSet};
+
+pub(crate) type OperationRef<'a> = WithQuery<'a, OperationId>;
+pub(crate) type FragmentRef<'a> = WithQuery<'a, ResolvedFragmentId>;
+pub(crate) type VariableRef<'a> = WithQuery<'a, VariableId>;
+pub(crate) type SelectionRef<'a> = WithQuery<'a, SelectionId>;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub(crate) struct SelectionId(u32);
@@ -47,62 +53,37 @@ enum SelectionParent {
 impl SelectionParent {
     fn add_to_selection_set(&self, q: &mut ResolvedQuery, selection_id: SelectionId) {
         match self {
-            SelectionParent::Selection(selection_id) => todo!(),
-            SelectionParent::Fragment(fragment_id) => todo!(),
-            SelectionParent::Operation(operation_id) => todo!(),
+            SelectionParent::Selection(parent_selection_id) => {
+                let parent_selection = q
+                    .selections
+                    .get_mut(parent_selection_id.0 as usize)
+                    .expect("get parent selection");
+
+                match parent_selection {
+                    Selection::Field(f) => f.selection_set.push(selection_id),
+                    Selection::InlineFragment(inline) => inline.selection_set.push(selection_id),
+                    _ => unreachable!("impossible parent selection"),
+                }
+            }
+            SelectionParent::Fragment(fragment_id) => {
+                let fragment = q
+                    .fragments
+                    .get_mut(fragment_id.0 as usize)
+                    .expect("get fragment");
+
+                fragment.selection.push(selection_id);
+            }
+            SelectionParent::Operation(operation_id) => {
+                let operation = q
+                    .operations
+                    .get_mut(operation_id.0 as usize)
+                    .expect("get operation");
+
+                operation.selection.push(selection_id);
+            }
         }
     }
 }
-
-// #[derive(Debug, Clone, Copy)]
-// pub(crate) struct SelectionItem<'a> {
-//     parent_id: Option<NodeId>,
-//     node_id: NodeId,
-//     variant: SelectionVariant<'a>,
-// }
-
-// #[derive(Debug, Clone, Copy)]
-// pub(crate) enum SelectionVariant<'a> {
-//     SelectedField {
-//         alias: Option<&'a str>,
-//         field: FieldRef<'a>,
-//     },
-//     FragmentSpread(ResolvedFragmentId),
-//     InlineFragment(TypeRef<'a>),
-//     Typename,
-// }
-
-// impl<'a> WithQuery<'a, SelectionItem<'a>> {
-//     pub(crate) fn variant(&self) -> &SelectionVariant<'a> {
-//         &self.item.variant
-//     }
-
-//     pub(crate) fn parent(&self) -> Option<WithQuery<'a, SelectionItem<'a>>> {
-//         self.item
-//             .parent_id
-//             .map(|parent_id| self.refocus(parent_id).upgrade())
-//     }
-
-//     fn to_path_segment(&self) -> String {
-//         match self.item.variant {
-//             SelectionVariant::SelectedField { alias, field } => alias
-//                 .map(|alias| alias.to_camel_case())
-//                 .unwrap_or_else(|| field.name().to_camel_case()),
-//             SelectionVariant::InlineFragment(type_ref) => {
-//                 format!("On{}", type_ref.name().to_camel_case())
-//             }
-//             _ => unreachable!(),
-//         }
-//     }
-
-//     pub(crate) fn subselection<'b>(
-//         &'b self,
-//     ) -> impl Iterator<Item = WithQuery<'a, SelectionItem<'a>>> + 'b {
-//         let id_selection = self.refocus(self.item.node_id);
-
-//         id_selection.into_subselection().map(move |s| s.upgrade())
-//     }
-// }
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct WithQuery<'a, T> {
@@ -137,10 +118,7 @@ impl<'a, T> WithQuery<'a, T> {
     }
 }
 
-type NodeId = petgraph::prelude::NodeIndex<u32>;
-type SelectionGraph = petgraph::Graph<QueryNode, QueryEdge, petgraph::Directed, u32>;
-
-impl<'a> WithQuery<'a, SelectionId> {
+impl<'a> SelectionRef<'a> {
     pub(crate) fn get(&self) -> &'a Selection {
         self.query
             .selections
@@ -182,28 +160,6 @@ impl<'a> WithQuery<'a, SelectionId> {
             Selection::Typename => (),
         }
     }
-
-    // fn upgrade(&self) -> WithQuery<'a, SelectionItem<'a>> {
-    //     let node = self.get_node();
-
-    //     let variant = match node.item {
-    //         QueryNode::FragmentSpread(frag_id) => SelectionVariant::FragmentSpread(*frag_id),
-    //         QueryNode::InlineFragment(type_id) => {
-    //             SelectionVariant::InlineFragment(type_id.upgrade(self.schema))
-    //         }
-    //         QueryNode::Typename => SelectionVariant::Typename,
-    //         QueryNode::SelectedField(f) => SelectionVariant::SelectedField {
-    //             alias: f.alias.as_ref().map(String::as_str),
-    //             field: self.schema.field(f.field_id),
-    //         },
-    //     };
-
-    //     self.refocus(SelectionItem {
-    //         node_id: self.item,
-    //         parent_id: self.parent_id(),
-    //         variant,
-    //     })
-    // }
 
     pub(crate) fn full_path_prefix(&self) -> String {
         let mut path = vec![self.to_path_segment()];
@@ -278,19 +234,6 @@ pub(crate) struct InlineFragment {
 }
 
 #[derive(Debug)]
-enum QueryNode {
-    SelectedField(SelectedField),
-    InlineFragment(TypeId),
-    FragmentSpread(ResolvedFragmentId),
-    Typename,
-}
-
-#[derive(Debug)]
-enum QueryEdge {
-    Selection,
-}
-
-#[derive(Debug)]
 pub(crate) struct SelectedField {
     alias: Option<String>,
     field_id: StoredFieldId,
@@ -306,15 +249,6 @@ impl<'a> WithQuery<'a, &'a SelectedField> {
         self.with_schema(self.item.field_id).name()
     }
 
-    pub(crate) fn selection_set<'b>(
-        &'b self,
-    ) -> impl Iterator<Item = WithQuery<'a, SelectionId>> + 'b {
-        self.item
-            .selection_set
-            .iter()
-            .map(move |id| self.refocus(*id))
-    }
-
     pub(crate) fn schema_field(&self) -> WithSchema<'a, StoredFieldId> {
         self.with_schema(self.item.field_id)
     }
@@ -326,7 +260,8 @@ pub(crate) fn resolve(
 ) -> anyhow::Result<ResolvedQuery> {
     let mut resolved_query: ResolvedQuery = Default::default();
 
-    // First, give ids to all fragments.
+    // First, give ids to all fragments and operations.
+    // TODO: refactor this into a "create_roots" function.
     for definition in &query.definitions {
         match definition {
             graphql_parser::query::Definition::Fragment(fragment) => {
@@ -337,7 +272,68 @@ pub(crate) fn resolve(
                     selection: Vec::new(),
                 });
             }
-            _ => (),
+            graphql_parser::query::Definition::Operation(
+                graphql_parser::query::OperationDefinition::Mutation(m),
+            ) => {
+                let on = schema.mutation_type();
+                let resolved_operation: ResolvedOperation = ResolvedOperation {
+                    object_id: on.id(),
+                    name: m.name.as_ref().expect("mutation without name").to_owned(),
+                    operation_type: crate::operations::OperationType::Mutation,
+                    variables: resolve_variables(
+                        &m.variable_definitions,
+                        schema,
+                        OperationId(resolved_query.operations.len() as u32),
+                    )?,
+                    selection: Vec::with_capacity(m.selection_set.items.len()),
+                };
+
+                resolved_query.operations.push(resolved_operation);
+            }
+            graphql_parser::query::Definition::Operation(
+                graphql_parser::query::OperationDefinition::Query(q),
+            ) => {
+                let on = schema.query_type();
+                let resolved_operation: ResolvedOperation = ResolvedOperation {
+                    name: q.name.as_ref().expect("query without name").to_owned(),
+                    operation_type: crate::operations::OperationType::Query,
+                    variables: resolve_variables(
+                        &q.variable_definitions,
+                        schema,
+                        OperationId(resolved_query.operations.len() as u32),
+                    )?,
+                    object_id: on.id(),
+                    selection: Vec::with_capacity(q.selection_set.items.len()),
+                };
+
+                resolved_query.operations.push(resolved_operation);
+            }
+            graphql_parser::query::Definition::Operation(
+                graphql_parser::query::OperationDefinition::Subscription(s),
+            ) => {
+                let on = schema.subscription_type();
+
+                let resolved_operation: ResolvedOperation = ResolvedOperation {
+                    name: s
+                        .name
+                        .as_ref()
+                        .expect("subscription without name")
+                        .to_owned(),
+                    operation_type: crate::operations::OperationType::Subscription,
+                    variables: resolve_variables(
+                        &s.variable_definitions,
+                        schema,
+                        OperationId(resolved_query.operations.len() as u32),
+                    )?,
+                    object_id: on.id(),
+                    selection: Vec::with_capacity(s.selection_set.items.len()),
+                };
+
+                resolved_query.operations.push(resolved_operation);
+            }
+            graphql_parser::query::Definition::Operation(
+                graphql_parser::query::OperationDefinition::SelectionSet(_),
+            ) => unreachable!("unnamed queries are not supported"),
         }
     }
 
@@ -401,7 +397,7 @@ fn resolve_object_selection<'a>(
                 let id = query.push_selection(
                     Selection::Field(SelectedField {
                         alias: field.alias.clone(),
-                        field_id: field_ref.id(),
+                        field_id: field_ref.item,
                         selection_set: Vec::with_capacity(selection_set.items.len()),
                     }),
                     parent,
@@ -444,7 +440,7 @@ fn resolve_selection(
     selection_set: &graphql_parser::query::SelectionSet,
     parent: SelectionParent,
 ) -> anyhow::Result<()> {
-    let selection = match on {
+    match on {
         TypeId::Object(oid) => {
             let object = schema.object(oid);
             resolve_object_selection(ctx, object, selection_set, parent)?;
@@ -506,75 +502,21 @@ fn resolve_operation(
     match operation {
         graphql_parser::query::OperationDefinition::Mutation(m) => {
             let on = schema.mutation_type();
-            resolve_object_selection(
-                query,
-                on,
-                &m.selection_set,
-                SelectionParent::Operation(OperationId(query.operations.len() as u32)),
-            )?;
-            let resolved_operation: ResolvedOperation = ResolvedOperation {
-                object_id: on.id(),
-                name: m.name.as_ref().expect("mutation without name").to_owned(),
-                operation_type: crate::operations::OperationType::Mutation,
-                variables: resolve_variables(
-                    &m.variable_definitions,
-                    schema,
-                    OperationId(query.operations.len() as u32),
-                )?,
-                selection: Vec::with_capacity(m.selection_set.items.len()),
-            };
+            let (id, _) = query.find_operation(m.name.as_ref().unwrap()).unwrap();
 
-            query.operations.push(resolved_operation);
+            resolve_object_selection(query, on, &m.selection_set, SelectionParent::Operation(id))?;
         }
         graphql_parser::query::OperationDefinition::Query(q) => {
             let on = schema.query_type();
-            resolve_object_selection(
-                query,
-                on,
-                &q.selection_set,
-                SelectionParent::Operation(OperationId(query.operations.len() as u32)),
-            )?;
+            let (id, _) = query.find_operation(q.name.as_ref().unwrap()).unwrap();
 
-            let resolved_operation: ResolvedOperation = ResolvedOperation {
-                name: q.name.as_ref().expect("query without name").to_owned(),
-                operation_type: crate::operations::OperationType::Query,
-                variables: resolve_variables(
-                    &q.variable_definitions,
-                    schema,
-                    OperationId(query.operations.len() as u32),
-                )?,
-                object_id: on.id(),
-                selection: Vec::with_capacity(q.selection_set.items.len()),
-            };
-
-            query.operations.push(resolved_operation);
+            resolve_object_selection(query, on, &q.selection_set, SelectionParent::Operation(id))?;
         }
         graphql_parser::query::OperationDefinition::Subscription(s) => {
-            let on = schema.subscription_type();
-            resolve_object_selection(
-                query,
-                on,
-                &s.selection_set,
-                SelectionParent::Operation(OperationId(query.operations.len() as u32)),
-            )?;
+            let on = schema.query_type();
+            let (id, _) = query.find_operation(s.name.as_ref().unwrap()).unwrap();
 
-            let resolved_operation: ResolvedOperation = ResolvedOperation {
-                name: s
-                    .name
-                    .as_ref()
-                    .expect("subscription without name")
-                    .to_owned(),
-                operation_type: crate::operations::OperationType::Subscription,
-                variables: resolve_variables(
-                    &s.variable_definitions,
-                    schema,
-                    OperationId(query.operations.len() as u32),
-                )?,
-                object_id: on.id(),
-                selection: Vec::with_capacity(s.selection_set.items.len()),
-            };
-
-            query.operations.push(resolved_operation);
+            resolve_object_selection(query, on, &s.selection_set, SelectionParent::Operation(id))?;
         }
         graphql_parser::query::OperationDefinition::SelectionSet(_) => {
             unreachable!("unnamed queries are not supported")
@@ -610,6 +552,14 @@ impl ResolvedQuery {
             .find(|(_, frag)| frag.name == name)
             .map(|(id, f)| (ResolvedFragmentId(id as u32), f))
     }
+
+    fn find_operation(&mut self, name: &str) -> Option<(OperationId, &mut ResolvedOperation)> {
+        self.operations
+            .iter_mut()
+            .enumerate()
+            .find(|(_, op)| op.name == name)
+            .map(|(id, op)| (OperationId::new(id), op))
+    }
 }
 
 #[derive(Debug)]
@@ -619,14 +569,7 @@ pub(crate) struct ResolvedFragment {
     selection: Vec<SelectionId>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct Operation<'a> {
-    operation_id: usize,
-    schema: &'a Schema,
-    query: &'a ResolvedQuery,
-}
-
-impl<'a> WithQuery<'a, OperationId> {
+impl<'a> OperationRef<'a> {
     fn get(&self) -> &'a ResolvedOperation {
         self.query.operations.get(self.item.0 as usize).unwrap()
     }
@@ -649,7 +592,7 @@ impl<'a> WithQuery<'a, OperationId> {
         all_used_types
     }
 
-    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = WithQuery<'a, SelectionId>> + 'b {
+    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = SelectionRef<'a>> + 'b {
         let operation = self.get();
         operation
             .selection
@@ -657,7 +600,7 @@ impl<'a> WithQuery<'a, OperationId> {
             .map(move |selection_id| self.refocus(*selection_id))
     }
 
-    pub(crate) fn variables<'b>(&'b self) -> impl Iterator<Item = WithQuery<'a, VariableId>> + 'b {
+    pub(crate) fn variables<'b>(&'b self) -> impl Iterator<Item = VariableRef<'a>> + 'b {
         self.query
             .variables
             .iter()
@@ -698,7 +641,7 @@ struct ResolvedVariable {
     r#type: StoredFieldType,
 }
 
-impl<'a> WithQuery<'a, VariableId> {
+impl<'a> VariableRef<'a> {
     fn get(&self) -> &'a ResolvedVariable {
         self.query.variables.get(self.item.0 as usize).unwrap()
     }
@@ -727,12 +670,12 @@ impl<'a> WithQuery<'a, VariableId> {
     }
 }
 
-impl<'a> WithQuery<'a, ResolvedFragmentId> {
+impl<'a> FragmentRef<'a> {
     fn get(&self) -> &'a ResolvedFragment {
         self.query.fragments.get(self.item.0 as usize).unwrap()
     }
 
-    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = WithQuery<'a, SelectionId>> + 'b {
+    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = SelectionRef<'a>> + 'b {
         let fragment = self.get();
         fragment
             .selection
@@ -746,10 +689,6 @@ impl<'a> WithQuery<'a, ResolvedFragmentId> {
 
     pub(crate) fn name(&self) -> &'a str {
         &self.get().name
-    }
-
-    pub(crate) fn selection_len(&self) -> usize {
-        self.get().selection.len()
     }
 }
 
@@ -772,7 +711,7 @@ impl UsedTypes {
     pub(crate) fn scalars<'s, 'a: 's>(
         &'s self,
         schema: &'a Schema,
-    ) -> impl Iterator<Item = ScalarRef<'a>> + 's {
+    ) -> impl Iterator<Item = WithSchema<'a, ScalarId>> + 's {
         self.types
             .iter()
             .filter_map(TypeId::as_scalar_id)
