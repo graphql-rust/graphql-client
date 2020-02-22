@@ -96,7 +96,7 @@ fn generate_variables_struct(
     let variable_defaults = operation.variables().map(|variable| {
         let method_name = format!("default_{}", variable.name());
         let method_name = Ident::new(&method_name, Span::call_site());
-        let method_return_type = quote!(String);
+        let method_return_type = render_variable_field_type(variable);
 
         quote!(
             pub fn #method_name() -> #method_return_type {

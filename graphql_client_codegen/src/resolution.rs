@@ -280,11 +280,6 @@ pub(crate) fn resolve(
                     object_id: on.id(),
                     name: m.name.as_ref().expect("mutation without name").to_owned(),
                     operation_type: crate::operations::OperationType::Mutation,
-                    variables: resolve_variables(
-                        &m.variable_definitions,
-                        schema,
-                        OperationId(resolved_query.operations.len() as u32),
-                    )?,
                     selection: Vec::with_capacity(m.selection_set.items.len()),
                 };
 
@@ -297,11 +292,6 @@ pub(crate) fn resolve(
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     name: q.name.as_ref().expect("query without name").to_owned(),
                     operation_type: crate::operations::OperationType::Query,
-                    variables: resolve_variables(
-                        &q.variable_definitions,
-                        schema,
-                        OperationId(resolved_query.operations.len() as u32),
-                    )?,
                     object_id: on.id(),
                     selection: Vec::with_capacity(q.selection_set.items.len()),
                 };
@@ -320,11 +310,6 @@ pub(crate) fn resolve(
                         .expect("subscription without name")
                         .to_owned(),
                     operation_type: crate::operations::OperationType::Subscription,
-                    variables: resolve_variables(
-                        &s.variable_definitions,
-                        schema,
-                        OperationId(resolved_query.operations.len() as u32),
-                    )?,
                     object_id: on.id(),
                     selection: Vec::with_capacity(s.selection_set.items.len()),
                 };
@@ -504,18 +489,21 @@ fn resolve_operation(
             let on = schema.mutation_type();
             let (id, _) = query.find_operation(m.name.as_ref().unwrap()).unwrap();
 
+            resolve_variables(query, &m.variable_definitions, schema, id);
             resolve_object_selection(query, on, &m.selection_set, SelectionParent::Operation(id))?;
         }
         graphql_parser::query::OperationDefinition::Query(q) => {
             let on = schema.query_type();
             let (id, _) = query.find_operation(q.name.as_ref().unwrap()).unwrap();
 
+            resolve_variables(query, &q.variable_definitions, schema, id);
             resolve_object_selection(query, on, &q.selection_set, SelectionParent::Operation(id))?;
         }
         graphql_parser::query::OperationDefinition::Subscription(s) => {
             let on = schema.query_type();
             let (id, _) = query.find_operation(s.name.as_ref().unwrap()).unwrap();
 
+            resolve_variables(query, &s.variable_definitions, schema, id);
             resolve_object_selection(query, on, &s.selection_set, SelectionParent::Operation(id))?;
         }
         graphql_parser::query::OperationDefinition::SelectionSet(_) => {
@@ -614,7 +602,7 @@ impl<'a> OperationRef<'a> {
     }
 
     pub(crate) fn has_no_variables(&self) -> bool {
-        self.get().variables.is_empty()
+        self.variables().next().is_none()
     }
 }
 
@@ -622,7 +610,6 @@ impl<'a> OperationRef<'a> {
 pub(crate) struct ResolvedOperation {
     name: String,
     operation_type: crate::operations::OperationType,
-    variables: Vec<ResolvedVariable>,
     selection: Vec<SelectionId>,
     object_id: ObjectId,
 }
@@ -743,19 +730,17 @@ impl UsedTypes {
 }
 
 fn resolve_variables(
+    query: &mut ResolvedQuery,
     variables: &[graphql_parser::query::VariableDefinition],
     schema: &Schema,
     operation_id: OperationId,
-) -> Result<Vec<ResolvedVariable>, anyhow::Error> {
-    variables
-        .iter()
-        .map(|var| {
-            Ok(ResolvedVariable {
-                operation_id,
-                name: var.name.clone(),
-                default: var.default_value.clone(),
-                r#type: resolve_field_type(schema, &var.var_type),
-            })
-        })
-        .collect()
+) {
+    for var in variables {
+        query.variables.push(ResolvedVariable {
+            operation_id,
+            name: var.name.clone(),
+            default: var.default_value.clone(),
+            r#type: resolve_field_type(schema, &var.var_type),
+        });
+    }
 }

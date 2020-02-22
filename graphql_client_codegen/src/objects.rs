@@ -111,46 +111,46 @@ impl<'schema> GqlObject<'schema> {
     //     })
     // }
 
-    pub(crate) fn response_for_selection(
-        &self,
-        query_context: &QueryContext<'_>,
-        selection: &Selection<'_>,
-        prefix: &str,
-    ) -> Result<TokenStream, anyhow::Error> {
-        unimplemented!()
-        // let derives = query_context.response_derives();
-        // let name = Ident::new(prefix, Span::call_site());
-        // let fields = self.response_fields_for_selection(query_context, selection, prefix)?;
-        // let field_impls = self.field_impls_for_selection(query_context, selection, &prefix)?;
-        // let description = self.description.as_ref().map(|desc| quote!(#[doc = #desc]));
-        // Ok(quote! {
-        //     #(#field_impls)*
+    // pub(crate) fn response_for_selection(
+    //     &self,
+    //     query_context: &QueryContext<'_>,
+    //     selection: &Selection<'_>,
+    //     prefix: &str,
+    // ) -> Result<TokenStream, anyhow::Error> {
+    //     unimplemented!()
+    //     // let derives = query_context.response_derives();
+    //     // let name = Ident::new(prefix, Span::call_site());
+    //     // let fields = self.response_fields_for_selection(query_context, selection, prefix)?;
+    //     // let field_impls = self.field_impls_for_selection(query_context, selection, &prefix)?;
+    //     // let description = self.description.as_ref().map(|desc| quote!(#[doc = #desc]));
+    //     // Ok(quote! {
+    //     //     #(#field_impls)*
 
-        //     #derives
-        //     #description
-        //     pub struct #name {
-        //         #(#fields,)*
-        //     }
-        // })
-    }
+    //     //     #derives
+    //     //     #description
+    //     //     pub struct #name {
+    //     //         #(#fields,)*
+    //     //     }
+    //     // })
+    // }
 
-    pub(crate) fn field_impls_for_selection(
-        &self,
-        query_context: &QueryContext<'_>,
-        selection: &Selection<'_>,
-        prefix: &str,
-    ) -> Result<Vec<TokenStream>, anyhow::Error> {
-        field_impls_for_selection(&self.fields, query_context, selection, prefix)
-    }
+    // pub(crate) fn field_impls_for_selection(
+    //     &self,
+    //     query_context: &QueryContext<'_>,
+    //     selection: &Selection<'_>,
+    //     prefix: &str,
+    // ) -> Result<Vec<TokenStream>, anyhow::Error> {
+    //     field_impls_for_selection(&self.fields, query_context, selection, prefix)
+    // }
 
-    pub(crate) fn response_fields_for_selection(
-        &self,
-        query_context: &QueryContext<'_>,
-        selection: &Selection<'_>,
-        prefix: &str,
-    ) -> Result<Vec<TokenStream>, anyhow::Error> {
-        response_fields_for_selection(&self.name, &self.fields, query_context, selection, prefix)
-    }
+    // pub(crate) fn response_fields_for_selection(
+    //     &self,
+    //     query_context: &QueryContext<'_>,
+    //     selection: &Selection<'_>,
+    //     prefix: &str,
+    // ) -> Result<Vec<TokenStream>, anyhow::Error> {
+    //     response_fields_for_selection(&self.name, &self.fields, query_context, selection, prefix)
+    // }
 }
 
 #[cfg(test)]
