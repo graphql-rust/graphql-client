@@ -1,4 +1,7 @@
-use crate::{codegen_options::*, resolution::Operation};
+use crate::{
+    codegen_options::*,
+    resolution::{Operation, OperationId, WithQuery},
+};
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -16,19 +19,25 @@ pub(crate) struct GeneratedModule<'a> {
 impl<'a> GeneratedModule<'a> {
     /// Generate the items for the variables and the response that will go inside the module.
     fn build_impls(&self) -> anyhow::Result<TokenStream> {
-        let root = crate::codegen::select_operation(
+        Ok(crate::codegen::response_for_query(
+            self.root(),
+            &self.options,
+        )?)
+    }
+
+    fn root(&self) -> WithQuery<'_, OperationId> {
+        let operation = crate::codegen::select_operation(
             &self.resolved_query,
             &self.operation,
             self.options.normalization(),
         )
         .expect("TODO: handle operation not found");
 
-        let operation = Operation::new(root, self.schema, self.resolved_query);
-
-        Ok(crate::codegen::response_for_query(
-            operation,
-            &self.options,
-        )?)
+        WithQuery::new(
+            self.resolved_query,
+            self.schema,
+            OperationId::new(operation),
+        )
     }
 
     /// Generate the module and all the code inside.
