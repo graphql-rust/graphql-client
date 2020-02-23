@@ -560,7 +560,7 @@ impl<'a> FieldRef<'a> {
         &self.get().name
     }
 
-    pub(crate) fn field_type(&self) -> WithSchema<'a, TypeId> {
+    pub(crate) fn field_type(&self) -> TypeRef<'a> {
         self.refocus(self.get().r#type.id)
     }
 
