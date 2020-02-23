@@ -8,6 +8,14 @@ const RESPONSE: &str = include_str!("unions/union_query_response.json");
     schema_path = "tests/unions/union_schema.graphql",
     response_derives = "PartialEq, Debug"
 )]
+pub struct FragmentOnUnion;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    query_path = "tests/unions/union_query.graphql",
+    schema_path = "tests/unions/union_schema.graphql",
+    response_derives = "PartialEq, Debug"
+)]
 pub struct UnionQuery;
 
 #[derive(GraphQLQuery)]
@@ -16,7 +24,7 @@ pub struct UnionQuery;
     schema_path = "tests/unions/union_schema.graphql",
     response_derives = "PartialEq, Debug"
 )]
-pub struct FragmentOnUnion;
+pub struct FragmentAndMoreOnUnion;
 
 #[test]
 fn union_query_deserialization() {
@@ -77,4 +85,9 @@ fn fragment_on_union() {
     };
 
     assert_eq!(response_data, expected);
+}
+
+#[test]
+fn fragment_and_more_on_union() {
+    todo!()
 }
