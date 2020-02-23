@@ -129,7 +129,10 @@ impl<'a> SelectionRef<'a> {
     pub(crate) fn subselection<'b>(
         &'b self,
     ) -> impl Iterator<Item = WithQuery<'a, SelectionId>> + 'b {
-        self.get().subselection().map(move |s| self.refocus(*s))
+        self.get()
+            .subselection()
+            .iter()
+            .map(move |s| self.refocus(*s))
     }
 
     pub(crate) fn collect_used_types(&self, used_types: &mut UsedTypes) {
@@ -218,11 +221,11 @@ pub(crate) enum Selection {
 }
 
 impl Selection {
-    fn subselection(&self) -> impl Iterator<Item = &SelectionId> {
+    pub(crate) fn subselection(&self) -> &[SelectionId] {
         match self {
-            Selection::Field(field) => field.selection_set.iter(),
-            Selection::InlineFragment(inline_fragment) => inline_fragment.selection_set.iter(),
-            _ => [].iter(),
+            Selection::Field(field) => field.selection_set.as_slice(),
+            Selection::InlineFragment(inline_fragment) => &inline_fragment.selection_set,
+            _ => &[],
         }
     }
 }

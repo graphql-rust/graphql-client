@@ -301,7 +301,7 @@ fn render_selection<'a>(
 
                         field_buffer.push(quote!(#deprecation_annotation #ident: #type_name));
                     }
-                    TypeId::Object(_) => {
+                    TypeId::Object(_) | TypeId::Interface(_) => {
                         let struct_name = Ident::new(&select.full_path_prefix(), Span::call_site());
                         let field_type =
                             decorate_type(&struct_name, field.schema_field().type_qualifiers());
@@ -326,10 +326,33 @@ fn render_selection<'a>(
 
                         response_type_buffer.push(struct_definition);
                     }
-                    _other => {
-                        Ident::new("String", Span::call_site());
-                        // unimplemented!("selection on {:?}", other)
+                    TypeId::Union(_) => {
+                        // Generate the union enum here
+                        let enum_name = Ident::new(&select.full_path_prefix(), Span::call_site());
+                        let field_type =
+                            decorate_type(&enum_name, field.schema_field().type_qualifiers());
+
+                        field_buffer.push(quote!(#deprecation_annotation #ident: #field_type));
+
+                        let mut fields = Vec::with_capacity(select.get().subselection().len());
+                        render_selection(
+                            select.subselection(),
+                            &mut fields,
+                            response_type_buffer,
+                            response_derives,
+                            options,
+                        );
+
+                        let enum_definition = quote! {
+                            #response_derives
+                            pub enum #enum_name {
+
+                            }
+                        };
+
+                        response_type_buffer.push(enum_definition);
                     }
+                    TypeId::Input(_) => unreachable!("field selection on input type"),
                 };
             }
             Selection::Typename => {
