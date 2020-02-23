@@ -702,10 +702,14 @@ impl<'a> ObjectRefLike<'a> for InterfaceRef<'a> {
     }
 
     fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
-        self.get_field_by_name(name)
+        self.get()
+            .fields
+            .iter()
+            .map(|field_id| self.schema.field(*field_id))
+            .find(|field| field.name() == name)
     }
 
     fn schema(&self) -> SchemaRef<'a> {
-        InterfaceRef::schema(self)
+        self.schema
     }
 }
