@@ -323,30 +323,21 @@ fn render_selection<'a>(
                             options,
                         );
 
-                        let on_field = if variants.len() > 0 {
-                            let enum_name = format!("{}On", struct_name_string);
-                            let enum_name = Ident::new(&enum_name, Span::call_site());
-
-                            Some(quote!(on: #enum_name,))
-                        } else {
-                            None
-                        };
-
-                        let struct_definition = quote! {
-                            #response_derives
-                            pub struct #struct_name {
-                                #(#fields),*
-                                #on_field
-                            }
-                        };
+                        let struct_definition = render_object_like_struct(
+                            response_derives,
+                            &struct_name_string,
+                            &fields,
+                            &variants,
+                        );
 
                         response_type_buffer.push(struct_definition);
                     }
                     TypeId::Union(_) => {
                         // Generate the union enum here
-                        let enum_name = Ident::new(&select.full_path_prefix(), Span::call_site());
+                        let enum_name = select.full_path_prefix();
+                        let enum_name_ident = Ident::new(&enum_name, Span::call_site());
                         let field_type =
-                            decorate_type(&enum_name, field.schema_field().type_qualifiers());
+                            decorate_type(&enum_name_ident, field.schema_field().type_qualifiers());
 
                         field_buffer.push(quote!(#deprecation_annotation #ident: #field_type));
 
@@ -361,22 +352,8 @@ fn render_selection<'a>(
                             options,
                         );
 
-                        // Idea: typed selection representation.
-                        // UnionSelection { variants }
-                        // InterfaceSelection { fields variants }
-                        // ObjectSelection { fields }
-
-                        // alternatively: pass &mut fields and &mut variants, here assert that we __only__ get variants.
-                        // on interfaces expect both optionally (with the On field and struct)
-                        // on objects expect no variants
-
-                        let enum_definition = quote! {
-                            #response_derives
-                            pub enum #enum_name {
-                                #(#variants),*
-                            }
-                        };
-
+                        let enum_definition =
+                            render_union_enum(response_derives, &enum_name, &variants);
                         response_type_buffer.push(enum_definition);
                     }
                     TypeId::Input(_) => unreachable!("field selection on input type"),
@@ -490,7 +467,6 @@ fn generate_fragment_definitions(
 
     for fragment in fragments {
         let struct_name = fragment.name();
-        let struct_ident = Ident::new(struct_name, Span::call_site());
         let mut fields = Vec::with_capacity(fragment.selection_set_len());
         let mut variants = Vec::new();
 
@@ -503,15 +479,58 @@ fn generate_fragment_definitions(
             options,
         );
 
-        let fragment_definition = quote! {
-            #response_derives
-            pub struct #struct_ident {
-                #(#fields),*
+        let definition = match fragment.on().item {
+            TypeId::Interface(_) | TypeId::Object(_) => {
+                render_object_like_struct(response_derives, struct_name, &fields, &variants)
             }
+            TypeId::Union(_) => render_union_enum(response_derives, struct_name, &variants),
+            other => panic!("Fragment on invalid type: {:?}", other),
         };
 
-        fragment_definitions.push(fragment_definition.into())
+        fragment_definitions.push(definition)
     }
 
     (fragment_definitions, response_type_buffer)
+}
+
+/// Render a struct for a selection on an object or interface.
+fn render_object_like_struct(
+    response_derives: &impl quote::ToTokens,
+    struct_name: &str,
+    fields: &[TokenStream],
+    variants: &[TokenStream],
+) -> TokenStream {
+    let on_field = if variants.len() > 0 {
+        let enum_name = format!("{}On", struct_name);
+        let enum_name = Ident::new(&enum_name, Span::call_site());
+
+        Some(quote!(on: #enum_name,))
+    } else {
+        None
+    };
+
+    let struct_ident = Ident::new(struct_name, Span::call_site());
+
+    quote! {
+        #response_derives
+        pub struct #struct_ident {
+            #(#fields),*
+            #on_field
+        }
+    }
+}
+
+fn render_union_enum(
+    response_derives: &impl quote::ToTokens,
+    enum_name: &str,
+    variants: &[TokenStream],
+) -> TokenStream {
+    let enum_ident = Ident::new(enum_name, Span::call_site());
+
+    quote! {
+        #response_derives
+        pub enum #enum_ident {
+            #(#variants),*
+        }
+    }
 }

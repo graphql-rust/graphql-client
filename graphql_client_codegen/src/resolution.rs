@@ -733,6 +733,10 @@ impl<'a> FragmentRef<'a> {
     pub(crate) fn selection_set_len(&self) -> usize {
         self.get().selection.len()
     }
+
+    pub(crate) fn on(&self) -> TypeRef<'a> {
+        self.with_schema(self.get().on)
+    }
 }
 
 #[derive(Debug, Default)]
