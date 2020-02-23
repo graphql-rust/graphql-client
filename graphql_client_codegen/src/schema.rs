@@ -4,6 +4,8 @@ mod json_conversion;
 use crate::field_type::GraphqlTypeQualifier;
 use std::collections::HashMap;
 
+pub(crate) type TypeRef<'a> = WithSchema<'a, TypeId>;
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct WithSchema<'a, T> {
     schema: &'a Schema,
@@ -16,6 +18,10 @@ impl<'a, T> WithSchema<'a, T> {
             schema: self.schema,
             item,
         }
+    }
+
+    pub(crate) fn schema(&self) -> &'a Schema {
+        self.schema
     }
 
     pub(crate) fn new(schema: &'a Schema, item: T) -> WithSchema<'a, T> {
@@ -536,10 +542,6 @@ impl<'a> ObjectRef<'a> {
 
     pub(crate) fn get_field_by_name(&self, name: &str) -> Option<WithSchema<'a, StoredFieldId>> {
         self.fields().find(|field| field.name() == name)
-    }
-
-    pub(crate) fn schema(&self) -> SchemaRef<'a> {
-        self.schema
     }
 
     pub(crate) fn id(&self) -> ObjectId {

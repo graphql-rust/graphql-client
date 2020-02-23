@@ -7,7 +7,7 @@ use crate::{
     field_type::GraphqlTypeQualifier,
     schema::{
         resolve_field_type, EnumRef, InputId, ObjectId, Schema, StoredFieldId, StoredFieldType,
-        TypeId, UnionRef, WithSchema,
+        TypeId, TypeRef, UnionRef, WithSchema,
     },
 };
 
@@ -18,6 +18,7 @@ pub(crate) type OperationRef<'a> = WithQuery<'a, OperationId>;
 pub(crate) type FragmentRef<'a> = WithQuery<'a, ResolvedFragmentId>;
 pub(crate) type VariableRef<'a> = WithQuery<'a, VariableId>;
 pub(crate) type SelectionRef<'a> = WithQuery<'a, SelectionId>;
+pub(crate) type InlineFragmentRef<'a> = WithQuery<'a, &'a InlineFragment>;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub(crate) struct SelectionId(u32);
@@ -236,6 +237,12 @@ pub(crate) struct InlineFragment {
     selection_set: Vec<SelectionId>,
 }
 
+impl<'a> InlineFragmentRef<'a> {
+    pub(crate) fn on(&self) -> TypeRef<'a> {
+        self.with_schema(self.item.type_id)
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct SelectedField {
     alias: Option<String>,
@@ -369,6 +376,35 @@ fn resolve_union_selection(
     selection_set: &graphql_parser::query::SelectionSet,
     parent: SelectionParent,
 ) -> anyhow::Result<()> {
+    for item in selection_set.items.iter() {
+        match item {
+            graphql_parser::query::Selection::Field(field) => {
+                if field.name == TYPENAME_FIELD {
+                    let id = query.push_selection(Selection::Typename, parent);
+                    parent.add_to_selection_set(query, id);
+                } else {
+                    anyhow::bail!("Invalid field selection on union field ({:?})", parent);
+                }
+            }
+            graphql_parser::query::Selection::InlineFragment(inline_fragment) => {
+                let selection_id =
+                    resolve_inline_fragment(query, union.schema(), inline_fragment, parent)?;
+
+                parent.add_to_selection_set(query, selection_id);
+            }
+            graphql_parser::query::Selection::FragmentSpread(fragment_spread) => {
+                // TODO: this is very duplicated.
+                let (fragment_id, _) = query
+                    .find_fragment(&fragment_spread.fragment_name)
+                    .expect("TODO: fragment resolution");
+
+                let id = query.push_selection(Selection::FragmentSpread(fragment_id), parent);
+
+                parent.add_to_selection_set(query, id);
+            }
+        }
+    }
+
     Ok(())
 }
 

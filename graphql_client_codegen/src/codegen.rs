@@ -241,10 +241,12 @@ fn render_response_data_fields<'a>(
 ) -> (Vec<TokenStream>, Vec<TokenStream>) {
     let mut response_types = Vec::new();
     let mut fields = Vec::new();
+    let mut variants = Vec::new();
 
     render_selection(
         operation.selection(),
         &mut fields,
+        &mut variants,
         &mut response_types,
         response_derives,
         options,
@@ -256,6 +258,7 @@ fn render_response_data_fields<'a>(
 fn render_selection<'a>(
     selection: impl Iterator<Item = WithQuery<'a, SelectionId>>,
     field_buffer: &mut Vec<TokenStream>,
+    variants_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
     response_derives: &impl quote::ToTokens,
     options: &GraphQLClientCodegenOptions,
@@ -302,25 +305,38 @@ fn render_selection<'a>(
                         field_buffer.push(quote!(#deprecation_annotation #ident: #type_name));
                     }
                     TypeId::Object(_) | TypeId::Interface(_) => {
-                        let struct_name = Ident::new(&select.full_path_prefix(), Span::call_site());
+                        let struct_name_string = select.full_path_prefix();
+                        let struct_name = Ident::new(&struct_name_string, Span::call_site());
                         let field_type =
                             decorate_type(&struct_name, field.schema_field().type_qualifiers());
 
                         field_buffer.push(quote!(#deprecation_annotation #ident: #field_type));
 
                         let mut fields = Vec::new();
+                        let mut variants = Vec::new();
                         render_selection(
                             select.subselection(),
                             &mut fields,
+                            &mut variants,
                             response_type_buffer,
                             response_derives,
                             options,
                         );
 
+                        let on_field = if variants.len() > 0 {
+                            let enum_name = format!("{}On", struct_name_string);
+                            let enum_name = Ident::new(&enum_name, Span::call_site());
+
+                            Some(quote!(on: #enum_name,))
+                        } else {
+                            None
+                        };
+
                         let struct_definition = quote! {
                             #response_derives
                             pub struct #struct_name {
                                 #(#fields),*
+                                #on_field
                             }
                         };
 
@@ -334,19 +350,30 @@ fn render_selection<'a>(
 
                         field_buffer.push(quote!(#deprecation_annotation #ident: #field_type));
 
-                        let mut fields = Vec::with_capacity(select.get().subselection().len());
+                        let mut fields = Vec::new();
+                        let mut variants = Vec::new();
                         render_selection(
                             select.subselection(),
                             &mut fields,
+                            &mut variants,
                             response_type_buffer,
                             response_derives,
                             options,
                         );
 
+                        // Idea: typed selection representation.
+                        // UnionSelection { variants }
+                        // InterfaceSelection { fields variants }
+                        // ObjectSelection { fields }
+
+                        // alternatively: pass &mut fields and &mut variants, here assert that we __only__ get variants.
+                        // on interfaces expect both optionally (with the On field and struct)
+                        // on objects expect no variants
+
                         let enum_definition = quote! {
                             #response_derives
                             pub enum #enum_name {
-
+                                #(#variants),*
                             }
                         };
 
@@ -361,7 +388,15 @@ fn render_selection<'a>(
                     pub typename: String
                 ));
             }
-            Selection::InlineFragment(_inline) => todo!("render inline fragment"),
+            Selection::InlineFragment(inline) => {
+                let variant_name = select.refocus(inline).on().name();
+                let variant_name = Ident::new(variant_name, Span::call_site());
+                let variant_struct_name = select.full_path_prefix();
+                let variant_struct_name = Ident::new(&variant_struct_name, Span::call_site());
+
+                let variant = quote!(#variant_name(#variant_struct_name));
+                variants_buffer.push(variant);
+            }
             Selection::FragmentSpread(frag) => {
                 let frag = select.refocus(*frag);
                 let original_field_name = frag.name().to_snake_case();
@@ -457,10 +492,12 @@ fn generate_fragment_definitions(
         let struct_name = fragment.name();
         let struct_ident = Ident::new(struct_name, Span::call_site());
         let mut fields = Vec::with_capacity(fragment.selection_set_len());
+        let mut variants = Vec::new();
 
         render_selection(
             fragment.selection(),
             &mut fields,
+            &mut variants,
             &mut response_type_buffer,
             response_derives,
             options,
