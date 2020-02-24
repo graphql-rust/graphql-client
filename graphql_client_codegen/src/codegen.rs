@@ -333,11 +333,17 @@ fn render_selection<'a>(
                         response_type_buffer.push(struct_definition);
                     }
                     TypeId::Union(_) => {
-                        // Generate the union enum here
-                        let enum_name = select.full_path_prefix();
-                        let enum_name_ident = Ident::new(&enum_name, Span::call_site());
-                        let field_type =
-                            decorate_type(&enum_name_ident, field.schema_field().type_qualifiers());
+                        // Generate the union struct here.
+                        //
+                        // We want a struct, because we want to preserve fragments in the output,
+                        // and there can be fragment and inline spreads for a given selection set
+                        // on an enum.
+                        let struct_name = select.full_path_prefix();
+                        let struct_name_ident = Ident::new(&struct_name, Span::call_site());
+                        let field_type = decorate_type(
+                            &struct_name_ident,
+                            field.schema_field().type_qualifiers(),
+                        );
 
                         field_buffer.push(quote!(#deprecation_annotation #ident: #field_type));
 
@@ -352,9 +358,13 @@ fn render_selection<'a>(
                             options,
                         );
 
-                        let enum_definition =
-                            render_union_enum(response_derives, &enum_name, &variants);
-                        response_type_buffer.push(enum_definition);
+                        let struct_definition = render_object_like_struct(
+                            response_derives,
+                            &struct_name,
+                            &fields,
+                            &variants,
+                        );
+                        response_type_buffer.push(struct_definition);
                     }
                     TypeId::Input(_) => unreachable!("field selection on input type"),
                 };
@@ -373,6 +383,19 @@ fn render_selection<'a>(
 
                 let variant = quote!(#variant_name(#variant_struct_name));
                 variants_buffer.push(variant);
+
+                // Render the struct for the selection
+
+                todo!("We have to do more here");
+
+                render_selection(
+                    select.subselection(),
+                    &mut fields,
+                    &mut variants,
+                    response_type_buffer,
+                    response_derives,
+                    options,
+                );
             }
             Selection::FragmentSpread(frag) => {
                 let frag = select.refocus(*frag);
@@ -500,13 +523,20 @@ fn render_object_like_struct(
     fields: &[TokenStream],
     variants: &[TokenStream],
 ) -> TokenStream {
-    let on_field = if variants.len() > 0 {
-        let enum_name = format!("{}On", struct_name);
-        let enum_name = Ident::new(&enum_name, Span::call_site());
+    let (on_field, on_enum) = if variants.len() > 0 {
+        let enum_name_str = format!("{}On", struct_name);
+        let enum_name = Ident::new(&enum_name_str, Span::call_site());
 
-        Some(quote!(on: #enum_name,))
+        (
+            Some(quote!(on: #enum_name,)),
+            Some(render_union_enum(
+                response_derives,
+                &enum_name_str,
+                variants,
+            )),
+        )
     } else {
-        None
+        (None, None)
     };
 
     let struct_ident = Ident::new(struct_name, Span::call_site());
@@ -514,9 +544,11 @@ fn render_object_like_struct(
     quote! {
         #response_derives
         pub struct #struct_ident {
-            #(#fields),*
+            #(#fields,)*
             #on_field
         }
+
+        #on_enum
     }
 }
 
@@ -530,7 +562,7 @@ fn render_union_enum(
     quote! {
         #response_derives
         pub enum #enum_ident {
-            #(#variants),*
+            #(#variants,)*
         }
     }
 }
