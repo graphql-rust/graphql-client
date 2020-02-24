@@ -362,9 +362,13 @@ fn render_selection<'a>(
                             options,
                         );
 
-                        let enum_definition =
-                            render_union_enum(response_derives, &struct_name, &variants);
-                        response_type_buffer.push(enum_definition);
+                        let struct_definition = render_object_like_struct(
+                            response_derives,
+                            &struct_name,
+                            &fields,
+                            &variants,
+                        );
+                        response_type_buffer.push(struct_definition);
                     }
                     TypeId::Input(_) => unreachable!("field selection on input type"),
                 };
@@ -396,23 +400,17 @@ fn render_selection<'a>(
                     options,
                 );
 
-                let variant = quote!(#variant_name { });
+                let variant = quote!(#variant_name(#variant_struct_name));
                 variants_buffer.push(variant);
 
-                match q.refocus(inline).on().item {
-                    TypeId::Object(_) | TypeId::Interface(_) => {
-                        let struct_definition = render_object_like_struct(
-                            response_derives,
-                            &variant_struct_name_str,
-                            &fields,
-                            &variants,
-                        );
+                let struct_definition = render_object_like_struct(
+                    response_derives,
+                    &variant_struct_name_str,
+                    &fields,
+                    &variants,
+                );
 
-                        response_type_buffer.push(struct_definition);
-                    }
-                    TypeId::Union(_) => todo!("inline fragment on union"),
-                    other => unreachable!("Inline fragment on non composite type ({:?})", other),
-                }
+                response_type_buffer.push(struct_definition);
             }
             Selection::FragmentSpread(frag) => {
                 let frag = q.refocus(*frag);
@@ -431,11 +429,9 @@ fn render_selection<'a>(
 }
 
 fn field_name(field: &WithQuery<'_, &SelectedField>) -> impl quote::ToTokens {
-    let name = field
-        .alias()
-        .unwrap_or_else(|| field.name())
-        .to_snake_case();
-    let final_name = keyword_replace(&name);
+    let name = field.alias().unwrap_or_else(|| field.name());
+    let snake_case_name = name.to_snake_case();
+    let final_name = keyword_replace(&snake_case_name);
     let rename_annotation = field_rename_annotation(&name, &final_name);
 
     let ident = Ident::new(&final_name, Span::call_site());
@@ -546,7 +542,7 @@ fn render_object_like_struct(
         let enum_name = Ident::new(&enum_name_str, Span::call_site());
 
         (
-            Some(quote!(on: #enum_name,)),
+            Some(quote!(#[serde(flatten)] pub on: #enum_name,)),
             Some(render_union_enum(
                 response_derives,
                 &enum_name_str,
@@ -579,6 +575,7 @@ fn render_union_enum(
 
     quote! {
         #response_derives
+        #[serde(tag = "__typename")]
         pub enum #enum_ident {
             #(#variants,)*
         }
