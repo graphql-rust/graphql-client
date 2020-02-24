@@ -8,7 +8,7 @@ const RESPONSE: &str = include_str!("unions/union_query_response.json");
     schema_path = "tests/unions/union_schema.graphql",
     response_derives = "PartialEq, Debug"
 )]
-pub struct FragmentOnUnion;
+pub struct UnionQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -16,7 +16,7 @@ pub struct FragmentOnUnion;
     schema_path = "tests/unions/union_schema.graphql",
     response_derives = "PartialEq, Debug"
 )]
-pub struct UnionQuery;
+pub struct FragmentOnUnion;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -76,11 +76,13 @@ fn fragment_on_union() {
                     title: "Mozilla".to_string(),
                 },
             ),
-            fragment_on_union::FragmentOnUnionNames::Dog(
-                fragment_on_union::FragmentOnUnionNamesOnDog {
-                    name: "Norbert".to_string(),
-                },
-            ),
+            fragment_on_union::FragmentOnUnionNames {
+                names_fragment: fragment_on_union::NamesFragment::Dog(
+                    fragment_on_union::NamesFragmentOnDog {
+                        name: "Norbert".to_string(),
+                    },
+                ),
+            },
         ]),
     };
 
