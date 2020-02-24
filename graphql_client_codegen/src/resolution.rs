@@ -136,6 +136,10 @@ impl<'a> SelectionRef<'a> {
             .map(move |s| self.refocus(*s))
     }
 
+    pub(crate) fn subselection_ids(&self) -> &'a [SelectionId] {
+        self.get().subselection()
+    }
+
     pub(crate) fn collect_used_types(&self, used_types: &mut UsedTypes) {
         let selection = self.get();
         match selection {
@@ -640,6 +644,10 @@ impl<'a> OperationRef<'a> {
             .map(move |selection_id| self.refocus(*selection_id))
     }
 
+    pub(crate) fn selection_ids(&self) -> &[SelectionId] {
+        &self.get().selection
+    }
+
     pub(crate) fn variables<'b>(&'b self) -> impl Iterator<Item = VariableRef<'a>> + 'b {
         self.query
             .variables
@@ -720,6 +728,10 @@ impl<'a> FragmentRef<'a> {
             .selection
             .iter()
             .map(move |item| self.refocus(*item))
+    }
+
+    pub(crate) fn selection_ids(&self) -> &[SelectionId] {
+        &self.get().selection
     }
 
     fn to_path_segment(&self) -> String {
