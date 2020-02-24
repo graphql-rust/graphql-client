@@ -244,7 +244,8 @@ fn render_response_data_fields<'a>(
     let mut variants = Vec::new();
 
     render_selection(
-        operation.selection(),
+        operation.refocus(()),
+        operation.selection_ids(),
         &mut fields,
         &mut variants,
         &mut response_types,
@@ -256,7 +257,8 @@ fn render_response_data_fields<'a>(
 }
 
 fn render_selection<'a>(
-    selection: impl Iterator<Item = WithQuery<'a, SelectionId>>,
+    q: WithQuery<'a, ()>,
+    selection: &[SelectionId],
     field_buffer: &mut Vec<TokenStream>,
     variants_buffer: &mut Vec<TokenStream>,
     response_type_buffer: &mut Vec<TokenStream>,
@@ -266,9 +268,9 @@ fn render_selection<'a>(
     // TODO: if the selection has one item, we can sometimes generate fewer structs (e.g. single fragment spread)
 
     for select in selection {
-        match &select.get() {
+        match q.refocus(*select).get() {
             Selection::Field(field) => {
-                let field = select.refocus(field);
+                let field = q.refocus(field);
 
                 let deprecation_annotation = match (
                     field.schema_field().is_deprecated(),
@@ -305,7 +307,7 @@ fn render_selection<'a>(
                         field_buffer.push(quote!(#deprecation_annotation #ident: #type_name));
                     }
                     TypeId::Object(_) | TypeId::Interface(_) => {
-                        let struct_name_string = select.full_path_prefix();
+                        let struct_name_string = q.refocus(*select).full_path_prefix();
                         let struct_name = Ident::new(&struct_name_string, Span::call_site());
                         let field_type =
                             decorate_type(&struct_name, field.schema_field().type_qualifiers());
@@ -315,7 +317,8 @@ fn render_selection<'a>(
                         let mut fields = Vec::new();
                         let mut variants = Vec::new();
                         render_selection(
-                            select.subselection(),
+                            q,
+                            q.refocus(*select).subselection_ids(),
                             &mut fields,
                             &mut variants,
                             response_type_buffer,
@@ -338,7 +341,7 @@ fn render_selection<'a>(
                         // We want a struct, because we want to preserve fragments in the output,
                         // and there can be fragment and inline spreads for a given selection set
                         // on an enum.
-                        let struct_name = select.full_path_prefix();
+                        let struct_name = q.refocus(*select).full_path_prefix();
                         let struct_name_ident = Ident::new(&struct_name, Span::call_site());
                         let field_type = decorate_type(
                             &struct_name_ident,
@@ -350,7 +353,8 @@ fn render_selection<'a>(
                         let mut fields = Vec::new();
                         let mut variants = Vec::new();
                         render_selection(
-                            select.subselection(),
+                            q,
+                            q.refocus(*select).subselection_ids(),
                             &mut fields,
                             &mut variants,
                             response_type_buffer,
@@ -358,13 +362,9 @@ fn render_selection<'a>(
                             options,
                         );
 
-                        let struct_definition = render_object_like_struct(
-                            response_derives,
-                            &struct_name,
-                            &fields,
-                            &variants,
-                        );
-                        response_type_buffer.push(struct_definition);
+                        let enum_definition =
+                            render_union_enum(response_derives, &struct_name, &variants);
+                        response_type_buffer.push(enum_definition);
                     }
                     TypeId::Input(_) => unreachable!("field selection on input type"),
                 };
@@ -376,29 +376,46 @@ fn render_selection<'a>(
                 ));
             }
             Selection::InlineFragment(inline) => {
-                let variant_name = select.refocus(inline).on().name();
-                let variant_name = Ident::new(variant_name, Span::call_site());
-                let variant_struct_name = select.full_path_prefix();
-                let variant_struct_name = Ident::new(&variant_struct_name, Span::call_site());
-
-                let variant = quote!(#variant_name(#variant_struct_name));
-                variants_buffer.push(variant);
+                let variant_name_str = q.refocus(inline).on().name();
+                let variant_name = Ident::new(variant_name_str, Span::call_site());
+                let variant_struct_name_str = q.refocus(*select).full_path_prefix();
+                let variant_struct_name = Ident::new(&variant_struct_name_str, Span::call_site());
 
                 // Render the struct for the selection
 
-                todo!("We have to do more here");
+                let mut fields = Vec::new();
+                let mut variants = Vec::new();
 
                 render_selection(
-                    select.subselection(),
+                    q,
+                    q.refocus(*select).subselection_ids(),
                     &mut fields,
                     &mut variants,
                     response_type_buffer,
                     response_derives,
                     options,
                 );
+
+                let variant = quote!(#variant_name { });
+                variants_buffer.push(variant);
+
+                match q.refocus(inline).on().item {
+                    TypeId::Object(_) | TypeId::Interface(_) => {
+                        let struct_definition = render_object_like_struct(
+                            response_derives,
+                            &variant_struct_name_str,
+                            &fields,
+                            &variants,
+                        );
+
+                        response_type_buffer.push(struct_definition);
+                    }
+                    TypeId::Union(_) => todo!("inline fragment on union"),
+                    other => unreachable!("Inline fragment on non composite type ({:?})", other),
+                }
             }
             Selection::FragmentSpread(frag) => {
-                let frag = select.refocus(*frag);
+                let frag = q.refocus(*frag);
                 let original_field_name = frag.name().to_snake_case();
                 let final_field_name = keyword_replace(&original_field_name);
                 let annotation = field_rename_annotation(&original_field_name, &final_field_name);
@@ -494,7 +511,8 @@ fn generate_fragment_definitions(
         let mut variants = Vec::new();
 
         render_selection(
-            fragment.selection(),
+            fragment.refocus(()),
+            fragment.selection_ids(),
             &mut fields,
             &mut variants,
             &mut response_type_buffer,
