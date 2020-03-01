@@ -1,4 +1,3 @@
-use crate::deprecation::DeprecationStatus;
 // use crate::field_type::FieldType;
 // use crate::objects::GqlObjectField;
 
