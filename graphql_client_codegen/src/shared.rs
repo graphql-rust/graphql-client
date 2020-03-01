@@ -71,10 +71,11 @@ const RUST_KEYWORDS: &[&str] = &[
     "yield",
 ];
 
-pub(crate) fn keyword_replace(needle: &str) -> Cow<'_, str> {
-    match RUST_KEYWORDS.binary_search(&needle) {
+pub(crate) fn keyword_replace<'a>(needle: impl Into<Cow<'a, str>>) -> Cow<'a, str> {
+    let needle = needle.into();
+    match RUST_KEYWORDS.binary_search(&needle.as_ref()) {
         Ok(index) => [RUST_KEYWORDS[index], "_"].concat().into(),
-        Err(_) => Cow::Borrowed(needle),
+        Err(_) => needle,
     }
 }
 

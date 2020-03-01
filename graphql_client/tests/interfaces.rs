@@ -146,7 +146,7 @@ fn fragment_in_interface() {
                     name: "Laïka".to_string(),
                     public_status: PublicStatus {
                         display_name: true,
-                        on: PublicStatusOn::Dog
+                        on: PublicStatusOn::OTHER
                     },
                     on: InterfaceWithFragmentQueryEverythingOn::Dog(
                         InterfaceWithFragmentQueryEverythingOnDog { is_good_dog: true }

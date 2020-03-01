@@ -148,14 +148,6 @@ impl<'query, 'schema> QueryContext<'query> {
         }
     }
 
-    pub(crate) fn response_derives(&self) -> TokenStream {
-        let derives: BTreeSet<&Ident> = self.response_derives.iter().collect();
-        let derives = derives.iter();
-        quote! {
-            #[derive( #(#derives),* )]
-        }
-    }
-
     pub(crate) fn response_enum_derives(&self) -> TokenStream {
         let always_derives = [
             Ident::new("Eq", Span::call_site()),

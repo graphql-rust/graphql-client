@@ -109,18 +109,18 @@ pub fn generate_module_token_stream(
         .operation_name
         .as_ref()
         .and_then(|operation_name| {
-            codegen::select_operation(&query, &operation_name, options.normalization())
-                .and_then(|idx| query.operations.get(idx))
+            query.select_operation(&schema, &options.normalization().operation(operation_name))
         })
         .map(|op| vec![op]);
 
     let operations = match (operations, &options.mode) {
         (Some(ops), _) => ops,
-        (None, &CodegenMode::Cli) => query.operations.iter().collect(),
+        (None, &CodegenMode::Cli) => query.operations(&schema).collect(),
         (None, &CodegenMode::Derive) => {
             return Err(derive_operation_not_found_error(
                 options.struct_ident(),
                 &query,
+                &schema,
             ));
         }
     };
@@ -168,11 +168,12 @@ fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
 fn derive_operation_not_found_error(
     ident: Option<&proc_macro2::Ident>,
     query: &crate::resolution::ResolvedQuery,
+    schema: &crate::schema::Schema,
 ) -> anyhow::Error {
     let operation_name = ident.map(ToString::to_string);
     let struct_ident = operation_name.as_deref().unwrap_or("");
 
-    let available_operations: Vec<&str> = query.operations.iter().map(|op| op.name()).collect();
+    let available_operations: Vec<&str> = query.operations(schema).map(|op| op.name()).collect();
     let available_operations: String = available_operations.join(", ");
 
     return format_err!(

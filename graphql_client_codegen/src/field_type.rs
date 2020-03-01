@@ -1,9 +1,7 @@
 // use crate::enums::ENUMS_PREFIX;
 // use crate::query::QueryContext;
-use crate::schema::DEFAULT_SCALARS;
 use graphql_introspection_query::introspection_response;
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
 
 // pub(crate) fn field_type_to_rust() -> TokenStream {
 //     todo!()
