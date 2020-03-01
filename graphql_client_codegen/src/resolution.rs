@@ -222,6 +222,13 @@ pub(crate) enum Selection {
 }
 
 impl Selection {
+    pub(crate) fn as_inline_fragment(&self) -> Option<&InlineFragment> {
+        match self {
+            Selection::InlineFragment(inline_fragment) => Some(inline_fragment),
+            _ => None,
+        }
+    }
+
     pub(crate) fn subselection(&self) -> &[SelectionId] {
         match self {
             Selection::Field(field) => field.selection_set.as_slice(),

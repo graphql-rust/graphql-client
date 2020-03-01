@@ -89,26 +89,77 @@ fn calculate_selection<'a>(
     // If we are on a union or an interface, we need to generate an enum that matches the variants _exhaustively_,
     // including an `Other { #serde(rename = "__typename") typename: String }` variant.
     {
-        let variants: Option<Vec<TypeId>> = match type_ref.type_id() {
+        let variants: Option<Cow<'_, [TypeId]>> = match type_ref.type_id() {
             TypeId::Interface(interface_id) => {
                 let interface = context.schema().interface(interface_id);
 
-                // get all variants
-
-                todo!();
+                Some(interface.variants().collect())
             }
             TypeId::Union(union_id) => {
                 let union = context.schema().union(union_id);
-                todo!();
+                Some(union.variants().into())
             }
             _ => None,
         };
 
-        // for each variant, get the corresponding fragment spread, or default to an empty variant
+        if let Some(variants) = variants {
+            // for each variant, get the corresponding fragment spread, or default to an empty variant
+            for variant in variants.as_ref() {
+                let schema_type = context.schema().type_ref(*variant);
+                let variant_name_str = schema_type.name();
 
-        // Finish by adding the Other variant
+                let selection = selection_set
+                    .iter()
+                    .map(|id| context.get_selection_ref(*id))
+                    .filter_map(|selection_ref| {
+                        selection_ref
+                            .selection()
+                            .as_inline_fragment()
+                            .map(|inline_fragment| (selection_ref, inline_fragment))
+                    })
+                    .find(|(_selection_ref, inline_fragment)| inline_fragment.type_id == *variant);
 
-        todo!();
+                if let Some((selection_ref, inline_fragment)) = selection {
+                    let variant_struct_name_str = selection_ref.full_path_prefix();
+
+                    todo!("There will be a struct/type for the variant if there is an inline OR type-refining fragment there.");
+
+                    context.push_variant(ExpandedVariant {
+                        name: variant_name_str.into(),
+                        variant_type: Some(variant_struct_name_str.clone().into()),
+                        on: struct_id,
+                    });
+
+                    let expanded_type = ExpandedType {
+                        name: variant_struct_name_str.into(),
+                        schema_type,
+                    };
+
+                    let struct_id = context.push_type(expanded_type);
+
+                    calculate_selection(
+                        context,
+                        selection_ref.subselection_ids(),
+                        struct_id,
+                        schema_type,
+                    );
+                } else {
+                    context.push_variant(ExpandedVariant {
+                        name: variant_name_str.into(),
+                        on: struct_id,
+                        variant_type: None,
+                    });
+                }
+            }
+
+            // push the fragments on variants down
+
+            // meaning get all the fragment spreads on one of the variants, and add it to the type for that variant....
+            todo!("push the fragments on variants down");
+
+            // Finish by adding the Other variant
+            todo!("add the Other variant");
+        }
     }
 
     for id in selection_set {
@@ -170,45 +221,19 @@ fn calculate_selection<'a>(
                     TypeId::Input(_) => unreachable!("field selection on input type"),
                 };
             }
-            Selection::Typename => {
-                // context.push_field(ExpandedField {
-                //     field_type: Cow::Borrowed("String"),
-                //     field_type_qualifiers: &[GraphqlTypeQualifier::Required],
-                //     graphql_name: "__typename",
-                //     rust_name: "typename".into(),
-                //     on,
-                // });
-            }
-            Selection::InlineFragment(inline) => {
-                let schema_type = context.schema().type_ref(inline.type_id);
-                let variant_name_str = schema_type.name();
-                let variant_struct_name_str = selection_ref.full_path_prefix();
-
-                context.push_variant(ExpandedVariant {
-                    name: variant_name_str.into(),
-                    variant_type: variant_struct_name_str.clone().into(),
-                    on: struct_id,
-                });
-
-                let expanded_type = ExpandedType {
-                    name: variant_struct_name_str.into(),
-                    schema_type,
-                };
-
-                let struct_id = context.push_type(expanded_type);
-
-                calculate_selection(
-                    context,
-                    selection_ref.subselection_ids(),
-                    struct_id,
-                    schema_type,
-                );
-            }
+            Selection::Typename => (),
+            Selection::InlineFragment(_inline) => (),
             Selection::FragmentSpread(fragment_id) => {
                 // FIXME: we need to identify if the fragment is on the field itself, or on an union/interface variant of it.
                 // If it's on a field, do it here.
                 // If it's on a variant, push it downstream to the variant.
                 let fragment = context.get_fragment_ref(*fragment_id);
+
+                // Assuming the query was validated properly, a fragment spread is either on the field's type itself, or on one of the variants (union or interfaces). If it's not directly a field on the struct, it will be handled in the `on` variants.
+                if fragment.on() != type_ref.type_id() {
+                    continue;
+                }
+
                 let original_field_name = fragment.name().to_snake_case();
                 let final_field_name = keyword_replace(original_field_name);
 
@@ -282,16 +307,19 @@ impl<'a> ExpandedField<'a> {
 
 struct ExpandedVariant<'a> {
     name: Cow<'a, str>,
-    variant_type: Cow<'a, str>,
+    variant_type: Option<Cow<'a, str>>,
     on: ResponseTypeId,
 }
 
 impl<'a> ExpandedVariant<'a> {
     fn render(&self) -> TokenStream {
         let name_ident = Ident::new(&self.name, Span::call_site());
-        let type_ident = Ident::new(&self.variant_type, Span::call_site());
+        let optional_type_ident = self.variant_type.as_ref().map(|variant_type| {
+            let ident = Ident::new(&variant_type, Span::call_site());
+            quote!((#ident))
+        });
 
-        quote!(#name_ident(#type_ident))
+        quote!(#name_ident #optional_type_ident)
     }
 }
 

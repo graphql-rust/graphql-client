@@ -157,7 +157,7 @@ impl<'a> UnionRef<'a> {
         self.0.schema
     }
 
-    pub(crate) fn variants(&self) -> &[TypeId] {
+    pub(crate) fn variants(&self) -> &'a [TypeId] {
         &self.get().variants
     }
 }
@@ -445,6 +445,10 @@ impl Schema {
             .expect("Schema.get_union")
     }
 
+    fn objects<'a>(&'a self) -> impl Iterator<Item = ObjectRef<'a>> + 'a {
+        (0..self.stored_objects.len()).map(move |id| self.object(ObjectId(id)))
+    }
+
     pub(crate) fn union(&self, id: UnionId) -> UnionRef<'_> {
         UnionRef(self.with(id))
     }
@@ -520,8 +524,12 @@ impl<'a> InterfaceRef<'a> {
         &self.get().name
     }
 
-    pub(crate) fn variants(&self) -> impl Iterator<Item = TypeId> {
-        todo!()
+    pub(crate) fn variants<'b>(&'b self) -> impl Iterator<Item = TypeId> + 'b {
+        self.0
+            .schema
+            .objects()
+            .filter(move |object| object.implements_interface(self.0.focus))
+            .map(|object| TypeId::Object(object.id()))
     }
 }
 
@@ -549,6 +557,10 @@ impl<'a> ObjectRef<'a> {
 
     pub(crate) fn id(&self) -> ObjectId {
         self.0.focus
+    }
+
+    pub(crate) fn implements_interface(&self, id: InterfaceId) -> bool {
+        self.get().implements_interfaces.contains(&id)
     }
 }
 
