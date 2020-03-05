@@ -20,7 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: Install toolchain
       uses: actions-rs/toolchain@v1
       with:
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: Install toolchain
       uses: actions-rs/toolchain@v1
       with:
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: Install toolchain
       uses: actions-rs/toolchain@v1
       with:
@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: Install node.js
       run: sudo apt update && sudo apt-get install -y nodejs
     - name: Execute prettier
