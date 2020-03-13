@@ -1,6 +1,6 @@
 [package]
 name = "graphql_client_web"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 edition = "2018"
 description = "Typed GraphQL requests and responses (web integration)"
@@ -10,7 +10,7 @@ categories = ["network-programming", "web-programming", "wasm"]
 repository = "https://github.com/graphql-rust/graphql-client"
 
 [dependencies.graphql_client]
-version = "0.8.0"
+version = "0.9.0"
 path = "../graphql_client"
 features = ["web"]
 

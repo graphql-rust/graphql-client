@@ -5,6 +5,9 @@ authors = ["Tom Houlé <tom@tomhoule.com>"]
 edition = "2018"
 keywords = ["graphql", "api", "web"]
 categories = ["web-programming"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/graphql-rust/graphql-client"
+description = "GraphQL introspection query and response types."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
