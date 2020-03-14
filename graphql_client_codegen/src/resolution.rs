@@ -106,6 +106,14 @@ impl SelectionParent {
 }
 
 impl<'a> SelectionRef<'a> {
+    pub(crate) fn query(&self) -> &'a ResolvedQuery {
+        self.0.query
+    }
+
+    pub(crate) fn schema(&self) -> &'a Schema {
+        self.0.schema
+    }
+
     pub(crate) fn selection(&self) -> &'a Selection {
         self.0.focus.1
     }
@@ -241,6 +249,7 @@ impl Selection {
 #[derive(Debug)]
 pub(crate) struct InlineFragment {
     pub(crate) type_id: TypeId,
+    // TODO: see if we can encode this at the top-level instead, with the selection being a parent.
     selection_set: Vec<SelectionId>,
 }
 
