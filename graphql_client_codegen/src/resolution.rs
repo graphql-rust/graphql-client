@@ -722,7 +722,7 @@ impl<'a> OperationRef<'a> {
             .query
             .operations
             .get(self.0.focus.0 as usize)
-            .unwrap()
+            .expect("get operation")
     }
 
     fn to_path_segment(&self) -> String {

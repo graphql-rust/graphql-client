@@ -5,7 +5,7 @@ use graphql_introspection_query::introspection_response::{
 
 pub(super) fn build_schema(src: IntrospectionResponse) -> super::Schema {
     let converter = JsonSchemaConverter {
-        src: src.into_schema().schema.unwrap(),
+        src: src.into_schema().schema.expect("could not find schema"),
         schema: Schema::new(),
     };
 
@@ -23,28 +23,28 @@ impl JsonSchemaConverter {
         let names = &mut self.schema.names;
 
         unions_mut(&mut self.src)
-            .map(|u| u.name.as_ref().unwrap())
+            .map(|u| u.name.as_ref().expect("union name"))
             .enumerate()
             .for_each(|(idx, name)| {
                 names.insert(name.clone(), TypeId::union(idx));
             });
 
         interfaces_mut(&mut self.src)
-            .map(|iface| iface.name.as_ref().unwrap())
+            .map(|iface| iface.name.as_ref().expect("interface name"))
             .enumerate()
             .for_each(|(idx, name)| {
                 names.insert(name.clone(), TypeId::interface(idx));
             });
 
         objects_mut(&mut self.src)
-            .map(|obj| obj.name.as_ref().unwrap())
+            .map(|obj| obj.name.as_ref().expect("object name"))
             .enumerate()
             .for_each(|(idx, name)| {
                 names.insert(name.clone(), TypeId::object(idx));
             });
 
         inputs_mut(&mut self.src)
-            .map(|obj| obj.name.as_ref().unwrap())
+            .map(|obj| obj.name.as_ref().expect("input name"))
             .enumerate()
             .for_each(|(idx, name)| {
                 names.insert(name.clone(), TypeId::input(idx));
@@ -223,7 +223,7 @@ fn types_mut(schema: &mut JsonSchema) -> impl Iterator<Item = &mut FullType> {
     schema
         .types
         .as_mut()
-        .unwrap()
+        .expect("schema.types.as_mut()")
         .iter_mut()
         .filter_map(|t| -> Option<&mut FullType> { t.as_mut().map(|f| &mut f.full_type) })
 }
@@ -251,12 +251,12 @@ fn inputs_mut(schema: &mut JsonSchema) -> impl Iterator<Item = &mut FullType> {
 fn scalars_mut(schema: &mut JsonSchema) -> impl Iterator<Item = &mut FullType> {
     types_mut(schema).filter(|t| {
         t.kind == Some(__TypeKind::SCALAR)
-            && !super::DEFAULT_SCALARS.contains(&t.name.as_ref().map(String::as_str).unwrap())
+            && !super::DEFAULT_SCALARS.contains(&t.name.as_ref().map(String::as_str).expect("FullType.name"))
     })
 }
 
 fn ingest_scalar(schema: &mut Schema, scalar: &mut FullType) {
-    let name: String = scalar.name.take().unwrap();
+    let name: String = scalar.name.take().expect("scalar.name");
     let names_name = name.clone();
 
     let id = schema.push_scalar(super::StoredScalar { name });
@@ -265,15 +265,15 @@ fn ingest_scalar(schema: &mut Schema, scalar: &mut FullType) {
 }
 
 fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
-    let name = enm.name.take().unwrap();
+    let name = enm.name.take().expect("enm.name");
     let names_name = name.clone();
 
     let variants = enm
         .enum_values
         .as_mut()
-        .unwrap()
+        .expect("enm.enum_values.as_mut()")
         .into_iter()
-        .map(|v| std::mem::replace(v.name.as_mut().take().unwrap(), String::new()))
+        .map(|v| std::mem::replace(v.name.as_mut().take().expect("variant.name.as_mut().take()"), String::new()))
         .collect();
 
     let enm = super::StoredEnum { name, variants };
@@ -285,17 +285,17 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
 
 fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
     let interface_id = schema
-        .find_type_id(iface.name.as_ref().unwrap())
+        .find_type_id(iface.name.as_ref().expect("iface.name"))
         .as_interface_id()
-        .unwrap();
-    let fields = iface.fields.as_mut().unwrap();
+        .expect("iface type id as interface id");
+    let fields = iface.fields.as_mut().expect("interface.fields");
     let mut field_ids = Vec::with_capacity(fields.len());
 
     for field in fields.iter_mut() {
         let field = super::StoredField {
             parent: super::StoredFieldParent::Interface(interface_id),
-            name: field.name.take().unwrap(),
-            r#type: resolve_field_type(schema, &mut field.type_.as_mut().unwrap().type_ref),
+            name: field.name.take().expect("take field name"),
+            r#type: resolve_field_type(schema, &mut field.type_.as_mut().expect("take field type").type_ref),
             deprecation: Some(None)
                 .filter(|_: &Option<()>| !field.is_deprecated.unwrap_or(false))
                 .map(|_: Option<()>| field.deprecation_reason.clone()),
@@ -305,7 +305,7 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
     }
 
     let interface = super::StoredInterface {
-        name: std::mem::replace(iface.name.as_mut().unwrap(), String::new()),
+        name: std::mem::replace(iface.name.as_mut().expect("iface.name.as_mut"), String::new()),
         fields: field_ids,
     };
 
@@ -314,18 +314,18 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
 
 fn ingest_object(schema: &mut Schema, object: &mut FullType) {
     let object_id = schema
-        .find_type_id(object.name.as_ref().unwrap())
+        .find_type_id(object.name.as_ref().expect("object.name"))
         .as_object_id()
-        .unwrap();
+        .expect("ingest_object > as_object_id");
 
-    let fields = object.fields.as_mut().unwrap();
+    let fields = object.fields.as_mut().expect("object.fields.as_mut()");
     let mut field_ids = Vec::with_capacity(fields.len());
 
     for field in fields.iter_mut() {
         let field = super::StoredField {
             parent: super::StoredFieldParent::Object(object_id),
-            name: field.name.take().unwrap(),
-            r#type: resolve_field_type(schema, &mut field.type_.as_mut().unwrap().type_ref),
+            name: field.name.take().expect("take field name"),
+            r#type: resolve_field_type(schema, &mut field.type_.as_mut().expect("take field type").type_ref),
             deprecation: Some(None)
                 .filter(|_: &Option<()>| !field.is_deprecated.unwrap_or(false))
                 .map(|_: Option<()>| field.deprecation_reason.clone()),
@@ -335,7 +335,7 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
     }
 
     let object = super::StoredObject {
-        name: object.name.take().unwrap(),
+        name: object.name.take().expect("take object name"),
         implements_interfaces: Vec::new(),
         fields: field_ids,
     };
@@ -347,12 +347,12 @@ fn ingest_union(schema: &mut Schema, union: &mut FullType) {
     let variants = union
         .possible_types
         .as_ref()
-        .unwrap()
+        .expect("union.possible_types")
         .iter()
-        .map(|variant| schema.find_type_id(variant.type_ref.name.as_ref().unwrap()))
+        .map(|variant| schema.find_type_id(variant.type_ref.name.as_ref().expect("variant.type_ref.name")))
         .collect();
     let un = super::StoredUnion {
-        name: union.name.take().unwrap(),
+        name: union.name.take().expect("union.name.take"),
         variants,
     };
 
@@ -399,7 +399,7 @@ fn from_json_type_inner(schema: &mut Schema, inner: &mut TypeRef) -> super::Stor
             }
             (Some(_), None, Some(name)) => {
                 return super::StoredFieldType {
-                    id: *schema.names.get(name).unwrap(),
+                    id: *schema.names.get(name).expect("schema.names.get(name)"),
                     qualifiers,
                 }
             }
