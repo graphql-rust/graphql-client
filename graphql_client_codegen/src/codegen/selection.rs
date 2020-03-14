@@ -10,7 +10,7 @@ use crate::shared::field_rename_annotation;
 use crate::{
     field_type::GraphqlTypeQualifier,
     // deprecation::DeprecationStrategy,
-    resolution::{OperationRef, ResolvedQuery, Selection, SelectionId},
+    resolution::{InlineFragment, OperationRef, ResolvedQuery, Selection, SelectionId},
     schema::{Schema, TypeId},
     shared::keyword_replace,
     GraphQLClientCodegenOptions,
@@ -78,6 +78,38 @@ pub(super) fn render_fragment(
     expanded_selection.render(response_derives)
 }
 
+/// A sub-selection set (spread) on one of the variants of a union or interface.
+enum VariantSelection<'a> {
+    InlineFragment(&'a InlineFragment),
+    FragmentSpread(FragmentRef<'a>),
+}
+
+impl<'a> VariantSelection<'a> {
+    fn from_selection(
+        selection_ref: &SelectionRef<'a>,
+        type_id: TypeId,
+    ) -> Option<VariantSelection<'a>> {
+        match selection_ref.selection() {
+            Selection::InlineFragment(inline_fragment) => {
+                Some(VariantSelection::InlineFragment(inline_fragment))
+            }
+            Selection::FragmentSpread(fragment_id) => {
+                let schema = selection_ref.schema();
+                let fragment_ref = selection_ref.query().get_fragment_ref(schema, *fragment_id);
+
+                if fragment_ref.on() == type_id {
+                    // The selection is on the type itself.
+                    None
+                } else {
+                    // The selection is on one of the variants of the type.
+                    Some(VariantSelection::FragmentSpread(fragment_ref))
+                }
+            }
+            Selection::Field(_) | Selection::Typename => None,
+        }
+    }
+}
+
 fn calculate_selection<'a>(
     context: &mut ExpandedSelection<'a>,
     selection_set: &[SelectionId],
@@ -103,26 +135,23 @@ fn calculate_selection<'a>(
         };
 
         if let Some(variants) = variants {
-            // for each variant, get the corresponding fragment spread, or default to an empty variant
+            // for each variant, get the corresponding fragment spreads, or default to an empty variant
             for variant in variants.as_ref() {
                 let schema_type = context.schema().type_ref(*variant);
                 let variant_name_str = schema_type.name();
 
-                let selection = selection_set
-                    .iter()
-                    .map(|id| context.get_selection_ref(*id))
-                    .filter_map(|selection_ref| {
-                        selection_ref
-                            .selection()
-                            .as_inline_fragment()
-                            .map(|inline_fragment| (selection_ref, inline_fragment))
-                    })
-                    .find(|(_selection_ref, inline_fragment)| inline_fragment.type_id == *variant);
+                let variant_selections: Vec<(SelectionRef<'_>, VariantSelection<'_>)> =
+                    selection_set
+                        .iter()
+                        .map(|id| context.get_selection_ref(*id))
+                        .filter_map(|selection_ref| {
+                            VariantSelection::from_selection(&selection_ref, type_ref.type_id())
+                                .map(|variant_selection| (selection_ref, variant_selection))
+                        })
+                        .collect();
 
-                if let Some((selection_ref, inline_fragment)) = selection {
+                if let Some((selection_ref, _)) = variant_selections.first() {
                     let variant_struct_name_str = selection_ref.full_path_prefix();
-
-                    todo!("There will be a struct/type for the variant if there is an inline OR type-refining fragment there.");
 
                     context.push_variant(ExpandedVariant {
                         name: variant_name_str.into(),
@@ -152,13 +181,12 @@ fn calculate_selection<'a>(
                 }
             }
 
-            // push the fragments on variants down
-
-            // meaning get all the fragment spreads on one of the variants, and add it to the type for that variant....
-            todo!("push the fragments on variants down");
-
             // Finish by adding the Other variant
-            todo!("add the Other variant");
+            context.push_variant(ExpandedVariant {
+                name: "Other".into(),
+                on: struct_id,
+                variant_type: Some("String".into()),
+            });
         }
     }
 
