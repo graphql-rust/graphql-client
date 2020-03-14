@@ -32,33 +32,26 @@ fn union_query_deserialization() {
 
     let expected = union_query::ResponseData {
         names: Some(vec![
-            union_query::UnionQueryNames {
-                typename: "Person".into(),
-                on: union_query::UnionQueryNamesOn::Person(union_query::UnionQueryNamesOnPerson {
+            union_query::UnionQueryNames::Person(
+                union_query::UnionQueryNamesOnPerson {
                     first_name: "Audrey".to_string(),
                     last_name: Some("Lorde".to_string()),
                 }),
-            },
-            union_query::UnionQueryNames {
-                typename: "Dog".into(),
-                on: union_query::UnionQueryNamesOn::Dog(union_query::UnionQueryNamesOnDog {
-                    name: "Laïka".to_string(),
-                }),
-            },
-            union_query::UnionQueryNames {
-                typename: "Organization".into(),
-                on: union_query::UnionQueryNamesOn::Organization(
+                union_query::UnionQueryNames::Dog(
+                    union_query::UnionQueryNamesOnDog {
+                        name: "Laïka".to_string(),
+                    }
+                ),
+            union_query::UnionQueryNames::Organization(
                     union_query::UnionQueryNamesOnOrganization {
                         title: "Mozilla".to_string(),
                     },
+            ),
+                union_query::UnionQueryNames::Dog(
+                    union_query::UnionQueryNamesOnDog {
+                        name: "Norbert".to_string(),
+                    }
                 ),
-            },
-            union_query::UnionQueryNames {
-                typename: "Dog".into(),
-                on: union_query::UnionQueryNamesOn::Dog(union_query::UnionQueryNamesOnDog {
-                    name: "Norbert".to_string(),
-                }),
-            },
         ]),
     };
 
@@ -79,6 +72,7 @@ fn fragment_on_union() {
                         first_name: "Audrey".to_string(),
                     },
                 ),
+                on: fragment_on_union::FragmentOnUnionNamesOn::Person,
             },
             fragment_on_union::FragmentOnUnionNames {
                 names_fragment: fragment_on_union::NamesFragment::Dog(
@@ -86,6 +80,7 @@ fn fragment_on_union() {
                         name: "Laïka".to_string(),
                     },
                 ),
+                on: fragment_on_union::FragmentOnUnionNamesOn::Dog,
             },
             fragment_on_union::FragmentOnUnionNames {
                 names_fragment: fragment_on_union::NamesFragment::Organization(
@@ -93,6 +88,7 @@ fn fragment_on_union() {
                         title: "Mozilla".to_string(),
                     },
                 ),
+                on: fragment_on_union::FragmentOnUnionNamesOn::Organization,
             },
             fragment_on_union::FragmentOnUnionNames {
                 names_fragment: fragment_on_union::NamesFragment::Dog(
@@ -100,6 +96,7 @@ fn fragment_on_union() {
                         name: "Norbert".to_string(),
                     },
                 ),
+                on: fragment_on_union::FragmentOnUnionNamesOn::Dog,
             },
         ]),
     };
@@ -109,22 +106,36 @@ fn fragment_on_union() {
 
 #[test]
 fn fragment_and_more_on_union() {
+    use fragment_and_more_on_union::*;
     todo!();
-    // let _expected = fragment_and_more_on_union::ResponseData {
-    //     names: Some(vec![
-    //         fragment_and_more_on_union::FragmentAndMoreOnUnionNames::Person {
-    //             first_name: "Audrey".to_string(),
-    //             last_name: Some("Lorde".to_string()),
-    //         },
-    //         fragment_and_more_on_union::FragmentAndMoreOnUnionNames::Dog {
-    //             name: "Laïka".to_string(),
-    //         },
-    //         fragment_and_more_on_union::FragmentAndMoreOnUnionNames::Organization {
-    //             title: "Mozilla".to_string(),
-    //         },
-    //         fragment_and_more_on_union::FragmentAndMoreOnUnionNames::Dog {
-    //             name: "Norbert".to_string(),
-    //         },
-    //     ]),
-    // };
+    let _expected = fragment_and_more_on_union::ResponseData {
+        names: Some(vec![
+            FragmentAndMoreOnUnionNames {
+                names_fragment: NamesFragment::Person(NamesFragmentOnPerson {
+                    first_name: "Larry".into(),
+                }),
+                on: FragmentAndMoreOnUnionNamesOn::Person,
+            },
+            FragmentAndMoreOnUnionNames {
+                names_fragment: NamesFragment::Dog(NamesFragmentOnDog {
+                    name: "Laïka".into(),
+                }),
+                on: FragmentAndMoreOnUnionNamesOn::Dog(FragmentAndMoreOnUnionNamesOnDog {
+                    is_good_dog: true,
+            })},
+            FragmentAndMoreOnUnionNames {
+                names_fragment: NamesFragment::Organization(NamesFragmentOnOrganization {
+                    title: "Mozilla".into(),
+                }),
+                on: FragmentAndMoreOnUnionNamesOn::Person,
+            },
+            FragmentAndMoreOnUnionNames {
+                names_fragment: NamesFragment::Dog(NamesFragmentOnDog {
+                    name: "Norbert".into(),
+                }),
+                on: FragmentAndMoreOnUnionNamesOn::Dog(FragmentAndMoreOnUnionNamesOnDog {
+                    is_good_dog: true
+            })},
+        ]),
+    };
 }

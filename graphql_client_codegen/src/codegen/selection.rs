@@ -22,9 +22,8 @@ use std::borrow::Cow;
 
 pub(crate) fn render_response_data_fields<'a>(
     operation: &OperationRef<'a>,
-    response_derives: &impl quote::ToTokens,
-    options: &GraphQLClientCodegenOptions,
-) -> TokenStream {
+    options: &'a GraphQLClientCodegenOptions,
+) -> ExpandedSelection<'a> {
     let mut expanded_selection = ExpandedSelection {
         query: operation.query(),
         schema: operation.schema(),
@@ -46,14 +45,13 @@ pub(crate) fn render_response_data_fields<'a>(
         operation.on_ref(),
     );
 
-    expanded_selection.render(response_derives)
+    expanded_selection
 }
 
-pub(super) fn render_fragment(
-    fragment: &FragmentRef<'_>,
-    response_derives: &impl quote::ToTokens,
-    options: &GraphQLClientCodegenOptions,
-) -> TokenStream {
+pub(super) fn render_fragment<'a>(
+    fragment: &FragmentRef<'a>,
+    options: &'a GraphQLClientCodegenOptions,
+) -> ExpandedSelection<'a> {
     let mut expanded_selection = ExpandedSelection {
         query: fragment.query(),
         schema: fragment.schema(),
@@ -75,7 +73,7 @@ pub(super) fn render_fragment(
         fragment.on_ref(),
     );
 
-    expanded_selection.render(response_derives)
+    expanded_selection
 }
 
 /// A sub-selection set (spread) on one of the variants of a union or interface.
@@ -85,6 +83,7 @@ enum VariantSelection<'a> {
 }
 
 impl<'a> VariantSelection<'a> {
+    /// The second argument is the parent type id, so it can be excluded.
     fn from_selection(
         selection_ref: &SelectionRef<'a>,
         type_id: TypeId,
@@ -108,6 +107,13 @@ impl<'a> VariantSelection<'a> {
             Selection::Field(_) | Selection::Typename => None,
         }
     }
+
+    fn variant_type_id(&self) -> TypeId {
+        match self {
+            VariantSelection::InlineFragment(f) => f.type_id,
+            VariantSelection::FragmentSpread(f) => f.on(),
+        }
+    }
 }
 
 fn calculate_selection<'a>(
@@ -116,8 +122,6 @@ fn calculate_selection<'a>(
     struct_id: ResponseTypeId,
     type_ref: TypeRef<'a>,
 ) {
-    // TODO: if the selection has one item, we can sometimes generate fewer structs (e.g. single fragment spread)
-
     // If we are on a union or an interface, we need to generate an enum that matches the variants _exhaustively_,
     // including an `Other { #serde(rename = "__typename") typename: String }` variant.
     {
@@ -135,22 +139,30 @@ fn calculate_selection<'a>(
         };
 
         if let Some(variants) = variants {
-            // for each variant, get the corresponding fragment spreads, or default to an empty variant
+            let variant_selections: Vec<(SelectionRef<'_>, VariantSelection<'_>)> = selection_set
+                .iter()
+                .map(|id| context.get_selection_ref(*id))
+                .filter_map(|selection_ref| {
+                    VariantSelection::from_selection(&selection_ref, type_ref.type_id())
+                        .map(|variant_selection| (selection_ref, variant_selection))
+                })
+                .collect();
+
+            // For each variant, get the corresponding fragment spreads and
+            // inline fragments, or default to an empty variant (one with no
+            // associated data).
             for variant in variants.as_ref() {
-                let schema_type = context.schema().type_ref(*variant);
-                let variant_name_str = schema_type.name();
+                let variant_schema_type = context.schema().type_ref(*variant);
+                let variant_name_str = variant_schema_type.name();
 
-                let variant_selections: Vec<(SelectionRef<'_>, VariantSelection<'_>)> =
-                    selection_set
-                        .iter()
-                        .map(|id| context.get_selection_ref(*id))
-                        .filter_map(|selection_ref| {
-                            VariantSelection::from_selection(&selection_ref, type_ref.type_id())
-                                .map(|variant_selection| (selection_ref, variant_selection))
-                        })
-                        .collect();
+                let mut variant_selections = variant_selections
+                    .iter()
+                    .filter(|(_selection_ref, variant)| {
+                        variant.variant_type_id() == variant_schema_type.type_id()
+                    })
+                    .peekable();
 
-                if let Some((selection_ref, _)) = variant_selections.first() {
+                if let Some((selection_ref, _)) = variant_selections.peek() {
                     let variant_struct_name_str = selection_ref.full_path_prefix();
 
                     context.push_variant(ExpandedVariant {
@@ -161,16 +173,17 @@ fn calculate_selection<'a>(
 
                     let expanded_type = ExpandedType {
                         name: variant_struct_name_str.into(),
-                        schema_type,
+                        schema_type: variant_schema_type,
                     };
 
                     let struct_id = context.push_type(expanded_type);
 
                     calculate_selection(
                         context,
+                        // FIXME should be all subselections
                         selection_ref.subselection_ids(),
                         struct_id,
-                        schema_type,
+                        variant_schema_type,
                     );
                 } else {
                     context.push_variant(ExpandedVariant {
@@ -252,12 +265,15 @@ fn calculate_selection<'a>(
             Selection::Typename => (),
             Selection::InlineFragment(_inline) => (),
             Selection::FragmentSpread(fragment_id) => {
-                // FIXME: we need to identify if the fragment is on the field itself, or on an union/interface variant of it.
-                // If it's on a field, do it here.
-                // If it's on a variant, push it downstream to the variant.
+                // Here we only render fragments that are directly on the type
+                // itself, and not on one of its variants.
+
                 let fragment = context.get_fragment_ref(*fragment_id);
 
-                // Assuming the query was validated properly, a fragment spread is either on the field's type itself, or on one of the variants (union or interfaces). If it's not directly a field on the struct, it will be handled in the `on` variants.
+                // Assuming the query was validated properly, a fragment spread
+                // is either on the field's type itself, or on one of the
+                // variants (union or interfaces). If it's not directly a field
+                // on the struct, it will be handled in the `on` variants.
                 if fragment.on() != type_ref.type_id() {
                     continue;
                 }
@@ -351,12 +367,12 @@ impl<'a> ExpandedVariant<'a> {
     }
 }
 
-struct ExpandedType<'a> {
+pub(crate) struct ExpandedType<'a> {
     name: Cow<'a, str>,
     schema_type: TypeRef<'a>,
 }
 
-struct ExpandedSelection<'a> {
+pub(crate) struct ExpandedSelection<'a> {
     query: &'a ResolvedQuery,
     schema: &'a Schema,
     types: Vec<ExpandedType<'a>>,
@@ -370,18 +386,18 @@ impl<'a> ExpandedSelection<'a> {
         self.schema
     }
 
-    pub(crate) fn push_type(&mut self, tpe: ExpandedType<'a>) -> ResponseTypeId {
+    fn push_type(&mut self, tpe: ExpandedType<'a>) -> ResponseTypeId {
         let id = self.types.len();
         self.types.push(tpe);
 
         ResponseTypeId(id as u32)
     }
 
-    pub(crate) fn push_field(&mut self, field: ExpandedField<'a>) {
+    fn push_field(&mut self, field: ExpandedField<'a>) {
         self.fields.push(field);
     }
 
-    pub(crate) fn push_variant(&mut self, variant: ExpandedVariant<'a>) {
+    fn push_variant(&mut self, variant: ExpandedVariant<'a>) {
         self.variants.push(variant);
     }
 
@@ -416,11 +432,12 @@ impl<'a> ExpandedSelection<'a> {
 
         for (type_id, ty) in self.types() {
             let struct_name = Ident::new(&ty.name, Span::call_site());
-            let fields = self
+            let mut fields = self
                 .fields
                 .iter()
                 .filter(|field| field.struct_id == type_id)
-                .map(|field| field.render());
+                .map(|field| field.render())
+                .peekable();
 
             let on_variants: Vec<TokenStream> = self
                 .variants
@@ -428,6 +445,19 @@ impl<'a> ExpandedSelection<'a> {
                 .filter(|variant| variant.on == type_id)
                 .map(|variant| variant.render())
                 .collect();
+
+            // If we only have an `on` field, turn the struct into the enum
+            // of the variants.
+            if fields.peek().is_none() {
+                let item = quote! {
+                    #response_derives
+                    pub enum #struct_name {
+                        #(#on_variants),*
+                    }
+                };
+                items.push(item);
+                continue;
+            }
 
             let (on_field, on_enum) = if on_variants.len() > 0 {
                 let enum_name = Ident::new(&format!("{}On", ty.name), Span::call_site());
