@@ -103,5 +103,5 @@ fn format(codes: &str) -> String {
         return String::from_utf8(out).unwrap();
     }
     #[cfg(not(feature = "rustfmt"))]
-    unreachable!()
+    unreachable!("called format() without the rustfmt feature")
 }
