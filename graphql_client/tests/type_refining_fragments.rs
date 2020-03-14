@@ -29,7 +29,9 @@ fn type_refining_fragment_on_union() {
                 last_name: Some("Lorde".to_string()),
             }),
             query_on_union::QueryOnUnionNames::Dog(query_on_union::QueryOnUnionNamesOnDog {
-                name: "Laïka".to_string(),
+                dog_name: query_on_union::DogName {
+                    name: "Laïka".to_string(),
+                },
             }),
             query_on_union::QueryOnUnionNames::Organization(
                 query_on_union::QueryOnUnionNamesOnOrganization {
@@ -37,7 +39,9 @@ fn type_refining_fragment_on_union() {
                 },
             ),
             query_on_union::QueryOnUnionNames::Dog(query_on_union::QueryOnUnionNamesOnDog {
-                name: "Norbert".to_string(),
+                dog_name: query_on_union::DogName {
+                    name: "Norbert".to_string(),
+                },
             }),
         ]),
     };
@@ -58,7 +62,9 @@ fn type_refining_fragment_on_interface() {
             QueryOnInterfaceEverything {
                 name: "Audrey Lorde".to_string(),
                 on: QueryOnInterfaceEverythingOn::Person(QueryOnInterfaceEverythingOnPerson {
-                    birthday: Some("1934-02-18".to_string()),
+                    birthday_fragment: BirthdayFragment {
+                        birthday: Some("1934-02-18".to_string()) 
+                    },
                 }),
             },
             QueryOnInterfaceEverything {

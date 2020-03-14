@@ -34,7 +34,6 @@ impl<'a, T> QueryWith<'a, T> {
     }
 }
 
-pub(crate) struct SelectionRef<'a>(QueryWith<'a, (SelectionId, &'a Selection)>);
 pub(crate) struct OperationRef<'a>(QueryWith<'a, OperationId>);
 pub(crate) struct VariableRef<'a>(QueryWith<'a, (VariableId, &'a ResolvedVariable)>);
 pub(crate) struct InlineFragmentRef<'a>(QueryWith<'a, &'a InlineFragment>);
@@ -65,7 +64,8 @@ impl VariableId {
 
 #[derive(Debug, Clone, Copy)]
 enum SelectionParent {
-    Selection(SelectionId),
+    Field(SelectionId),
+    InlineFragment(SelectionId),
     Fragment(ResolvedFragmentId),
     Operation(OperationId),
 }
@@ -73,7 +73,8 @@ enum SelectionParent {
 impl SelectionParent {
     fn add_to_selection_set(&self, q: &mut ResolvedQuery, selection_id: SelectionId) {
         match self {
-            SelectionParent::Selection(parent_selection_id) => {
+            SelectionParent::Field(parent_selection_id)
+            | SelectionParent::InlineFragment(parent_selection_id) => {
                 let parent_selection = q
                     .selections
                     .get_mut(parent_selection_id.0 as usize)
@@ -82,7 +83,7 @@ impl SelectionParent {
                 match parent_selection {
                     Selection::Field(f) => f.selection_set.push(selection_id),
                     Selection::InlineFragment(inline) => inline.selection_set.push(selection_id),
-                    _ => unreachable!("impossible parent selection"),
+                    other => unreachable!("impossible parent selection: {:?}", other),
                 }
             }
             SelectionParent::Fragment(fragment_id) => {
@@ -104,6 +105,8 @@ impl SelectionParent {
         }
     }
 }
+
+pub(crate) struct SelectionRef<'a>(QueryWith<'a, (SelectionId, &'a Selection)>);
 
 impl<'a> SelectionRef<'a> {
     pub(crate) fn query(&self) -> &'a ResolvedQuery {
@@ -167,7 +170,10 @@ impl<'a> SelectionRef<'a> {
     }
 
     pub(crate) fn full_path_prefix(&self) -> String {
-        let mut path = vec![self.to_path_segment()];
+        let mut path = match self.selection() {
+            Selection::FragmentSpread(_) | Selection::InlineFragment(_) => Vec::new(),
+            _ => vec![self.to_path_segment()],
+        };
 
         let mut item = self.id();
 
@@ -175,7 +181,7 @@ impl<'a> SelectionRef<'a> {
             path.push(self.0.refocus(*parent).to_path_segment());
 
             match parent {
-                SelectionParent::Selection(id) => {
+                SelectionParent::Field(id) | SelectionParent::InlineFragment(id) => {
                     item = *id;
                 }
                 _ => break,
@@ -209,7 +215,7 @@ impl<'a> SelectionRef<'a> {
 impl<'a> QueryWith<'a, SelectionParent> {
     pub(crate) fn to_path_segment(&self) -> String {
         match self.focus {
-            SelectionParent::Selection(id) => {
+            SelectionParent::Field(id) | SelectionParent::InlineFragment(id) => {
                 SelectionRef(self.refocus((id, self.query.get_selection(id)))).to_path_segment()
             }
             SelectionParent::Operation(id) => OperationRef(self.refocus(id)).to_path_segment(),
@@ -467,7 +473,7 @@ fn resolve_object_selection<'a>(
                     object.schema(),
                     field_ref.type_id(),
                     &field.selection_set,
-                    SelectionParent::Selection(id),
+                    SelectionParent::Field(id),
                 )?;
 
                 parent.add_to_selection_set(query, id);
@@ -551,7 +557,7 @@ fn resolve_inline_fragment(
         schema,
         type_id,
         &inline_fragment.selection_set,
-        SelectionParent::Selection(id),
+        SelectionParent::InlineFragment(id),
     )?;
 
     Ok(id)

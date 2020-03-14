@@ -161,8 +161,11 @@ fn calculate_selection<'a>(
                     })
                     .peekable();
 
-                if let Some((selection_ref, _)) = variant_selections.peek() {
-                    let variant_struct_name_str = selection_ref.full_path_prefix();
+                if let Some((selection_ref, _variant)) = variant_selections.peek() {
+                    let mut variant_struct_name_str = selection_ref.full_path_prefix();
+                    variant_struct_name_str.reserve(2 + variant_name_str.len());
+                    variant_struct_name_str.push_str("On");
+                    variant_struct_name_str.push_str(variant_name_str);
 
                     context.push_variant(ExpandedVariant {
                         name: variant_name_str.into(),
@@ -177,13 +180,28 @@ fn calculate_selection<'a>(
 
                     let struct_id = context.push_type(expanded_type);
 
-                    calculate_selection(
-                        context,
-                        // FIXME should be all subselections
-                        selection_ref.subselection_ids(),
-                        struct_id,
-                        variant_schema_type,
-                    );
+                    for (_selection, variant_selection) in variant_selections {
+                        match variant_selection {
+                            VariantSelection::InlineFragment(_) => {
+                                calculate_selection(
+                                    context,
+                                    selection_ref.subselection_ids(),
+                                    struct_id,
+                                    variant_schema_type,
+                                );
+                            }
+                            VariantSelection::FragmentSpread(fragment_ref) => {
+                                context.push_field(ExpandedField {
+                                    field_type: fragment_ref.name().into(),
+                                    field_type_qualifiers: &[GraphqlTypeQualifier::Required],
+                                    flatten: true,
+                                    graphql_name: None,
+                                    rust_name: fragment_ref.name().to_snake_case().into(),
+                                    struct_id,
+                                })
+                            }
+                        }
+                    }
                 } else {
                     context.push_variant(ExpandedVariant {
                         name: variant_name_str.into(),
@@ -207,7 +225,7 @@ fn calculate_selection<'a>(
                 match field_type.type_id() {
                     TypeId::Enum(enm) => {
                         context.push_field(ExpandedField {
-                            graphql_name,
+                            graphql_name: Some(graphql_name),
                             rust_name,
                             struct_id,
                             field_type: context.schema().r#enum(enm).name().into(),
@@ -221,7 +239,7 @@ fn calculate_selection<'a>(
                             field_type_qualifiers: field
                                 .schema_field(context.schema())
                                 .type_qualifiers(),
-                            graphql_name,
+                            graphql_name: Some(graphql_name),
                             struct_id,
                             rust_name,
                             flatten: false,
@@ -232,7 +250,7 @@ fn calculate_selection<'a>(
 
                         context.push_field(ExpandedField {
                             struct_id,
-                            graphql_name,
+                            graphql_name: Some(graphql_name),
                             rust_name,
                             field_type_qualifiers: schema_field.type_qualifiers(),
                             field_type: Cow::Owned(struct_name_string.clone()),
@@ -276,7 +294,7 @@ fn calculate_selection<'a>(
                 context.push_field(ExpandedField {
                     field_type: fragment.name().into(),
                     field_type_qualifiers: &[GraphqlTypeQualifier::Required],
-                    graphql_name: fragment.name(),
+                    graphql_name: None,
                     rust_name: final_field_name,
                     struct_id,
                     flatten: true,
@@ -293,7 +311,7 @@ fn calculate_selection<'a>(
 struct ResponseTypeId(u32);
 
 struct ExpandedField<'a> {
-    graphql_name: &'a str,
+    graphql_name: Option<&'a str>,
     rust_name: Cow<'a, str>,
     field_type: Cow<'a, str>,
     field_type_qualifiers: &'a [GraphqlTypeQualifier],
@@ -309,7 +327,10 @@ impl<'a> ExpandedField<'a> {
             self.field_type_qualifiers,
         );
 
-        let optional_rename = field_rename_annotation(self.graphql_name, &self.rust_name);
+        let optional_rename = self
+            .graphql_name
+            .as_ref()
+            .map(|graphql_name| field_rename_annotation(graphql_name, &self.rust_name));
         let optional_flatten = if self.flatten {
             Some(quote!(#[serde(flatten)]))
         } else {

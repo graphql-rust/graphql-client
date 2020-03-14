@@ -251,7 +251,8 @@ fn inputs_mut(schema: &mut JsonSchema) -> impl Iterator<Item = &mut FullType> {
 fn scalars_mut(schema: &mut JsonSchema) -> impl Iterator<Item = &mut FullType> {
     types_mut(schema).filter(|t| {
         t.kind == Some(__TypeKind::SCALAR)
-            && !super::DEFAULT_SCALARS.contains(&t.name.as_ref().map(String::as_str).expect("FullType.name"))
+            && !super::DEFAULT_SCALARS
+                .contains(&t.name.as_ref().map(String::as_str).expect("FullType.name"))
     })
 }
 
@@ -273,7 +274,15 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
         .as_mut()
         .expect("enm.enum_values.as_mut()")
         .into_iter()
-        .map(|v| std::mem::replace(v.name.as_mut().take().expect("variant.name.as_mut().take()"), String::new()))
+        .map(|v| {
+            std::mem::replace(
+                v.name
+                    .as_mut()
+                    .take()
+                    .expect("variant.name.as_mut().take()"),
+                String::new(),
+            )
+        })
         .collect();
 
     let enm = super::StoredEnum { name, variants };
@@ -295,7 +304,10 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
         let field = super::StoredField {
             parent: super::StoredFieldParent::Interface(interface_id),
             name: field.name.take().expect("take field name"),
-            r#type: resolve_field_type(schema, &mut field.type_.as_mut().expect("take field type").type_ref),
+            r#type: resolve_field_type(
+                schema,
+                &mut field.type_.as_mut().expect("take field type").type_ref,
+            ),
             deprecation: Some(None)
                 .filter(|_: &Option<()>| !field.is_deprecated.unwrap_or(false))
                 .map(|_: Option<()>| field.deprecation_reason.clone()),
@@ -305,7 +317,10 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
     }
 
     let interface = super::StoredInterface {
-        name: std::mem::replace(iface.name.as_mut().expect("iface.name.as_mut"), String::new()),
+        name: std::mem::replace(
+            iface.name.as_mut().expect("iface.name.as_mut"),
+            String::new(),
+        ),
         fields: field_ids,
     };
 
@@ -325,7 +340,10 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
         let field = super::StoredField {
             parent: super::StoredFieldParent::Object(object_id),
             name: field.name.take().expect("take field name"),
-            r#type: resolve_field_type(schema, &mut field.type_.as_mut().expect("take field type").type_ref),
+            r#type: resolve_field_type(
+                schema,
+                &mut field.type_.as_mut().expect("take field type").type_ref,
+            ),
             deprecation: Some(None)
                 .filter(|_: &Option<()>| !field.is_deprecated.unwrap_or(false))
                 .map(|_: Option<()>| field.deprecation_reason.clone()),
@@ -349,7 +367,15 @@ fn ingest_union(schema: &mut Schema, union: &mut FullType) {
         .as_ref()
         .expect("union.possible_types")
         .iter()
-        .map(|variant| schema.find_type_id(variant.type_ref.name.as_ref().expect("variant.type_ref.name")))
+        .map(|variant| {
+            schema.find_type_id(
+                variant
+                    .type_ref
+                    .name
+                    .as_ref()
+                    .expect("variant.type_ref.name"),
+            )
+        })
         .collect();
     let un = super::StoredUnion {
         name: union.name.take().expect("union.name.take"),

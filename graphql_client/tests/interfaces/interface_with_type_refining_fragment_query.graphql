@@ -1,4 +1,4 @@
-fragment Birthday on Person {
+fragment BirthdayFragment on Person {
   birthday
 }
 
@@ -9,7 +9,7 @@ query QueryOnInterface {
     ... on Dog {
       isGoodDog
     }
-    ...Birthday
+    ...BirthdayFragment
     ... on Organization {
       industry
     }
