@@ -32,26 +32,21 @@ fn union_query_deserialization() {
 
     let expected = union_query::ResponseData {
         names: Some(vec![
-            union_query::UnionQueryNames::Person(
-                union_query::UnionQueryNamesOnPerson {
-                    first_name: "Audrey".to_string(),
-                    last_name: Some("Lorde".to_string()),
-                }),
-                union_query::UnionQueryNames::Dog(
-                    union_query::UnionQueryNamesOnDog {
-                        name: "Laïka".to_string(),
-                    }
-                ),
+            union_query::UnionQueryNames::Person(union_query::UnionQueryNamesOnPerson {
+                first_name: "Audrey".to_string(),
+                last_name: Some("Lorde".to_string()),
+            }),
+            union_query::UnionQueryNames::Dog(union_query::UnionQueryNamesOnDog {
+                name: "Laïka".to_string(),
+            }),
             union_query::UnionQueryNames::Organization(
-                    union_query::UnionQueryNamesOnOrganization {
-                        title: "Mozilla".to_string(),
-                    },
+                union_query::UnionQueryNamesOnOrganization {
+                    title: "Mozilla".to_string(),
+                },
             ),
-                union_query::UnionQueryNames::Dog(
-                    union_query::UnionQueryNamesOnDog {
-                        name: "Norbert".to_string(),
-                    }
-                ),
+            union_query::UnionQueryNames::Dog(union_query::UnionQueryNamesOnDog {
+                name: "Norbert".to_string(),
+            }),
         ]),
     };
 
@@ -122,7 +117,8 @@ fn fragment_and_more_on_union() {
                 }),
                 on: FragmentAndMoreOnUnionNamesOn::Dog(FragmentAndMoreOnUnionNamesOnDog {
                     is_good_dog: true,
-            })},
+                }),
+            },
             FragmentAndMoreOnUnionNames {
                 names_fragment: NamesFragment::Organization(NamesFragmentOnOrganization {
                     title: "Mozilla".into(),
@@ -134,8 +130,9 @@ fn fragment_and_more_on_union() {
                     name: "Norbert".into(),
                 }),
                 on: FragmentAndMoreOnUnionNamesOn::Dog(FragmentAndMoreOnUnionNamesOnDog {
-                    is_good_dog: true
-            })},
+                    is_good_dog: true,
+                }),
+            },
         ]),
     };
 }
