@@ -1,4 +1,4 @@
-use super::{InputId, Schema, TypeId};
+use super::{InputId, Schema, StoredInputFieldType, TypeId};
 use crate::schema::resolve_field_type;
 use graphql_parser::schema::{self as parser, Definition, Document, TypeDefinition, UnionType};
 
@@ -244,12 +244,22 @@ fn find_deprecation(directives: &[parser::Directive]) -> Option<Option<String>> 
 }
 
 fn ingest_input(schema: &mut Schema, input: &mut parser::InputObjectType) {
-    let input_id = InputId::new(schema.stored_inputs.len());
-
-    // TODO: input object fields
     let input = super::StoredInputType {
         name: std::mem::replace(&mut input.name, String::new()),
-        fields: Vec::new(),
+        fields: input
+            .fields
+            .iter_mut()
+            .map(|val| {
+                let field_type = super::resolve_field_type(schema, &val.value_type);
+                (
+                    std::mem::replace(&mut val.name, String::new()),
+                    StoredInputFieldType {
+                        qualifiers: field_type.qualifiers,
+                        id: field_type.id,
+                    },
+                )
+            })
+            .collect(),
     };
 
     schema.stored_inputs.push(input);
