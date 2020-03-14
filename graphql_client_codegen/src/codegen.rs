@@ -27,6 +27,7 @@ pub(crate) fn response_for_query(
         generate_fragment_definitions(&operation, &all_used_types, &response_derives, options);
     let input_object_definitions =
         generate_input_object_definitions(&operation, &all_used_types, options);
+
     let variables_struct = generate_variables_struct(&operation, options);
 
     let definitions = render_response_data_fields(&operation, options).render(&response_derives);

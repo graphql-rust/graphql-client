@@ -826,9 +826,14 @@ impl<'a> VariableRef<'a> {
 
     fn collect_used_types(&self, used_types: &mut UsedTypes) {
         match self.0.focus.1.r#type.id {
-            type_id @ TypeId::Input(_)
-            | type_id @ TypeId::Scalar(_)
-            | type_id @ TypeId::Enum(_) => {
+            TypeId::Input(input_id) => {
+                used_types.types.insert(TypeId::Input(input_id));
+
+                let input = self.0.schema.input(input_id);
+
+                input.used_input_ids_recursive(used_types)
+            }
+            type_id @ TypeId::Scalar(_) | type_id @ TypeId::Enum(_) => {
                 used_types.types.insert(type_id);
             }
             _ => (),
@@ -878,7 +883,7 @@ impl<'a> FragmentRef<'a> {
 
 #[derive(Debug, Default)]
 pub(crate) struct UsedTypes {
-    types: HashSet<TypeId>,
+    pub(crate) types: HashSet<TypeId>,
     fragments: HashSet<ResolvedFragmentId>,
 }
 

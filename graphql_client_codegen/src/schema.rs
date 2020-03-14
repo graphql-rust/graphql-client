@@ -2,6 +2,7 @@ mod graphql_parser_conversion;
 mod json_conversion;
 
 use crate::field_type::GraphqlTypeQualifier;
+use crate::resolution::UsedTypes;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
@@ -13,7 +14,6 @@ struct SchemaWith<'a, T> {
 
 #[derive(Clone, Copy)]
 pub(crate) struct TypeRef<'a>(SchemaWith<'a, TypeId>);
-pub(crate) struct InputRef<'a>(SchemaWith<'a, InputId>);
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
@@ -217,6 +217,13 @@ impl TypeId {
         }
     }
 
+    pub(crate) fn as_input_id(&self) -> Option<InputId> {
+        match self {
+            TypeId::Input(id) => Some(*id),
+            _ => None,
+        }
+    }
+
     pub(crate) fn as_scalar_id(&self) -> Option<ScalarId> {
         match self {
             TypeId::Scalar(id) => Some(*id),
@@ -266,7 +273,7 @@ struct StoredEnum {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StoredInputFieldType {
     id: TypeId,
-    pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
+    qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
 impl StoredInputFieldType {
@@ -610,6 +617,8 @@ impl<'a> FieldRef<'a> {
     }
 }
 
+pub(crate) struct InputRef<'a>(SchemaWith<'a, InputId>);
+
 impl<'a> InputRef<'a> {
     fn get(&self) -> &'a StoredInputType {
         self.0.schema.get_stored_input(self.0.focus)
@@ -621,6 +630,30 @@ impl<'a> InputRef<'a> {
 
     pub(crate) fn name(&self) -> &'a str {
         &self.get().name
+    }
+
+    pub(crate) fn used_input_ids_recursive<'b>(&'b self, used_types: &mut UsedTypes) {
+        for input_id in self
+            .fields()
+            .map(|(_, type_id)| type_id)
+            .filter_map(|type_id| type_id.as_input_id())
+        {
+            let type_id = TypeId::Input(input_id);
+            if used_types.types.contains(&type_id) {
+                continue;
+            } else {
+                used_types.types.insert(type_id);
+                let input_ref = self.0.schema.input(input_id);
+                input_ref.used_input_ids_recursive(used_types);
+            }
+        }
+    }
+
+    pub(crate) fn fields<'b>(&'b self) -> impl Iterator<Item = (&'a str, TypeId)> + 'b {
+        self.get()
+            .fields
+            .iter()
+            .map(|(name, f)| (name.as_str(), f.id))
     }
 
     pub(crate) fn contains_type_without_indirection(&self, type_name: &str) -> bool {
