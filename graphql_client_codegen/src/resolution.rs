@@ -201,7 +201,7 @@ impl<'a> SelectionRef<'a> {
                     .name()
                     .to_camel_case()
             ),
-            _ => unreachable!(),
+            other => unreachable!("{:?} in to_path_segment", other),
         }
     }
 }
