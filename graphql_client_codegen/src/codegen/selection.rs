@@ -122,8 +122,7 @@ fn calculate_selection<'a>(
     struct_id: ResponseTypeId,
     type_ref: TypeRef<'a>,
 ) {
-    // If we are on a union or an interface, we need to generate an enum that matches the variants _exhaustively_,
-    // including an `Other { #serde(rename = "__typename") typename: String }` variant.
+    // If we are on a union or an interface, we need to generate an enum that matches the variants _exhaustively_.
     {
         let variants: Option<Cow<'_, [TypeId]>> = match type_ref.type_id() {
             TypeId::Interface(interface_id) => {
@@ -193,13 +192,6 @@ fn calculate_selection<'a>(
                     });
                 }
             }
-
-            // Finish by adding the Other variant
-            context.push_variant(ExpandedVariant {
-                name: "Other".into(),
-                on: struct_id,
-                variant_type: Some("String".into()),
-            });
         }
     }
 
@@ -451,6 +443,7 @@ impl<'a> ExpandedSelection<'a> {
             if fields.peek().is_none() {
                 let item = quote! {
                     #response_derives
+                    #[serde(tag = "__typename")]
                     pub enum #struct_name {
                         #(#on_variants),*
                     }
@@ -462,12 +455,13 @@ impl<'a> ExpandedSelection<'a> {
             let (on_field, on_enum) = if on_variants.len() > 0 {
                 let enum_name = Ident::new(&format!("{}On", ty.name), Span::call_site());
 
-                let on_field = quote!(pub on: #enum_name);
+                let on_field = quote!(#[serde(flatten)] pub on: #enum_name);
 
                 let on_enum = quote!(
                     #response_derives
+                    #[serde(tag = "__typename")]
                     pub enum #enum_name {
-                        #(#on_variants),*
+                        #(#on_variants,)*
                     }
                 );
 
