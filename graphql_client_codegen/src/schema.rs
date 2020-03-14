@@ -601,6 +601,13 @@ impl<'a> FieldRef<'a> {
             .as_ref()
             .and_then(|item| item.as_ref().map(String::as_str))
     }
+
+    pub(crate) fn deprecation(&self) -> Option<Option<&'a str>> {
+        self.field()
+            .deprecation
+            .as_ref()
+            .map(|o| o.as_ref().map(String::as_str))
+    }
 }
 
 impl<'a> InputRef<'a> {

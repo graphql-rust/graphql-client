@@ -8,6 +8,7 @@ use crate::resolution::SelectionRef;
 use crate::schema::TypeRef;
 use crate::shared::field_rename_annotation;
 use crate::{
+    deprecation::DeprecationStrategy,
     field_type::GraphqlTypeQualifier,
     // deprecation::DeprecationStrategy,
     resolution::{InlineFragment, OperationRef, ResolvedQuery, Selection, SelectionId},
@@ -198,6 +199,7 @@ fn calculate_selection<'a>(
                                     graphql_name: None,
                                     rust_name: fragment_ref.name().to_snake_case().into(),
                                     struct_id,
+                                    deprecation: None,
                                 })
                             }
                         }
@@ -231,6 +233,7 @@ fn calculate_selection<'a>(
                             field_type: context.schema().r#enum(enm).name().into(),
                             field_type_qualifiers: schema_field.type_qualifiers(),
                             flatten: false,
+                            deprecation: schema_field.deprecation(),
                         });
                     }
                     TypeId::Scalar(scalar) => {
@@ -243,6 +246,7 @@ fn calculate_selection<'a>(
                             struct_id,
                             rust_name,
                             flatten: false,
+                            deprecation: schema_field.deprecation(),
                         });
                     }
                     TypeId::Object(_) | TypeId::Interface(_) | TypeId::Union(_) => {
@@ -255,6 +259,7 @@ fn calculate_selection<'a>(
                             field_type_qualifiers: schema_field.type_qualifiers(),
                             field_type: Cow::Owned(struct_name_string.clone()),
                             flatten: false,
+                            deprecation: schema_field.deprecation(),
                         });
 
                         let type_id = context.push_type(ExpandedType {
@@ -298,6 +303,7 @@ fn calculate_selection<'a>(
                     rust_name: final_field_name,
                     struct_id,
                     flatten: true,
+                    deprecation: None,
                 });
 
                 // We stop here, because the structs for the fragments are generated separately, to
@@ -317,10 +323,11 @@ struct ExpandedField<'a> {
     field_type_qualifiers: &'a [GraphqlTypeQualifier],
     struct_id: ResponseTypeId,
     flatten: bool,
+    deprecation: Option<Option<&'a str>>,
 }
 
 impl<'a> ExpandedField<'a> {
-    fn render(&self) -> TokenStream {
+    fn render(&self, options: &GraphQLClientCodegenOptions) -> Option<TokenStream> {
         let ident = Ident::new(&self.rust_name, Span::call_site());
         let qualified_type = decorate_type(
             &Ident::new(&self.field_type, Span::call_site()),
@@ -337,28 +344,25 @@ impl<'a> ExpandedField<'a> {
             None
         };
 
-        // TODO: deprecation
-        // let deprecation_annotation = match (
-        //     field.schema_field().is_deprecated(),
-        //     options.deprecation_strategy(),
-        // ) {
-        //     (false, _) | (true, DeprecationStrategy::Allow) => None,
-        //     (true, DeprecationStrategy::Warn) => {
-        //         let msg = field
-        //             .schema_field()
-        //             .deprecation_message()
-        //             .unwrap_or("This field is deprecated.");
+        let optional_deprecation_annotation =
+            match (self.deprecation, options.deprecation_strategy()) {
+                (None, _) | (Some(_), DeprecationStrategy::Allow) => None,
+                (Some(msg), DeprecationStrategy::Warn) => {
+                    let optional_msg = msg.map(|msg| quote!((note = #msg)));
 
-        //         Some(quote!(#[deprecated(note = #msg)]))
-        //     }
-        //     (true, DeprecationStrategy::Deny) => continue,
-        // };
+                    Some(quote!(#[deprecated#optional_msg]))
+                }
+                (Some(_), DeprecationStrategy::Deny) => return None,
+            };
 
-        quote! {
+        let tokens = quote! {
             #optional_flatten
             #optional_rename
+            #optional_deprecation_annotation
             pub #ident: #qualified_type
-        }
+        };
+
+        Some(tokens)
     }
 }
 
@@ -449,7 +453,7 @@ impl<'a> ExpandedSelection<'a> {
                 .fields
                 .iter()
                 .filter(|field| field.struct_id == type_id)
-                .map(|field| field.render())
+                .filter_map(|field| field.render(self.options))
                 .peekable();
 
             let on_variants: Vec<TokenStream> = self
