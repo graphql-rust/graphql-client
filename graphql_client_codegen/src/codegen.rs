@@ -1,11 +1,9 @@
 mod enums;
+mod inputs;
 mod selection;
 
 use crate::{
-    field_type::GraphqlTypeQualifier,
-    normalization::Normalization,
-    resolution::*,
-    shared::{field_rename_annotation, keyword_replace},
+    field_type::GraphqlTypeQualifier, resolution::*, shared::keyword_replace,
     GraphQLClientCodegenOptions,
 };
 use heck::SnakeCase;
@@ -26,7 +24,7 @@ pub(crate) fn response_for_query(
     let fragment_definitions =
         generate_fragment_definitions(&operation, &all_used_types, &response_derives, options);
     let input_object_definitions =
-        generate_input_object_definitions(&operation, &all_used_types, options);
+        inputs::generate_input_object_definitions(&operation, &all_used_types, options);
 
     let variables_struct = generate_variables_struct(&operation, options);
 
@@ -56,8 +54,6 @@ pub(crate) fn response_for_query(
 
         #definitions
     };
-
-    // panic!("{}", q);
 
     Ok(q)
 }
@@ -175,20 +171,6 @@ fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStr
     qualified
 }
 
-fn generate_input_object_definitions(
-    operation: &OperationRef<'_>,
-    all_used_types: &UsedTypes,
-    options: &GraphQLClientCodegenOptions,
-) -> Vec<TokenStream> {
-    all_used_types
-        .inputs(operation.schema())
-        .map(|input| {
-            let struct_name = Ident::new(input.name(), Span::call_site());
-            quote!(pub struct #struct_name;)
-        })
-        .collect()
-}
-
 fn generate_fragment_definitions(
     operation: &OperationRef<'_>,
     all_used_types: &UsedTypes,
@@ -207,56 +189,4 @@ fn generate_fragment_definitions(
     }
 
     fragment_definitions
-}
-
-/// Render a struct for a selection on an object or interface.
-fn render_object_like_struct(
-    response_derives: &impl quote::ToTokens,
-    struct_name: &str,
-    fields: &[TokenStream],
-    variants: &[TokenStream],
-) -> TokenStream {
-    let (on_field, on_enum) = if variants.len() > 0 {
-        let enum_name_str = format!("{}On", struct_name);
-        let enum_name = Ident::new(&enum_name_str, Span::call_site());
-
-        (
-            Some(quote!(#[serde(flatten)] pub on: #enum_name,)),
-            Some(render_union_enum(
-                response_derives,
-                &enum_name_str,
-                variants,
-            )),
-        )
-    } else {
-        (None, None)
-    };
-
-    let struct_ident = Ident::new(struct_name, Span::call_site());
-
-    quote! {
-        #response_derives
-        pub struct #struct_ident {
-            #(#fields,)*
-            #on_field
-        }
-
-        #on_enum
-    }
-}
-
-fn render_union_enum(
-    response_derives: &impl quote::ToTokens,
-    enum_name: &str,
-    variants: &[TokenStream],
-) -> TokenStream {
-    let enum_ident = Ident::new(enum_name, Span::call_site());
-
-    quote! {
-        #response_derives
-        #[serde(tag = "__typename")]
-        pub enum #enum_ident {
-            #(#variants,)*
-        }
-    }
 }
