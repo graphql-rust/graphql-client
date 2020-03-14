@@ -103,7 +103,10 @@ impl GraphQLClientCodegenOptions {
     pub fn all_response_derives(&self) -> impl Iterator<Item = &str> {
         let base_derives = std::iter::once("Deserialize");
 
-        base_derives.chain(self.additional_response_derives())
+        base_derives.chain(
+            self.additional_response_derives()
+                .filter(|additional| additional != &"Deserialize"),
+        )
     }
 
     /// Additional traits we want to derive for responses.

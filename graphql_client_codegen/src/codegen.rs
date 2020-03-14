@@ -29,7 +29,7 @@ pub(crate) fn response_for_query(
         generate_input_object_definitions(&operation, &all_used_types, options);
     let variables_struct = generate_variables_struct(&operation, options);
 
-    let definitions = render_response_data_fields(&operation, &response_derives, options);
+    let definitions = render_response_data_fields(&operation, options).render(&response_derives);
 
     let q = quote! {
         use serde::{Serialize, Deserialize};
@@ -201,11 +201,8 @@ fn generate_fragment_definitions(
         .map(move |id| operation.query().get_fragment_ref(operation.schema(), id));
 
     for fragment in fragments {
-        fragment_definitions.push(selection::render_fragment(
-            &fragment,
-            response_derives,
-            options,
-        ));
+        fragment_definitions
+            .push(selection::render_fragment(&fragment, options).render(&response_derives));
     }
 
     fragment_definitions

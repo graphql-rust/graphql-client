@@ -20,7 +20,7 @@ pub(crate) struct FragmentId(usize);
 // }
 
 /// This holds all the information we need during the code generation phase.
-pub(crate) struct QueryContext<'query> {
+struct QueryContext<'query> {
     pub fragments: BTreeMap<&'query str, GqlFragment<'query>>,
     pub schema: &'query Schema,
     pub deprecation_strategy: DeprecationStrategy,
