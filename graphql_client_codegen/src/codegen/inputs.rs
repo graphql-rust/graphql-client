@@ -12,7 +12,18 @@ pub(super) fn generate_input_object_definitions(
         .inputs(operation.schema())
         .map(|input| {
             let struct_name = Ident::new(input.name(), Span::call_site());
-            quote!(pub struct #struct_name;)
+
+            let fields = input.fields().map(|field| {
+                let name_ident = Ident::new(field.name(), Span::call_site());
+                quote!(pub #name_ident: String)
+            });
+
+            quote! {
+                #[derive(Serialize)]
+                pub struct #struct_name {
+                    #(#fields,)*
+                }
+            }
         })
         .collect()
 }
