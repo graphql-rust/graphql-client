@@ -633,19 +633,16 @@ impl<'a> InputRef<'a> {
     }
 
     pub(crate) fn used_input_ids_recursive<'b>(&'b self, used_types: &mut UsedTypes) {
-        for type_id in self
-            .fields()
-            .map(|field| field.field_type_id())
-        {
+        for type_id in self.fields().map(|field| field.field_type_id()) {
             match type_id {
                 TypeId::Input(input_id) => {
-            if used_types.types.contains(&type_id) {
-                continue;
-            } else {
-                used_types.types.insert(type_id);
-                let input_ref = self.0.schema.input(input_id);
-                input_ref.used_input_ids_recursive(used_types);
-            }
+                    if used_types.types.contains(&type_id) {
+                        continue;
+                    } else {
+                        used_types.types.insert(type_id);
+                        let input_ref = self.0.schema.input(input_id);
+                        input_ref.used_input_ids_recursive(used_types);
+                    }
                 }
                 TypeId::Enum(_) | TypeId::Scalar(_) => {
                     used_types.types.insert(type_id);
@@ -656,13 +653,12 @@ impl<'a> InputRef<'a> {
     }
 
     pub(crate) fn fields<'b>(&'b self) -> impl Iterator<Item = StoredInputFieldRef<'a>> + 'b {
-        self.get()
-            .fields
-            .iter()
-            .map(move |field| StoredInputFieldRef(SchemaWith {
+        self.get().fields.iter().map(move |field| {
+            StoredInputFieldRef(SchemaWith {
                 schema: self.0.schema,
-                focus: field
-            }))
+                focus: field,
+            })
+        })
     }
 
     pub(crate) fn is_recursive_without_indirection(&self) -> bool {
@@ -681,7 +677,7 @@ impl<'a> InputRef<'a> {
 
             if let Some(field_input_id) = field_input_id {
                 if field_input_id == input_id {
-                    return true
+                    return true;
                 }
 
                 let input = self.0.schema.input(field_input_id);
@@ -711,14 +707,15 @@ impl<'a> StoredInputFieldRef<'a> {
         TypeRef(SchemaWith {
             schema: self.0.schema,
             focus: self.field_type_id(),
-        }).name()
+        })
+        .name()
     }
 
     /// This is used for recursion checking.
     pub(crate) fn field_type_as_input(&self) -> Option<InputRef<'a>> {
-        self.field_type_id().as_input_id().map(|input_id| {
-            InputRef(self.0.schema.with(input_id))
-        })
+        self.field_type_id()
+            .as_input_id()
+            .map(|input_id| InputRef(self.0.schema.with(input_id)))
     }
 
     fn is_indirected(&self) -> bool {

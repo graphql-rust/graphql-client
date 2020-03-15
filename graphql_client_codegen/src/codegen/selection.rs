@@ -200,6 +200,7 @@ fn calculate_selection<'a>(
                                     rust_name: fragment_ref.name().to_snake_case().into(),
                                     struct_id,
                                     deprecation: None,
+                                    boxed: fragment_ref.is_recursive(),
                                 })
                             }
                         }
@@ -234,6 +235,7 @@ fn calculate_selection<'a>(
                             field_type_qualifiers: schema_field.type_qualifiers(),
                             flatten: false,
                             deprecation: schema_field.deprecation(),
+                            boxed: false,
                         });
                     }
                     TypeId::Scalar(scalar) => {
@@ -247,6 +249,7 @@ fn calculate_selection<'a>(
                             rust_name,
                             flatten: false,
                             deprecation: schema_field.deprecation(),
+                            boxed: false,
                         });
                     }
                     TypeId::Object(_) | TypeId::Interface(_) | TypeId::Union(_) => {
@@ -259,6 +262,7 @@ fn calculate_selection<'a>(
                             field_type_qualifiers: schema_field.type_qualifiers(),
                             field_type: Cow::Owned(struct_name_string.clone()),
                             flatten: false,
+                            boxed: false,
                             deprecation: schema_field.deprecation(),
                         });
 
@@ -304,6 +308,7 @@ fn calculate_selection<'a>(
                     struct_id,
                     flatten: true,
                     deprecation: None,
+                    boxed: fragment.is_recursive(),
                 });
 
                 // We stop here, because the structs for the fragments are generated separately, to
@@ -324,6 +329,7 @@ struct ExpandedField<'a> {
     struct_id: ResponseTypeId,
     flatten: bool,
     deprecation: Option<Option<&'a str>>,
+    boxed: bool,
 }
 
 impl<'a> ExpandedField<'a> {
@@ -333,6 +339,12 @@ impl<'a> ExpandedField<'a> {
             &Ident::new(&self.field_type, Span::call_site()),
             self.field_type_qualifiers,
         );
+
+        let qualified_type = if self.boxed {
+            quote!(Box<#qualified_type>)
+        } else {
+            qualified_type
+        };
 
         let optional_rename = self
             .graphql_name
