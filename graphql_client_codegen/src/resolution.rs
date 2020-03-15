@@ -157,6 +157,11 @@ impl<'a> SelectionRef<'a> {
                 }
             }
             Selection::FragmentSpread(fragment_id) => {
+                // This is necessary to avoid infinite recursion.
+                if used_types.fragments.contains(fragment_id) {
+                    return
+                }
+
                 used_types.fragments.insert(*fragment_id);
 
                 let fragment_ref = self.0.query.get_fragment_ref(self.0.schema, *fragment_id);
