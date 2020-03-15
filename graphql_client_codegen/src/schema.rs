@@ -635,7 +635,7 @@ impl<'a> InputRef<'a> {
     pub(crate) fn used_input_ids_recursive<'b>(&'b self, used_types: &mut UsedTypes) {
         for input_id in self
             .fields()
-            .map(|(_, type_id)| type_id)
+            .map(|field| field.field_type_id())
             .filter_map(|type_id| type_id.as_input_id())
         {
             let type_id = TypeId::Input(input_id);
@@ -649,11 +649,14 @@ impl<'a> InputRef<'a> {
         }
     }
 
-    pub(crate) fn fields<'b>(&'b self) -> impl Iterator<Item = (&'a str, TypeId)> + 'b {
+    pub(crate) fn fields<'b>(&'b self) -> impl Iterator<Item = StoredInputFieldRef<'a>> + 'b {
         self.get()
             .fields
             .iter()
-            .map(|(name, f)| (name.as_str(), f.id))
+            .map(move |field| StoredInputFieldRef(SchemaWith {
+                schema: self.0.schema,
+                focus: field
+            }))
     }
 
     pub(crate) fn contains_type_without_indirection(&self, type_name: &str) -> bool {
@@ -683,6 +686,18 @@ impl<'a> InputRef<'a> {
         //         false
         //     }
         // })
+    }
+}
+
+pub(crate) struct StoredInputFieldRef<'a>(SchemaWith<'a, &'a (String, StoredInputFieldType)>);
+
+impl<'a> StoredInputFieldRef<'a> {
+    fn field_type_id(&self) -> TypeId {
+        self.0.focus.1.id
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        self.0.focus.0.as_str()
     }
 }
 
