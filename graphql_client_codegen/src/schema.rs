@@ -633,18 +633,24 @@ impl<'a> InputRef<'a> {
     }
 
     pub(crate) fn used_input_ids_recursive<'b>(&'b self, used_types: &mut UsedTypes) {
-        for input_id in self
+        for type_id in self
             .fields()
             .map(|field| field.field_type_id())
-            .filter_map(|type_id| type_id.as_input_id())
         {
-            let type_id = TypeId::Input(input_id);
+            match type_id {
+                TypeId::Input(input_id) => {
             if used_types.types.contains(&type_id) {
                 continue;
             } else {
                 used_types.types.insert(type_id);
                 let input_ref = self.0.schema.input(input_id);
                 input_ref.used_input_ids_recursive(used_types);
+            }
+                }
+                TypeId::Enum(_) => {
+                    used_types.types.insert(type_id);
+                }
+                _ => (),
             }
         }
     }
@@ -660,12 +666,10 @@ impl<'a> InputRef<'a> {
     }
 
     pub(crate) fn is_recursive_without_indirection(&self) -> bool {
-        self.contains_type_without_indirection(self.name())
+        self.contains_type_without_indirection(self.0.focus)
     }
 
-    fn contains_type_without_indirection(&self, type_name: &str) -> bool {
-        let input = self.get();
-
+    fn contains_type_without_indirection(&self, input_id: InputId) -> bool {
         // The input type is recursive if any of its members contains it, without indirection
         self.fields().any(|field| {
             // the field is indirected, so no boxing is needed
@@ -673,18 +677,17 @@ impl<'a> InputRef<'a> {
                 return false;
             }
 
-            let input_id = field.field_type_id().as_input_id();
+            let field_input_id = field.field_type_id().as_input_id();
 
-            if let Some(input_id) = input_id {
-                // the input contains itself, not indirected
-                if input_id == self.0.focus {
+            if let Some(field_input_id) = field_input_id {
+                if field_input_id == input_id {
                     return true
                 }
 
-                let input = self.0.schema.input(input_id);
+                let input = self.0.schema.input(field_input_id);
 
                 // we check if the other input contains this one (without indirection)
-                input.contains_type_without_indirection(type_name)
+                input.contains_type_without_indirection(input_id)
             } else {
                 // the field is not referring to an input type
                 false
@@ -709,6 +712,13 @@ impl<'a> StoredInputFieldRef<'a> {
             schema: self.0.schema,
             focus: self.field_type_id(),
         }).name()
+    }
+
+    /// This is used for recursion checking.
+    pub(crate) fn field_type_as_input(&self) -> Option<InputRef<'a>> {
+        self.field_type_id().as_input_id().map(|input_id| {
+            InputRef(self.0.schema.with(input_id))
+        })
     }
 
     fn is_indirected(&self) -> bool {
