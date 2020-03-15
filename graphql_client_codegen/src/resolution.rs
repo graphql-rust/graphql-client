@@ -287,20 +287,6 @@ impl SelectedField {
     }
 }
 
-// impl<'a> WithQuery<'a, &'a SelectedField> {
-//     pub(crate) fn alias(&self) -> Option<&str> {
-//         self.item.alias.as_ref().map(String::as_str)
-//     }
-
-//     pub(crate) fn name(&self) -> &'a str {
-//         self.schema.field(self.item.field_id).name()
-//     }
-
-//     pub(crate) fn schema_field(&self) -> WithSchema<'a, StoredFieldId> {
-//         self.with_schema(self.item.field_id)
-//     }
-// }
-
 pub(crate) fn resolve(
     schema: &Schema,
     query: &graphql_parser::query::Document,
