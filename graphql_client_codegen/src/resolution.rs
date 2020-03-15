@@ -109,6 +109,14 @@ impl SelectionParent {
 pub(crate) struct SelectionRef<'a>(QueryWith<'a, (SelectionId, &'a Selection)>);
 
 impl<'a> SelectionRef<'a> {
+    pub(crate) fn contains_fragment(&self, fragment_id: ResolvedFragmentId) -> bool {
+        match self.selection() {
+            Selection::FragmentSpread(id) => *id == fragment_id,
+            _ => self
+                .subselection()
+                .any(|selection| selection.contains_fragment(fragment_id)),
+        }
+    }
     pub(crate) fn query(&self) -> &'a ResolvedQuery {
         self.0.query
     }
@@ -159,7 +167,7 @@ impl<'a> SelectionRef<'a> {
             Selection::FragmentSpread(fragment_id) => {
                 // This is necessary to avoid infinite recursion.
                 if used_types.fragments.contains(fragment_id) {
-                    return
+                    return;
                 }
 
                 used_types.fragments.insert(*fragment_id);
@@ -833,12 +841,31 @@ impl<'a> VariableRef<'a> {
 }
 
 impl<'a> FragmentRef<'a> {
-    pub(crate) fn schema(&self) -> &'a Schema {
-        self.0.schema
+    pub(crate) fn is_recursive(&self) -> bool {
+        let id = self.0.focus.0;
+
+        self.selection_set()
+            .any(|selection| selection.contains_fragment(id))
     }
 
     pub(crate) fn query(&self) -> &'a ResolvedQuery {
         self.0.query
+    }
+
+    pub(crate) fn name(&self) -> &'a str {
+        &self.0.focus.1.name
+    }
+
+    pub(crate) fn on(&self) -> TypeId {
+        self.0.focus.1.on
+    }
+
+    pub(crate) fn on_ref(&self) -> TypeRef<'a> {
+        self.0.schema.type_ref(self.0.focus.1.on)
+    }
+
+    pub(crate) fn schema(&self) -> &'a Schema {
+        self.0.schema
     }
 
     pub(crate) fn selection_ids(&self) -> &[SelectionId] {
@@ -851,24 +878,12 @@ impl<'a> FragmentRef<'a> {
             .map(move |id| self.0.query.get_selection_ref(self.0.schema, *id))
     }
 
-    fn to_path_segment(&self) -> String {
-        self.0.focus.1.name.to_camel_case()
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.0.focus.1.name
-    }
-
     pub(crate) fn selection_set_len(&self) -> usize {
         self.0.focus.1.selection.len()
     }
 
-    pub(crate) fn on(&self) -> TypeId {
-        self.0.focus.1.on
-    }
-
-    pub(crate) fn on_ref(&self) -> TypeRef<'a> {
-        self.0.schema.type_ref(self.0.focus.1.on)
+    fn to_path_segment(&self) -> String {
+        self.0.focus.1.name.to_camel_case()
     }
 }
 

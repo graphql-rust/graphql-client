@@ -63,7 +63,7 @@ fn type_refining_fragment_on_interface() {
                 name: "Audrey Lorde".to_string(),
                 on: QueryOnInterfaceEverythingOn::Person(QueryOnInterfaceEverythingOnPerson {
                     birthday_fragment: BirthdayFragment {
-                        birthday: Some("1934-02-18".to_string()) 
+                        birthday: Some("1934-02-18".to_string()),
                     },
                 }),
             },

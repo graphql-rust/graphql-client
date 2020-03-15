@@ -17,7 +17,11 @@ pub(super) fn generate_input_object_definitions(
                 let name_ident = Ident::new(field.name(), Span::call_site());
                 let type_name = Ident::new(field.field_type_name(), Span::call_site());
                 let field_type = super::decorate_type(&type_name, field.field_type_qualifiers());
-                let field_type = if field.field_type_as_input().map(|input| input.is_recursive_without_indirection()).unwrap_or(false) {
+                let field_type = if field
+                    .field_type_as_input()
+                    .map(|input| input.is_recursive_without_indirection())
+                    .unwrap_or(false)
+                {
                     quote!(Box<#field_type>)
                 } else {
                     field_type
