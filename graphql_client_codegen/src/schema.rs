@@ -647,7 +647,7 @@ impl<'a> InputRef<'a> {
                 input_ref.used_input_ids_recursive(used_types);
             }
                 }
-                TypeId::Enum(_) => {
+                TypeId::Enum(_) | TypeId::Scalar(_) => {
                     used_types.types.insert(type_id);
                 }
                 _ => (),
