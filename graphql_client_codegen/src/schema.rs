@@ -659,33 +659,37 @@ impl<'a> InputRef<'a> {
             }))
     }
 
-    pub(crate) fn contains_type_without_indirection(&self, type_name: &str) -> bool {
-        todo!("contains type without indirection")
-        // let input = self.get();
+    pub(crate) fn is_recursive_without_indirection(&self) -> bool {
+        self.contains_type_without_indirection(self.name())
+    }
 
-        // // the input type is recursive if any of its members contains it, without indirection
-        // input.fields.iter().any(|(name, r#type)| {
-        //     // the field is indirected, so no boxing is needed
-        //     if r#type.is_indirected() {
-        //         return false;
-        //     }
+    fn contains_type_without_indirection(&self, type_name: &str) -> bool {
+        let input = self.get();
 
-        //     let field_type_name = field.type_.inner_name_str();
-        //     let input = self.schema.inputs.get(field_type_name);
+        // The input type is recursive if any of its members contains it, without indirection
+        self.fields().any(|field| {
+            // the field is indirected, so no boxing is needed
+            if field.is_indirected() {
+                return false;
+            }
 
-        //     if let Some(input) = input {
-        //         // the input contains itself, not indirected
-        //         if input.name == type_name {
-        //             return true;
-        //         }
+            let input_id = field.field_type_id().as_input_id();
 
-        //         // we check if the other input contains this one (without indirection)
-        //         input.contains_type_without_indirection(context, type_name)
-        //     } else {
-        //         // the field is not referring to an input type
-        //         false
-        //     }
-        // })
+            if let Some(input_id) = input_id {
+                // the input contains itself, not indirected
+                if input_id == self.0.focus {
+                    return true
+                }
+
+                let input = self.0.schema.input(input_id);
+
+                // we check if the other input contains this one (without indirection)
+                input.contains_type_without_indirection(type_name)
+            } else {
+                // the field is not referring to an input type
+                false
+            }
+        })
     }
 }
 
@@ -694,6 +698,21 @@ pub(crate) struct StoredInputFieldRef<'a>(SchemaWith<'a, &'a (String, StoredInpu
 impl<'a> StoredInputFieldRef<'a> {
     fn field_type_id(&self) -> TypeId {
         self.0.focus.1.id
+    }
+
+    pub(crate) fn field_type_qualifiers(&self) -> &'a [GraphqlTypeQualifier] {
+        &self.0.focus.1.qualifiers
+    }
+
+    pub(crate) fn field_type_name(&self) -> &'a str {
+        TypeRef(SchemaWith {
+            schema: self.0.schema,
+            focus: self.field_type_id(),
+        }).name()
+    }
+
+    fn is_indirected(&self) -> bool {
+        self.0.focus.1.is_indirected()
     }
 
     pub(crate) fn name(&self) -> &'a str {
