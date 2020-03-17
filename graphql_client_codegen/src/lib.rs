@@ -169,7 +169,7 @@ fn derive_operation_not_found_error(
     use graphql_parser::query::*;
 
     let operation_name = ident.map(ToString::to_string);
-    let struct_ident = operation_name.as_ref().map(String::as_str).unwrap_or("");
+    let struct_ident = operation_name.as_deref().unwrap_or("");
 
     let available_operations = query
         .definitions

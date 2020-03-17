@@ -113,7 +113,7 @@ impl<'schema> std::convert::From<&'schema graphql_parser::schema::InputObjectTyp
 {
     fn from(schema_input: &'schema graphql_parser::schema::InputObjectType) -> GqlInput<'schema> {
         GqlInput {
-            description: schema_input.description.as_ref().map(String::as_str),
+            description: schema_input.description.as_deref(),
             name: &schema_input.name,
             fields: schema_input
                 .fields
@@ -137,11 +137,10 @@ impl<'schema> std::convert::From<&'schema graphql_parser::schema::InputObjectTyp
 impl<'schema> std::convert::From<&'schema introspection_response::FullType> for GqlInput<'schema> {
     fn from(schema_input: &'schema introspection_response::FullType) -> GqlInput<'schema> {
         GqlInput {
-            description: schema_input.description.as_ref().map(String::as_str),
+            description: schema_input.description.as_deref(),
             name: schema_input
                 .name
-                .as_ref()
-                .map(String::as_str)
+                .as_deref()
                 .expect("unnamed input object"),
             fields: schema_input
                 .input_fields

@@ -79,7 +79,7 @@ impl GraphQLClientCodegenOptions {
 
     /// Comma-separated list of additional traits we want to derive for variables.
     pub fn variables_derives(&self) -> Option<&str> {
-        self.variables_derives.as_ref().map(String::as_str)
+        self.variables_derives.as_deref()
     }
 
     /// Comma-separated list of additional traits we want to derive for variables.
@@ -89,7 +89,7 @@ impl GraphQLClientCodegenOptions {
 
     /// Comma-separated list of additional traits we want to derive for responses.
     pub fn response_derives(&self) -> Option<&str> {
-        self.response_derives.as_ref().map(String::as_str)
+        self.response_derives.as_deref()
     }
 
     /// Comma-separated list of additional traits we want to derive for responses.
@@ -121,13 +121,13 @@ impl GraphQLClientCodegenOptions {
     /// A path to a file to include in the module to force Cargo to take into account changes in
     /// the schema files when recompiling.
     pub fn schema_file(&self) -> Option<&Path> {
-        self.schema_file.as_ref().map(PathBuf::as_path)
+        self.schema_file.as_deref()
     }
 
     /// A path to a file to include in the module to force Cargo to take into account changes in
     /// the query files when recompiling.
     pub fn query_file(&self) -> Option<&Path> {
-        self.query_file.as_ref().map(PathBuf::as_path)
+        self.query_file.as_deref()
     }
 
     /// The identifier to use when referring to the struct implementing GraphQLQuery, if any.
