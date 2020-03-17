@@ -30,15 +30,9 @@ fn parse_deprecation_info(field: &schema::Field) -> DeprecationStatus {
     let deprecated = field
         .directives
         .iter()
-        .filter(|x| x.name.to_lowercase() == "deprecated")
-        .nth(0);
+        .find(|x| x.name.to_lowercase() == "deprecated");
     let reason = if let Some(d) = deprecated {
-        if let Some((_, value)) = d
-            .arguments
-            .iter()
-            .filter(|x| x.0.to_lowercase() == "reason")
-            .nth(0)
-        {
+        if let Some((_, value)) = d.arguments.iter().find(|x| x.0.to_lowercase() == "reason") {
             match value {
                 schema::Value::String(reason) => Some(reason.clone()),
                 schema::Value::Null => None,
@@ -67,12 +61,12 @@ impl<'schema> GqlObject<'schema> {
     }
 
     pub fn from_graphql_parser_object(obj: &'schema schema::ObjectType) -> Self {
-        let description = obj.description.as_ref().map(String::as_str);
+        let description = obj.description.as_deref();
         let mut item = GqlObject::new(&obj.name, description);
         item.fields.extend(obj.fields.iter().map(|f| {
             let deprecation = parse_deprecation_info(&f);
             GqlObjectField {
-                description: f.description.as_ref().map(String::as_str),
+                description: f.description.as_deref(),
                 name: &f.name,
                 type_: FieldType::from(&f.field_type),
                 deprecation,
@@ -84,7 +78,7 @@ impl<'schema> GqlObject<'schema> {
     pub fn from_introspected_schema_json(
         obj: &'schema graphql_introspection_query::introspection_response::FullType,
     ) -> Self {
-        let description = obj.description.as_ref().map(String::as_str);
+        let description = obj.description.as_deref();
         let mut item = GqlObject::new(obj.name.as_ref().expect("missing object name"), description);
         let fields = obj.fields.as_ref().unwrap().iter().filter_map(|t| {
             t.as_ref().map(|t| {
@@ -94,7 +88,7 @@ impl<'schema> GqlObject<'schema> {
                     DeprecationStatus::Current
                 };
                 GqlObjectField {
-                    description: t.description.as_ref().map(String::as_str),
+                    description: t.description.as_deref(),
                     name: t.name.as_ref().expect("field name"),
                     type_: FieldType::from(t.type_.as_ref().expect("field type")),
                     deprecation,

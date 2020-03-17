@@ -186,7 +186,7 @@ impl<'query> std::convert::From<&'query SelectionSet> for Selection<'query> {
         for item in &selection_set.items {
             let converted = match item {
                 Selection::Field(f) => SelectionItem::Field(SelectionField {
-                    alias: f.alias.as_ref().map(String::as_str),
+                    alias: f.alias.as_deref(),
                     name: &f.name,
                     fields: (&f.selection_set).into(),
                 }),
