@@ -138,10 +138,7 @@ impl<'schema> std::convert::From<&'schema introspection_response::FullType> for 
     fn from(schema_input: &'schema introspection_response::FullType) -> GqlInput<'schema> {
         GqlInput {
             description: schema_input.description.as_deref(),
-            name: schema_input
-                .name
-                .as_deref()
-                .expect("unnamed input object"),
+            name: schema_input.name.as_deref().expect("unnamed input object"),
             fields: schema_input
                 .input_fields
                 .as_ref()

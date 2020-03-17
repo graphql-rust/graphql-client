@@ -171,10 +171,8 @@ impl<'schema> std::convert::From<&'schema graphql_parser::schema::Document> for 
                         );
                     }
                     schema::TypeDefinition::Interface(interface) => {
-                        let mut iface = GqlInterface::new(
-                            &interface.name,
-                            interface.description.as_deref(),
-                        );
+                        let mut iface =
+                            GqlInterface::new(&interface.name, interface.description.as_deref());
                         iface
                             .fields
                             .extend(interface.fields.iter().map(|f| GqlObjectField {
@@ -251,10 +249,7 @@ impl<'schema>
             .iter()
             .filter_map(|t| t.as_ref().map(|t| &t.full_type))
         {
-            let name: &str = ty
-                .name
-                .as_deref()
-                .expect("type definition name");
+            let name: &str = ty.name.as_deref().expect("type definition name");
 
             match ty.kind {
                 Some(__TypeKind::ENUM) => {
@@ -266,10 +261,7 @@ impl<'schema>
                         .map(|t| {
                             t.as_ref().map(|t| EnumVariant {
                                 description: t.description.as_deref(),
-                                name: t
-                                    .name
-                                    .as_deref()
-                                    .expect("enum variant name"),
+                                name: t.name.as_deref().expect("enum variant name"),
                             })
                         })
                         .filter_map(|t| t)
@@ -300,10 +292,7 @@ impl<'schema>
                         .as_ref()
                         .unwrap()
                         .iter()
-                        .filter_map(|t| {
-                            t.as_ref()
-                                .and_then(|t| t.type_ref.name.as_deref())
-                        })
+                        .filter_map(|t| t.as_ref().and_then(|t| t.type_ref.name.as_deref()))
                         .collect();
                     schema.unions.insert(
                         name,
@@ -325,11 +314,7 @@ impl<'schema>
                         .map(|t| &t.type_ref.name)
                     {
                         interface_implementations
-                            .entry(
-                                implementing
-                                    .as_deref()
-                                    .expect("interface name"),
-                            )
+                            .entry(implementing.as_deref().expect("interface name"))
                             .and_modify(|objects| objects.push(name))
                             .or_insert_with(|| vec![name]);
                     }
@@ -339,8 +324,7 @@ impl<'schema>
                         .insert(name, GqlObject::from_introspected_schema_json(ty));
                 }
                 Some(__TypeKind::INTERFACE) => {
-                    let mut iface =
-                        GqlInterface::new(name, ty.description.as_deref());
+                    let mut iface = GqlInterface::new(name, ty.description.as_deref());
                     iface.fields.extend(
                         ty.fields
                             .as_ref()

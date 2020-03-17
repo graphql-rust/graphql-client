@@ -32,11 +32,7 @@ fn parse_deprecation_info(field: &schema::Field) -> DeprecationStatus {
         .iter()
         .find(|x| x.name.to_lowercase() == "deprecated");
     let reason = if let Some(d) = deprecated {
-        if let Some((_, value)) = d
-            .arguments
-            .iter()
-            .find(|x| x.0.to_lowercase() == "reason")
-        {
+        if let Some((_, value)) = d.arguments.iter().find(|x| x.0.to_lowercase() == "reason") {
             match value {
                 schema::Value::String(reason) => Some(reason.clone()),
                 schema::Value::Null => None,
