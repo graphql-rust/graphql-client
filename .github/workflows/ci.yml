@@ -29,21 +29,13 @@ jobs:
         override: true
     - name: Execute cargo update for creating Cargo.lock
       run: cargo update
-    - name: Cache cargo registry
+    - name: Change cache permission
+      run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+    - name: Cache cargo
       uses: actions/cache@v1
       with:
-        path: ~/.cargo/registry
+        path: ~/.cargo/
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-    - name: Cache cargo index
-      uses: actions/cache@v1
-      with:
-        path: ~/.cargo/git
-        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-    - name: Cache cargo build
-      uses: actions/cache@v1
-      with:
-        path: target
-        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
     - name: Execute cargo test
       run: cargo test --all --tests --examples
   wasm_test:
@@ -60,21 +52,13 @@ jobs:
         override: true
     - name: Execute cargo update for creating Cargo.lock
       run: cargo update
-    - name: Cache cargo registry
+    - name: Change cache permission
+      run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+    - name: Cache cargo
       uses: actions/cache@v1
       with:
-        path: ~/.cargo/registry
+        path: ~/.cargo/
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-    - name: Cache cargo index
-      uses: actions/cache@v1
-      with:
-        path: ~/.cargo/git
-        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-    - name: Cache cargo build
-      uses: actions/cache@v1
-      with:
-        path: target
-        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
     - name: Setup wasm-bindgen
       run: |
         rustup target add wasm32-unknown-unknown &&
@@ -98,21 +82,13 @@ jobs:
         components: clippy,rustfmt
     - name: Execute cargo update for creating Cargo.lock
       run: cargo update
-    - name: Cache cargo registry
+    - name: Change cache permission
+      run: sudo chown -R $(whoami):$(id -ng) ~/.cargo/
+    - name: Cache cargo
       uses: actions/cache@v1
       with:
-        path: ~/.cargo/registry
+        path: ~/.cargo/
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-    - name: Cache cargo index
-      uses: actions/cache@v1
-      with:
-        path: ~/.cargo/git
-        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-    - name: Cache cargo build
-      uses: actions/cache@v1
-      with:
-        path: target
-        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
     - name: Execute cargo fmt
       run: cargo fmt --all -- --check
     - name: Execute cargo clippy
