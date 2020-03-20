@@ -19,7 +19,7 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
     let derives = render_derives(
         options
             .all_response_derives()
-            .filter(|d| !&["Serialize", "Deserialize"].contains(d)),
+            .filter(|d| !&["Serialize", "Deserialize", "Default"].contains(d)),
     );
     let normalization = options.normalization();
 
