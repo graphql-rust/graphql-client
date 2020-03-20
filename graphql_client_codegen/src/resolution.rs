@@ -2,15 +2,13 @@
 //! against a given schema.
 
 use crate::schema::InputRef;
-use crate::schema::ObjectRef;
-use crate::schema::ScalarId;
 use crate::schema::ScalarRef;
 use crate::{
     constants::TYPENAME_FIELD,
     field_type::GraphqlTypeQualifier,
     schema::{
-        resolve_field_type, EnumRef, InputId, ObjectId, Schema, StoredFieldId, StoredFieldType,
-        TypeId, TypeRef, UnionRef,
+        resolve_field_type, EnumRef, ObjectId, Schema, StoredFieldId, StoredFieldType, TypeId,
+        TypeRef, UnionRef,
     },
 };
 
@@ -18,6 +16,7 @@ use heck::CamelCase;
 use std::collections::{HashMap, HashSet};
 
 /// This is a convenience struct that should stay private, it's an implementation detail for our `Ref` types.
+#[derive(Copy, Clone)]
 struct QueryWith<'a, T> {
     query: &'a ResolvedQuery,
     schema: &'a Schema,
@@ -35,7 +34,6 @@ impl<'a, T> QueryWith<'a, T> {
 }
 
 pub(crate) struct OperationRef<'a>(QueryWith<'a, OperationId>);
-pub(crate) struct VariableRef<'a>(QueryWith<'a, (VariableId, &'a ResolvedVariable)>);
 pub(crate) struct InlineFragmentRef<'a>(QueryWith<'a, &'a InlineFragment>);
 pub(crate) struct FragmentRef<'a>(QueryWith<'a, (ResolvedFragmentId, &'a ResolvedFragment)>);
 
@@ -810,9 +808,24 @@ struct ResolvedVariable {
     r#type: StoredFieldType,
 }
 
+#[derive(Copy, Clone)]
+pub(crate) struct VariableRef<'a>(QueryWith<'a, (VariableId, &'a ResolvedVariable)>);
+
 impl<'a> VariableRef<'a> {
+    pub(crate) fn default(&self) -> Option<&graphql_parser::query::Value> {
+        self.0.focus.1.default.as_ref()
+    }
+
     pub(crate) fn name(&self) -> &'a str {
         &self.0.focus.1.name
+    }
+
+    pub(crate) fn is_optional(&self) -> bool {
+        self.0.focus.1.r#type.is_optional()
+    }
+
+    pub(crate) fn variable_type(&self) -> TypeRef<'a> {
+        self.0.schema.type_ref(self.0.focus.1.r#type.id)
     }
 
     pub(crate) fn type_name(&self) -> &'a str {

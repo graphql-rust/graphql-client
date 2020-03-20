@@ -70,6 +70,10 @@ impl JsonSchemaConverter {
             ingest_interface(&mut schema, interface);
         }
 
+        for object in objects_mut(&mut src) {
+            ingest_object(&mut schema, object);
+        }
+
         // for ty in src
         //     .types
         //     .as_ref()

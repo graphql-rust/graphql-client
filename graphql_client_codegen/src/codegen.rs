@@ -3,7 +3,9 @@ mod inputs;
 mod selection;
 
 use crate::{
-    field_type::GraphqlTypeQualifier, resolution::*, shared::keyword_replace,
+    field_type::GraphqlTypeQualifier,
+    resolution::*,
+    schema::{InputRef, TypeRef},
     GraphQLClientCodegenOptions,
 };
 use heck::SnakeCase;
@@ -78,11 +80,23 @@ fn generate_variables_struct(
         let method_name = Ident::new(&method_name, Span::call_site());
         let method_return_type = render_variable_field_type(variable);
 
-        quote!(
-            pub fn #method_name() -> #method_return_type {
-                todo!()
-            }
-        )
+        variable.default().map(|default| {
+            let value = graphql_parser_value_to_literal(
+                default,
+                variable.variable_type(),
+                variable
+                    .type_qualifiers()
+                    .get(0)
+                    .map(|qual| !qual.is_required())
+                    .unwrap_or(true),
+            );
+
+            quote!(
+                pub fn #method_name() -> #method_return_type {
+                    #value
+                }
+            )
+        })
     });
 
     let variables_struct = quote!(
@@ -189,4 +203,82 @@ fn generate_fragment_definitions(
     }
 
     fragment_definitions
+}
+
+/// For default value constructors.
+fn graphql_parser_value_to_literal(
+    value: &graphql_parser::query::Value,
+    ty: TypeRef<'_>,
+    is_optional: bool,
+) -> TokenStream {
+    use graphql_parser::query::Value;
+
+    let inner = match value {
+        Value::Boolean(b) => {
+            if *b {
+                quote!(true)
+            } else {
+                quote!(false)
+            }
+        }
+        Value::String(s) => quote!(#s.to_string()),
+        Value::Variable(_) => panic!("variable in variable"),
+        Value::Null => panic!("null as default value"),
+        Value::Float(f) => quote!(#f),
+        Value::Int(i) => {
+            let i = i.as_i64();
+            quote!(#i)
+        }
+        Value::Enum(en) => quote!(#en),
+        Value::List(inner) => {
+            let elements = inner
+                .iter()
+                .map(|val| graphql_parser_value_to_literal(val, ty, false));
+            quote! {
+                vec![
+                    #(#elements,)*
+                ]
+            }
+        }
+        Value::Object(obj) => {
+            render_object_literal(obj, ty.as_input_ref().expect("TODO: error handling"))
+        }
+    };
+
+    if is_optional {
+        quote!(Some(#inner))
+    } else {
+        inner
+    }
+}
+
+/// For default value constructors.
+fn render_object_literal(
+    object: &std::collections::BTreeMap<String, graphql_parser::query::Value>,
+    ty: InputRef<'_>,
+) -> TokenStream {
+    let type_name = ty.name();
+    let constructor = Ident::new(&type_name, Span::call_site());
+    let fields: Vec<TokenStream> = ty
+        .fields()
+        .map(|field| {
+            let field_name = Ident::new(field.name(), Span::call_site());
+            let provided_value = object.get(field.name());
+            match provided_value {
+                Some(default_value) => {
+                    let value = graphql_parser_value_to_literal(
+                        default_value,
+                        field.field_type(),
+                        field.is_optional(),
+                    );
+                    quote!(#field_name: #value)
+                }
+                None => quote!(#field_name: None),
+            }
+        })
+        .collect();
+
+    quote!(#constructor {
+        #(#fields,)*
+    })
 }

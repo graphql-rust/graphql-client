@@ -102,7 +102,7 @@ fn fragment_on_union() {
 #[test]
 fn fragment_and_more_on_union() {
     use fragment_and_more_on_union::*;
-    todo!();
+    todo!("fragment_and_more_on_union");
     let _expected = fragment_and_more_on_union::ResponseData {
         names: Some(vec![
             FragmentAndMoreOnUnionNames {
