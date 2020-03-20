@@ -10,7 +10,6 @@ use crate::shared::field_rename_annotation;
 use crate::{
     deprecation::DeprecationStrategy,
     field_type::GraphqlTypeQualifier,
-    // deprecation::DeprecationStrategy,
     resolution::{InlineFragment, OperationRef, ResolvedQuery, Selection, SelectionId},
     schema::{Schema, TypeId},
     shared::keyword_replace,
@@ -36,7 +35,6 @@ pub(crate) fn render_response_data_fields<'a>(
 
     let response_data_type_id = expanded_selection.push_type(ExpandedType {
         name: Cow::Borrowed("ResponseData"),
-        schema_type: operation.on_ref(),
     });
 
     calculate_selection(
@@ -65,7 +63,6 @@ pub(super) fn render_fragment<'a>(
 
     let response_type_id = expanded_selection.push_type(ExpandedType {
         name: fragment.name().into(),
-        schema_type: fragment.on_ref(),
     });
 
     calculate_selection(
@@ -179,7 +176,6 @@ fn calculate_selection<'a>(
 
                     let expanded_type = ExpandedType {
                         name: variant_struct_name_str.into(),
-                        schema_type: variant_schema_type,
                     };
 
                     let struct_id = context.push_type(expanded_type);
@@ -278,7 +274,6 @@ fn calculate_selection<'a>(
 
                         let type_id = context.push_type(ExpandedType {
                             name: Cow::Owned(struct_name_string),
-                            schema_type: field_type,
                         });
 
                         calculate_selection(
@@ -409,7 +404,6 @@ impl<'a> ExpandedVariant<'a> {
 
 pub(crate) struct ExpandedType<'a> {
     name: Cow<'a, str>,
-    schema_type: TypeRef<'a>,
 }
 
 pub(crate) struct ExpandedSelection<'a> {

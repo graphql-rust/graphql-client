@@ -15,27 +15,19 @@ mod codegen;
 mod codegen_options;
 /// Deprecation-related code
 pub mod deprecation;
-// mod query;
 /// Contains the [Schema] type and its implementation.
 pub mod schema;
 
 mod constants;
-// mod enums;
 mod field_type;
-// mod fragments;
 mod generated_module;
-// mod inputs;
-// mod interfaces;
 /// Normalization-related code
 pub mod normalization;
-// mod objects;
 mod operations;
 mod resolution;
-// mod selection;
 mod shared;
-// mod unions;
-// mod variables;
 
+// TODO: uncomment this
 // #[cfg(test)]
 // mod tests;
 

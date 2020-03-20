@@ -1,4 +1,4 @@
-use super::{InputId, Schema, StoredInputFieldType, TypeId};
+use super::{Schema, StoredInputFieldType, TypeId};
 use crate::schema::resolve_field_type;
 use graphql_parser::schema::{self as parser, Definition, Document, TypeDefinition, UnionType};
 
