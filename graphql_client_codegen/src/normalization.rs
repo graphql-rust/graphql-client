@@ -1,4 +1,4 @@
-use heck::{CamelCase, SnakeCase};
+use heck::CamelCase;
 use std::borrow::Cow;
 
 /// Normalization conventions available for generated code.
@@ -15,13 +15,6 @@ impl Normalization {
         match self {
             Self::None => name.into(),
             Self::Rust => name.to_camel_case().into(),
-        }
-    }
-
-    fn snake_case(self, name: &str) -> Cow<'_, str> {
-        match self {
-            Self::None => name.into(),
-            Self::Rust => name.to_snake_case().into(),
         }
     }
 
@@ -47,10 +40,6 @@ impl Normalization {
 
     pub(crate) fn field_type<'a>(self, fty: &'a str) -> Cow<'a, str> {
         self.field_type_impl(fty)
-    }
-
-    pub(crate) fn field_name<'a>(self, fnm: &'a str) -> Cow<'a, str> {
-        self.snake_case(fnm)
     }
 
     pub(crate) fn input_name<'a>(self, inm: &'a str) -> Cow<'a, str> {
