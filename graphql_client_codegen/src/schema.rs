@@ -1,6 +1,9 @@
 mod graphql_parser_conversion;
 mod json_conversion;
 
+#[cfg(test)]
+mod tests;
+
 use crate::field_type::GraphqlTypeQualifier;
 use crate::resolution::UsedTypes;
 use std::collections::HashMap;
@@ -238,31 +241,6 @@ impl TypeId {
             _ => None,
         }
     }
-
-    // pub(crate) fn upgrade(self, schema: &Schema) -> TypeRef<'_> {
-    //     match self {
-    //         TypeId::Enum(id) => TypeRef::Enum(EnumRef {
-    //             enum_id: id,
-    //             schema,
-    //         }),
-    //         TypeId::Interface(id) => TypeRef::Interface(InterfaceRef {
-    //             interface_id: id,
-    //             schema,
-    //         }),
-    //         TypeId::Object(id) => TypeRef::Object(ObjectRef {
-    //             object_id: id,
-    //             schema,
-    //         }),
-    //         TypeId::Scalar(id) => TypeRef::Scalar(ScalarRef {
-    //             scalar_id: id,
-    //             schema,
-    //         }),
-    //         TypeId::Union(id) => TypeRef::Union(UnionRef {
-    //             union_id: id,
-    //             schema,
-    //         }),
-    //     }
-    // }
 }
 
 #[derive(Debug, Clone, PartialEq)]

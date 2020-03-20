@@ -1,17 +1,17 @@
 use crate::schema::Schema;
-use std::collections::HashSet;
+// use std::collections::HashSet;
+// use std::iter::FromIterator;
 
 const SCHEMA_JSON: &str = include_str!("github_schema.json");
 const SCHEMA_GRAPHQL: &str = include_str!("github_schema.graphql");
 
 #[test]
 fn ast_from_graphql_and_json_produce_the_same_schema() {
-    use std::iter::FromIterator;
     let json: graphql_introspection_query::introspection_response::IntrospectionResponse =
         serde_json::from_str(SCHEMA_JSON).unwrap();
     let graphql_parser_schema = graphql_parser::parse_schema(SCHEMA_GRAPHQL).unwrap();
-    let json = Schema::from(&json);
-    let gql = Schema::from(&graphql_parser_schema);
+    let json = Schema::from(json);
+    let gql = Schema::from(graphql_parser_schema);
 
     assert_eq!(json.stored_scalars, gql.stored_scalars);
     // TODO: reenable this
