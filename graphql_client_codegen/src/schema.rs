@@ -89,6 +89,10 @@ struct StoredInterface {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StoredFieldType {
     pub(crate) id: TypeId,
+    /// An ordered list of qualifiers, from outer to inner.
+    ///
+    /// e.g. `[Int]!` would have `vec![List, Optional]`, but `[Int!]` would have `vec![Optional,
+    /// List]`.
     pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
@@ -296,7 +300,7 @@ impl StoredInputFieldType {
     /// A type is indirected if it is a (flat or nested) list type, optional or not.
     ///
     /// We use this to determine whether a type needs to be boxed for recursion.
-    pub fn is_indirected(&self) -> bool {
+    pub(crate) fn is_indirected(&self) -> bool {
         self.qualifiers
             .iter()
             .any(|qualifier| qualifier == &GraphqlTypeQualifier::List)

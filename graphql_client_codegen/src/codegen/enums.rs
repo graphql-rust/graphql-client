@@ -1,6 +1,6 @@
-use crate::codegen::render_derives;
-use crate::codegen_options::GraphQLClientCodegenOptions;
-use crate::resolution::{OperationId, OperationRef};
+use crate::{
+    codegen::render_derives, codegen_options::GraphQLClientCodegenOptions, resolution::OperationRef,
+};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 

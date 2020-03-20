@@ -35,7 +35,6 @@ impl<'a, T> QueryWith<'a, T> {
 }
 
 pub(crate) struct OperationRef<'a>(QueryWith<'a, OperationId>);
-pub(crate) struct InlineFragmentRef<'a>(QueryWith<'a, &'a InlineFragment>);
 pub(crate) struct FragmentRef<'a>(QueryWith<'a, (ResolvedFragmentId, &'a ResolvedFragment)>);
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -271,12 +270,6 @@ pub(crate) struct InlineFragment {
     selection_set: Vec<SelectionId>,
 }
 
-impl<'a> InlineFragmentRef<'a> {
-    pub(crate) fn on(&self) -> TypeId {
-        self.0.focus.type_id
-    }
-}
-
 #[derive(Debug)]
 pub(crate) struct SelectedField {
     alias: Option<String>,
@@ -319,7 +312,7 @@ pub(crate) fn resolve(
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     object_id: on.id(),
                     name: m.name.as_ref().expect("mutation without name").to_owned(),
-                    operation_type: crate::operations::OperationType::Mutation,
+                    _operation_type: crate::operations::OperationType::Mutation,
                     selection: Vec::with_capacity(m.selection_set.items.len()),
                 };
 
@@ -331,7 +324,7 @@ pub(crate) fn resolve(
                 let on = schema.query_type();
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     name: q.name.as_ref().expect("query without name").to_owned(),
-                    operation_type: crate::operations::OperationType::Query,
+                    _operation_type: crate::operations::OperationType::Query,
                     object_id: on.id(),
                     selection: Vec::with_capacity(q.selection_set.items.len()),
                 };
@@ -349,7 +342,7 @@ pub(crate) fn resolve(
                         .as_ref()
                         .expect("subscription without name")
                         .to_owned(),
-                    operation_type: crate::operations::OperationType::Subscription,
+                    _operation_type: crate::operations::OperationType::Subscription,
                     object_id: on.id(),
                     selection: Vec::with_capacity(s.selection_set.items.len()),
                 };
@@ -792,7 +785,7 @@ impl<'a> OperationRef<'a> {
 
 struct ResolvedOperation {
     name: String,
-    operation_type: crate::operations::OperationType,
+    _operation_type: crate::operations::OperationType,
     selection: Vec<SelectionId>,
     object_id: ObjectId,
 }
@@ -821,10 +814,6 @@ impl<'a> VariableRef<'a> {
 
     pub(crate) fn name(&self) -> &'a str {
         &self.0.focus.1.name
-    }
-
-    pub(crate) fn is_optional(&self) -> bool {
-        self.0.focus.1.r#type.is_optional()
     }
 
     pub(crate) fn variable_type(&self) -> TypeRef<'a> {
@@ -892,10 +881,6 @@ impl<'a> FragmentRef<'a> {
         self.selection_ids()
             .iter()
             .map(move |id| self.0.query.get_selection_ref(self.0.schema, *id))
-    }
-
-    pub(crate) fn selection_set_len(&self) -> usize {
-        self.0.focus.1.selection.len()
     }
 
     fn to_path_segment(&self) -> String {
