@@ -258,7 +258,10 @@ There are a number of breaking changes due to the new features, read the `Added`
 
 ### Added
 
-- Copy documentation from the GraphQL schema to the generated types (including their fields) as normal Rust documentation. Documentation will show up in the generated docs as well as IDEs that support expanding derive macros (which does not include the RLS yet).
+- Copy documentation from the GraphQL schema to the generated types (including
+  their fields) as normal Rust documentation. Documentation will show up in the
+  generated docs as well as IDEs that support expanding derive macros (which
+  does not include the RLS yet).
 - Implement and test deserializing subscription responses. We also try to provide helpful error messages when a subscription query is not valid (i.e. when it has more than one top-level field).
 - Support the [new top-level errors shape from the June 2018 spec](https://github.com/facebook/graphql/blob/master/spec/Section%207%20--%20Response.md), except for the `extensions` field (see issue #64).
 

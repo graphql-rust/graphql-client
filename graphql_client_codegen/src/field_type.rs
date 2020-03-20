@@ -13,6 +13,12 @@ pub(crate) enum GraphqlTypeQualifier {
     List,
 }
 
+impl GraphqlTypeQualifier {
+    pub(crate) fn is_required(&self) -> bool {
+        *self == GraphqlTypeQualifier::Required
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub struct FieldType<'a> {
     /// The type name of the field.

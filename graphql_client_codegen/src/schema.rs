@@ -92,6 +92,15 @@ pub(crate) struct StoredFieldType {
     pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
+impl StoredFieldType {
+    pub(crate) fn is_optional(&self) -> bool {
+        self.qualifiers
+            .get(0)
+            .map(|qualifier| !qualifier.is_required())
+            .unwrap_or(true)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 struct StoredUnion {
     name: String,
@@ -126,6 +135,13 @@ impl<'a> TypeRef<'a> {
             TypeId::Union(s) => self.0.schema.union(s).name(),
             TypeId::Enum(s) => self.0.schema.r#enum(s).name(),
             TypeId::Input(s) => self.0.schema.input(s).name(),
+        }
+    }
+
+    pub(crate) fn as_input_ref(&self) -> Option<InputRef<'a>> {
+        match self.type_id() {
+            TypeId::Input(input_id) => Some(self.0.schema.input(input_id)),
+            _ => None,
         }
     }
 }
@@ -284,6 +300,13 @@ impl StoredInputFieldType {
         self.qualifiers
             .iter()
             .any(|qualifier| qualifier == &GraphqlTypeQualifier::List)
+    }
+
+    pub(crate) fn is_optional(&self) -> bool {
+        self.qualifiers
+            .get(0)
+            .map(|qualifier| !qualifier.is_required())
+            .unwrap_or(true)
     }
 }
 
@@ -711,6 +734,17 @@ impl<'a> StoredInputFieldRef<'a> {
         .name()
     }
 
+    pub(crate) fn field_type(&self) -> TypeRef<'a> {
+        TypeRef(SchemaWith {
+            schema: self.0.schema,
+            focus: self.field_type_id(),
+        })
+    }
+
+    pub(crate) fn is_optional(&self) -> bool {
+        self.0.focus.1.is_optional()
+    }
+
     /// This is used for recursion checking.
     pub(crate) fn field_type_as_input(&self) -> Option<InputRef<'a>> {
         self.field_type_id()
@@ -748,7 +782,6 @@ pub(crate) fn resolve_field_type(
     inner: &graphql_parser::schema::Type,
 ) -> StoredFieldType {
     use crate::field_type::graphql_parser_depth;
-
     use graphql_parser::schema::Type::*;
 
     let qualifiers_depth = graphql_parser_depth(inner);
