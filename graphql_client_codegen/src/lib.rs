@@ -27,9 +27,8 @@ mod operations;
 mod resolution;
 mod shared;
 
-// TODO: uncomment this
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 

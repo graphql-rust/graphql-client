@@ -301,12 +301,6 @@ struct StoredInputType {
     fields: Vec<(String, StoredInputFieldType)>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum InputFieldTypeId {
-    Scalar(ScalarId),
-    InputObject(InputId),
-}
-
 /// Intermediate representation for a parsed GraphQL schema used during code generation.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Schema {
@@ -596,17 +590,6 @@ impl<'a> FieldRef<'a> {
 
     pub(crate) fn type_id(&self) -> TypeId {
         self.field().r#type.id
-    }
-
-    pub(crate) fn is_deprecated(&self) -> bool {
-        self.field().deprecation.is_some()
-    }
-
-    pub(crate) fn deprecation_message(&self) -> Option<&'a str> {
-        self.field()
-            .deprecation
-            .as_ref()
-            .and_then(|item| item.as_ref().map(String::as_str))
     }
 
     pub(crate) fn deprecation(&self) -> Option<Option<&'a str>> {

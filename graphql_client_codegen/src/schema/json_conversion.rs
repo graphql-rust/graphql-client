@@ -13,7 +13,7 @@ pub(super) fn build_schema(src: IntrospectionResponse) -> Schema {
 }
 
 fn build_names_map(src: &mut JsonSchema, schema: &mut Schema) {
-    let mut names = &mut schema.names;
+    let names = &mut schema.names;
     names.reserve(types_mut(src).count());
 
     unions_mut(src)

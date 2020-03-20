@@ -24,7 +24,7 @@ pub fn introspect_schema(
 
     let out: Box<dyn Write> = match output {
         Some(path) => Box::new(::std::fs::File::create(path)?),
-        None => Box::new(::std::io::stdout()),
+        None => Box::new(std::io::stdout()),
     };
 
     let request_body: graphql_client::QueryBody<()> = graphql_client::QueryBody {
