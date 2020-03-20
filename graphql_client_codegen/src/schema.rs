@@ -355,14 +355,6 @@ impl Schema {
         }
     }
 
-    fn get_object_mut(&mut self, object_id: ObjectId) -> &mut StoredObject {
-        self.stored_objects.get_mut(object_id.0).unwrap()
-    }
-
-    fn get_interface_mut(&mut self, id: InterfaceId) -> &mut StoredInterface {
-        self.stored_interfaces.get_mut(id.0).unwrap()
-    }
-
     fn push_object(&mut self, object: StoredObject) -> ObjectId {
         let id = ObjectId(self.stored_objects.len());
         self.stored_objects.push(object);
