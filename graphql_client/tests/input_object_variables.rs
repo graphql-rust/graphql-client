@@ -39,12 +39,13 @@ fn input_object_variables_default() {
         msg: default_input_object_variables_query::Variables::default_msg(),
     };
 
-    let out = serde_json::to_string(&variables).unwrap();
+    let out = serde_json::to_value(&variables).unwrap();
 
-    assert_eq!(
-        out,
-        r#"{"msg":{"content":null,"to":{"category":null,"email":"rosa.luxemburg@example.com","name":null}}}"#,
-    );
+    let expected_default = serde_json::json!({
+        "msg":{"content":null,"to":{"category":null,"email":"rosa.luxemburg@example.com","name":null}}
+    });
+
+    assert_eq!(out, expected_default);
 }
 
 #[derive(GraphQLQuery)]
