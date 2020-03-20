@@ -1,6 +1,7 @@
 //! The responsibility of this module is to resolve and validate a query
 //! against a given schema.
 
+use crate::normalization::Normalization;
 use crate::schema::InputRef;
 use crate::schema::ScalarRef;
 use crate::{
@@ -675,8 +676,10 @@ impl ResolvedQuery {
         &'a self,
         schema: &'a Schema,
         name: &str,
+        normalization: &Normalization,
     ) -> Option<OperationRef<'a>> {
-        self.operations(schema).find(|op| op.name() == name)
+        self.operations(schema)
+            .find(|op| normalization.operation(op.name()) == name)
     }
 
     fn find_fragment(&mut self, name: &str) -> Option<(ResolvedFragmentId, &mut ResolvedFragment)> {

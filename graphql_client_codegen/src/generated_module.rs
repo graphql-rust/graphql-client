@@ -27,7 +27,7 @@ impl<'a> GeneratedModule<'a> {
     fn root(&self) -> OperationRef<'_> {
         let op_name = self.options.normalization().operation(self.operation);
         self.resolved_query
-            .select_operation(self.schema, &op_name)
+            .select_operation(self.schema, &op_name, self.options.normalization())
             .expect("TODO: handle operation not found")
     }
 

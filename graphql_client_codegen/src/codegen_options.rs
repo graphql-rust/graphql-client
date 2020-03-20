@@ -173,7 +173,7 @@ impl GraphQLClientCodegenOptions {
     }
 
     /// The normalization mode for the generated code.
-    pub fn normalization(&self) -> Normalization {
-        self.normalization
+    pub fn normalization(&self) -> &Normalization {
+        &self.normalization
     }
 }
