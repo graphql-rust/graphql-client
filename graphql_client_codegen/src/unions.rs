@@ -6,17 +6,6 @@ use quote::quote;
 use std::cell::Cell;
 use std::collections::BTreeSet;
 
-/// A GraphQL union (simplified schema representation).
-///
-/// For code generation purposes, unions will "flatten" fragment spreads, so there is only one enum for the selection. See the tests in the graphql_client crate for examples.
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct GqlUnion<'schema> {
-    pub name: &'schema str,
-    pub description: Option<&'schema str>,
-    pub variants: BTreeSet<&'schema str>,
-    pub is_required: Cell<bool>,
-}
-
 #[derive(Debug, Fail)]
 #[fail(display = "UnionError")]
 enum UnionError {
@@ -28,9 +17,6 @@ enum UnionError {
     MissingTypename { union_name: String },
 }
 
-type UnionVariantResult<'selection> =
-    Result<(Vec<TokenStream>, Vec<TokenStream>, Vec<&'selection str>), anyhow::Error>;
-
 /// Returns a triple.
 ///
 /// - The first element is the union variants to be inserted directly into the `enum` declaration.
@@ -41,7 +27,7 @@ pub(crate) fn union_variants<'selection>(
     context: &'selection QueryContext<'selection>,
     prefix: &str,
     selection_on: &str,
-) -> UnionVariantResult<'selection> {
+) -> ! {
     todo!()
     // let selection = selection.selected_variants_on_union(context, selection_on)?;
     // let mut used_variants: Vec<&str> = selection.keys().cloned().collect();
