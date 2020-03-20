@@ -1,7 +1,4 @@
-use crate::{
-    codegen_options::*,
-    resolution::{OperationId, OperationRef},
-};
+use crate::{codegen_options::*, resolution::OperationRef};
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;

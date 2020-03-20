@@ -96,15 +96,6 @@ pub(crate) struct StoredFieldType {
     pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
-impl StoredFieldType {
-    pub(crate) fn is_optional(&self) -> bool {
-        self.qualifiers
-            .get(0)
-            .map(|qualifier| !qualifier.is_required())
-            .unwrap_or(true)
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 struct StoredUnion {
     name: String,
