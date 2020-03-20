@@ -68,12 +68,6 @@ pub(crate) struct EnumId(usize);
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct InputId(usize);
 
-impl InputId {
-    fn new(idx: usize) -> Self {
-        InputId(idx)
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct StoredFieldId(usize);
 
@@ -190,10 +184,6 @@ impl<'a> EnumRef<'a> {
 }
 
 impl TypeId {
-    fn scalar(id: usize) -> Self {
-        TypeId::Scalar(ScalarId(id))
-    }
-
     fn r#enum(id: usize) -> Self {
         TypeId::Enum(EnumId(id))
     }
