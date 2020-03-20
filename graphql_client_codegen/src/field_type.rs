@@ -1,5 +1,3 @@
-use graphql_introspection_query::introspection_response;
-
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub(crate) enum GraphqlTypeQualifier {
     Required,
