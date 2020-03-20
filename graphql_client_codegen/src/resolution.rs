@@ -247,13 +247,6 @@ pub(crate) enum Selection {
 }
 
 impl Selection {
-    pub(crate) fn as_inline_fragment(&self) -> Option<&InlineFragment> {
-        match self {
-            Selection::InlineFragment(inline_fragment) => Some(inline_fragment),
-            _ => None,
-        }
-    }
-
     pub(crate) fn subselection(&self) -> &[SelectionId] {
         match self {
             Selection::Field(field) => field.selection_set.as_slice(),
@@ -336,6 +329,10 @@ pub(crate) fn resolve(
             ) => {
                 let on = schema.subscription_type();
 
+                if s.selection_set.items.len() != 1 {
+                    anyhow::bail!("{}", crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR)
+                }
+
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     name: s
                         .name
@@ -351,7 +348,7 @@ pub(crate) fn resolve(
             }
             graphql_parser::query::Definition::Operation(
                 graphql_parser::query::OperationDefinition::SelectionSet(_),
-            ) => unreachable!("unnamed queries are not supported"),
+            ) => anyhow::bail!("{}", crate::constants::SELECTION_SET_AT_ROOT),
         }
     }
 
