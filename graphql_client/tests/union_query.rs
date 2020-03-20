@@ -1,6 +1,7 @@
 use graphql_client::*;
 
 const RESPONSE: &str = include_str!("unions/union_query_response.json");
+const FRAGMENT_AND_MORE_RESPONSE: &str = include_str!("unions/fragment_and_more_response.json");
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -102,8 +103,11 @@ fn fragment_on_union() {
 #[test]
 fn fragment_and_more_on_union() {
     use fragment_and_more_on_union::*;
-    todo!("fragment_and_more_on_union");
-    let _expected = fragment_and_more_on_union::ResponseData {
+
+    let response_data: fragment_and_more_on_union::ResponseData =
+        serde_json::from_str(FRAGMENT_AND_MORE_RESPONSE).unwrap();
+
+    let expected = fragment_and_more_on_union::ResponseData {
         names: Some(vec![
             FragmentAndMoreOnUnionNames {
                 names_fragment: NamesFragment::Person(NamesFragmentOnPerson {
@@ -123,7 +127,7 @@ fn fragment_and_more_on_union() {
                 names_fragment: NamesFragment::Organization(NamesFragmentOnOrganization {
                     title: "Mozilla".into(),
                 }),
-                on: FragmentAndMoreOnUnionNamesOn::Person,
+                on: FragmentAndMoreOnUnionNamesOn::Organization,
             },
             FragmentAndMoreOnUnionNames {
                 names_fragment: NamesFragment::Dog(NamesFragmentOnDog {
@@ -135,4 +139,6 @@ fn fragment_and_more_on_union() {
             },
         ]),
     };
+
+    assert_eq!(response_data, expected);
 }
