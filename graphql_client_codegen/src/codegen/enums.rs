@@ -28,9 +28,11 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
             .variants()
             .iter()
             .map(|v| {
-                let name = normalization.enum_variant(crate::shared::keyword_replace(v.as_str()));
+                let safe_name = crate::shared::keyword_replace(v.as_str());
+                let name = normalization.enum_variant(safe_name.as_ref());
                 let name = Ident::new(&name, Span::call_site());
 
+                // TODO
                 // let description = &v.description;
                 // let description = description.as_ref().map(|d| quote!(#[doc = #d]));
 
@@ -45,7 +47,8 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
             .variants()
             .iter()
             .map(|v| {
-                let name = normalization.enum_variant(crate::shared::keyword_replace(v));
+                let safe_name = crate::shared::keyword_replace(v);
+                let name = normalization.enum_variant(safe_name.as_ref());
                 let v = Ident::new(&name, Span::call_site());
 
                 quote!(#name_ident::#v)

@@ -21,7 +21,7 @@ pub(crate) fn response_for_query(
     let all_used_types = operation.all_used_types();
     let response_derives = render_derives(options.all_response_derives());
 
-    let scalar_definitions = generate_scalar_definitions(&operation, &all_used_types);
+    let scalar_definitions = generate_scalar_definitions(&operation, &all_used_types, &options);
     let enum_definitions = enums::generate_enum_definitions(&operation, &all_used_types, options);
     let fragment_definitions =
         generate_fragment_definitions(&operation, &all_used_types, &response_derives, options);
@@ -74,11 +74,13 @@ fn generate_variables_struct(
         );
     }
 
-    let variable_fields = operation.variables().map(generate_variable_struct_field);
+    let variable_fields = operation
+        .variables()
+        .map(|variable| generate_variable_struct_field(variable, options));
     let variable_defaults = operation.variables().map(|variable| {
         let method_name = format!("default_{}", variable.name());
         let method_name = Ident::new(&method_name, Span::call_site());
-        let method_return_type = render_variable_field_type(variable);
+        let method_return_type = render_variable_field_type(variable, options);
 
         variable.default().map(|default| {
             let value = graphql_parser_value_to_literal(
@@ -113,14 +115,17 @@ fn generate_variables_struct(
     variables_struct.into()
 }
 
-fn generate_variable_struct_field(variable: VariableRef<'_>) -> TokenStream {
+fn generate_variable_struct_field(
+    variable: VariableRef<'_>,
+    options: &GraphQLClientCodegenOptions,
+) -> TokenStream {
     let snake_case_name = variable.name().to_snake_case();
     let ident = Ident::new(
         &crate::shared::keyword_replace(&snake_case_name),
         Span::call_site(),
     );
     let annotation = crate::shared::field_rename_annotation(variable.name(), &snake_case_name);
-    let r#type = render_variable_field_type(variable);
+    let r#type = render_variable_field_type(variable, options);
 
     quote::quote!(#annotation pub #ident : #r#type)
 }
@@ -128,11 +133,21 @@ fn generate_variable_struct_field(variable: VariableRef<'_>) -> TokenStream {
 fn generate_scalar_definitions<'a, 'schema: 'a>(
     operation: &OperationRef<'schema>,
     all_used_types: &'a crate::resolution::UsedTypes,
+    options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
-    all_used_types.scalars(operation.schema()).map(|scalar| {
-        let ident = syn::Ident::new(scalar.name(), proc_macro2::Span::call_site());
-        quote!(type #ident = super::#ident;)
-    })
+    all_used_types
+        .scalars(operation.schema())
+        .map(move |scalar| {
+            let ident = syn::Ident::new(
+                options
+                    .normalization()
+                    .scalar_name(scalar.name().into())
+                    .as_ref(),
+                proc_macro2::Span::call_site(),
+            );
+
+            quote!(type #ident = super::#ident;)
+        })
 }
 
 fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToTokens {
@@ -141,8 +156,12 @@ fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToT
     quote!(#[derive(#(#idents),*)])
 }
 
-fn render_variable_field_type(variable: VariableRef<'_>) -> TokenStream {
-    let full_name = Ident::new(variable.type_name(), Span::call_site());
+fn render_variable_field_type(
+    variable: VariableRef<'_>,
+    options: &GraphQLClientCodegenOptions,
+) -> TokenStream {
+    let normalized_name = options.normalization().input_name(variable.type_name());
+    let full_name = Ident::new(normalized_name.as_ref(), Span::call_site());
 
     decorate_type(&full_name, variable.type_qualifiers())
 }

@@ -109,7 +109,7 @@ pub fn generate_module_token_stream(
         .operation_name
         .as_ref()
         .and_then(|operation_name| {
-            query.select_operation(&schema, &options.normalization().operation(operation_name))
+            query.select_operation(&schema, operation_name, &options.normalization())
         })
         .map(|op| vec![op]);
 

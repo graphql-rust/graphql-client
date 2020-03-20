@@ -44,6 +44,7 @@ pub(crate) fn render_response_data_fields<'a>(
         operation.selection_ids(),
         response_data_type_id,
         operation.on_ref(),
+        options,
     );
 
     expanded_selection
@@ -72,6 +73,7 @@ pub(super) fn render_fragment<'a>(
         fragment.selection_ids(),
         response_type_id,
         fragment.on_ref(),
+        options,
     );
 
     expanded_selection
@@ -122,6 +124,7 @@ fn calculate_selection<'a>(
     selection_set: &[SelectionId],
     struct_id: ResponseTypeId,
     type_ref: TypeRef<'a>,
+    options: &'a GraphQLClientCodegenOptions,
 ) {
     // If we are on a union or an interface, we need to generate an enum that matches the variants _exhaustively_.
     {
@@ -189,6 +192,7 @@ fn calculate_selection<'a>(
                                     selection_ref.subselection_ids(),
                                     struct_id,
                                     variant_schema_type,
+                                    options,
                                 );
                             }
                             VariantSelection::FragmentSpread(fragment_ref) => {
@@ -231,7 +235,10 @@ fn calculate_selection<'a>(
                             graphql_name: Some(graphql_name),
                             rust_name,
                             struct_id,
-                            field_type: context.schema().r#enum(enm).name().into(),
+                            field_type: options
+                                .normalization()
+                                .field_type(context.schema().r#enum(enm).name())
+                                .into(),
                             field_type_qualifiers: schema_field.type_qualifiers(),
                             flatten: false,
                             deprecation: schema_field.deprecation(),
@@ -240,7 +247,10 @@ fn calculate_selection<'a>(
                     }
                     TypeId::Scalar(scalar) => {
                         context.push_field(ExpandedField {
-                            field_type: context.schema().scalar(scalar).name().into(),
+                            field_type: options
+                                .normalization()
+                                .field_type(context.schema().scalar(scalar).name())
+                                .into(),
                             field_type_qualifiers: field
                                 .schema_field(context.schema())
                                 .type_qualifiers(),
@@ -276,6 +286,7 @@ fn calculate_selection<'a>(
                             selection_ref.subselection_ids(),
                             type_id,
                             field_type,
+                            options,
                         );
                     }
                     TypeId::Input(_) => unreachable!("field selection on input type"),
