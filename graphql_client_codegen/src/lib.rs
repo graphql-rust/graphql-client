@@ -1,4 +1,3 @@
-#![recursion_limit = "128"]
 #![deny(missing_docs)]
 #![warn(rust_2018_idioms)]
 
