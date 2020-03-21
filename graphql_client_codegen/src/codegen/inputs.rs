@@ -1,5 +1,6 @@
 use crate::codegen_options::GraphQLClientCodegenOptions;
 use crate::query::{OperationRef, UsedTypes};
+use crate::shared::keyword_replace;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
@@ -12,10 +13,12 @@ pub(super) fn generate_input_object_definitions(
         .inputs(operation.schema())
         .map(|input| {
             let normalized_name = options.normalization().input_name(input.name());
-            let struct_name = Ident::new(normalized_name.as_ref(), Span::call_site());
+            let safe_name = keyword_replace(normalized_name);
+            let struct_name = Ident::new(safe_name.as_ref(), Span::call_site());
 
             let fields = input.fields().map(|field| {
-                let name_ident = Ident::new(field.name(), Span::call_site());
+                let safe_field_name = keyword_replace(field.name());
+                let name_ident = Ident::new(safe_field_name.as_ref(), Span::call_site());
                 let normalized_field_type_name =
                     options.normalization().field_type(field.field_type_name());
                 let type_name = Ident::new(normalized_field_type_name.as_ref(), Span::call_site());

@@ -84,9 +84,10 @@ pub(crate) fn field_rename_annotation(graphql_name: &str, rust_name: &str) -> Op
     }
 }
 
+#[cfg(test)]
 mod tests {
     #[test]
-    fn keyword_replace() {
+    fn keyword_replace_works() {
         use super::keyword_replace;
         assert_eq!("fora", keyword_replace("fora"));
         assert_eq!("in_", keyword_replace("in"));
