@@ -1,5 +1,5 @@
 use crate::codegen_options::GraphQLClientCodegenOptions;
-use crate::resolution::{OperationRef, UsedTypes};
+use crate::query::{OperationRef, UsedTypes};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 

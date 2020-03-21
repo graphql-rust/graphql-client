@@ -5,7 +5,7 @@ mod json_conversion;
 mod tests;
 
 use crate::field_type::GraphqlTypeQualifier;
-use crate::resolution::UsedTypes;
+use crate::query::UsedTypes;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy)]

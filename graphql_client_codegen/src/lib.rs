@@ -23,7 +23,7 @@ mod generated_module;
 /// Normalization-related code
 pub mod normalization;
 mod operations;
-mod resolution;
+mod query;
 mod shared;
 
 #[cfg(test)]
@@ -92,7 +92,7 @@ pub fn generate_module_token_stream(
         }
     };
 
-    let query = resolution::resolve(&schema, &query)?;
+    let query = crate::query::resolve(&schema, &query)?;
 
     // Determine which operation we are generating code for. This will be used in operationName.
     let operations = options
@@ -157,7 +157,7 @@ fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
 /// In derive mode, build an error when the operation with the same name as the struct is not found.
 fn derive_operation_not_found_error(
     ident: Option<&proc_macro2::Ident>,
-    query: &crate::resolution::ResolvedQuery,
+    query: &crate::query::ResolvedQuery,
     schema: &crate::schema::Schema,
 ) -> anyhow::Error {
     let operation_name = ident.map(ToString::to_string);

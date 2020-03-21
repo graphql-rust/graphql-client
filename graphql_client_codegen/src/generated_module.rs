@@ -1,4 +1,4 @@
-use crate::{codegen_options::*, resolution::OperationRef};
+use crate::{codegen_options::*, query::OperationRef};
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -7,7 +7,7 @@ use quote::quote;
 pub(crate) struct GeneratedModule<'a> {
     pub operation: &'a str,
     pub query_string: &'a str,
-    pub resolved_query: &'a crate::resolution::ResolvedQuery,
+    pub resolved_query: &'a crate::query::ResolvedQuery,
     pub schema: &'a crate::schema::Schema,
     pub options: &'a crate::GraphQLClientCodegenOptions,
 }
