@@ -1,5 +1,5 @@
 use crate::{
-    codegen::render_derives, codegen_options::GraphQLClientCodegenOptions, resolution::OperationRef,
+    codegen::render_derives, codegen_options::GraphQLClientCodegenOptions, query::OperationRef,
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -13,7 +13,7 @@ use quote::quote;
  */
 pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
     operation: &OperationRef<'schema>,
-    all_used_types: &'a crate::resolution::UsedTypes,
+    all_used_types: &'a crate::query::UsedTypes,
     options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
     let derives = render_derives(

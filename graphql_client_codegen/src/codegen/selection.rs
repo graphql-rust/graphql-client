@@ -1,18 +1,15 @@
 //! Code generation for the selection on an operation or a fragment.
 
-use crate::codegen::decorate_type;
-use crate::resolution::FragmentRef;
-use crate::resolution::ResolvedFragmentId;
-use crate::resolution::SelectedField;
-use crate::resolution::SelectionRef;
-use crate::schema::TypeRef;
-use crate::shared::field_rename_annotation;
 use crate::{
+    codegen::decorate_type,
     deprecation::DeprecationStrategy,
     field_type::GraphqlTypeQualifier,
-    resolution::{InlineFragment, OperationRef, ResolvedQuery, Selection, SelectionId},
-    schema::{Schema, TypeId},
-    shared::keyword_replace,
+    query::{
+        FragmentRef, InlineFragment, OperationRef, ResolvedFragmentId, ResolvedQuery,
+        SelectedField, Selection, SelectionId, SelectionRef,
+    },
+    schema::{Schema, TypeId, TypeRef},
+    shared::{field_rename_annotation, keyword_replace},
     GraphQLClientCodegenOptions,
 };
 use heck::*;

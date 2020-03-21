@@ -10,7 +10,7 @@ fn schema_with_keywords_works() {
     let schema = Schema::from(schema);
 
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
-    let query = crate::resolution::resolve(&schema, &query).unwrap();
+    let query = crate::query::resolve(&schema, &query).unwrap();
 
     for operation in query.operations(&schema) {
         let generated_tokens = generated_module::GeneratedModule {

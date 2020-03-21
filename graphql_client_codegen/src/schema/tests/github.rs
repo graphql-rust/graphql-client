@@ -14,6 +14,16 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     let gql = Schema::from(graphql_parser_schema);
 
     assert!(vecs_match(&json.stored_scalars, &gql.stored_scalars));
+    panic!(
+        "{:?}",
+        json.stored_objects
+            .iter()
+            .filter(|obj| !gql
+                .stored_objects
+                .iter()
+                .any(|other| &obj.name == &other.name))
+            .collect::<Vec<_>>()
+    );
     assert_eq!(
         json.stored_objects.len(),
         gql.stored_objects.len(),

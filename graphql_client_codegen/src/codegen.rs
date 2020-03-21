@@ -4,7 +4,7 @@ mod selection;
 
 use crate::{
     field_type::GraphqlTypeQualifier,
-    resolution::*,
+    query::*,
     schema::{InputRef, TypeRef},
     GraphQLClientCodegenOptions,
 };
@@ -132,7 +132,7 @@ fn generate_variable_struct_field(
 
 fn generate_scalar_definitions<'a, 'schema: 'a>(
     operation: &OperationRef<'schema>,
-    all_used_types: &'a crate::resolution::UsedTypes,
+    all_used_types: &'a crate::query::UsedTypes,
     options: &'a GraphQLClientCodegenOptions,
 ) -> impl Iterator<Item = TokenStream> + 'a {
     all_used_types
