@@ -1,6 +1,4 @@
 use crate::schema::Schema;
-// use std::collections::HashSet;
-// use std::iter::FromIterator;
 
 const SCHEMA_JSON: &str = include_str!("github_schema.json");
 const SCHEMA_GRAPHQL: &str = include_str!("github_schema.graphql");
@@ -10,51 +8,115 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     let json: graphql_introspection_query::introspection_response::IntrospectionResponse =
         serde_json::from_str(SCHEMA_JSON).unwrap();
     let graphql_parser_schema = graphql_parser::parse_schema(SCHEMA_GRAPHQL).unwrap();
-    let json = Schema::from(json);
-    let gql = Schema::from(graphql_parser_schema);
+    let mut json = Schema::from(json);
+    let mut gql = Schema::from(graphql_parser_schema);
 
     assert!(vecs_match(&json.stored_scalars, &gql.stored_scalars));
-    panic!(
-        "{:?}",
-        json.stored_objects
+
+    // Root objects
+    {
+        assert_eq!(json.query_type().name(), gql.query_type().name());
+        assert_eq!(
+            json.mutation_type().map(|t| t.name()),
+            gql.mutation_type().map(|t| t.name()),
+            "Mutation types don't match."
+        );
+        assert_eq!(
+            json.subscription_type().map(|t| t.name()),
+            gql.subscription_type().map(|t| t.name()),
+            "Subscription types don't match."
+        );
+    }
+
+    // Objects
+    {
+        let mut json_stored_objects: Vec<_> = json
+            .stored_objects
+            .drain(..)
+            .filter(|obj| !obj.name.starts_with("__"))
+            .collect();
+
+        assert_eq!(
+            json_stored_objects.len(),
+            gql.stored_objects.len(),
+            "Objects count matches."
+        );
+
+        json_stored_objects.sort_by(|a, b| a.name.cmp(&b.name));
+        gql.stored_objects.sort_by(|a, b| a.name.cmp(&b.name));
+
+        for (j, g) in json_stored_objects
+            .iter_mut()
+            .filter(|obj| !obj.name.starts_with("__"))
+            .zip(gql.stored_objects.iter_mut())
+        {
+            assert_eq!(j.name, g.name);
+            assert_eq!(
+                j.implements_interfaces.len(),
+                g.implements_interfaces.len(),
+                "{}",
+                j.name
+            );
+            assert_eq!(j.fields.len(), g.fields.len(), "{}", j.name);
+        }
+    }
+
+    // Unions
+    {
+        assert_eq!(json.stored_unions.len(), gql.stored_unions.len());
+
+        json.stored_unions.sort_by(|a, b| a.name.cmp(&b.name));
+        gql.stored_unions.sort_by(|a, b| a.name.cmp(&b.name));
+
+        for (json, gql) in json.stored_unions.iter().zip(gql.stored_unions.iter()) {
+            assert_eq!(json.variants.len(), gql.variants.len());
+        }
+    }
+
+    // Interfaces
+    {
+        assert_eq!(json.stored_interfaces.len(), gql.stored_interfaces.len());
+
+        json.stored_interfaces.sort_by(|a, b| a.name.cmp(&b.name));
+        gql.stored_interfaces.sort_by(|a, b| a.name.cmp(&b.name));
+
+        for (json, gql) in json
+            .stored_interfaces
             .iter()
-            .filter(|obj| !gql
-                .stored_objects
-                .iter()
-                .any(|other| &obj.name == &other.name))
-            .collect::<Vec<_>>()
-    );
-    assert_eq!(
-        json.stored_objects.len(),
-        gql.stored_objects.len(),
-        "Objects count matches."
-    );
-    assert!(
-        vecs_match(&json.stored_objects, &gql.stored_objects),
-        format!("{:?}\n{:?}", json.stored_objects, gql.stored_objects)
-    );
-    // for (json, gql) in json.unions.iter().zip(gql.unions.iter()) {
-    //     assert_eq!(json, gql)
-    // }
-    // for (json, gql) in json.interfaces.iter().zip(gql.interfaces.iter()) {
-    //     assert_eq!(json, gql)
-    // }
-    // assert_eq!(json.interfaces, gql.interfaces);
-    // assert_eq!(json.query_type, gql.query_type);
-    // assert_eq!(json.mutation_type, gql.mutation_type);
-    // assert_eq!(json.subscription_type, gql.subscription_type);
-    // for (json, gql) in json.inputs.iter().zip(gql.inputs.iter()) {
-    //     assert_eq!(json, gql);
-    // }
-    // assert_eq!(json.inputs, gql.inputs, "inputs differ");
-    // for ((json_name, json_value), (gql_name, gql_value)) in json.enums.iter().zip(gql.enums.iter())
-    // {
-    //     assert_eq!(json_name, gql_name);
-    //     assert_eq!(
-    //         HashSet::<&str>::from_iter(json_value.variants.iter().map(|v| v.name)),
-    //         HashSet::<&str>::from_iter(gql_value.variants.iter().map(|v| v.name)),
-    //     );
-    // }
+            .zip(gql.stored_interfaces.iter())
+        {
+            assert_eq!(json.fields.len(), gql.fields.len());
+        }
+    }
+
+    // Input objects
+    {
+        json.stored_enums = json
+            .stored_enums
+            .drain(..)
+            .filter(|enm| !enm.name.starts_with("__"))
+            .collect();
+        assert_eq!(json.stored_inputs.len(), gql.stored_inputs.len());
+
+        json.stored_inputs.sort_by(|a, b| a.name.cmp(&b.name));
+        gql.stored_inputs.sort_by(|a, b| a.name.cmp(&b.name));
+
+        for (json, gql) in json.stored_inputs.iter().zip(gql.stored_inputs.iter()) {
+            assert_eq!(json.fields.len(), gql.fields.len());
+        }
+    }
+
+    // Enums
+    {
+        assert_eq!(json.stored_enums.len(), gql.stored_enums.len());
+
+        json.stored_enums.sort_by(|a, b| a.name.cmp(&b.name));
+        gql.stored_enums.sort_by(|a, b| a.name.cmp(&b.name));
+
+        for (json, gql) in json.stored_enums.iter().zip(gql.stored_enums.iter()) {
+            assert_eq!(json.variants.len(), gql.variants.len());
+        }
+    }
 }
 
 fn vecs_match<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {

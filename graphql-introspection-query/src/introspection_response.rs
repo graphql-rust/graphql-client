@@ -196,19 +196,14 @@ pub struct FullTypePossibleTypes {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InputValue {
-    pub name: Option<String>,
+    pub name: String,
     pub description: Option<String>,
     #[serde(rename = "type")]
-    pub type_: Option<InputValueType>,
+    pub type_: InputValueType,
     pub default_value: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InputValueType {
-    #[serde(flatten)]
-    pub type_ref: TypeRef,
-}
+type InputValueType = TypeRef;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

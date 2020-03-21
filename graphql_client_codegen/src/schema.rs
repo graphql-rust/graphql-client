@@ -375,23 +375,12 @@ impl Schema {
         )
     }
 
-    pub(crate) fn mutation_type(&self) -> ObjectRef<'_> {
-        ObjectRef(
-            self.with(
-                self.mutation_type
-                    .expect("Mutation operation type must be defined"),
-            ),
-        )
+    pub(crate) fn mutation_type(&self) -> Option<ObjectRef<'_>> {
+        self.mutation_type.map(|id| ObjectRef(self.with(id)))
     }
 
-    pub(crate) fn subscription_type(&self) -> ObjectRef<'_> {
-        ObjectRef(
-            self.with(
-                self.subscription_type
-                    // TODO: make this return an option
-                    .expect("Subscription operation type must be defined"),
-            ),
-        )
+    pub(crate) fn subscription_type(&self) -> Option<ObjectRef<'_>> {
+        self.subscription_type.map(|id| ObjectRef(self.with(id)))
     }
 
     fn get_interface(&self, interface_id: InterfaceId) -> &StoredInterface {
@@ -403,7 +392,9 @@ impl Schema {
     }
 
     fn get_object(&self, object_id: ObjectId) -> &StoredObject {
-        self.stored_objects.get(object_id.0).unwrap()
+        self.stored_objects
+            .get(object_id.0)
+            .expect("Schema::get_object")
     }
 
     fn get_field(&self, field_id: StoredFieldId) -> &StoredField {
@@ -421,7 +412,7 @@ impl Schema {
     fn get_union(&self, union_id: UnionId) -> &StoredUnion {
         self.stored_unions
             .get(union_id.0)
-            .expect("Schema.get_union")
+            .expect("Schema::get_union")
     }
 
     fn objects<'a>(&'a self) -> impl Iterator<Item = ObjectRef<'a>> + 'a {
