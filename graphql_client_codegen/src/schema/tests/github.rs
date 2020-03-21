@@ -13,14 +13,16 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     let json = Schema::from(json);
     let gql = Schema::from(graphql_parser_schema);
 
-    assert_eq!(json.stored_scalars, gql.stored_scalars);
-    // TODO: reenable this
-    // for (json, gql) in json.objects.iter().zip(gql.objects.iter()) {
-    //     for (j, g) in json.1.fields.iter().zip(gql.1.fields.iter()) {
-    //         assert_eq!(j, g);
-    //     }
-    //     assert_eq!(json, gql)
-    // }
+    assert!(vecs_match(&json.stored_scalars, &gql.stored_scalars));
+    assert_eq!(
+        json.stored_objects.len(),
+        gql.stored_objects.len(),
+        "Objects count matches."
+    );
+    assert!(
+        vecs_match(&json.stored_objects, &gql.stored_objects),
+        format!("{:?}\n{:?}", json.stored_objects, gql.stored_objects)
+    );
     // for (json, gql) in json.unions.iter().zip(gql.unions.iter()) {
     //     assert_eq!(json, gql)
     // }
@@ -43,4 +45,8 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     //         HashSet::<&str>::from_iter(gql_value.variants.iter().map(|v| v.name)),
     //     );
     // }
+}
+
+fn vecs_match<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
+    a.len() == b.len() && a.iter().all(|a| b.iter().any(|b| a == b))
 }
