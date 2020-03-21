@@ -301,7 +301,11 @@ pub(crate) fn resolve(
             graphql_parser::query::Definition::Operation(
                 graphql_parser::query::OperationDefinition::Mutation(m),
             ) => {
-                let on = schema.mutation_type();
+                let on = schema.mutation_type().ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "Query contains a mutation operation, but the schema has no mutation type."
+                    )
+                })?;
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     object_id: on.id(),
                     name: m.name.as_ref().expect("mutation without name").to_owned(),
@@ -327,7 +331,11 @@ pub(crate) fn resolve(
             graphql_parser::query::Definition::Operation(
                 graphql_parser::query::OperationDefinition::Subscription(s),
             ) => {
-                let on = schema.subscription_type();
+                let on = schema.subscription_type().ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "Query contains a subscription operation, but the schema has no subscription type."
+                    )
+                })?;
 
                 if s.selection_set.items.len() != 1 {
                     anyhow::bail!("{}", crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR)
@@ -558,7 +566,11 @@ fn resolve_operation(
 ) -> anyhow::Result<()> {
     match operation {
         graphql_parser::query::OperationDefinition::Mutation(m) => {
-            let on = schema.mutation_type();
+            let on = schema.mutation_type().ok_or_else(|| {
+                anyhow::anyhow!(
+                    "Query contains a mutation operation, but the schema has no mutation type."
+                )
+            })?;
             let (id, _) = query.find_operation(m.name.as_ref().unwrap()).unwrap();
 
             resolve_variables(query, &m.variable_definitions, schema, id);
@@ -572,7 +584,7 @@ fn resolve_operation(
             resolve_object_selection(query, on, &q.selection_set, SelectionParent::Operation(id))?;
         }
         graphql_parser::query::OperationDefinition::Subscription(s) => {
-            let on = schema.subscription_type();
+            let on = schema.subscription_type().ok_or_else(|| anyhow::anyhow!("Query contains a subscription operation, but the schema has no subscription type."))?;
             let (id, _) = query.find_operation(s.name.as_ref().unwrap()).unwrap();
 
             resolve_variables(query, &s.variable_definitions, schema, id);

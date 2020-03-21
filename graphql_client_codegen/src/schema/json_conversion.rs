@@ -66,6 +66,10 @@ fn convert(src: &mut JsonSchema, schema: &mut Schema) {
         ingest_union(schema, unn)
     }
 
+    for input in inputs_mut(src) {
+        ingest_input(schema, input);
+    }
+
     // Define the root operations.
     {
         schema.query_type = src
@@ -81,7 +85,7 @@ fn convert(src: &mut JsonSchema, schema: &mut Schema) {
             .and_then(|n| schema.names.get(n))
             .and_then(|id| id.as_object_id());
         schema.subscription_type = src
-            .mutation_type
+            .subscription_type
             .as_mut()
             .and_then(|n| n.name.as_mut())
             .and_then(|n| schema.names.get(n))
@@ -224,7 +228,28 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
 
     let object = super::StoredObject {
         name: object.name.take().expect("take object name"),
-        implements_interfaces: Vec::new(),
+        implements_interfaces: object
+            .interfaces
+            .as_ref()
+            .map(|ifaces| {
+                ifaces
+                    .iter()
+                    .map(|iface| {
+                        schema
+                            .names
+                            .get(iface.type_ref.name.as_ref().unwrap())
+                            .and_then(|type_id| type_id.as_interface_id())
+                            .ok_or_else(|| {
+                                format!(
+                                    "Unknown interface: {}",
+                                    iface.type_ref.name.as_ref().unwrap()
+                                )
+                            })
+                            .unwrap()
+                    })
+                    .collect()
+            })
+            .unwrap_or_else(Vec::new),
         fields: field_ids,
     };
 
@@ -255,8 +280,43 @@ fn ingest_union(schema: &mut Schema, union: &mut FullType) {
     schema.stored_unions.push(un);
 }
 
+fn ingest_input(schema: &mut Schema, input: &mut FullType) {
+    let mut fields = Vec::new();
+
+    for field in input
+        .input_fields
+        .as_mut()
+        .expect("Missing input_fields on input")
+        .iter_mut()
+    {
+        fields.push((
+            std::mem::replace(&mut field.input_value.name, String::new()),
+            resolve_input_field_type(schema, &mut field.input_value.type_),
+        ));
+    }
+
+    let input = super::StoredInputType {
+        fields,
+        name: input.name.take().expect("Input without a name"),
+    };
+
+    schema.stored_inputs.push(input);
+}
+
 fn resolve_field_type(schema: &mut Schema, typeref: &mut TypeRef) -> super::StoredFieldType {
     from_json_type_inner(schema, typeref)
+}
+
+fn resolve_input_field_type(
+    schema: &mut Schema,
+    typeref: &mut TypeRef,
+) -> super::StoredInputFieldType {
+    let field_type = from_json_type_inner(schema, typeref);
+
+    super::StoredInputFieldType {
+        id: field_type.id,
+        qualifiers: field_type.qualifiers,
+    }
 }
 
 fn json_type_qualifiers_depth(typeref: &mut TypeRef) -> usize {
