@@ -1,19 +1,24 @@
-//! The responsibility of this module is to resolve and validate a query
+//! The responsibility of this module is to bind and validate a query
 //! against a given schema.
 
-use crate::normalization::Normalization;
-use crate::schema::InputRef;
-use crate::schema::ScalarRef;
+mod fragments;
+mod operations;
+
+pub(crate) use fragments::FragmentRef;
+pub(crate) use operations::OperationRef;
+
 use crate::{
     constants::TYPENAME_FIELD,
     field_type::GraphqlTypeQualifier,
+    normalization::Normalization,
     schema::{
-        resolve_field_type, EnumRef, ObjectId, Schema, StoredFieldId, StoredFieldType, TypeId,
-        TypeRef, UnionRef,
+        resolve_field_type, EnumRef, InputRef, ScalarRef, Schema, StoredFieldId, StoredFieldType,
+        TypeId, TypeRef, UnionRef,
     },
 };
-
+use fragments::*;
 use heck::CamelCase;
+use operations::*;
 use std::collections::{HashMap, HashSet};
 
 /// This is a convenience struct that should stay private, it's an implementation detail for our `Ref` types.
@@ -33,9 +38,6 @@ impl<'a, T> QueryWith<'a, T> {
         }
     }
 }
-
-pub(crate) struct OperationRef<'a>(QueryWith<'a, OperationId>);
-pub(crate) struct FragmentRef<'a>(QueryWith<'a, (ResolvedFragmentId, &'a ResolvedFragment)>);
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub(crate) struct SelectionId(u32);
@@ -710,102 +712,6 @@ impl ResolvedQuery {
 }
 
 #[derive(Debug)]
-pub struct ResolvedFragment {
-    name: String,
-    on: crate::schema::TypeId,
-    selection: Vec<SelectionId>,
-}
-
-impl<'a> OperationRef<'a> {
-    pub(crate) fn query(&self) -> &'a ResolvedQuery {
-        self.0.query
-    }
-
-    pub(crate) fn schema(&self) -> &'a Schema {
-        self.0.schema
-    }
-
-    fn get(&self) -> &'a ResolvedOperation {
-        self.0
-            .query
-            .operations
-            .get(self.0.focus.0 as usize)
-            .expect("get operation")
-    }
-
-    fn to_path_segment(&self) -> String {
-        self.get().name.to_camel_case()
-    }
-
-    pub(crate) fn all_used_types(&self) -> UsedTypes {
-        let mut all_used_types = UsedTypes::default();
-
-        for selection in self.selection() {
-            selection.collect_used_types(&mut all_used_types);
-        }
-
-        for variable in self.variables() {
-            variable.collect_used_types(&mut all_used_types);
-        }
-
-        all_used_types
-    }
-
-    pub(crate) fn selection<'b>(&'b self) -> impl Iterator<Item = SelectionRef<'a>> + 'b {
-        let operation = self.get();
-        operation.selection.iter().map(move |selection_id| {
-            SelectionRef(
-                self.0
-                    .refocus((*selection_id, self.0.query.get_selection(*selection_id))),
-            )
-        })
-    }
-
-    pub(crate) fn selection_ids(&self) -> &[SelectionId] {
-        &self.get().selection
-    }
-
-    pub(crate) fn variables<'b>(&'b self) -> impl Iterator<Item = VariableRef<'a>> + 'b {
-        self.0
-            .query
-            .variables
-            .iter()
-            .enumerate()
-            .filter(move |(_, variable)| variable.operation_id == self.0.focus)
-            .map(move |(id, _)| {
-                self.0
-                    .query
-                    .get_variable_ref(self.0.schema, VariableId::new(id))
-            })
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        self.get().name()
-    }
-
-    pub(crate) fn has_no_variables(&self) -> bool {
-        self.variables().next().is_none()
-    }
-
-    pub(crate) fn on_ref(&self) -> TypeRef<'a> {
-        self.0.schema.type_ref(TypeId::Object(self.get().object_id))
-    }
-}
-
-struct ResolvedOperation {
-    name: String,
-    _operation_type: crate::operations::OperationType,
-    selection: Vec<SelectionId>,
-    object_id: ObjectId,
-}
-
-impl ResolvedOperation {
-    pub(crate) fn name(&self) -> &str {
-        &self.name
-    }
-}
-
-#[derive(Debug)]
 struct ResolvedVariable {
     operation_id: OperationId,
     name: String,
@@ -851,49 +757,6 @@ impl<'a> VariableRef<'a> {
             }
             _ => (),
         }
-    }
-}
-
-impl<'a> FragmentRef<'a> {
-    pub(crate) fn is_recursive(&self) -> bool {
-        let id = self.0.focus.0;
-
-        self.selection_set()
-            .any(|selection| selection.contains_fragment(id))
-    }
-
-    pub(crate) fn query(&self) -> &'a ResolvedQuery {
-        self.0.query
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.0.focus.1.name
-    }
-
-    pub(crate) fn on(&self) -> TypeId {
-        self.0.focus.1.on
-    }
-
-    pub(crate) fn on_ref(&self) -> TypeRef<'a> {
-        self.0.schema.type_ref(self.0.focus.1.on)
-    }
-
-    pub(crate) fn schema(&self) -> &'a Schema {
-        self.0.schema
-    }
-
-    pub(crate) fn selection_ids(&self) -> &[SelectionId] {
-        &self.0.focus.1.selection
-    }
-
-    pub(crate) fn selection_set<'b>(&'b self) -> impl Iterator<Item = SelectionRef<'a>> + 'b {
-        self.selection_ids()
-            .iter()
-            .map(move |id| self.0.query.get_selection_ref(self.0.schema, *id))
-    }
-
-    fn to_path_segment(&self) -> String {
-        self.0.focus.1.name.to_camel_case()
     }
 }
 
