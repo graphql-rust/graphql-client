@@ -21,15 +21,20 @@ pub(crate) fn response_for_query(
 ) -> anyhow::Result<TokenStream> {
     let all_used_types = operation.all_used_types();
     let response_derives = render_derives(options.all_response_derives());
+    let variable_derives = render_derives(options.all_variable_derives());
 
     let scalar_definitions = generate_scalar_definitions(&operation, &all_used_types, &options);
     let enum_definitions = enums::generate_enum_definitions(&operation, &all_used_types, options);
     let fragment_definitions =
         generate_fragment_definitions(&operation, &all_used_types, &response_derives, options);
-    let input_object_definitions =
-        inputs::generate_input_object_definitions(&operation, &all_used_types, options);
+    let input_object_definitions = inputs::generate_input_object_definitions(
+        &operation,
+        &all_used_types,
+        options,
+        &variable_derives,
+    );
 
-    let variables_struct = generate_variables_struct(&operation, options);
+    let variables_struct = generate_variables_struct(&operation, options, &variable_derives);
 
     let definitions = render_response_data_fields(&operation, options).render(&response_derives);
 
@@ -64,10 +69,8 @@ pub(crate) fn response_for_query(
 fn generate_variables_struct(
     operation: &OperationRef<'_>,
     options: &GraphQLClientCodegenOptions,
+    variable_derives: &impl quote::ToTokens,
 ) -> TokenStream {
-    let variable_derives = options.all_variable_derives();
-    let variable_derives = render_derives(variable_derives);
-
     if operation.has_no_variables() {
         return quote!(
             #variable_derives

@@ -10,6 +10,7 @@ pub(super) fn generate_input_object_definitions(
     operation: &OperationRef<'_>,
     all_used_types: &UsedTypes,
     options: &GraphQLClientCodegenOptions,
+    variable_derives: &impl quote::ToTokens,
 ) -> Vec<TokenStream> {
     all_used_types
         .inputs(operation.schema())
@@ -38,7 +39,7 @@ pub(super) fn generate_input_object_definitions(
             });
 
             quote! {
-                #[derive(Serialize)]
+                #variable_derives
                 pub struct #struct_name {
                     #(#fields,)*
                 }
