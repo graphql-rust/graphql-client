@@ -1,15 +1,17 @@
 //! Code generation for the selection on an operation or a fragment.
 
 use crate::{
-    codegen::decorate_type,
+    codegen::{
+        decorate_type,
+        shared::{field_rename_annotation, keyword_replace},
+    },
     deprecation::DeprecationStrategy,
-    field_type::GraphqlTypeQualifier,
     query::{
         FragmentRef, InlineFragment, OperationRef, ResolvedFragmentId, ResolvedQuery,
         SelectedField, Selection, SelectionId, SelectionRef,
     },
     schema::{Schema, TypeId, TypeRef},
-    shared::{field_rename_annotation, keyword_replace},
+    type_qualifiers::GraphqlTypeQualifier,
     GraphQLClientCodegenOptions,
 };
 use heck::*;

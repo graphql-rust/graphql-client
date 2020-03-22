@@ -1,11 +1,12 @@
 mod enums;
 mod inputs;
 mod selection;
+mod shared;
 
 use crate::{
-    field_type::GraphqlTypeQualifier,
     query::*,
     schema::{InputRef, TypeRef},
+    type_qualifiers::GraphqlTypeQualifier,
     GraphQLClientCodegenOptions,
 };
 use heck::SnakeCase;
@@ -121,10 +122,10 @@ fn generate_variable_struct_field(
 ) -> TokenStream {
     let snake_case_name = variable.name().to_snake_case();
     let ident = Ident::new(
-        &crate::shared::keyword_replace(&snake_case_name),
+        &shared::keyword_replace(&snake_case_name),
         Span::call_site(),
     );
-    let annotation = crate::shared::field_rename_annotation(variable.name(), &snake_case_name);
+    let annotation = shared::field_rename_annotation(variable.name(), &snake_case_name);
     let r#type = render_variable_field_type(variable, options);
 
     quote::quote!(#annotation pub #ident : #r#type)

@@ -4,8 +4,8 @@ mod json_conversion;
 #[cfg(test)]
 mod tests;
 
-use crate::field_type::GraphqlTypeQualifier;
 use crate::query::UsedTypes;
+use crate::type_qualifiers::GraphqlTypeQualifier;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
@@ -710,7 +710,7 @@ pub(crate) fn resolve_field_type(
     schema: &Schema,
     inner: &graphql_parser::schema::Type,
 ) -> StoredFieldType {
-    use crate::field_type::graphql_parser_depth;
+    use crate::type_qualifiers::graphql_parser_depth;
     use graphql_parser::schema::Type::*;
 
     let qualifiers_depth = graphql_parser_depth(inner);

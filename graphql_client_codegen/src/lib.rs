@@ -18,13 +18,12 @@ pub mod deprecation;
 pub mod schema;
 
 mod constants;
-mod field_type;
 mod generated_module;
 /// Normalization-related code
 pub mod normalization;
 mod operations;
 mod query;
-mod shared;
+mod type_qualifiers;
 
 #[cfg(test)]
 mod tests;

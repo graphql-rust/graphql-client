@@ -1,6 +1,8 @@
-use crate::codegen_options::GraphQLClientCodegenOptions;
-use crate::query::{OperationRef, UsedTypes};
-use crate::shared::keyword_replace;
+use super::shared::keyword_replace;
+use crate::{
+    codegen_options::GraphQLClientCodegenOptions,
+    query::{OperationRef, UsedTypes},
+};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
