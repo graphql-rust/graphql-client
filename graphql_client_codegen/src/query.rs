@@ -311,7 +311,7 @@ pub(crate) fn resolve(
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     object_id: on.id(),
                     name: m.name.as_ref().expect("mutation without name").to_owned(),
-                    _operation_type: crate::operations::OperationType::Mutation,
+                    _operation_type: operations::OperationType::Mutation,
                     selection: Vec::with_capacity(m.selection_set.items.len()),
                 };
 
@@ -323,7 +323,7 @@ pub(crate) fn resolve(
                 let on = schema.query_type();
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     name: q.name.as_ref().expect("query without name").to_owned(),
-                    _operation_type: crate::operations::OperationType::Query,
+                    _operation_type: operations::OperationType::Query,
                     object_id: on.id(),
                     selection: Vec::with_capacity(q.selection_set.items.len()),
                 };
@@ -349,7 +349,7 @@ pub(crate) fn resolve(
                         .as_ref()
                         .expect("subscription without name")
                         .to_owned(),
-                    _operation_type: crate::operations::OperationType::Subscription,
+                    _operation_type: operations::OperationType::Subscription,
                     object_id: on.id(),
                     selection: Vec::with_capacity(s.selection_set.items.len()),
                 };
