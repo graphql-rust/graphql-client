@@ -5,6 +5,13 @@ use super::{
 use crate::schema::{ObjectId, Schema, TypeId, TypeRef};
 use heck::*;
 
+#[derive(Debug, Clone)]
+pub(crate) enum OperationType {
+    Query,
+    Mutation,
+    Subscription,
+}
+
 pub(crate) struct OperationRef<'a>(pub(super) QueryWith<'a, OperationId>);
 
 impl<'a> OperationRef<'a> {
@@ -85,7 +92,7 @@ impl<'a> OperationRef<'a> {
 
 pub(crate) struct ResolvedOperation {
     pub(crate) name: String,
-    pub(crate) _operation_type: crate::operations::OperationType,
+    pub(crate) _operation_type: OperationType,
     pub(crate) selection: Vec<SelectionId>,
     pub(crate) object_id: ObjectId,
 }

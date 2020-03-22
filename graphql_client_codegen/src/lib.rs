@@ -21,7 +21,6 @@ mod constants;
 mod generated_module;
 /// Normalization-related code
 pub mod normalization;
-mod operations;
 mod query;
 mod type_qualifiers;
 
