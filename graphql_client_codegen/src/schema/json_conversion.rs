@@ -331,7 +331,7 @@ fn json_type_qualifiers_depth(typeref: &mut TypeRef) -> usize {
 }
 
 fn from_json_type_inner(schema: &mut Schema, inner: &mut TypeRef) -> super::StoredFieldType {
-    use crate::field_type::GraphqlTypeQualifier;
+    use crate::type_qualifiers::GraphqlTypeQualifier;
     use graphql_introspection_query::introspection_response::*;
 
     let qualifiers_depth = json_type_qualifiers_depth(inner);

@@ -28,7 +28,7 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
             .variants()
             .iter()
             .map(|v| {
-                let safe_name = crate::shared::keyword_replace(v.as_str());
+                let safe_name = super::shared::keyword_replace(v.as_str());
                 let name = normalization.enum_variant(safe_name.as_ref());
                 let name = Ident::new(&name, Span::call_site());
 
@@ -47,7 +47,7 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
             .variants()
             .iter()
             .map(|v| {
-                let safe_name = crate::shared::keyword_replace(v);
+                let safe_name = super::shared::keyword_replace(v);
                 let name = normalization.enum_variant(safe_name.as_ref());
                 let v = Ident::new(&name, Span::call_site());
 

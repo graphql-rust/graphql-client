@@ -9,12 +9,12 @@ pub(crate) use operations::OperationRef;
 
 use crate::{
     constants::TYPENAME_FIELD,
-    field_type::GraphqlTypeQualifier,
     normalization::Normalization,
     schema::{
         resolve_field_type, EnumRef, InputRef, ScalarRef, Schema, StoredFieldId, StoredFieldType,
         TypeId, TypeRef, UnionRef,
     },
+    type_qualifiers::GraphqlTypeQualifier,
 };
 use fragments::*;
 use heck::CamelCase;
