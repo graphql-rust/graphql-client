@@ -1,4 +1,7 @@
-use crate::{codegen_options::*, query::OperationRef};
+use crate::{
+    codegen_options::*,
+    query::{BoundQuery, OperationId},
+};
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -18,14 +21,19 @@ impl<'a> GeneratedModule<'a> {
         Ok(crate::codegen::response_for_query(
             self.root(),
             &self.options,
+            BoundQuery {
+                query: self.resolved_query,
+                schema: self.schema,
+            },
         )?)
     }
 
-    fn root(&self) -> OperationRef<'_> {
+    fn root(&self) -> OperationId {
         let op_name = self.options.normalization().operation(self.operation);
         self.resolved_query
-            .select_operation(self.schema, &op_name, self.options.normalization())
+            .select_operation(&op_name, self.options.normalization())
             .expect("TODO: handle operation not found")
+            .0
     }
 
     /// Generate the module and all the code inside.

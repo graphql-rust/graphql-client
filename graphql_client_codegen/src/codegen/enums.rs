@@ -1,5 +1,5 @@
 use crate::{
-    codegen::render_derives, codegen_options::GraphQLClientCodegenOptions, query::OperationRef,
+    codegen::render_derives, codegen_options::GraphQLClientCodegenOptions, query::BoundQuery,
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -12,9 +12,9 @@ use quote::quote;
  * Generated serialize line: "AnEnum::where_ => "where","
  */
 pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
-    operation: &OperationRef<'schema>,
     all_used_types: &'a crate::query::UsedTypes,
     options: &'a GraphQLClientCodegenOptions,
+    query: BoundQuery<'schema>,
 ) -> impl Iterator<Item = TokenStream> + 'a {
     let derives = render_derives(
         options
@@ -23,9 +23,9 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
     );
     let normalization = options.normalization();
 
-    all_used_types.enums(operation.schema()).map(move |r#enum| {
+    all_used_types.enums(query.schema).map(move |(_id, r#enum)| {
         let variant_names: Vec<TokenStream> = r#enum
-            .variants()
+            .variants
             .iter()
             .map(|v| {
                 let safe_name = super::shared::keyword_replace(v.as_str());
@@ -41,10 +41,10 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
             })
             .collect();
         let variant_names = &variant_names;
-        let name_ident = normalization.enum_name(r#enum.name());
+        let name_ident = normalization.enum_name(r#enum.name.as_str());
         let name_ident = Ident::new(&name_ident, Span::call_site());
         let constructors: Vec<_> = r#enum
-            .variants()
+            .variants
             .iter()
             .map(|v| {
                 let safe_name = super::shared::keyword_replace(v);
@@ -55,7 +55,7 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
             })
             .collect();
         let constructors = &constructors;
-        let variant_str: Vec<&str> = r#enum.variants().iter().map(|s| s.as_str()).collect();
+        let variant_str: Vec<&str> = r#enum.variants.iter().map(|s| s.as_str()).collect();
         let variant_str = &variant_str;
 
         let name = name_ident;

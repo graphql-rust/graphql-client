@@ -8,19 +8,7 @@ use crate::query::UsedTypes;
 use crate::type_qualifiers::GraphqlTypeQualifier;
 use std::collections::HashMap;
 
-#[derive(Clone, Copy)]
-/// This is a helper for the `Ref` types. It should stay private.
-struct SchemaWith<'a, T> {
-    schema: &'a Schema,
-    focus: T,
-}
-
-#[derive(Clone, Copy)]
-pub(crate) struct TypeRef<'a>(SchemaWith<'a, TypeId>);
-
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
-
-pub(crate) type SchemaRef<'a> = &'a Schema;
 
 #[derive(Debug, PartialEq, Clone)]
 struct StoredObjectField {
@@ -29,29 +17,37 @@ struct StoredObjectField {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct StoredObject {
-    name: String,
-    fields: Vec<StoredFieldId>,
-    implements_interfaces: Vec<InterfaceId>,
+pub(crate) struct StoredObject {
+    pub(crate) name: String,
+    pub(crate) fields: Vec<StoredFieldId>,
+    pub(crate) implements_interfaces: Vec<InterfaceId>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct StoredField {
-    name: String,
-    r#type: StoredFieldType,
-    parent: StoredFieldParent,
+pub(crate) struct StoredField {
+    pub(crate) name: String,
+    pub(crate) r#type: StoredFieldType,
+    pub(crate) parent: StoredFieldParent,
     /// `Some(None)` should be interpreted as "deprecated, without reason"
-    deprecation: Option<Option<String>>,
+    pub(crate) deprecation: Option<Option<String>>,
+}
+
+impl StoredField {
+    pub(crate) fn deprecation(&self) -> Option<Option<&str>> {
+        self.deprecation
+            .as_ref()
+            .map(|inner| inner.as_ref().map(String::as_str))
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
-enum StoredFieldParent {
+pub(crate) enum StoredFieldParent {
     Object(ObjectId),
     Interface(InterfaceId),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
-pub(crate) struct ObjectId(usize);
+pub(crate) struct ObjectId(u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct ObjectFieldId(usize);
@@ -69,7 +65,7 @@ pub(crate) struct UnionId(usize);
 pub(crate) struct EnumId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
-pub(crate) struct InputId(usize);
+pub(crate) struct InputId(u32);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct StoredFieldId(usize);
@@ -78,7 +74,7 @@ pub(crate) struct StoredFieldId(usize);
 struct InputFieldId(usize);
 
 #[derive(Debug, Clone, PartialEq)]
-struct StoredInterface {
+pub(crate) struct StoredInterface {
     name: String,
     fields: Vec<StoredFieldId>,
 }
@@ -94,14 +90,14 @@ pub(crate) struct StoredFieldType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct StoredUnion {
-    name: String,
-    variants: Vec<TypeId>,
+pub(crate) struct StoredUnion {
+    pub(crate) name: String,
+    pub(crate) variants: Vec<TypeId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct StoredScalar {
-    name: String,
+pub(crate) struct StoredScalar {
+    pub(crate) name: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
@@ -112,78 +108,6 @@ pub(crate) enum TypeId {
     Union(UnionId),
     Enum(EnumId),
     Input(InputId),
-}
-
-impl<'a> TypeRef<'a> {
-    pub(crate) fn type_id(&self) -> TypeId {
-        self.0.focus
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        match self.0.focus {
-            TypeId::Object(obj) => self.0.schema.object(obj).name(),
-            TypeId::Scalar(s) => self.0.schema.scalar(s).name(),
-            TypeId::Interface(s) => self.0.schema.interface(s).name(),
-            TypeId::Union(s) => self.0.schema.union(s).name(),
-            TypeId::Enum(s) => self.0.schema.r#enum(s).name(),
-            TypeId::Input(s) => self.0.schema.input(s).name(),
-        }
-    }
-
-    pub(crate) fn as_input_ref(&self) -> Option<InputRef<'a>> {
-        match self.type_id() {
-            TypeId::Input(input_id) => Some(self.0.schema.input(input_id)),
-            _ => None,
-        }
-    }
-}
-
-pub(crate) struct ScalarRef<'a>(SchemaWith<'a, ScalarId>);
-
-impl<'a> ScalarRef<'a> {
-    fn get(&self) -> &'a StoredScalar {
-        self.0.schema.get_scalar(self.0.focus)
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-}
-
-pub(crate) struct UnionRef<'a>(SchemaWith<'a, UnionId>);
-
-impl<'a> UnionRef<'a> {
-    fn get(&self) -> &'a StoredUnion {
-        self.0.schema.get_union(self.0.focus)
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-
-    pub(crate) fn schema(&self) -> &'a Schema {
-        self.0.schema
-    }
-
-    pub(crate) fn variants(&self) -> &'a [TypeId] {
-        &self.get().variants
-    }
-}
-
-pub(crate) struct EnumRef<'a>(SchemaWith<'a, EnumId>);
-
-impl<'a> EnumRef<'a> {
-    fn get(&self) -> &'a StoredEnum {
-        self.0.schema.get_enum(self.0.focus)
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-
-    pub(crate) fn variants(&self) -> &'a [String] {
-        &self.get().variants
-    }
 }
 
 impl TypeId {
@@ -199,11 +123,11 @@ impl TypeId {
         TypeId::Union(UnionId(id))
     }
 
-    fn object(id: usize) -> Self {
+    fn object(id: u32) -> Self {
         TypeId::Object(ObjectId(id))
     }
 
-    fn input(id: usize) -> Self {
+    fn input(id: u32) -> Self {
         TypeId::Input(InputId(id))
     }
 
@@ -241,18 +165,29 @@ impl TypeId {
             _ => None,
         }
     }
+
+    pub(crate) fn name<'a>(&self, schema: &'a Schema) -> &'a str {
+        match self {
+            TypeId::Object(obj) => schema.get_object(*obj).name.as_str(),
+            TypeId::Scalar(s) => schema.get_scalar(*s).name.as_str(),
+            TypeId::Interface(s) => schema.get_interface(*s).name.as_str(),
+            TypeId::Union(s) => schema.get_union(*s).name.as_str(),
+            TypeId::Enum(s) => schema.get_enum(*s).name.as_str(),
+            TypeId::Input(s) => schema.get_input(*s).name.as_str(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct StoredEnum {
-    name: String,
-    variants: Vec<String>,
+pub(crate) struct StoredEnum {
+    pub(crate) name: String,
+    pub(crate) variants: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StoredInputFieldType {
-    id: TypeId,
-    qualifiers: Vec<GraphqlTypeQualifier>,
+    pub(crate) id: TypeId,
+    pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
 }
 
 impl StoredInputFieldType {
@@ -274,9 +209,9 @@ impl StoredInputFieldType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct StoredInputType {
-    name: String,
-    fields: Vec<(String, StoredInputFieldType)>,
+pub(crate) struct StoredInputType {
+    pub(crate) name: String,
+    pub(crate) fields: Vec<(String, StoredInputFieldType)>,
 }
 
 /// Intermediate representation for a parsed GraphQL schema used during code generation.
@@ -328,7 +263,7 @@ impl Schema {
     }
 
     fn push_object(&mut self, object: StoredObject) -> ObjectId {
-        let id = ObjectId(self.stored_objects.len());
+        let id = ObjectId(self.stored_objects.len() as u32);
         self.stored_objects.push(object);
 
         id
@@ -366,89 +301,49 @@ impl Schema {
         id
     }
 
-    pub(crate) fn query_type(&self) -> ObjectRef<'_> {
-        ObjectRef(
-            self.with(
-                self.query_type
-                    .expect("Query operation type must be defined"),
-            ),
-        )
+    pub(crate) fn query_type(&self) -> ObjectId {
+        self.query_type
+            .expect("Query operation type must be defined")
     }
 
-    pub(crate) fn mutation_type(&self) -> Option<ObjectRef<'_>> {
-        self.mutation_type.map(|id| ObjectRef(self.with(id)))
+    pub(crate) fn mutation_type(&self) -> Option<ObjectId> {
+        self.mutation_type
     }
 
-    pub(crate) fn subscription_type(&self) -> Option<ObjectRef<'_>> {
-        self.subscription_type.map(|id| ObjectRef(self.with(id)))
+    pub(crate) fn subscription_type(&self) -> Option<ObjectId> {
+        self.subscription_type
     }
 
-    fn get_interface(&self, interface_id: InterfaceId) -> &StoredInterface {
+    pub(crate) fn get_interface(&self, interface_id: InterfaceId) -> &StoredInterface {
         self.stored_interfaces.get(interface_id.0).unwrap()
     }
 
-    fn get_stored_input(&self, input_id: InputId) -> &StoredInputType {
-        self.stored_inputs.get(input_id.0).unwrap()
+    pub(crate) fn get_input(&self, input_id: InputId) -> &StoredInputType {
+        self.stored_inputs.get(input_id.0 as usize).unwrap()
     }
 
-    fn get_object(&self, object_id: ObjectId) -> &StoredObject {
+    pub(crate) fn get_object(&self, object_id: ObjectId) -> &StoredObject {
         self.stored_objects
-            .get(object_id.0)
+            .get(object_id.0 as usize)
             .expect("Schema::get_object")
     }
 
-    fn get_field(&self, field_id: StoredFieldId) -> &StoredField {
+    pub(crate) fn get_field(&self, field_id: StoredFieldId) -> &StoredField {
         self.stored_fields.get(field_id.0).unwrap()
     }
 
-    fn get_enum(&self, enum_id: EnumId) -> &StoredEnum {
+    pub(crate) fn get_enum(&self, enum_id: EnumId) -> &StoredEnum {
         self.stored_enums.get(enum_id.0).unwrap()
     }
 
-    fn get_scalar(&self, scalar_id: ScalarId) -> &StoredScalar {
+    pub(crate) fn get_scalar(&self, scalar_id: ScalarId) -> &StoredScalar {
         self.stored_scalars.get(scalar_id.0).unwrap()
     }
 
-    fn get_union(&self, union_id: UnionId) -> &StoredUnion {
+    pub(crate) fn get_union(&self, union_id: UnionId) -> &StoredUnion {
         self.stored_unions
             .get(union_id.0)
             .expect("Schema::get_union")
-    }
-
-    fn objects<'a>(&'a self) -> impl Iterator<Item = ObjectRef<'a>> + 'a {
-        (0..self.stored_objects.len()).map(move |id| self.object(ObjectId(id)))
-    }
-
-    pub(crate) fn union(&self, id: UnionId) -> UnionRef<'_> {
-        UnionRef(self.with(id))
-    }
-
-    pub(crate) fn object(&self, id: ObjectId) -> ObjectRef<'_> {
-        ObjectRef(self.with(id))
-    }
-
-    pub(crate) fn interface(&self, interface_id: InterfaceId) -> InterfaceRef<'_> {
-        InterfaceRef(self.with(interface_id))
-    }
-
-    pub(crate) fn field(&self, id: StoredFieldId) -> FieldRef<'_> {
-        FieldRef(self.with((id, self.get_field(id))))
-    }
-
-    pub(crate) fn scalar(&self, scalar_id: ScalarId) -> ScalarRef<'_> {
-        ScalarRef(self.with(scalar_id))
-    }
-
-    pub(crate) fn r#enum(&self, enum_id: EnumId) -> EnumRef<'_> {
-        EnumRef(self.with(enum_id))
-    }
-
-    pub(crate) fn type_ref(&self, id: TypeId) -> TypeRef<'_> {
-        TypeRef(self.with(id))
-    }
-
-    pub(crate) fn input(&self, id: InputId) -> InputRef<'_> {
-        InputRef(self.with(id))
     }
 
     fn find_interface(&self, interface_name: &str) -> InterfaceId {
@@ -457,6 +352,20 @@ impl Schema {
 
     pub(crate) fn find_type(&self, type_name: &str) -> Option<TypeId> {
         self.names.get(type_name).map(|id| *id)
+    }
+
+    pub(crate) fn objects(&self) -> impl Iterator<Item = (ObjectId, &StoredObject)> {
+        self.stored_objects
+            .iter()
+            .enumerate()
+            .map(|(idx, obj)| (ObjectId(idx as u32), obj))
+    }
+
+    pub(crate) fn inputs(&self) -> impl Iterator<Item = (InputId, &StoredInputType)> {
+        self.stored_inputs
+            .iter()
+            .enumerate()
+            .map(|(idx, obj)| (InputId(idx as u32), obj))
     }
 
     fn find_type_id(&self, type_name: &str) -> TypeId {
@@ -470,130 +379,19 @@ impl Schema {
             }
         }
     }
-
-    pub(crate) fn inputs<'a>(&'a self) -> impl Iterator<Item = InputRef<'a>> + 'a {
-        (0..self.stored_inputs.len()).map(move |id| InputRef(self.with(InputId(id))))
-    }
-
-    fn with<F>(&self, focus: F) -> SchemaWith<'_, F> {
-        SchemaWith {
-            schema: self,
-            focus,
-        }
-    }
 }
 
-pub(crate) struct InterfaceRef<'a>(SchemaWith<'a, InterfaceId>);
-
-impl<'a> InterfaceRef<'a> {
-    fn get(&self) -> &'a StoredInterface {
-        self.0.schema.get_interface(self.0.focus)
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-
-    pub(crate) fn variants<'b>(&'b self) -> impl Iterator<Item = TypeId> + 'b {
-        self.0
-            .schema
-            .objects()
-            .filter(move |object| object.implements_interface(self.0.focus))
-            .map(|object| TypeId::Object(object.id()))
-    }
-}
-
-pub(crate) struct ObjectRef<'a>(SchemaWith<'a, ObjectId>);
-
-impl<'a> ObjectRef<'a> {
-    fn get(&self) -> &'a StoredObject {
-        self.0.schema.get_object(self.0.focus)
-    }
-
-    fn fields<'b>(&'b self) -> impl Iterator<Item = FieldRef<'a>> + 'b {
-        self.get()
-            .fields
-            .iter()
-            .map(move |field| self.0.schema.field(*field))
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-
-    pub(crate) fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
-        self.fields().find(|field| field.name() == name)
-    }
-
-    pub(crate) fn id(&self) -> ObjectId {
-        self.0.focus
-    }
-
-    pub(crate) fn implements_interface(&self, id: InterfaceId) -> bool {
-        self.get().implements_interfaces.contains(&id)
-    }
-}
-
-pub(crate) struct FieldRef<'a>(SchemaWith<'a, (StoredFieldId, &'a StoredField)>);
-
-impl<'a> FieldRef<'a> {
-    fn field(&self) -> &'a StoredField {
-        self.0.focus.1
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.field().name
-    }
-
-    pub(crate) fn field_type(&self) -> TypeRef<'a> {
-        self.0.schema.type_ref(self.field().r#type.id)
-    }
-
-    pub(crate) fn type_qualifiers(&self) -> &'a [GraphqlTypeQualifier] {
-        &self.field().r#type.qualifiers
-    }
-
-    pub(crate) fn field_id(&self) -> StoredFieldId {
-        self.0.focus.0
-    }
-
-    pub(crate) fn type_id(&self) -> TypeId {
-        self.field().r#type.id
-    }
-
-    pub(crate) fn deprecation(&self) -> Option<Option<&'a str>> {
-        self.field()
-            .deprecation
-            .as_ref()
-            .map(|o| o.as_ref().map(String::as_str))
-    }
-}
-
-pub(crate) struct InputRef<'a>(SchemaWith<'a, InputId>);
-
-impl<'a> InputRef<'a> {
-    fn get(&self) -> &'a StoredInputType {
-        self.0.schema.get_stored_input(self.0.focus)
-    }
-
-    pub(crate) fn type_id(&self) -> TypeId {
-        TypeId::Input(self.0.focus)
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        &self.get().name
-    }
-
-    pub(crate) fn used_input_ids_recursive<'b>(&'b self, used_types: &mut UsedTypes) {
-        for type_id in self.fields().map(|field| field.field_type_id()) {
+impl StoredInputType {
+    pub(crate) fn used_input_ids_recursive(&self, used_types: &mut UsedTypes, schema: &Schema) {
+        for type_id in self.fields.iter().map(|(_name, ty)| ty.id) {
             match type_id {
                 TypeId::Input(input_id) => {
                     if used_types.types.contains(&type_id) {
                         continue;
                     } else {
                         used_types.types.insert(type_id);
-                        let input_ref = self.0.schema.input(input_id);
-                        input_ref.used_input_ids_recursive(used_types);
+                        let input = schema.get_input(input_id);
+                        input.used_input_ids_recursive(used_types, schema);
                     }
                 }
                 TypeId::Enum(_) | TypeId::Scalar(_) => {
@@ -604,38 +402,25 @@ impl<'a> InputRef<'a> {
         }
     }
 
-    pub(crate) fn fields<'b>(&'b self) -> impl Iterator<Item = StoredInputFieldRef<'a>> + 'b {
-        self.get().fields.iter().map(move |field| {
-            StoredInputFieldRef(SchemaWith {
-                schema: self.0.schema,
-                focus: field,
-            })
-        })
-    }
-
-    pub(crate) fn is_recursive_without_indirection(&self) -> bool {
-        self.contains_type_without_indirection(self.0.focus)
-    }
-
-    fn contains_type_without_indirection(&self, input_id: InputId) -> bool {
+    fn contains_type_without_indirection(&self, input_id: InputId, schema: &Schema) -> bool {
         // The input type is recursive if any of its members contains it, without indirection
-        self.fields().any(|field| {
+        self.fields.iter().any(|(_name, field_type)| {
             // the field is indirected, so no boxing is needed
-            if field.is_indirected() {
+            if field_type.is_indirected() {
                 return false;
             }
 
-            let field_input_id = field.field_type_id().as_input_id();
+            let field_input_id = field_type.id.as_input_id();
 
             if let Some(field_input_id) = field_input_id {
                 if field_input_id == input_id {
                     return true;
                 }
 
-                let input = self.0.schema.input(field_input_id);
+                let input = schema.get_input(field_input_id);
 
                 // we check if the other input contains this one (without indirection)
-                input.contains_type_without_indirection(input_id)
+                input.contains_type_without_indirection(input_id, schema)
             } else {
                 // the field is not referring to an input type
                 false
@@ -644,50 +429,9 @@ impl<'a> InputRef<'a> {
     }
 }
 
-pub(crate) struct StoredInputFieldRef<'a>(SchemaWith<'a, &'a (String, StoredInputFieldType)>);
-
-impl<'a> StoredInputFieldRef<'a> {
-    fn field_type_id(&self) -> TypeId {
-        self.0.focus.1.id
-    }
-
-    pub(crate) fn field_type_qualifiers(&self) -> &'a [GraphqlTypeQualifier] {
-        &self.0.focus.1.qualifiers
-    }
-
-    pub(crate) fn field_type_name(&self) -> &'a str {
-        TypeRef(SchemaWith {
-            schema: self.0.schema,
-            focus: self.field_type_id(),
-        })
-        .name()
-    }
-
-    pub(crate) fn field_type(&self) -> TypeRef<'a> {
-        TypeRef(SchemaWith {
-            schema: self.0.schema,
-            focus: self.field_type_id(),
-        })
-    }
-
-    pub(crate) fn is_optional(&self) -> bool {
-        self.0.focus.1.is_optional()
-    }
-
-    /// This is used for recursion checking.
-    pub(crate) fn field_type_as_input(&self) -> Option<InputRef<'a>> {
-        self.field_type_id()
-            .as_input_id()
-            .map(|input_id| InputRef(self.0.schema.with(input_id)))
-    }
-
-    fn is_indirected(&self) -> bool {
-        self.0.focus.1.is_indirected()
-    }
-
-    pub(crate) fn name(&self) -> &'a str {
-        self.0.focus.0.as_str()
-    }
+pub(crate) fn input_is_recursive_without_indirection(input_id: InputId, schema: &Schema) -> bool {
+    let input = schema.get_input(input_id);
+    input.contains_type_without_indirection(input_id, schema)
 }
 
 impl std::convert::From<graphql_parser::schema::Document> for Schema {
@@ -738,42 +482,46 @@ pub(crate) fn resolve_field_type(
     }
 }
 
-pub(crate) trait ObjectRefLike<'a> {
-    fn name(&self) -> &'a str;
+pub(crate) trait ObjectLike {
+    fn name(&self) -> &str;
 
-    fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>>;
-
-    fn schema(&self) -> SchemaRef<'a>;
+    fn get_field_by_name<'a>(
+        &'a self,
+        name: &str,
+        schema: &'a Schema,
+    ) -> Option<(StoredFieldId, &'a StoredField)>;
 }
 
-impl<'a> ObjectRefLike<'a> for ObjectRef<'a> {
-    fn name(&self) -> &'a str {
-        self.name()
+impl ObjectLike for StoredObject {
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
-        self.get_field_by_name(name)
-    }
-
-    fn schema(&self) -> SchemaRef<'a> {
-        self.0.schema
-    }
-}
-
-impl<'a> ObjectRefLike<'a> for InterfaceRef<'a> {
-    fn name(&self) -> &'a str {
-        self.name()
-    }
-
-    fn get_field_by_name(&self, name: &str) -> Option<FieldRef<'a>> {
-        self.get()
-            .fields
+    fn get_field_by_name<'a>(
+        &'a self,
+        name: &str,
+        schema: &'a Schema,
+    ) -> Option<(StoredFieldId, &'a StoredField)> {
+        self.fields
             .iter()
-            .map(|field_id| self.0.schema.field(*field_id))
-            .find(|field| field.name() == name)
+            .map(|field_id| (*field_id, schema.get_field(*field_id)))
+            .find(|(_, f)| f.name == name)
+    }
+}
+
+impl ObjectLike for StoredInterface {
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn schema(&self) -> SchemaRef<'a> {
-        self.0.schema
+    fn get_field_by_name<'a>(
+        &'a self,
+        name: &str,
+        schema: &'a Schema,
+    ) -> Option<(StoredFieldId, &'a StoredField)> {
+        self.fields
+            .iter()
+            .map(|field_id| (*field_id, schema.get_field(*field_id)))
+            .find(|(_, field)| field.name == name)
     }
 }
