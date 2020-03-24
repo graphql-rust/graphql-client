@@ -15,15 +15,18 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
 
     // Root objects
     {
-        assert_eq!(json.query_type().name(), gql.query_type().name());
         assert_eq!(
-            json.mutation_type().map(|t| t.name()),
-            gql.mutation_type().map(|t| t.name()),
+            json.get_object(json.query_type()).name,
+            gql.get_object(gql.query_type()).name
+        );
+        assert_eq!(
+            json.mutation_type().map(|t| &json.get_object(t).name),
+            gql.mutation_type().map(|t| &gql.get_object(t).name),
             "Mutation types don't match."
         );
         assert_eq!(
-            json.subscription_type().map(|t| t.name()),
-            gql.subscription_type().map(|t| t.name()),
+            json.subscription_type().map(|t| &json.get_object(t).name),
+            gql.subscription_type().map(|t| &gql.get_object(t).name),
             "Subscription types don't match."
         );
     }

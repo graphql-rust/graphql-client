@@ -34,14 +34,14 @@ fn build_names_map(src: &mut JsonSchema, schema: &mut Schema) {
         .map(|obj| obj.name.as_ref().expect("object name"))
         .enumerate()
         .for_each(|(idx, name)| {
-            names.insert(name.clone(), TypeId::object(idx));
+            names.insert(name.clone(), TypeId::object(idx as u32));
         });
 
     inputs_mut(src)
         .map(|obj| obj.name.as_ref().expect("input name"))
         .enumerate()
         .for_each(|(idx, name)| {
-            names.insert(name.clone(), TypeId::input(idx));
+            names.insert(name.clone(), TypeId::input(idx as u32));
         });
 }
 

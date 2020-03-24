@@ -12,11 +12,11 @@ fn schema_with_keywords_works() {
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
     let query = crate::query::resolve(&schema, &query).unwrap();
 
-    for operation in query.operations(&schema) {
+    for (_id, operation) in query.operations() {
         let generated_tokens = generated_module::GeneratedModule {
             query_string,
             schema: &schema,
-            operation: operation.name(),
+            operation: &operation.name,
             resolved_query: &query,
             options: &options,
         }

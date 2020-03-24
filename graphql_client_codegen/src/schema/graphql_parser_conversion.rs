@@ -89,7 +89,7 @@ fn populate_names_map(schema: &mut Schema, definitions: &[Definition]) {
         .for_each(|(idx, object_name)| {
             schema
                 .names
-                .insert(object_name.into(), TypeId::r#object(idx));
+                .insert(object_name.into(), TypeId::r#object(idx as u32));
         });
 
     definitions
@@ -128,7 +128,9 @@ fn populate_names_map(schema: &mut Schema, definitions: &[Definition]) {
         })
         .enumerate()
         .for_each(|(idx, input_name)| {
-            schema.names.insert(input_name.into(), TypeId::input(idx));
+            schema
+                .names
+                .insert(input_name.into(), TypeId::input(idx as u32));
         });
 }
 
