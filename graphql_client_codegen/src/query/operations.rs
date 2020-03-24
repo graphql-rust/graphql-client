@@ -1,6 +1,5 @@
 use super::{
-    OperationId, QueryWith, ResolvedQuery, SelectionId, SelectionRef, UsedTypes, VariableId,
-    VariableRef,
+    OperationId, Query, QueryWith, SelectionId, SelectionRef, UsedTypes, VariableId, VariableRef,
 };
 use crate::schema::{ObjectId, Schema, TypeId, TypeRef};
 use heck::*;
@@ -15,7 +14,7 @@ pub(crate) enum OperationType {
 pub(crate) struct OperationRef<'a>(pub(super) QueryWith<'a, OperationId>);
 
 impl<'a> OperationRef<'a> {
-    pub(crate) fn query(&self) -> &'a ResolvedQuery {
+    pub(crate) fn query(&self) -> &'a Query {
         self.0.query
     }
 
