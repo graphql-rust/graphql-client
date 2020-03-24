@@ -24,13 +24,7 @@ fn fragment_reference() {
     let valid_fragment_reference =
         serde_json::from_value::<fragment_reference::ResponseData>(valid_response).unwrap();
 
-    assert_eq!(
-        valid_fragment_reference
-            .fragment_reference
-            .in_fragment
-            .unwrap(),
-        "value"
-    );
+    assert_eq!(valid_fragment_reference.in_fragment.unwrap(), "value");
 }
 
 #[test]
@@ -42,13 +36,7 @@ fn fragments_with_snake_case_name() {
     let valid_fragment_reference =
         serde_json::from_value::<snake_case_fragment::ResponseData>(valid_response).unwrap();
 
-    assert_eq!(
-        valid_fragment_reference
-            .snake_case_fragment
-            .in_fragment
-            .unwrap(),
-        "value"
-    );
+    assert_eq!(valid_fragment_reference.in_fragment.unwrap(), "value");
 }
 
 #[derive(GraphQLQuery)]
@@ -64,11 +52,9 @@ fn recursive_fragment() {
 
     let _ = RecursiveFragment {
         head: Some("ABCD".to_string()),
-        tail: Some(RecursiveFragmentTail {
-            recursive_fragment: Box::new(RecursiveFragment {
-                head: Some("EFGH".to_string()),
-                tail: None,
-            }),
-        }),
+        tail: Some(Box::new(RecursiveFragment {
+            head: Some("EFGH".to_string()),
+            tail: None,
+        })),
     };
 }

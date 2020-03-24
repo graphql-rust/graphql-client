@@ -62,38 +62,20 @@ fn fragment_on_union() {
 
     let expected = fragment_on_union::ResponseData {
         names: Some(vec![
-            fragment_on_union::FragmentOnUnionNames {
-                names_fragment: fragment_on_union::NamesFragment::Person(
-                    fragment_on_union::NamesFragmentOnPerson {
-                        first_name: "Audrey".to_string(),
-                    },
-                ),
-                on: fragment_on_union::FragmentOnUnionNamesOn::Person,
-            },
-            fragment_on_union::FragmentOnUnionNames {
-                names_fragment: fragment_on_union::NamesFragment::Dog(
-                    fragment_on_union::NamesFragmentOnDog {
-                        name: "Laïka".to_string(),
-                    },
-                ),
-                on: fragment_on_union::FragmentOnUnionNamesOn::Dog,
-            },
-            fragment_on_union::FragmentOnUnionNames {
-                names_fragment: fragment_on_union::NamesFragment::Organization(
-                    fragment_on_union::NamesFragmentOnOrganization {
-                        title: "Mozilla".to_string(),
-                    },
-                ),
-                on: fragment_on_union::FragmentOnUnionNamesOn::Organization,
-            },
-            fragment_on_union::FragmentOnUnionNames {
-                names_fragment: fragment_on_union::NamesFragment::Dog(
-                    fragment_on_union::NamesFragmentOnDog {
-                        name: "Norbert".to_string(),
-                    },
-                ),
-                on: fragment_on_union::FragmentOnUnionNamesOn::Dog,
-            },
+            fragment_on_union::NamesFragment::Person(fragment_on_union::NamesFragmentOnPerson {
+                first_name: "Audrey".to_string(),
+            }),
+            fragment_on_union::NamesFragment::Dog(fragment_on_union::NamesFragmentOnDog {
+                name: "Laïka".to_string(),
+            }),
+            fragment_on_union::NamesFragment::Organization(
+                fragment_on_union::NamesFragmentOnOrganization {
+                    title: "Mozilla".to_string(),
+                },
+            ),
+            fragment_on_union::NamesFragment::Dog(fragment_on_union::NamesFragmentOnDog {
+                name: "Norbert".to_string(),
+            }),
         ]),
     };
 
