@@ -155,7 +155,7 @@ fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
 /// In derive mode, build an error when the operation with the same name as the struct is not found.
 fn derive_operation_not_found_error(
     ident: Option<&proc_macro2::Ident>,
-    query: &crate::query::ResolvedQuery,
+    query: &crate::query::Query,
     schema: &crate::schema::Schema,
 ) -> anyhow::Error {
     let operation_name = ident.map(ToString::to_string);

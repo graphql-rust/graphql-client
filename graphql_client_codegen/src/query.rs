@@ -24,7 +24,7 @@ use std::collections::{HashMap, HashSet};
 /// This is a convenience struct that should stay private, it's an implementation detail for our `Ref` types.
 #[derive(Copy, Clone)]
 struct QueryWith<'a, T> {
-    query: &'a ResolvedQuery,
+    query: &'a Query,
     schema: &'a Schema,
     focus: T,
 }
@@ -71,7 +71,7 @@ enum SelectionParent {
 }
 
 impl SelectionParent {
-    fn add_to_selection_set(&self, q: &mut ResolvedQuery, selection_id: SelectionId) {
+    fn add_to_selection_set(&self, q: &mut Query, selection_id: SelectionId) {
         match self {
             SelectionParent::Field(parent_selection_id)
             | SelectionParent::InlineFragment(parent_selection_id) => {
@@ -117,7 +117,7 @@ impl<'a> SelectionRef<'a> {
                 .any(|selection| selection.contains_fragment(fragment_id)),
         }
     }
-    pub(crate) fn query(&self) -> &'a ResolvedQuery {
+    pub(crate) fn query(&self) -> &'a Query {
         self.0.query
     }
 
@@ -285,8 +285,8 @@ impl SelectedField {
 pub(crate) fn resolve(
     schema: &Schema,
     query: &graphql_parser::query::Document,
-) -> anyhow::Result<ResolvedQuery> {
-    let mut resolved_query: ResolvedQuery = Default::default();
+) -> anyhow::Result<Query> {
+    let mut resolved_query: Query = Default::default();
 
     // First, give ids to all fragments and operations.
     // TODO: refactor this into a "create_roots" function.
@@ -378,7 +378,7 @@ pub(crate) fn resolve(
 }
 
 fn resolve_fragment(
-    query: &mut ResolvedQuery,
+    query: &mut Query,
     schema: &Schema,
     fragment_definition: &graphql_parser::query::FragmentDefinition,
 ) -> anyhow::Result<()> {
@@ -401,7 +401,7 @@ fn resolve_fragment(
 }
 
 fn resolve_union_selection(
-    query: &mut ResolvedQuery,
+    query: &mut Query,
     union: UnionRef<'_>,
     selection_set: &graphql_parser::query::SelectionSet,
     parent: SelectionParent,
@@ -439,7 +439,7 @@ fn resolve_union_selection(
 }
 
 fn resolve_object_selection<'a>(
-    query: &mut ResolvedQuery,
+    query: &mut Query,
     object: impl crate::schema::ObjectRefLike<'a>,
     selection_set: &graphql_parser::query::SelectionSet,
     parent: SelectionParent,
@@ -497,7 +497,7 @@ fn resolve_object_selection<'a>(
 }
 
 fn resolve_selection(
-    ctx: &mut ResolvedQuery,
+    ctx: &mut Query,
     schema: &Schema,
     on: TypeId,
     selection_set: &graphql_parser::query::SelectionSet,
@@ -529,7 +529,7 @@ fn resolve_selection(
 }
 
 fn resolve_inline_fragment(
-    query: &mut ResolvedQuery,
+    query: &mut Query,
     schema: &Schema,
     inline_fragment: &graphql_parser::query::InlineFragment,
     parent: SelectionParent,
@@ -562,7 +562,7 @@ fn resolve_inline_fragment(
 }
 
 fn resolve_operation(
-    query: &mut ResolvedQuery,
+    query: &mut Query,
     schema: &Schema,
     operation: &graphql_parser::query::OperationDefinition,
 ) -> anyhow::Result<()> {
@@ -601,7 +601,7 @@ fn resolve_operation(
 }
 
 #[derive(Default)]
-pub(crate) struct ResolvedQuery {
+pub(crate) struct Query {
     fragments: Vec<ResolvedFragment>,
     operations: Vec<ResolvedOperation>,
     selection_parent_idx: HashMap<SelectionId, SelectionParent>,
@@ -609,7 +609,7 @@ pub(crate) struct ResolvedQuery {
     variables: Vec<ResolvedVariable>,
 }
 
-impl ResolvedQuery {
+impl Query {
     fn push_selection(&mut self, node: Selection, parent: SelectionParent) -> SelectionId {
         let id = SelectionId(self.selections.len() as u32);
         self.selections.push(node);
@@ -807,7 +807,7 @@ impl UsedTypes {
 }
 
 fn resolve_variables(
-    query: &mut ResolvedQuery,
+    query: &mut Query,
     variables: &[graphql_parser::query::VariableDefinition],
     schema: &Schema,
     operation_id: OperationId,

@@ -7,8 +7,8 @@ use crate::{
     },
     deprecation::DeprecationStrategy,
     query::{
-        FragmentRef, InlineFragment, OperationRef, ResolvedFragmentId, ResolvedQuery,
-        SelectedField, Selection, SelectionId, SelectionRef,
+        FragmentRef, InlineFragment, OperationRef, Query, ResolvedFragmentId, SelectedField,
+        Selection, SelectionId, SelectionRef,
     },
     schema::{Schema, TypeId, TypeRef},
     type_qualifiers::GraphqlTypeQualifier,
@@ -406,7 +406,7 @@ pub(crate) struct ExpandedType<'a> {
 }
 
 pub(crate) struct ExpandedSelection<'a> {
-    query: &'a ResolvedQuery,
+    query: &'a Query,
     schema: &'a Schema,
     types: Vec<ExpandedType<'a>>,
     fields: Vec<ExpandedField<'a>>,

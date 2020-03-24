@@ -1,4 +1,4 @@
-use super::{QueryWith, ResolvedFragmentId, ResolvedQuery, SelectionId, SelectionRef};
+use super::{Query, QueryWith, ResolvedFragmentId, SelectionId, SelectionRef};
 use crate::schema::{Schema, TypeId, TypeRef};
 use heck::*;
 
@@ -21,7 +21,7 @@ impl<'a> FragmentRef<'a> {
             .any(|selection| selection.contains_fragment(id))
     }
 
-    pub(crate) fn query(&self) -> &'a ResolvedQuery {
+    pub(crate) fn query(&self) -> &'a Query {
         self.0.query
     }
 

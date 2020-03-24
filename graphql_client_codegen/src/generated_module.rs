@@ -7,7 +7,7 @@ use quote::quote;
 pub(crate) struct GeneratedModule<'a> {
     pub operation: &'a str,
     pub query_string: &'a str,
-    pub resolved_query: &'a crate::query::ResolvedQuery,
+    pub resolved_query: &'a crate::query::Query,
     pub schema: &'a crate::schema::Schema,
     pub options: &'a crate::GraphQLClientCodegenOptions,
 }
