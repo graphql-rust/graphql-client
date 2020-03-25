@@ -32,11 +32,6 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
                 let name = normalization.enum_variant(safe_name.as_ref());
                 let name = Ident::new(&name, Span::call_site());
 
-                // TODO
-                // let description = &v.description;
-                // let description = description.as_ref().map(|d| quote!(#[doc = #d]));
-
-                // quote!(#description #name)
                 quote!(#name)
             })
             .collect();
