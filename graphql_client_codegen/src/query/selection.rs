@@ -235,7 +235,6 @@ impl Selection {
 #[derive(Debug)]
 pub(crate) struct InlineFragment {
     pub(crate) type_id: TypeId,
-    // TODO: see if we can encode this at the top-level instead, with the selection being a parent.
     pub(crate) selection_set: Vec<SelectionId>,
 }
 

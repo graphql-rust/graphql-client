@@ -111,8 +111,45 @@ pub(crate) fn resolve(
 ) -> anyhow::Result<Query> {
     let mut resolved_query: Query = Default::default();
 
+    create_roots(&mut resolved_query, query, schema)?;
+
+    // Then resolve the selections.
+    for definition in &query.definitions {
+        match definition {
+            graphql_parser::query::Definition::Fragment(fragment) => {
+                resolve_fragment(&mut resolved_query, schema, fragment)?
+            }
+            graphql_parser::query::Definition::Operation(operation) => {
+                resolve_operation(&mut resolved_query, schema, operation)?
+            }
+        }
+    }
+
+    // Validation: to be expanded and factored out.
+    validate_typename_presence(&BoundQuery {
+        query: &resolved_query,
+        schema,
+    })?;
+
+    for (selection_id, _) in resolved_query.selections() {
+        selection::validate_type_conditions(
+            selection_id,
+            &BoundQuery {
+                query: &resolved_query,
+                schema,
+            },
+        )?
+    }
+
+    Ok(resolved_query)
+}
+
+fn create_roots(
+    resolved_query: &mut Query,
+    query: &graphql_parser::query::Document,
+    schema: &Schema,
+) -> anyhow::Result<()> {
     // First, give ids to all fragments and operations.
-    // TODO: refactor this into a "create_roots" function.
     for definition in &query.definitions {
         match definition {
             graphql_parser::query::Definition::Fragment(fragment) => {
@@ -191,35 +228,7 @@ pub(crate) fn resolve(
         }
     }
 
-    // Then resolve the selections.
-    for definition in &query.definitions {
-        match definition {
-            graphql_parser::query::Definition::Fragment(fragment) => {
-                resolve_fragment(&mut resolved_query, schema, fragment)?
-            }
-            graphql_parser::query::Definition::Operation(operation) => {
-                resolve_operation(&mut resolved_query, schema, operation)?
-            }
-        }
-    }
-
-    // Validation: to be expanded and factored out.
-    validate_typename_presence(&BoundQuery {
-        query: &resolved_query,
-        schema,
-    })?;
-
-    for (selection_id, _) in resolved_query.selections() {
-        selection::validate_type_conditions(
-            selection_id,
-            &BoundQuery {
-                query: &resolved_query,
-                schema,
-            },
-        )?
-    }
-
-    Ok(resolved_query)
+    Ok(())
 }
 
 fn resolve_fragment(
