@@ -270,8 +270,7 @@ fn calculate_selection<'a>(
                             struct_id,
                             field_type: options
                                 .normalization()
-                                .field_type(&context.schema().get_enum(enm).name)
-                                .into(),
+                                .field_type(&context.schema().get_enum(enm).name),
                             field_type_qualifiers: &schema_field.r#type.qualifiers,
                             flatten: false,
                             deprecation: schema_field.deprecation(),
@@ -282,8 +281,7 @@ fn calculate_selection<'a>(
                         context.push_field(ExpandedField {
                             field_type: options
                                 .normalization()
-                                .field_type(context.schema().get_scalar(scalar).name.as_str())
-                                .into(),
+                                .field_type(context.schema().get_scalar(scalar).name.as_str()),
                             field_type_qualifiers: &field
                                 .schema_field(context.schema())
                                 .r#type
@@ -550,7 +548,7 @@ impl<'a> ExpandedSelection<'a> {
                 continue;
             }
 
-            let (on_field, on_enum) = if on_variants.len() > 0 {
+            let (on_field, on_enum) = if !on_variants.is_empty() {
                 let enum_name = Ident::new(&format!("{}On", ty.name), Span::call_site());
 
                 let on_field = quote!(#[serde(flatten)] pub on: #enum_name);

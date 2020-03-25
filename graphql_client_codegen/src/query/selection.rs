@@ -247,7 +247,7 @@ pub(crate) struct SelectedField {
 
 impl SelectedField {
     pub(crate) fn alias(&self) -> Option<&str> {
-        self.alias.as_ref().map(String::as_str)
+        self.alias.as_deref()
     }
 
     pub(crate) fn schema_field<'a>(&self, schema: &'a Schema) -> &'a StoredField {

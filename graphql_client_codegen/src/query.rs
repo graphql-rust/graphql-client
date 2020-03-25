@@ -473,7 +473,7 @@ impl Query {
     pub(crate) fn select_operation<'a>(
         &'a self,
         name: &str,
-        normalization: &Normalization,
+        normalization: Normalization,
     ) -> Option<(OperationId, &'a ResolvedOperation)> {
         walk_operations(self).find(|(_id, op)| normalization.operation(&op.name) == name)
     }
@@ -579,7 +579,7 @@ impl UsedTypes {
     }
 
     pub(crate) fn fragment_ids<'b>(&'b self) -> impl Iterator<Item = ResolvedFragmentId> + 'b {
-        self.fragments.iter().map(|v| *v)
+        self.fragments.iter().copied()
     }
 }
 

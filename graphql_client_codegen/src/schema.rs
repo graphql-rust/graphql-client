@@ -34,9 +34,7 @@ pub(crate) struct StoredField {
 
 impl StoredField {
     pub(crate) fn deprecation(&self) -> Option<Option<&str>> {
-        self.deprecation
-            .as_ref()
-            .map(|inner| inner.as_ref().map(String::as_str))
+        self.deprecation.as_ref().map(|inner| inner.as_deref())
     }
 }
 
@@ -258,7 +256,7 @@ impl Schema {
                 name: (*scalar).to_owned(),
             });
 
-            self.names.insert(scalar.to_string(), TypeId::Scalar(id));
+            self.names.insert((*scalar).to_owned(), TypeId::Scalar(id));
         }
     }
 
@@ -351,7 +349,7 @@ impl Schema {
     }
 
     pub(crate) fn find_type(&self, type_name: &str) -> Option<TypeId> {
-        self.names.get(type_name).map(|id| *id)
+        self.names.get(type_name).copied()
     }
 
     pub(crate) fn objects(&self) -> impl Iterator<Item = (ObjectId, &StoredObject)> {

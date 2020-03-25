@@ -125,8 +125,7 @@ fn inputs_mut(schema: &mut JsonSchema) -> impl Iterator<Item = &mut FullType> {
 fn scalars_mut(schema: &mut JsonSchema) -> impl Iterator<Item = &mut FullType> {
     types_mut(schema).filter(|t| {
         t.kind == Some(__TypeKind::SCALAR)
-            && !super::DEFAULT_SCALARS
-                .contains(&t.name.as_ref().map(String::as_str).expect("FullType.name"))
+            && !super::DEFAULT_SCALARS.contains(&t.name.as_deref().expect("FullType.name"))
     })
 }
 

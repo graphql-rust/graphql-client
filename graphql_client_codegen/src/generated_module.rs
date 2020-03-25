@@ -31,7 +31,7 @@ impl<'a> GeneratedModule<'a> {
     fn root(&self) -> anyhow::Result<OperationId> {
         let op_name = self.options.normalization().operation(self.operation);
         self.resolved_query
-            .select_operation(&op_name, self.options.normalization())
+            .select_operation(&op_name, *self.options.normalization())
             .map(|op| op.0)
             .ok_or_else(|| {
                 anyhow::anyhow!(

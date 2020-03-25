@@ -18,15 +18,15 @@ impl Normalization {
         }
     }
 
-    pub(crate) fn operation<'a>(self, op: &'a str) -> Cow<'a, str> {
+    pub(crate) fn operation(self, op: &str) -> Cow<'_, str> {
         self.camel_case(op)
     }
 
-    pub(crate) fn enum_variant<'a>(self, enm: &'a str) -> Cow<'a, str> {
-        self.camel_case(enm.into())
+    pub(crate) fn enum_variant(self, enm: &str) -> Cow<'_, str> {
+        self.camel_case(enm)
     }
 
-    pub(crate) fn enum_name<'a>(self, enm: &'a str) -> Cow<'a, str> {
+    pub(crate) fn enum_name(self, enm: &str) -> Cow<'_, str> {
         self.camel_case(enm)
     }
 
@@ -38,15 +38,15 @@ impl Normalization {
         }
     }
 
-    pub(crate) fn field_type<'a>(self, fty: &'a str) -> Cow<'a, str> {
+    pub(crate) fn field_type(self, fty: &str) -> Cow<'_, str> {
         self.field_type_impl(fty)
     }
 
-    pub(crate) fn input_name<'a>(self, inm: &'a str) -> Cow<'a, str> {
+    pub(crate) fn input_name(self, inm: &str) -> Cow<'_, str> {
         self.camel_case(inm)
     }
 
-    pub(crate) fn scalar_name<'a>(self, snm: &'a str) -> Cow<'a, str> {
+    pub(crate) fn scalar_name(self, snm: &str) -> Cow<'_, str> {
         self.camel_case(snm)
     }
 }

@@ -123,7 +123,7 @@ fn generate_variables_struct(
         }
     );
 
-    variables_struct.into()
+    variables_struct
 }
 
 fn generate_variable_struct_field(

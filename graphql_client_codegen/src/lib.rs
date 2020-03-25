@@ -96,7 +96,7 @@ pub fn generate_module_token_stream(
     let operations = options
         .operation_name
         .as_ref()
-        .and_then(|operation_name| query.select_operation(operation_name, &options.normalization()))
+        .and_then(|operation_name| query.select_operation(operation_name, *options.normalization()))
         .map(|op| vec![op]);
 
     let operations = match (operations, &options.mode) {

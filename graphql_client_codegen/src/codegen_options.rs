@@ -91,10 +91,9 @@ impl GraphQLClientCodegenOptions {
     pub fn all_variable_derives(&self) -> impl Iterator<Item = &str> {
         let additional = self
             .variables_derives
-            .as_ref()
-            .map(String::as_str)
+            .as_deref()
             .into_iter()
-            .flat_map(|s| s.split(","));
+            .flat_map(|s| s.split(','));
 
         std::iter::once("Serialize").chain(additional)
     }
@@ -112,10 +111,9 @@ impl GraphQLClientCodegenOptions {
     /// Additional traits we want to derive for responses.
     pub fn additional_response_derives(&self) -> impl Iterator<Item = &str> {
         self.response_derives
-            .as_ref()
-            .map(String::as_str)
+            .as_deref()
             .into_iter()
-            .flat_map(|s| s.split(","))
+            .flat_map(|s| s.split(','))
             .map(|s| s.trim())
     }
 
