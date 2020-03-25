@@ -182,9 +182,11 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
                 schema,
                 &mut field.type_.as_mut().expect("take field type").type_ref,
             ),
-            deprecation: Some(None)
-                .filter(|_: &Option<()>| !field.is_deprecated.unwrap_or(false))
-                .map(|_: Option<()>| field.deprecation_reason.clone()),
+            deprecation: if let Some(true) = field.is_deprecated {
+                Some(field.deprecation_reason.clone())
+            } else {
+                None
+            },
         };
 
         field_ids.push(schema.push_field(field));
@@ -218,9 +220,11 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
                 schema,
                 &mut field.type_.as_mut().expect("take field type").type_ref,
             ),
-            deprecation: Some(None)
-                .filter(|_: &Option<()>| !field.is_deprecated.unwrap_or(false))
-                .map(|_: Option<()>| field.deprecation_reason.clone()),
+            deprecation: if let Some(true) = field.is_deprecated {
+                Some(field.deprecation_reason.clone())
+            } else {
+                None
+            },
         };
 
         field_ids.push(schema.push_field(field));
