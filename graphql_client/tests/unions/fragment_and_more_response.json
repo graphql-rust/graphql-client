@@ -1,22 +1,22 @@
 {
-    "names": [
-      {
-        "__typename": "Person",
-        "firstName": "Larry"
-      },
-      {
-        "__typename": "Dog",
-        "name": "Laïka",
-        "isGoodDog": true
-      },
-      {
-        "__typename": "Organization",
-        "title": "Mozilla"
-      },
-      {
-        "__typename": "Dog",
-        "name": "Norbert",
-        "isGoodDog": true
-      }
-    ]
-  }
+  "names": [
+    {
+      "__typename": "Person",
+      "firstName": "Larry"
+    },
+    {
+      "__typename": "Dog",
+      "name": "Laïka",
+      "isGoodDog": true
+    },
+    {
+      "__typename": "Organization",
+      "title": "Mozilla"
+    },
+    {
+      "__typename": "Dog",
+      "name": "Norbert",
+      "isGoodDog": true
+    }
+  ]
+}
