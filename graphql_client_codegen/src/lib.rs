@@ -61,7 +61,7 @@ pub fn generate_module_token_stream(
                 let schema_string = read_file(v.key())?;
                 let schema = match schema_extension {
                     "graphql" | "gql" => {
-                        let s = graphql_parser::schema::parse_schema(&schema_string).expect("TODO: error conversion");
+                        let s = graphql_parser::schema::parse_schema(&schema_string).map_err(|parser_error| anyhow::anyhow!("Parser error: {}", parser_error))?;
                         schema::Schema::from(s)
                     }
                     "json" => {
@@ -83,8 +83,8 @@ pub fn generate_module_token_stream(
             hash_map::Entry::Occupied(o) => o.get().clone(),
             hash_map::Entry::Vacant(v) => {
                 let query_string = read_file(v.key())?;
-                let query =
-                    graphql_parser::parse_query(&query_string).expect("TODO: error conversion");
+                let query = graphql_parser::parse_query(&query_string)
+                    .map_err(|err| anyhow::anyhow!("Query parser error: {}", err))?;
                 v.insert((query_string, query)).clone()
             }
         }

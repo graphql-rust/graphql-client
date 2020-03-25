@@ -210,7 +210,13 @@ pub(crate) fn resolve(
                 let graphql_parser::query::TypeCondition::On(on) = &fragment.type_condition;
                 resolved_query.fragments.push(ResolvedFragment {
                     name: fragment.name.clone(),
-                    on: schema.find_type(on).expect("TODO: proper error message"),
+                    on: schema.find_type(on).ok_or_else(|| {
+                        anyhow::anyhow!(
+                            "Could not find type {} for fragment {} in schema.",
+                            on,
+                            fragment.name
+                        )
+                    })?,
                     selection_set: Vec::new(),
                 });
             }

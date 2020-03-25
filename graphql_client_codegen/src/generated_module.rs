@@ -19,7 +19,7 @@ impl<'a> GeneratedModule<'a> {
     /// Generate the items for the variables and the response that will go inside the module.
     fn build_impls(&self) -> anyhow::Result<TokenStream> {
         Ok(crate::codegen::response_for_query(
-            self.root(),
+            self.root()?,
             &self.options,
             BoundQuery {
                 query: self.resolved_query,
@@ -28,12 +28,17 @@ impl<'a> GeneratedModule<'a> {
         )?)
     }
 
-    fn root(&self) -> OperationId {
+    fn root(&self) -> anyhow::Result<OperationId> {
         let op_name = self.options.normalization().operation(self.operation);
         self.resolved_query
             .select_operation(&op_name, self.options.normalization())
-            .expect("TODO: handle operation not found")
-            .0
+            .map(|op| op.0)
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "Could not find an operation named {} in the query document.",
+                    op_name
+                )
+            })
     }
 
     /// Generate the module and all the code inside.

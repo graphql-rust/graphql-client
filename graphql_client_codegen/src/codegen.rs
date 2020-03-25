@@ -263,9 +263,14 @@ fn graphql_parser_value_to_literal(
                 ]
             }
         }
-        Value::Object(obj) => {
-            render_object_literal(obj, ty.as_input_id().expect("TODO: error handling"), query)
-        }
+        Value::Object(obj) => ty
+            .as_input_id()
+            .map(|input_id| render_object_literal(obj, input_id, query))
+            .unwrap_or_else(|| {
+                quote!(compile_error!(
+                    "Object literal on a non-input-object field."
+                ))
+            }),
     };
 
     if is_optional {

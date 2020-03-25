@@ -6,6 +6,7 @@ use quote::quote;
 use std::cell::Cell;
 use std::collections::BTreeSet;
 
+// TODO: here!
 #[derive(Debug, Fail)]
 #[fail(display = "UnionError")]
 enum UnionError {
