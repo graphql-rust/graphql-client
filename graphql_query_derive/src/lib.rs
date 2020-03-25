@@ -30,7 +30,6 @@ fn graphql_query_derive_inner(
     Ok(
         generate_module_token_stream(query_path, &schema_path, options)
             .map(Into::into)
-            .map_err(|fail| fail.compat())
             .context("Code generation failed.")?,
     )
 }

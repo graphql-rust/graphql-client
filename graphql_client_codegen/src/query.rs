@@ -3,19 +3,20 @@
 
 mod fragments;
 mod operations;
+mod selection;
 
 pub(crate) use fragments::{fragment_is_recursive, ResolvedFragment};
 pub(crate) use operations::ResolvedOperation;
+pub(crate) use selection::*;
 
 use crate::{
     constants::TYPENAME_FIELD,
     normalization::Normalization,
     schema::{
-        resolve_field_type, EnumId, InputId, ScalarId, Schema, StoredEnum, StoredField,
-        StoredFieldId, StoredFieldType, StoredInputType, StoredScalar, TypeId, UnionId,
+        resolve_field_type, EnumId, InputId, ScalarId, Schema, StoredEnum, StoredFieldType,
+        StoredInputType, StoredScalar, TypeId, UnionId,
     },
 };
-use heck::CamelCase;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -35,165 +36,73 @@ pub(crate) struct ResolvedFragmentId(u32);
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct VariableId(u32);
 
-#[derive(Debug, Clone, Copy)]
-enum SelectionParent {
-    Field(SelectionId),
-    InlineFragment(SelectionId),
-    Fragment(ResolvedFragmentId),
-    Operation(OperationId),
-}
+// TODO: put this into a validation module.
+fn selection_set_contains_type_name(
+    parent_type_id: TypeId,
+    selection_set: &[SelectionId],
+    query: &Query,
+) -> bool {
+    for id in selection_set {
+        let selection = query.get_selection(*id);
 
-impl SelectionParent {
-    fn add_to_selection_set(&self, q: &mut Query, selection_id: SelectionId) {
-        match self {
-            SelectionParent::Field(parent_selection_id)
-            | SelectionParent::InlineFragment(parent_selection_id) => {
-                let parent_selection = q
-                    .selections
-                    .get_mut(parent_selection_id.0 as usize)
-                    .expect("get parent selection");
-
-                match parent_selection {
-                    Selection::Field(f) => f.selection_set.push(selection_id),
-                    Selection::InlineFragment(inline) => inline.selection_set.push(selection_id),
-                    other => unreachable!("impossible parent selection: {:?}", other),
-                }
-            }
-            SelectionParent::Fragment(fragment_id) => {
-                let fragment = q
-                    .fragments
-                    .get_mut(fragment_id.0 as usize)
-                    .expect("get fragment");
-
-                fragment.selection_set.push(selection_id);
-            }
-            SelectionParent::Operation(operation_id) => {
-                let operation = q
-                    .operations
-                    .get_mut(operation_id.0 as usize)
-                    .expect("get operation");
-
-                operation.selection_set.push(selection_id);
-            }
-        }
-    }
-
-    pub(crate) fn to_path_segment(&self, query: &BoundQuery<'_>) -> String {
-        match self {
-            SelectionParent::Field(id) | SelectionParent::InlineFragment(id) => {
-                query.query.get_selection(*id).to_path_segment(query)
-            }
-            SelectionParent::Operation(id) => query.query.get_operation(*id).to_path_segment(),
-            SelectionParent::Fragment(id) => query.query.get_fragment(*id).to_path_segment(),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub(crate) enum Selection {
-    Field(SelectedField),
-    InlineFragment(InlineFragment),
-    FragmentSpread(ResolvedFragmentId),
-    Typename,
-}
-
-impl Selection {
-    pub(crate) fn collect_used_types(&self, used_types: &mut UsedTypes, query: &BoundQuery<'_>) {
-        match self {
-            Selection::Field(field) => {
-                let stored_field = query.schema.get_field(field.field_id);
-                used_types.types.insert(stored_field.r#type.id);
-
-                for selection_id in self.subselection() {
-                    let selection = query.query.get_selection(*selection_id);
-                    selection.collect_used_types(used_types, query);
-                }
-            }
-            Selection::InlineFragment(inline_fragment) => {
-                used_types.types.insert(inline_fragment.type_id);
-
-                for selection_id in self.subselection() {
-                    let selection = query.query.get_selection(*selection_id);
-                    selection.collect_used_types(used_types, query);
-                }
-            }
+        match selection {
+            Selection::Typename => return true,
             Selection::FragmentSpread(fragment_id) => {
-                // This is necessary to avoid infinite recursion.
-                if used_types.fragments.contains(fragment_id) {
-                    return;
-                }
-
-                used_types.fragments.insert(*fragment_id);
-
-                let fragment = query.query.get_fragment(*fragment_id);
-
-                for (_id, selection) in query.query.walk_selection_set(&fragment.selection_set) {
-                    selection.collect_used_types(used_types, query);
+                let fragment = query.get_fragment(*fragment_id);
+                if fragment.on == parent_type_id
+                    && selection_set_contains_type_name(fragment.on, &fragment.selection_set, query)
+                {
+                    return true;
                 }
             }
-            Selection::Typename => (),
+            _ => (),
         }
     }
 
-    pub(crate) fn contains_fragment(&self, fragment_id: ResolvedFragmentId, query: &Query) -> bool {
-        match self {
-            Selection::FragmentSpread(id) => *id == fragment_id,
-            _ => self.subselection().iter().any(|selection_id| {
-                query
-                    .get_selection(*selection_id)
-                    .contains_fragment(fragment_id, query)
-            }),
-        }
-    }
-
-    pub(crate) fn subselection(&self) -> &[SelectionId] {
-        match self {
-            Selection::Field(field) => field.selection_set.as_slice(),
-            Selection::InlineFragment(inline_fragment) => &inline_fragment.selection_set,
-            _ => &[],
-        }
-    }
-
-    fn to_path_segment(&self, query: &BoundQuery<'_>) -> String {
-        match self {
-            Selection::Field(field) => field
-                .alias
-                .as_ref()
-                .map(|alias| alias.to_camel_case())
-                .unwrap_or_else(move || {
-                    query.schema.get_field(field.field_id).name.to_camel_case()
-                }),
-            Selection::InlineFragment(inline_fragment) => format!(
-                "On{}",
-                inline_fragment.type_id.name(query.schema).to_camel_case()
-            ),
-            other => unreachable!("{:?} in to_path_segment", other),
-        }
-    }
+    false
 }
 
-#[derive(Debug)]
-pub(crate) struct InlineFragment {
-    pub(crate) type_id: TypeId,
-    // TODO: see if we can encode this at the top-level instead, with the selection being a parent.
-    selection_set: Vec<SelectionId>,
-}
+fn validate_typename_presence(query: &BoundQuery<'_>) -> anyhow::Result<()> {
+    for fragment in query.query.fragments.iter() {
+        let type_id = match fragment.on {
+            id @ TypeId::Interface(_) | id @ TypeId::Union(_) => id,
+            _ => continue,
+        };
 
-#[derive(Debug)]
-pub(crate) struct SelectedField {
-    alias: Option<String>,
-    field_id: StoredFieldId,
-    selection_set: Vec<SelectionId>,
-}
-
-impl SelectedField {
-    pub(crate) fn alias(&self) -> Option<&str> {
-        self.alias.as_ref().map(String::as_str)
+        if !selection_set_contains_type_name(fragment.on, &fragment.selection_set, query.query) {
+            anyhow::bail!(
+                "The `{}` fragment uses `{}` but does not select `__typename` on it. graphql-client cannot generate code for it. Please add `__typename` to the selection.",
+                &fragment.name,
+                type_id.name(query.schema),
+            )
+        }
     }
 
-    pub(crate) fn schema_field<'a>(&self, schema: &'a Schema) -> &'a StoredField {
-        schema.get_field(self.field_id)
+    let union_and_interface_field_selections =
+        query
+            .query
+            .selections()
+            .filter_map(|(selection_id, selection)| match selection {
+                Selection::Field(field) => match query.schema.get_field(field.field_id).r#type.id {
+                    id @ TypeId::Interface(_) | id @ TypeId::Union(_) => {
+                        Some((selection_id, id, &field.selection_set))
+                    }
+                    _ => None,
+                },
+                _ => None,
+            });
+
+    for selection in union_and_interface_field_selections {
+        if !selection_set_contains_type_name(selection.1, selection.2, query.query) {
+            anyhow::bail!(
+                "The query uses `{path}` at `{selected_type}` but does not select `__typename` on it. graphql-client cannot generate code for it. Please add `__typename` to the selection.",
+                path = full_path_prefix(selection.0, query),
+                selected_type = selection.1.name(query.schema)
+            );
+        }
     }
+
+    Ok(())
 }
 
 pub(crate) fn resolve(
@@ -294,6 +203,22 @@ pub(crate) fn resolve(
         }
     }
 
+    // Validation: to be expanded and factored out.
+    validate_typename_presence(&BoundQuery {
+        query: &resolved_query,
+        schema,
+    })?;
+
+    for (selection_id, _) in resolved_query.selections() {
+        selection::validate_type_conditions(
+            selection_id,
+            &BoundQuery {
+                query: &resolved_query,
+                schema,
+            },
+        )?
+    }
+
     Ok(resolved_query)
 }
 
@@ -303,11 +228,19 @@ fn resolve_fragment(
     fragment_definition: &graphql_parser::query::FragmentDefinition,
 ) -> anyhow::Result<()> {
     let graphql_parser::query::TypeCondition::On(on) = &fragment_definition.type_condition;
-    let on = schema.find_type(&on).unwrap();
+    let on = schema.find_type(&on).ok_or_else(|| {
+        anyhow::anyhow!(
+            "Could not find type `{}` referenced by fragment `{}`",
+            on,
+            fragment_definition.name
+        )
+    })?;
 
     let (id, _) = query
         .find_fragment(&fragment_definition.name)
-        .expect("TODO: fragment resolution");
+        .ok_or_else(|| {
+            anyhow::anyhow!("Could not find fragment `{}`.", fragment_definition.name)
+        })?;
 
     resolve_selection(
         query,
@@ -339,14 +272,17 @@ fn resolve_union_selection(
             }
             graphql_parser::query::Selection::InlineFragment(inline_fragment) => {
                 let selection_id = resolve_inline_fragment(query, schema, inline_fragment, parent)?;
-
                 parent.add_to_selection_set(query, selection_id);
             }
             graphql_parser::query::Selection::FragmentSpread(fragment_spread) => {
-                // TODO: this is very duplicated.
-                let (fragment_id, _) = query
+                let (fragment_id, _fragment) = query
                     .find_fragment(&fragment_spread.fragment_name)
-                    .expect("TODO: fragment resolution");
+                    .ok_or_else(|| {
+                        anyhow::anyhow!(
+                            "Could not find fragment `{}` referenced by fragment spread.",
+                            fragment_spread.fragment_name
+                        )
+                    })?;
 
                 let id = query.push_selection(Selection::FragmentSpread(fragment_id), parent);
 
@@ -360,7 +296,7 @@ fn resolve_union_selection(
 
 fn resolve_object_selection<'a>(
     query: &mut Query,
-    object: &impl crate::schema::ObjectLike,
+    object: &dyn crate::schema::ObjectLike,
     selection_set: &graphql_parser::query::SelectionSet,
     parent: SelectionParent,
     schema: &'a Schema,
@@ -405,9 +341,14 @@ fn resolve_object_selection<'a>(
                 parent.add_to_selection_set(query, selection_id);
             }
             graphql_parser::query::Selection::FragmentSpread(fragment_spread) => {
-                let (fragment_id, _) = query
+                let (fragment_id, _fragment) = query
                     .find_fragment(&fragment_spread.fragment_name)
-                    .expect("TODO: fragment resolution");
+                    .ok_or_else(|| {
+                        anyhow::anyhow!(
+                            "Could not find fragment `{}` referenced by fragment spread.",
+                            fragment_spread.fragment_name
+                        )
+                    })?;
 
                 let id = query.push_selection(Selection::FragmentSpread(fragment_id), parent);
 
@@ -460,9 +401,12 @@ fn resolve_inline_fragment(
         .type_condition
         .as_ref()
         .expect("missing type condition on inline fragment");
-    let type_id = schema
-        .find_type(on)
-        .ok_or_else(|| anyhow::anyhow!("TODO: error message"))?;
+    let type_id = schema.find_type(on).ok_or_else(|| {
+        anyhow::anyhow!(
+            "Could not find type `{}` referenced by inline fragment.",
+            on
+        )
+    })?;
 
     let id = query.push_selection(
         Selection::InlineFragment(InlineFragment {
@@ -607,6 +551,13 @@ impl Query {
             .enumerate()
             .find(|(_, op)| op.name == name)
             .map(|(id, op)| (OperationId::new(id), op))
+    }
+
+    fn selections(&self) -> impl Iterator<Item = (SelectionId, &Selection)> {
+        self.selections
+            .iter()
+            .enumerate()
+            .map(|(idx, selection)| (SelectionId(idx as u32), selection))
     }
 
     fn walk_selection_set<'a>(
