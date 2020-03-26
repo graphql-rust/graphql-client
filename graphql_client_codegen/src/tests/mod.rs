@@ -1,7 +1,6 @@
 #[test]
 fn schema_with_keywords_works() {
     use crate::{generated_module, schema::Schema, CodegenMode, GraphQLClientCodegenOptions};
-    use graphql_parser;
 
     let query_string = include_str!("keywords_query.graphql");
     let query = graphql_parser::parse_query(query_string).expect("Parse keywords query");

@@ -68,6 +68,7 @@ pub(super) enum SelectionParent {
     Operation(OperationId),
 }
 
+#[allow(clippy::trivially_copy_pass_by_ref)]
 impl SelectionParent {
     fn schema_type_id(&self, query: &BoundQuery<'_>) -> TypeId {
         match self {

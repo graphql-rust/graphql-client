@@ -146,7 +146,7 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
         .enum_values
         .as_mut()
         .expect("enm.enum_values.as_mut()")
-        .into_iter()
+        .iter_mut()
         .map(|v| {
             std::mem::replace(
                 v.name

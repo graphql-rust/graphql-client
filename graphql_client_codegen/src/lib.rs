@@ -1,5 +1,6 @@
 #![deny(missing_docs)]
 #![warn(rust_2018_idioms)]
+#![allow(clippy::option_option)]
 
 //! Crate for internal use by other graphql-client crates, for code generation.
 //!

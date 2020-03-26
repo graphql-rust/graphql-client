@@ -122,6 +122,6 @@ fn ast_from_graphql_and_json_produce_the_same_schema() {
     }
 }
 
-fn vecs_match<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
+fn vecs_match<T: PartialEq>(a: &[T], b: &[T]) -> bool {
     a.len() == b.len() && a.iter().all(|a| b.iter().any(|b| a == b))
 }
