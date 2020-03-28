@@ -1,4 +1,4 @@
-use failure::*;
+use anyhow::*;
 use graphql_client_codegen::{
     generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
 };
@@ -19,7 +19,7 @@ pub(crate) struct CliCodegenParams {
     pub output_directory: Option<PathBuf>,
 }
 
-pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Error> {
+pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
     let CliCodegenParams {
         variables_derives,
         response_derives,
@@ -59,7 +59,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<(), failure::Err
         options.set_deprecation_strategy(deprecation_strategy);
     }
 
-    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)?;
+    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options).map_err(|fail| fail.compat())?;
 
     let generated_code = gen.to_string();
     let generated_code = if cfg!(feature = "rustfmt") && !no_formatting {

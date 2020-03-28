@@ -11,7 +11,7 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-failure = "^0.1"
+anyhow = "1.0"
 syn = { version = "^1.0", features = ["extra-traits"] }
 proc-macro2 = { version = "^1.0", features = [] }
 graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.9.0" }
