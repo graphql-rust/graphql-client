@@ -12,7 +12,7 @@ name = "graphql-client"
 path = "src/main.rs"
 
 [dependencies]
-failure = "^0.1"
+anyhow = "1.0"
 reqwest = "^0.9"
 graphql_client = { version = "0.9.0", path = "../graphql_client" }
 graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.9.0" }

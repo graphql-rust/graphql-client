@@ -1,4 +1,4 @@
-use failure::format_err;
+use anyhow::format_err;
 use graphql_client::GraphQLQuery;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
 use std::path::PathBuf;
@@ -18,7 +18,7 @@ pub fn introspect_schema(
     output: Option<PathBuf>,
     authorization: Option<String>,
     headers: Vec<Header>,
-) -> Result<(), failure::Error> {
+) -> anyhow::Result<()> {
     use std::io::Write;
 
     let out: Box<dyn Write> = match output {
@@ -73,7 +73,7 @@ pub struct Header {
 }
 
 impl FromStr for Header {
-    type Err = failure::Error;
+    type Err = anyhow::Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         // error: colon required for name/value pair

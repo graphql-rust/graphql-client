@@ -1,4 +1,4 @@
-use failure::*;
+use anyhow::*;
 use graphql_client::*;
 use log::*;
 use prettytable::*;
@@ -27,7 +27,7 @@ struct Env {
     github_api_token: String,
 }
 
-fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), failure::Error> {
+fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), anyhow::Error> {
     let mut parts = repo_name.split('/');
     match (parts.next(), parts.next()) {
         (Some(owner), Some(name)) => Ok((owner, name)),
@@ -35,7 +35,7 @@ fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), failure::Error> {
     }
 }
 
-fn main() -> Result<(), failure::Error> {
+fn main() -> Result<(), anyhow::Error> {
     dotenv::dotenv().ok();
     env_logger::init();
 

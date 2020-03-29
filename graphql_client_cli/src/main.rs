@@ -69,7 +69,7 @@ enum Cli {
     },
 }
 
-fn main() -> Result<(), failure::Error> {
+fn main() -> anyhow::Result<()> {
     set_env_logger();
 
     let cli = Cli::from_args();
