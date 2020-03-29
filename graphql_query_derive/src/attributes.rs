@@ -1,7 +1,6 @@
 use anyhow::*;
 use graphql_client_codegen::deprecation::DeprecationStrategy;
 use graphql_client_codegen::normalization::Normalization;
-use syn;
 
 const DEPRECATION_ERROR: &str = "deprecated must be one of 'allow', 'deny', or 'warn'";
 const NORMALIZATION_ERROR: &str = "normalization must be one of 'none' or 'rust'";
