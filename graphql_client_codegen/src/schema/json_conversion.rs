@@ -148,12 +148,11 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
         .expect("enm.enum_values.as_mut()")
         .iter_mut()
         .map(|v| {
-            std::mem::replace(
+            std::mem::take(
                 v.name
                     .as_mut()
                     .take()
                     .expect("variant.name.as_mut().take()"),
-                String::new(),
             )
         })
         .collect();
@@ -192,10 +191,7 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
     }
 
     let interface = super::StoredInterface {
-        name: std::mem::replace(
-            iface.name.as_mut().expect("iface.name.as_mut"),
-            String::new(),
-        ),
+        name: std::mem::take(iface.name.as_mut().expect("iface.name.as_mut")),
         fields: field_ids,
     };
 
@@ -293,7 +289,7 @@ fn ingest_input(schema: &mut Schema, input: &mut FullType) {
         .iter_mut()
     {
         fields.push((
-            std::mem::replace(&mut field.input_value.name, String::new()),
+            std::mem::take(&mut field.input_value.name),
             resolve_input_field_type(schema, &mut field.input_value.type_),
         ));
     }

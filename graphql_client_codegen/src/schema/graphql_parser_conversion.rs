@@ -136,7 +136,7 @@ fn populate_names_map(schema: &mut Schema, definitions: &[Definition]) {
 
 fn ingest_union(schema: &mut Schema, union: &mut UnionType) {
     let stored_union = super::StoredUnion {
-        name: std::mem::replace(&mut union.name, String::new()),
+        name: std::mem::take(&mut union.name),
         variants: union
             .types
             .iter()
@@ -153,7 +153,7 @@ fn ingest_object(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectTy
 
     for field in obj.fields.iter_mut() {
         let field = super::StoredField {
-            name: std::mem::replace(&mut field.name, String::new()),
+            name: std::mem::take(&mut field.name),
             r#type: resolve_field_type(schema, &field.field_type),
             parent: super::StoredFieldParent::Object(object_id),
             deprecation: find_deprecation(&field.directives),
@@ -164,7 +164,7 @@ fn ingest_object(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectTy
 
     // Ingest the object itself
     let object = super::StoredObject {
-        name: std::mem::replace(&mut obj.name, String::new()),
+        name: std::mem::take(&mut obj.name),
         fields: field_ids,
         implements_interfaces: obj
             .implements_interfaces
@@ -177,7 +177,7 @@ fn ingest_object(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectTy
 }
 
 fn ingest_scalar(schema: &mut Schema, scalar: &mut graphql_parser::schema::ScalarType) {
-    let name = std::mem::replace(&mut scalar.name, String::new());
+    let name = std::mem::take(&mut scalar.name);
     let name_for_names = name.clone();
 
     let scalar = super::StoredScalar { name };
@@ -191,11 +191,11 @@ fn ingest_scalar(schema: &mut Schema, scalar: &mut graphql_parser::schema::Scala
 
 fn ingest_enum(schema: &mut Schema, enm: &mut graphql_parser::schema::EnumType) {
     let enm = super::StoredEnum {
-        name: std::mem::replace(&mut enm.name, String::new()),
+        name: std::mem::take(&mut enm.name),
         variants: enm
             .values
             .iter_mut()
-            .map(|value| std::mem::replace(&mut value.name, String::new()))
+            .map(|value| std::mem::take(&mut value.name))
             .collect(),
     };
 
@@ -212,7 +212,7 @@ fn ingest_interface(schema: &mut Schema, interface: &mut graphql_parser::schema:
 
     for field in interface.fields.iter_mut() {
         let field = super::StoredField {
-            name: std::mem::replace(&mut field.name, String::new()),
+            name: std::mem::take(&mut field.name),
             r#type: resolve_field_type(schema, &field.field_type),
             parent: super::StoredFieldParent::Interface(interface_id),
             deprecation: find_deprecation(&field.directives),
@@ -222,7 +222,7 @@ fn ingest_interface(schema: &mut Schema, interface: &mut graphql_parser::schema:
     }
 
     let new_interface = super::StoredInterface {
-        name: std::mem::replace(&mut interface.name, String::new()),
+        name: std::mem::take(&mut interface.name),
         fields: field_ids,
     };
 
@@ -247,14 +247,14 @@ fn find_deprecation(directives: &[parser::Directive]) -> Option<Option<String>> 
 
 fn ingest_input(schema: &mut Schema, input: &mut parser::InputObjectType) {
     let input = super::StoredInputType {
-        name: std::mem::replace(&mut input.name, String::new()),
+        name: std::mem::take(&mut input.name),
         fields: input
             .fields
             .iter_mut()
             .map(|val| {
                 let field_type = super::resolve_field_type(schema, &val.value_type);
                 (
-                    std::mem::replace(&mut val.name, String::new()),
+                    std::mem::take(&mut val.name),
                     StoredInputFieldType {
                         qualifiers: field_type.qualifiers,
                         id: field_type.id,
