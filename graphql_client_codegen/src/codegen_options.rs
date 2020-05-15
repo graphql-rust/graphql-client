@@ -87,9 +87,34 @@ impl GraphQLClientCodegenOptions {
         self.variables_derives = Some(variables_derives);
     }
 
-    /// Comma-separated list of additional traits we want to derive for responses.
-    pub fn response_derives(&self) -> Option<&str> {
-        self.response_derives.as_deref()
+    /// All the variable derives to be rendered.
+    pub fn all_variable_derives(&self) -> impl Iterator<Item = &str> {
+        let additional = self
+            .variables_derives
+            .as_deref()
+            .into_iter()
+            .flat_map(|s| s.split(','));
+
+        std::iter::once("Serialize").chain(additional)
+    }
+
+    /// Traits we want to derive for responses.
+    pub fn all_response_derives(&self) -> impl Iterator<Item = &str> {
+        let base_derives = std::iter::once("Deserialize");
+
+        base_derives.chain(
+            self.additional_response_derives()
+                .filter(|additional| additional != &"Deserialize"),
+        )
+    }
+
+    /// Additional traits we want to derive for responses.
+    pub fn additional_response_derives(&self) -> impl Iterator<Item = &str> {
+        self.response_derives
+            .as_deref()
+            .into_iter()
+            .flat_map(|s| s.split(','))
+            .map(|s| s.trim())
     }
 
     /// Comma-separated list of additional traits we want to derive for responses.
@@ -146,7 +171,7 @@ impl GraphQLClientCodegenOptions {
     }
 
     /// The normalization mode for the generated code.
-    pub fn normalization(&self) -> Normalization {
-        self.normalization
+    pub fn normalization(&self) -> &Normalization {
+        &self.normalization
     }
 }

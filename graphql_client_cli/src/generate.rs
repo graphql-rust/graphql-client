@@ -59,7 +59,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
         options.set_deprecation_strategy(deprecation_strategy);
     }
 
-    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options).map_err(|fail| fail.compat())?;
+    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)?;
 
     let generated_code = gen.to_string();
     let generated_code = if cfg!(feature = "rustfmt") && !no_formatting {
@@ -103,5 +103,5 @@ fn format(codes: &str) -> String {
         return String::from_utf8(out).unwrap();
     }
     #[cfg(not(feature = "rustfmt"))]
-    unreachable!()
+    unreachable!("called format() without the rustfmt feature")
 }

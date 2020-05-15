@@ -59,6 +59,7 @@ A typed GraphQL client library for Rust.
 
   ```rust
   use graphql_client::{GraphQLQuery, Response};
+  use std::error::Error;
 
   #[derive(GraphQLQuery)]
   #[graphql(
@@ -68,7 +69,7 @@ A typed GraphQL client library for Rust.
   )]
   pub struct UnionQuery;
 
-  fn perform_my_query(variables: union_query::Variables) -> Result<(), anyhow::Error> {
+  fn perform_my_query(variables: union_query::Variables) -> Result<(), Box<dyn Error>> {
 
       // this is the important line
       let request_body = UnionQuery::build_query(variables);

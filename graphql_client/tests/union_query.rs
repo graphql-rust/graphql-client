@@ -1,6 +1,7 @@
 use graphql_client::*;
 
 const RESPONSE: &str = include_str!("unions/union_query_response.json");
+const FRAGMENT_AND_MORE_RESPONSE: &str = include_str!("unions/fragment_and_more_response.json");
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -17,6 +18,14 @@ pub struct UnionQuery;
     response_derives = "PartialEq, Debug"
 )]
 pub struct FragmentOnUnion;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    query_path = "tests/unions/union_query.graphql",
+    schema_path = "tests/unions/union_schema.graphql",
+    response_derives = "PartialEq, Debug"
+)]
+pub struct FragmentAndMoreOnUnion;
 
 #[test]
 fn union_query_deserialization() {
@@ -53,26 +62,63 @@ fn fragment_on_union() {
 
     let expected = fragment_on_union::ResponseData {
         names: Some(vec![
-            fragment_on_union::FragmentOnUnionNames::Person(
-                fragment_on_union::FragmentOnUnionNamesOnPerson {
-                    first_name: "Audrey".to_string(),
-                },
-            ),
-            fragment_on_union::FragmentOnUnionNames::Dog(
-                fragment_on_union::FragmentOnUnionNamesOnDog {
-                    name: "Laïka".to_string(),
-                },
-            ),
-            fragment_on_union::FragmentOnUnionNames::Organization(
-                fragment_on_union::FragmentOnUnionNamesOnOrganization {
+            fragment_on_union::NamesFragment::Person(fragment_on_union::NamesFragmentOnPerson {
+                first_name: "Audrey".to_string(),
+            }),
+            fragment_on_union::NamesFragment::Dog(fragment_on_union::NamesFragmentOnDog {
+                name: "Laïka".to_string(),
+            }),
+            fragment_on_union::NamesFragment::Organization(
+                fragment_on_union::NamesFragmentOnOrganization {
                     title: "Mozilla".to_string(),
                 },
             ),
-            fragment_on_union::FragmentOnUnionNames::Dog(
-                fragment_on_union::FragmentOnUnionNamesOnDog {
-                    name: "Norbert".to_string(),
-                },
-            ),
+            fragment_on_union::NamesFragment::Dog(fragment_on_union::NamesFragmentOnDog {
+                name: "Norbert".to_string(),
+            }),
+        ]),
+    };
+
+    assert_eq!(response_data, expected);
+}
+
+#[test]
+fn fragment_and_more_on_union() {
+    use fragment_and_more_on_union::*;
+
+    let response_data: fragment_and_more_on_union::ResponseData =
+        serde_json::from_str(FRAGMENT_AND_MORE_RESPONSE).unwrap();
+
+    let expected = fragment_and_more_on_union::ResponseData {
+        names: Some(vec![
+            FragmentAndMoreOnUnionNames {
+                names_fragment: NamesFragment::Person(NamesFragmentOnPerson {
+                    first_name: "Larry".into(),
+                }),
+                on: FragmentAndMoreOnUnionNamesOn::Person,
+            },
+            FragmentAndMoreOnUnionNames {
+                names_fragment: NamesFragment::Dog(NamesFragmentOnDog {
+                    name: "Laïka".into(),
+                }),
+                on: FragmentAndMoreOnUnionNamesOn::Dog(FragmentAndMoreOnUnionNamesOnDog {
+                    is_good_dog: true,
+                }),
+            },
+            FragmentAndMoreOnUnionNames {
+                names_fragment: NamesFragment::Organization(NamesFragmentOnOrganization {
+                    title: "Mozilla".into(),
+                }),
+                on: FragmentAndMoreOnUnionNamesOn::Organization,
+            },
+            FragmentAndMoreOnUnionNames {
+                names_fragment: NamesFragment::Dog(NamesFragmentOnDog {
+                    name: "Norbert".into(),
+                }),
+                on: FragmentAndMoreOnUnionNamesOn::Dog(FragmentAndMoreOnUnionNamesOnDog {
+                    is_good_dog: true,
+                }),
+            },
         ]),
     };
 

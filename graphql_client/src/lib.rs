@@ -31,6 +31,7 @@ doc_comment::doctest!("../../README.md");
 /// ```
 /// use graphql_client::*;
 /// use serde_json::json;
+/// use std::error::Error;
 ///
 /// #[derive(GraphQLQuery)]
 /// #[graphql(
@@ -39,7 +40,7 @@ doc_comment::doctest!("../../README.md");
 /// )]
 /// struct StarWarsQuery;
 ///
-/// fn main() -> Result<(), anyhow::Error> {
+/// fn main() -> Result<(), Box<dyn Error>> {
 ///     use graphql_client::GraphQLQuery;
 ///
 ///     let variables = star_wars_query::Variables {
@@ -124,13 +125,14 @@ impl Display for PathFragment {
 /// # use serde_json::json;
 /// # use serde::Deserialize;
 /// # use graphql_client::GraphQLQuery;
+/// # use std::error::Error;
 /// #
 /// # #[derive(Debug, Deserialize, PartialEq)]
 /// # struct ResponseData {
 /// #     something: i32
 /// # }
 /// #
-/// # fn main() -> Result<(), anyhow::Error> {
+/// # fn main() -> Result<(), Box<dyn Error>> {
 /// use graphql_client::*;
 ///
 /// let body: Response<ResponseData> = serde_json::from_value(json!({
@@ -230,6 +232,7 @@ impl Display for Error {
 /// # use serde_json::json;
 /// # use serde::Deserialize;
 /// # use graphql_client::GraphQLQuery;
+/// # use std::error::Error;
 /// #
 /// # #[derive(Debug, Deserialize, PartialEq)]
 /// # struct User {
@@ -247,7 +250,7 @@ impl Display for Error {
 /// #     dogs: Vec<Dog>,
 /// # }
 /// #
-/// # fn main() -> Result<(), anyhow::Error> {
+/// # fn main() -> Result<(), Box<dyn Error>> {
 /// use graphql_client::Response;
 ///
 /// let body: Response<ResponseData> = serde_json::from_value(json!({

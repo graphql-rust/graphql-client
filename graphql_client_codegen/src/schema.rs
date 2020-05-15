@@ -1,435 +1,525 @@
-use crate::deprecation::DeprecationStatus;
-use crate::enums::{EnumVariant, GqlEnum};
-use crate::field_type::FieldType;
-use crate::inputs::GqlInput;
-use crate::interfaces::GqlInterface;
-use crate::objects::{GqlObject, GqlObjectField};
-use crate::scalars::Scalar;
-use crate::unions::GqlUnion;
-use failure::*;
-use graphql_parser::{self, schema};
-use std::collections::{BTreeMap, BTreeSet};
+mod graphql_parser_conversion;
+mod json_conversion;
+
+#[cfg(test)]
+mod tests;
+
+use crate::query::UsedTypes;
+use crate::type_qualifiers::GraphqlTypeQualifier;
+use std::collections::HashMap;
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
-/// Intermediate representation for a parsed GraphQL schema used during code generation.
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Schema<'schema> {
-    pub(crate) enums: BTreeMap<&'schema str, GqlEnum<'schema>>,
-    pub(crate) inputs: BTreeMap<&'schema str, GqlInput<'schema>>,
-    pub(crate) interfaces: BTreeMap<&'schema str, GqlInterface<'schema>>,
-    pub(crate) objects: BTreeMap<&'schema str, GqlObject<'schema>>,
-    pub(crate) scalars: BTreeMap<&'schema str, Scalar<'schema>>,
-    pub(crate) unions: BTreeMap<&'schema str, GqlUnion<'schema>>,
-    pub(crate) query_type: Option<&'schema str>,
-    pub(crate) mutation_type: Option<&'schema str>,
-    pub(crate) subscription_type: Option<&'schema str>,
+#[derive(Debug, PartialEq, Clone)]
+struct StoredObjectField {
+    name: String,
+    object: ObjectId,
 }
 
-impl<'schema> Schema<'schema> {
-    pub(crate) fn new() -> Schema<'schema> {
-        Schema {
-            enums: BTreeMap::new(),
-            inputs: BTreeMap::new(),
-            interfaces: BTreeMap::new(),
-            objects: BTreeMap::new(),
-            scalars: BTreeMap::new(),
-            unions: BTreeMap::new(),
+#[derive(Debug, PartialEq, Clone)]
+pub(crate) struct StoredObject {
+    pub(crate) name: String,
+    pub(crate) fields: Vec<StoredFieldId>,
+    pub(crate) implements_interfaces: Vec<InterfaceId>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub(crate) struct StoredField {
+    pub(crate) name: String,
+    pub(crate) r#type: StoredFieldType,
+    pub(crate) parent: StoredFieldParent,
+    /// `Some(None)` should be interpreted as "deprecated, without reason"
+    pub(crate) deprecation: Option<Option<String>>,
+}
+
+impl StoredField {
+    pub(crate) fn deprecation(&self) -> Option<Option<&str>> {
+        self.deprecation.as_ref().map(|inner| inner.as_deref())
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub(crate) enum StoredFieldParent {
+    Object(ObjectId),
+    Interface(InterfaceId),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+pub(crate) struct ObjectId(u32);
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+pub(crate) struct ObjectFieldId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+pub(crate) struct InterfaceId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+pub(crate) struct ScalarId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+pub(crate) struct UnionId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+pub(crate) struct EnumId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+pub(crate) struct InputId(u32);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct StoredFieldId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct InputFieldId(usize);
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct StoredInterface {
+    name: String,
+    fields: Vec<StoredFieldId>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct StoredFieldType {
+    pub(crate) id: TypeId,
+    /// An ordered list of qualifiers, from outer to inner.
+    ///
+    /// e.g. `[Int]!` would have `vec![List, Optional]`, but `[Int!]` would have `vec![Optional,
+    /// List]`.
+    pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct StoredUnion {
+    pub(crate) name: String,
+    pub(crate) variants: Vec<TypeId>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct StoredScalar {
+    pub(crate) name: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+pub(crate) enum TypeId {
+    Object(ObjectId),
+    Scalar(ScalarId),
+    Interface(InterfaceId),
+    Union(UnionId),
+    Enum(EnumId),
+    Input(InputId),
+}
+
+impl TypeId {
+    fn r#enum(id: usize) -> Self {
+        TypeId::Enum(EnumId(id))
+    }
+
+    fn interface(id: usize) -> Self {
+        TypeId::Interface(InterfaceId(id))
+    }
+
+    fn union(id: usize) -> Self {
+        TypeId::Union(UnionId(id))
+    }
+
+    fn object(id: u32) -> Self {
+        TypeId::Object(ObjectId(id))
+    }
+
+    fn input(id: u32) -> Self {
+        TypeId::Input(InputId(id))
+    }
+
+    fn as_interface_id(&self) -> Option<InterfaceId> {
+        match self {
+            TypeId::Interface(id) => Some(*id),
+            _ => None,
+        }
+    }
+
+    fn as_object_id(&self) -> Option<ObjectId> {
+        match self {
+            TypeId::Object(id) => Some(*id),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_input_id(&self) -> Option<InputId> {
+        match self {
+            TypeId::Input(id) => Some(*id),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_scalar_id(&self) -> Option<ScalarId> {
+        match self {
+            TypeId::Scalar(id) => Some(*id),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_enum_id(&self) -> Option<EnumId> {
+        match self {
+            TypeId::Enum(id) => Some(*id),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn name<'a>(&self, schema: &'a Schema) -> &'a str {
+        match self {
+            TypeId::Object(obj) => schema.get_object(*obj).name.as_str(),
+            TypeId::Scalar(s) => schema.get_scalar(*s).name.as_str(),
+            TypeId::Interface(s) => schema.get_interface(*s).name.as_str(),
+            TypeId::Union(s) => schema.get_union(*s).name.as_str(),
+            TypeId::Enum(s) => schema.get_enum(*s).name.as_str(),
+            TypeId::Input(s) => schema.get_input(*s).name.as_str(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct StoredEnum {
+    pub(crate) name: String,
+    pub(crate) variants: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct StoredInputFieldType {
+    pub(crate) id: TypeId,
+    pub(crate) qualifiers: Vec<GraphqlTypeQualifier>,
+}
+
+impl StoredInputFieldType {
+    /// A type is indirected if it is a (flat or nested) list type, optional or not.
+    ///
+    /// We use this to determine whether a type needs to be boxed for recursion.
+    pub(crate) fn is_indirected(&self) -> bool {
+        self.qualifiers
+            .iter()
+            .any(|qualifier| qualifier == &GraphqlTypeQualifier::List)
+    }
+
+    pub(crate) fn is_optional(&self) -> bool {
+        self.qualifiers
+            .get(0)
+            .map(|qualifier| !qualifier.is_required())
+            .unwrap_or(true)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct StoredInputType {
+    pub(crate) name: String,
+    pub(crate) fields: Vec<(String, StoredInputFieldType)>,
+}
+
+/// Intermediate representation for a parsed GraphQL schema used during code generation.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Schema {
+    stored_objects: Vec<StoredObject>,
+    stored_fields: Vec<StoredField>,
+    stored_interfaces: Vec<StoredInterface>,
+    stored_unions: Vec<StoredUnion>,
+    stored_scalars: Vec<StoredScalar>,
+    stored_enums: Vec<StoredEnum>,
+    stored_inputs: Vec<StoredInputType>,
+    names: HashMap<String, TypeId>,
+
+    pub(crate) query_type: Option<ObjectId>,
+    pub(crate) mutation_type: Option<ObjectId>,
+    pub(crate) subscription_type: Option<ObjectId>,
+}
+
+impl Schema {
+    pub(crate) fn new() -> Schema {
+        let mut schema = Schema {
+            stored_objects: Vec::new(),
+            stored_interfaces: Vec::new(),
+            stored_fields: Vec::new(),
+            stored_unions: Vec::new(),
+            stored_scalars: Vec::with_capacity(DEFAULT_SCALARS.len()),
+            stored_enums: Vec::new(),
+            stored_inputs: Vec::new(),
+            names: HashMap::new(),
             query_type: None,
             mutation_type: None,
             subscription_type: None,
+        };
+
+        schema.push_default_scalars();
+
+        schema
+    }
+
+    fn push_default_scalars(&mut self) {
+        for scalar in DEFAULT_SCALARS {
+            let id = self.push_scalar(StoredScalar {
+                name: (*scalar).to_owned(),
+            });
+
+            self.names.insert((*scalar).to_owned(), TypeId::Scalar(id));
         }
     }
 
-    pub(crate) fn ingest_interface_implementations(
-        &mut self,
-        impls: BTreeMap<&'schema str, Vec<&'schema str>>,
-    ) -> Result<(), failure::Error> {
-        impls
-            .into_iter()
-            .map(|(iface_name, implementors)| {
-                let iface = self
-                    .interfaces
-                    .get_mut(&iface_name)
-                    .ok_or_else(|| format_err!("interface not found: {}", iface_name))?;
-                iface.implemented_by = implementors.iter().cloned().collect();
-                Ok(())
-            })
-            .collect()
+    fn push_object(&mut self, object: StoredObject) -> ObjectId {
+        let id = ObjectId(self.stored_objects.len() as u32);
+        self.stored_objects.push(object);
+
+        id
     }
 
-    pub(crate) fn require(&self, typename_: &str) {
-        DEFAULT_SCALARS
+    fn push_interface(&mut self, interface: StoredInterface) -> InterfaceId {
+        let id = InterfaceId(self.stored_interfaces.len());
+
+        self.stored_interfaces.push(interface);
+
+        id
+    }
+
+    fn push_scalar(&mut self, scalar: StoredScalar) -> ScalarId {
+        let id = ScalarId(self.stored_scalars.len());
+
+        self.stored_scalars.push(scalar);
+
+        id
+    }
+
+    fn push_enum(&mut self, enm: StoredEnum) -> EnumId {
+        let id = EnumId(self.stored_enums.len());
+
+        self.stored_enums.push(enm);
+
+        id
+    }
+
+    fn push_field(&mut self, field: StoredField) -> StoredFieldId {
+        let id = StoredFieldId(self.stored_fields.len());
+
+        self.stored_fields.push(field);
+
+        id
+    }
+
+    pub(crate) fn query_type(&self) -> ObjectId {
+        self.query_type
+            .expect("Query operation type must be defined")
+    }
+
+    pub(crate) fn mutation_type(&self) -> Option<ObjectId> {
+        self.mutation_type
+    }
+
+    pub(crate) fn subscription_type(&self) -> Option<ObjectId> {
+        self.subscription_type
+    }
+
+    pub(crate) fn get_interface(&self, interface_id: InterfaceId) -> &StoredInterface {
+        self.stored_interfaces.get(interface_id.0).unwrap()
+    }
+
+    pub(crate) fn get_input(&self, input_id: InputId) -> &StoredInputType {
+        self.stored_inputs.get(input_id.0 as usize).unwrap()
+    }
+
+    pub(crate) fn get_object(&self, object_id: ObjectId) -> &StoredObject {
+        self.stored_objects
+            .get(object_id.0 as usize)
+            .expect("Schema::get_object")
+    }
+
+    pub(crate) fn get_field(&self, field_id: StoredFieldId) -> &StoredField {
+        self.stored_fields.get(field_id.0).unwrap()
+    }
+
+    pub(crate) fn get_enum(&self, enum_id: EnumId) -> &StoredEnum {
+        self.stored_enums.get(enum_id.0).unwrap()
+    }
+
+    pub(crate) fn get_scalar(&self, scalar_id: ScalarId) -> &StoredScalar {
+        self.stored_scalars.get(scalar_id.0).unwrap()
+    }
+
+    pub(crate) fn get_union(&self, union_id: UnionId) -> &StoredUnion {
+        self.stored_unions
+            .get(union_id.0)
+            .expect("Schema::get_union")
+    }
+
+    fn find_interface(&self, interface_name: &str) -> InterfaceId {
+        self.find_type_id(interface_name).as_interface_id().unwrap()
+    }
+
+    pub(crate) fn find_type(&self, type_name: &str) -> Option<TypeId> {
+        self.names.get(type_name).copied()
+    }
+
+    pub(crate) fn objects(&self) -> impl Iterator<Item = (ObjectId, &StoredObject)> {
+        self.stored_objects
             .iter()
-            .find(|&&s| s == typename_)
-            .map(|_| ())
-            .or_else(|| {
-                self.enums
-                    .get(typename_)
-                    .map(|enm| enm.is_required.set(true))
-            })
-            .or_else(|| self.inputs.get(typename_).map(|input| input.require(self)))
-            .or_else(|| {
-                self.objects
-                    .get(typename_)
-                    .map(|object| object.require(self))
-            })
-            .or_else(|| {
-                self.scalars
-                    .get(typename_)
-                    .map(|scalar| scalar.is_required.set(true))
-            });
+            .enumerate()
+            .map(|(idx, obj)| (ObjectId(idx as u32), obj))
     }
 
-    pub(crate) fn contains_scalar(&self, type_name: &str) -> bool {
-        DEFAULT_SCALARS.iter().any(|s| s == &type_name) || self.scalars.contains_key(type_name)
+    pub(crate) fn inputs(&self) -> impl Iterator<Item = (InputId, &StoredInputType)> {
+        self.stored_inputs
+            .iter()
+            .enumerate()
+            .map(|(idx, obj)| (InputId(idx as u32), obj))
     }
 
-    pub(crate) fn fragment_target(
-        &self,
-        target_name: &str,
-    ) -> Option<crate::fragments::FragmentTarget<'_>> {
-        self.objects
-            .get(target_name)
-            .map(crate::fragments::FragmentTarget::Object)
-            .or_else(|| {
-                self.interfaces
-                    .get(target_name)
-                    .map(crate::fragments::FragmentTarget::Interface)
-            })
-            .or_else(|| {
-                self.unions
-                    .get(target_name)
-                    .map(crate::fragments::FragmentTarget::Union)
-            })
-    }
-}
-
-impl<'schema> std::convert::From<&'schema graphql_parser::schema::Document> for Schema<'schema> {
-    fn from(ast: &'schema graphql_parser::schema::Document) -> Schema<'schema> {
-        let mut schema = Schema::new();
-
-        // Holds which objects implement which interfaces so we can populate GqlInterface#implemented_by later.
-        // It maps interface names to a vec of implementation names.
-        let mut interface_implementations: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
-
-        for definition in &ast.definitions {
-            match definition {
-                schema::Definition::TypeDefinition(ty_definition) => match ty_definition {
-                    schema::TypeDefinition::Object(obj) => {
-                        for implementing in &obj.implements_interfaces {
-                            let name = &obj.name;
-                            interface_implementations
-                                .entry(implementing)
-                                .and_modify(|objects| objects.push(name))
-                                .or_insert_with(|| vec![name]);
-                        }
-
-                        schema
-                            .objects
-                            .insert(&obj.name, GqlObject::from_graphql_parser_object(&obj));
-                    }
-                    schema::TypeDefinition::Enum(enm) => {
-                        schema.enums.insert(
-                            &enm.name,
-                            GqlEnum {
-                                name: &enm.name,
-                                description: enm.description.as_deref(),
-                                variants: enm
-                                    .values
-                                    .iter()
-                                    .map(|v| EnumVariant {
-                                        description: v.description.as_deref(),
-                                        name: &v.name,
-                                    })
-                                    .collect(),
-                                is_required: false.into(),
-                            },
-                        );
-                    }
-                    schema::TypeDefinition::Scalar(scalar) => {
-                        schema.scalars.insert(
-                            &scalar.name,
-                            Scalar {
-                                name: &scalar.name,
-                                description: scalar.description.as_deref(),
-                                is_required: false.into(),
-                            },
-                        );
-                    }
-                    schema::TypeDefinition::Union(union) => {
-                        let variants: BTreeSet<&str> =
-                            union.types.iter().map(String::as_str).collect();
-                        schema.unions.insert(
-                            &union.name,
-                            GqlUnion {
-                                name: &union.name,
-                                variants,
-                                description: union.description.as_deref(),
-                                is_required: false.into(),
-                            },
-                        );
-                    }
-                    schema::TypeDefinition::Interface(interface) => {
-                        let mut iface =
-                            GqlInterface::new(&interface.name, interface.description.as_deref());
-                        iface
-                            .fields
-                            .extend(interface.fields.iter().map(|f| GqlObjectField {
-                                description: f.description.as_deref(),
-                                name: f.name.as_str(),
-                                type_: FieldType::from(&f.field_type),
-                                deprecation: DeprecationStatus::Current,
-                            }));
-                        schema.interfaces.insert(&interface.name, iface);
-                    }
-                    schema::TypeDefinition::InputObject(input) => {
-                        schema.inputs.insert(&input.name, GqlInput::from(input));
-                    }
-                },
-                schema::Definition::DirectiveDefinition(_) => (),
-                schema::Definition::TypeExtension(_extension) => (),
-                schema::Definition::SchemaDefinition(definition) => {
-                    schema.query_type = definition.query.as_deref();
-                    schema.mutation_type = definition.mutation.as_deref();
-                    schema.subscription_type = definition.subscription.as_deref();
-                }
+    fn find_type_id(&self, type_name: &str) -> TypeId {
+        match self.names.get(type_name) {
+            Some(id) => *id,
+            None => {
+                panic!(
+                    "graphql-client-codegen internal error: failed to resolve TypeId for `{}°.",
+                    type_name
+                );
             }
         }
-
-        schema
-            .ingest_interface_implementations(interface_implementations)
-            .expect("schema ingestion");
-
-        schema
     }
 }
 
-impl<'schema>
-    std::convert::From<
-        &'schema graphql_introspection_query::introspection_response::IntrospectionResponse,
-    > for Schema<'schema>
+impl StoredInputType {
+    pub(crate) fn used_input_ids_recursive(&self, used_types: &mut UsedTypes, schema: &Schema) {
+        for type_id in self.fields.iter().map(|(_name, ty)| ty.id) {
+            match type_id {
+                TypeId::Input(input_id) => {
+                    if used_types.types.contains(&type_id) {
+                        continue;
+                    } else {
+                        used_types.types.insert(type_id);
+                        let input = schema.get_input(input_id);
+                        input.used_input_ids_recursive(used_types, schema);
+                    }
+                }
+                TypeId::Enum(_) | TypeId::Scalar(_) => {
+                    used_types.types.insert(type_id);
+                }
+                _ => (),
+            }
+        }
+    }
+
+    fn contains_type_without_indirection(&self, input_id: InputId, schema: &Schema) -> bool {
+        // The input type is recursive if any of its members contains it, without indirection
+        self.fields.iter().any(|(_name, field_type)| {
+            // the field is indirected, so no boxing is needed
+            if field_type.is_indirected() {
+                return false;
+            }
+
+            let field_input_id = field_type.id.as_input_id();
+
+            if let Some(field_input_id) = field_input_id {
+                if field_input_id == input_id {
+                    return true;
+                }
+
+                let input = schema.get_input(field_input_id);
+
+                // we check if the other input contains this one (without indirection)
+                input.contains_type_without_indirection(input_id, schema)
+            } else {
+                // the field is not referring to an input type
+                false
+            }
+        })
+    }
+}
+
+pub(crate) fn input_is_recursive_without_indirection(input_id: InputId, schema: &Schema) -> bool {
+    let input = schema.get_input(input_id);
+    input.contains_type_without_indirection(input_id, schema)
+}
+
+impl std::convert::From<graphql_parser::schema::Document> for Schema {
+    fn from(ast: graphql_parser::schema::Document) -> Schema {
+        graphql_parser_conversion::build_schema(ast)
+    }
+}
+
+impl std::convert::From<graphql_introspection_query::introspection_response::IntrospectionResponse>
+    for Schema
 {
     fn from(
-        src: &'schema graphql_introspection_query::introspection_response::IntrospectionResponse,
+        src: graphql_introspection_query::introspection_response::IntrospectionResponse,
     ) -> Self {
-        use graphql_introspection_query::introspection_response::__TypeKind;
+        json_conversion::build_schema(src)
+    }
+}
 
-        let mut schema = Schema::new();
-        let root = src
-            .as_schema()
-            .schema
-            .as_ref()
-            .expect("__schema is not null");
+pub(crate) fn resolve_field_type(
+    schema: &Schema,
+    inner: &graphql_parser::schema::Type,
+) -> StoredFieldType {
+    use crate::type_qualifiers::graphql_parser_depth;
+    use graphql_parser::schema::Type::*;
 
-        schema.query_type = root
-            .query_type
-            .as_ref()
-            .and_then(|ty| ty.name.as_ref())
-            .map(String::as_str);
-        schema.mutation_type = root
-            .mutation_type
-            .as_ref()
-            .and_then(|ty| ty.name.as_ref())
-            .map(String::as_str);
-        schema.subscription_type = root
-            .subscription_type
-            .as_ref()
-            .and_then(|ty| ty.name.as_ref())
-            .map(String::as_str);
+    let qualifiers_depth = graphql_parser_depth(inner);
+    let mut qualifiers = Vec::with_capacity(qualifiers_depth);
 
-        // Holds which objects implement which interfaces so we can populate GqlInterface#implemented_by later.
-        // It maps interface names to a vec of implementation names.
-        let mut interface_implementations: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+    let mut inner = inner;
 
-        for ty in root
-            .types
-            .as_ref()
-            .expect("types in schema")
-            .iter()
-            .filter_map(|t| t.as_ref().map(|t| &t.full_type))
-        {
-            let name: &str = ty.name.as_deref().expect("type definition name");
-
-            match ty.kind {
-                Some(__TypeKind::ENUM) => {
-                    let variants: Vec<EnumVariant<'_>> = ty
-                        .enum_values
-                        .as_ref()
-                        .expect("enum variants")
-                        .iter()
-                        .map(|t| {
-                            t.as_ref().map(|t| EnumVariant {
-                                description: t.description.as_deref(),
-                                name: t.name.as_deref().expect("enum variant name"),
-                            })
-                        })
-                        .filter_map(|t| t)
-                        .collect();
-                    let enm = GqlEnum {
-                        name,
-                        description: ty.description.as_deref(),
-                        variants,
-                        is_required: false.into(),
-                    };
-                    schema.enums.insert(name, enm);
+    loop {
+        match inner {
+            ListType(new_inner) => {
+                qualifiers.push(GraphqlTypeQualifier::List);
+                inner = new_inner;
+            }
+            NonNullType(new_inner) => {
+                qualifiers.push(GraphqlTypeQualifier::Required);
+                inner = new_inner;
+            }
+            NamedType(name) => {
+                return StoredFieldType {
+                    id: schema.find_type_id(name),
+                    qualifiers,
                 }
-                Some(__TypeKind::SCALAR) => {
-                    if DEFAULT_SCALARS.iter().find(|s| s == &&name).is_none() {
-                        schema.scalars.insert(
-                            name,
-                            Scalar {
-                                name,
-                                description: ty.description.as_deref(),
-                                is_required: false.into(),
-                            },
-                        );
-                    }
-                }
-                Some(__TypeKind::UNION) => {
-                    let variants: BTreeSet<&str> = ty
-                        .possible_types
-                        .as_ref()
-                        .unwrap()
-                        .iter()
-                        .filter_map(|t| t.as_ref().and_then(|t| t.type_ref.name.as_deref()))
-                        .collect();
-                    schema.unions.insert(
-                        name,
-                        GqlUnion {
-                            name: ty.name.as_deref().expect("unnamed union"),
-                            description: ty.description.as_deref(),
-                            variants,
-                            is_required: false.into(),
-                        },
-                    );
-                }
-                Some(__TypeKind::OBJECT) => {
-                    for implementing in ty
-                        .interfaces
-                        .as_deref()
-                        .unwrap_or_else(|| &[])
-                        .iter()
-                        .filter_map(Option::as_ref)
-                        .map(|t| &t.type_ref.name)
-                    {
-                        interface_implementations
-                            .entry(implementing.as_deref().expect("interface name"))
-                            .and_modify(|objects| objects.push(name))
-                            .or_insert_with(|| vec![name]);
-                    }
-
-                    schema
-                        .objects
-                        .insert(name, GqlObject::from_introspected_schema_json(ty));
-                }
-                Some(__TypeKind::INTERFACE) => {
-                    let mut iface = GqlInterface::new(name, ty.description.as_deref());
-                    iface.fields.extend(
-                        ty.fields
-                            .as_ref()
-                            .expect("interface fields")
-                            .iter()
-                            .filter_map(Option::as_ref)
-                            .map(|f| GqlObjectField {
-                                description: f.description.as_deref(),
-                                name: f.name.as_ref().expect("field name").as_str(),
-                                type_: FieldType::from(f.type_.as_ref().expect("field type")),
-                                deprecation: DeprecationStatus::Current,
-                            }),
-                    );
-                    schema.interfaces.insert(name, iface);
-                }
-                Some(__TypeKind::INPUT_OBJECT) => {
-                    schema.inputs.insert(name, GqlInput::from(ty));
-                }
-                _ => unimplemented!("unimplemented definition"),
             }
         }
-
-        schema
-            .ingest_interface_implementations(interface_implementations)
-            .expect("schema ingestion");
-
-        schema
     }
 }
 
-pub(crate) enum ParsedSchema {
-    GraphQLParser(graphql_parser::schema::Document),
-    Json(graphql_introspection_query::introspection_response::IntrospectionResponse),
+pub(crate) trait ObjectLike {
+    fn name(&self) -> &str;
+
+    fn get_field_by_name<'a>(
+        &'a self,
+        name: &str,
+        schema: &'a Schema,
+    ) -> Option<(StoredFieldId, &'a StoredField)>;
 }
 
-impl<'schema> From<&'schema ParsedSchema> for Schema<'schema> {
-    fn from(parsed_schema: &'schema ParsedSchema) -> Schema<'schema> {
-        match parsed_schema {
-            ParsedSchema::GraphQLParser(s) => s.into(),
-            ParsedSchema::Json(s) => s.into(),
-        }
+impl ObjectLike for StoredObject {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn get_field_by_name<'a>(
+        &'a self,
+        name: &str,
+        schema: &'a Schema,
+    ) -> Option<(StoredFieldId, &'a StoredField)> {
+        self.fields
+            .iter()
+            .map(|field_id| (*field_id, schema.get_field(*field_id)))
+            .find(|(_, f)| f.name == name)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::constants::*;
+impl ObjectLike for StoredInterface {
+    fn name(&self) -> &str {
+        &self.name
+    }
 
-    #[test]
-    fn build_schema_works() {
-        let gql_schema = include_str!("tests/star_wars_schema.graphql");
-        let gql_schema = graphql_parser::parse_schema(gql_schema).unwrap();
-        let built = Schema::from(&gql_schema);
-        assert_eq!(
-            built.objects.get("Droid"),
-            Some(&GqlObject {
-                description: None,
-                name: "Droid",
-                fields: vec![
-                    GqlObjectField {
-                        description: None,
-                        name: TYPENAME_FIELD,
-                        type_: FieldType::new(string_type()),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "id",
-                        type_: FieldType::new("ID").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "name",
-                        type_: FieldType::new("String").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "friends",
-                        type_: FieldType::new("Character").list(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "friendsConnection",
-                        type_: FieldType::new("FriendsConnection").nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "appearsIn",
-                        type_: FieldType::new("Episode").list().nonnull(),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                    GqlObjectField {
-                        description: None,
-                        name: "primaryFunction",
-                        type_: FieldType::new("String"),
-                        deprecation: DeprecationStatus::Current,
-                    },
-                ],
-                is_required: false.into(),
-            })
-        )
+    fn get_field_by_name<'a>(
+        &'a self,
+        name: &str,
+        schema: &'a Schema,
+    ) -> Option<(StoredFieldId, &'a StoredField)> {
+        self.fields
+            .iter()
+            .map(|field_id| (*field_id, schema.get_field(*field_id)))
+            .find(|(_, field)| field.name == name)
     }
 }

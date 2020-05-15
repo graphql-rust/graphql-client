@@ -78,7 +78,7 @@ impl<'de> Deserialize<'de> for __DirectiveLocation {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum __TypeKind {
     SCALAR,
     OBJECT,
@@ -130,11 +130,11 @@ pub struct FullType {
     pub kind: Option<__TypeKind>,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub fields: Option<Vec<Option<FullTypeFields>>>,
-    pub input_fields: Option<Vec<Option<FullTypeInputFields>>>,
-    pub interfaces: Option<Vec<Option<FullTypeInterfaces>>>,
-    pub enum_values: Option<Vec<Option<FullTypeEnumValues>>>,
-    pub possible_types: Option<Vec<Option<FullTypePossibleTypes>>>,
+    pub fields: Option<Vec<FullTypeFields>>,
+    pub input_fields: Option<Vec<FullTypeInputFields>>,
+    pub interfaces: Option<Vec<FullTypeInterfaces>>,
+    pub enum_values: Option<Vec<FullTypeEnumValues>>,
+    pub possible_types: Option<Vec<FullTypePossibleTypes>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -196,19 +196,14 @@ pub struct FullTypePossibleTypes {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InputValue {
-    pub name: Option<String>,
+    pub name: String,
     pub description: Option<String>,
     #[serde(rename = "type")]
-    pub type_: Option<InputValueType>,
+    pub type_: InputValueType,
     pub default_value: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InputValueType {
-    #[serde(flatten)]
-    pub type_ref: TypeRef,
-}
+type InputValueType = TypeRef;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

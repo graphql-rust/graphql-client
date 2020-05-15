@@ -1,163 +1,48 @@
-use crate::fragments::GqlFragment;
-use crate::normalization::Normalization;
-use crate::operations::Operation;
-use crate::query::QueryContext;
-use crate::schema;
-use crate::selection::Selection;
-use failure::*;
-use graphql_parser::query;
-use proc_macro2::TokenStream;
-use quote::*;
+mod enums;
+mod inputs;
+mod selection;
+mod shared;
 
-/// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
-pub(crate) fn select_operation<'query>(
-    query: &'query query::Document,
-    struct_name: &str,
-    norm: Normalization,
-) -> Option<Operation<'query>> {
-    let operations = all_operations(query);
-
-    operations
-        .iter()
-        .find(|op| norm.operation(&op.name) == struct_name)
-        .map(ToOwned::to_owned)
-}
-
-pub(crate) fn all_operations(query: &query::Document) -> Vec<Operation<'_>> {
-    let mut operations: Vec<Operation<'_>> = Vec::new();
-
-    for definition in &query.definitions {
-        if let query::Definition::Operation(op) = definition {
-            operations.push(op.into());
-        }
-    }
-    operations
-}
+use crate::{
+    query::*,
+    schema::{InputId, TypeId},
+    type_qualifiers::GraphqlTypeQualifier,
+    GraphQLClientCodegenOptions,
+};
+use heck::SnakeCase;
+use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
+use selection::*;
+use std::collections::BTreeMap;
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
-    schema: &schema::Schema<'_>,
-    query: &query::Document,
-    operation: &Operation<'_>,
-    options: &crate::GraphQLClientCodegenOptions,
-) -> Result<TokenStream, failure::Error> {
-    let mut context = QueryContext::new(
-        schema,
-        options.deprecation_strategy(),
-        options.normalization(),
+    operation_id: OperationId,
+    options: &GraphQLClientCodegenOptions,
+    query: BoundQuery<'_>,
+) -> anyhow::Result<TokenStream> {
+    let all_used_types = all_used_types(operation_id, &query);
+    let response_derives = render_derives(options.all_response_derives());
+    let variable_derives = render_derives(options.all_variable_derives());
+
+    let scalar_definitions = generate_scalar_definitions(&all_used_types, options, query);
+    let enum_definitions = enums::generate_enum_definitions(&all_used_types, options, query);
+    let fragment_definitions =
+        generate_fragment_definitions(&all_used_types, &response_derives, options, &query);
+    let input_object_definitions = inputs::generate_input_object_definitions(
+        &all_used_types,
+        options,
+        &variable_derives,
+        &query,
     );
 
-    if let Some(derives) = options.variables_derives() {
-        context.ingest_variables_derives(&derives)?;
-    }
+    let variables_struct =
+        generate_variables_struct(operation_id, &variable_derives, options, &query);
 
-    if let Some(derives) = options.response_derives() {
-        context.ingest_response_derives(&derives)?;
-    }
+    let definitions =
+        render_response_data_fields(operation_id, options, &query).render(&response_derives);
 
-    let mut definitions = Vec::new();
-
-    for definition in &query.definitions {
-        match definition {
-            query::Definition::Operation(_op) => (),
-            query::Definition::Fragment(fragment) => {
-                let &query::TypeCondition::On(ref on) = &fragment.type_condition;
-                let on = schema.fragment_target(on).ok_or_else(|| {
-                    format_err!(
-                        "Fragment {} is defined on unknown type: {}",
-                        &fragment.name,
-                        on,
-                    )
-                })?;
-                context.fragments.insert(
-                    &fragment.name,
-                    GqlFragment {
-                        name: &fragment.name,
-                        selection: Selection::from(&fragment.selection_set),
-                        on,
-                        is_required: false.into(),
-                    },
-                );
-            }
-        }
-    }
-
-    let response_data_fields = {
-        let root_name = operation.root_name(&context.schema);
-        let opt_definition = context.schema.objects.get(&root_name);
-        let definition = if let Some(definition) = opt_definition {
-            definition
-        } else {
-            panic!(
-                "operation type '{:?}' not in schema",
-                operation.operation_type
-            );
-        };
-        let prefix = &operation.name;
-        let selection = &operation.selection;
-
-        if operation.is_subscription() && selection.len() > 1 {
-            return Err(format_err!(
-                "{}",
-                crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR
-            ));
-        }
-
-        definitions.extend(definition.field_impls_for_selection(&context, &selection, &prefix)?);
-        definition.response_fields_for_selection(&context, &selection, &prefix)?
-    };
-
-    let enum_definitions = context.schema.enums.values().filter_map(|enm| {
-        if enm.is_required.get() {
-            Some(enm.to_rust(&context))
-        } else {
-            None
-        }
-    });
-    let fragment_definitions: Result<Vec<TokenStream>, _> = context
-        .fragments
-        .values()
-        .filter_map(|fragment| {
-            if fragment.is_required.get() {
-                Some(fragment.to_rust(&context))
-            } else {
-                None
-            }
-        })
-        .collect();
-    let fragment_definitions = fragment_definitions?;
-    let variables_struct = operation.expand_variables(&context);
-
-    let input_object_definitions: Result<Vec<TokenStream>, _> = context
-        .schema
-        .inputs
-        .values()
-        .filter_map(|i| {
-            if i.is_required.get() {
-                Some(i.to_rust(&context))
-            } else {
-                None
-            }
-        })
-        .collect();
-    let input_object_definitions = input_object_definitions?;
-
-    let scalar_definitions: Vec<TokenStream> = context
-        .schema
-        .scalars
-        .values()
-        .filter_map(|s| {
-            if s.is_required.get() {
-                Some(s.to_rust(context.normalization))
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    let response_derives = context.response_derives();
-
-    Ok(quote! {
+    let q = quote! {
         use serde::{Serialize, Deserialize};
 
         #[allow(dead_code)]
@@ -171,21 +56,260 @@ pub(crate) fn response_for_query(
 
         #(#scalar_definitions)*
 
-        #(#input_object_definitions)*
-
         #(#enum_definitions)*
 
-        #(#fragment_definitions)*
-
-        #(#definitions)*
+        #(#input_object_definitions)*
 
         #variables_struct
 
-        #response_derives
+        #(#fragment_definitions)*
 
-        pub struct ResponseData {
-            #(#response_data_fields,)*
+        #definitions
+    };
+
+    Ok(q)
+}
+
+fn generate_variables_struct(
+    operation_id: OperationId,
+    variable_derives: &impl quote::ToTokens,
+    options: &GraphQLClientCodegenOptions,
+    query: &BoundQuery<'_>,
+) -> TokenStream {
+    if operation_has_no_variables(operation_id, query.query) {
+        return quote!(
+            #variable_derives
+            pub struct Variables;
+        );
+    }
+
+    let variable_fields = walk_operation_variables(operation_id, query.query)
+        .map(|(_id, variable)| generate_variable_struct_field(variable, options, query));
+    let variable_defaults =
+        walk_operation_variables(operation_id, query.query).map(|(_id, variable)| {
+            let method_name = format!("default_{}", variable.name);
+            let method_name = Ident::new(&method_name, Span::call_site());
+            let method_return_type = render_variable_field_type(variable, options, query);
+
+            variable.default.as_ref().map(|default| {
+                let value = graphql_parser_value_to_literal(
+                    default,
+                    variable.r#type.id,
+                    variable
+                        .r#type
+                        .qualifiers
+                        .get(0)
+                        .map(|qual| !qual.is_required())
+                        .unwrap_or(true),
+                    query,
+                );
+
+                quote!(
+                    pub fn #method_name() -> #method_return_type {
+                        #value
+                    }
+                )
+            })
+        });
+
+    let variables_struct = quote!(
+        #variable_derives
+        pub struct Variables {
+            #(#variable_fields,)*
         }
 
+        impl Variables {
+            #(#variable_defaults)*
+        }
+    );
+
+    variables_struct
+}
+
+fn generate_variable_struct_field(
+    variable: &ResolvedVariable,
+    options: &GraphQLClientCodegenOptions,
+    query: &BoundQuery<'_>,
+) -> TokenStream {
+    let snake_case_name = variable.name.to_snake_case();
+    let ident = Ident::new(
+        &shared::keyword_replace(&snake_case_name),
+        Span::call_site(),
+    );
+    let annotation = shared::field_rename_annotation(&variable.name, &snake_case_name);
+    let r#type = render_variable_field_type(variable, options, query);
+
+    quote::quote!(#annotation pub #ident : #r#type)
+}
+
+fn generate_scalar_definitions<'a, 'schema: 'a>(
+    all_used_types: &'a crate::query::UsedTypes,
+    options: &'a GraphQLClientCodegenOptions,
+    query: BoundQuery<'schema>,
+) -> impl Iterator<Item = TokenStream> + 'a {
+    all_used_types
+        .scalars(query.schema)
+        .map(move |(_id, scalar)| {
+            let ident = syn::Ident::new(
+                options.normalization().scalar_name(&scalar.name).as_ref(),
+                proc_macro2::Span::call_site(),
+            );
+
+            quote!(type #ident = super::#ident;)
+        })
+}
+
+fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToTokens {
+    let idents = derives.map(|s| Ident::new(s, Span::call_site()));
+
+    quote!(#[derive(#(#idents),*)])
+}
+
+fn render_variable_field_type(
+    variable: &ResolvedVariable,
+    options: &GraphQLClientCodegenOptions,
+    query: &BoundQuery<'_>,
+) -> TokenStream {
+    let normalized_name = options
+        .normalization()
+        .input_name(variable.type_name(query.schema));
+    let full_name = Ident::new(normalized_name.as_ref(), Span::call_site());
+
+    decorate_type(&full_name, &variable.r#type.qualifiers)
+}
+
+fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStream {
+    let mut qualified = quote!(#ident);
+
+    let mut non_null = false;
+
+    // Note: we iterate over qualifiers in reverse because it is more intuitive. This
+    // means we start from the _inner_ type and make our way to the outside.
+    for qualifier in qualifiers.iter().rev() {
+        match (non_null, qualifier) {
+            // We are in non-null context, and we wrap the non-null type into a list.
+            // We switch back to null context.
+            (true, GraphqlTypeQualifier::List) => {
+                qualified = quote!(Vec<#qualified>);
+                non_null = false;
+            }
+            // We are in nullable context, and we wrap the nullable type into a list.
+            (false, GraphqlTypeQualifier::List) => {
+                qualified = quote!(Vec<Option<#qualified>>);
+            }
+            // We are in non-nullable context, but we can't double require a type
+            // (!!).
+            (true, GraphqlTypeQualifier::Required) => panic!("double required annotation"),
+            // We are in nullable context, and we switch to non-nullable context.
+            (false, GraphqlTypeQualifier::Required) => {
+                non_null = true;
+            }
+        }
+    }
+
+    // If we are in nullable context at the end of the iteration, we wrap the whole
+    // type with an Option.
+    if !non_null {
+        qualified = quote!(Option<#qualified>);
+    }
+
+    qualified
+}
+
+fn generate_fragment_definitions<'a>(
+    all_used_types: &'a UsedTypes,
+    response_derives: &'a impl quote::ToTokens,
+    options: &'a GraphQLClientCodegenOptions,
+    query: &'a BoundQuery<'a>,
+) -> impl Iterator<Item = TokenStream> + 'a {
+    all_used_types.fragment_ids().map(move |fragment_id| {
+        selection::render_fragment(fragment_id, options, query).render(&response_derives)
+    })
+}
+
+/// For default value constructors.
+fn graphql_parser_value_to_literal(
+    value: &graphql_parser::query::Value,
+    ty: TypeId,
+    is_optional: bool,
+    query: &BoundQuery<'_>,
+) -> TokenStream {
+    use graphql_parser::query::Value;
+
+    let inner = match value {
+        Value::Boolean(b) => {
+            if *b {
+                quote!(true)
+            } else {
+                quote!(false)
+            }
+        }
+        Value::String(s) => quote!(#s.to_string()),
+        Value::Variable(_) => panic!("variable in variable"),
+        Value::Null => panic!("null as default value"),
+        Value::Float(f) => quote!(#f),
+        Value::Int(i) => {
+            let i = i.as_i64();
+            quote!(#i)
+        }
+        Value::Enum(en) => quote!(#en),
+        Value::List(inner) => {
+            let elements = inner
+                .iter()
+                .map(|val| graphql_parser_value_to_literal(val, ty, false, query));
+            quote! {
+                vec![
+                    #(#elements,)*
+                ]
+            }
+        }
+        Value::Object(obj) => ty
+            .as_input_id()
+            .map(|input_id| render_object_literal(obj, input_id, query))
+            .unwrap_or_else(|| {
+                quote!(compile_error!(
+                    "Object literal on a non-input-object field."
+                ))
+            }),
+    };
+
+    if is_optional {
+        quote!(Some(#inner))
+    } else {
+        inner
+    }
+}
+
+/// For default value constructors.
+fn render_object_literal(
+    object_map: &BTreeMap<String, graphql_parser::query::Value>,
+    input_id: InputId,
+    query: &BoundQuery<'_>,
+) -> TokenStream {
+    let input = query.schema.get_input(input_id);
+    let constructor = Ident::new(&input.name, Span::call_site());
+    let fields: Vec<TokenStream> = input
+        .fields
+        .iter()
+        .map(|(name, r#type)| {
+            let field_name = Ident::new(&name, Span::call_site());
+            let provided_value = object_map.get(name);
+            match provided_value {
+                Some(default_value) => {
+                    let value = graphql_parser_value_to_literal(
+                        default_value,
+                        r#type.id,
+                        r#type.is_optional(),
+                        query,
+                    );
+                    quote!(#field_name: #value)
+                }
+                None => quote!(#field_name: None),
+            }
+        })
+        .collect();
+
+    quote!(#constructor {
+        #(#fields,)*
     })
 }

@@ -8,7 +8,8 @@ use std::str::FromStr;
 #[graphql(
     schema_path = "src/graphql/introspection_schema.graphql",
     query_path = "src/graphql/introspection_query.graphql",
-    response_derives = "Serialize"
+    response_derives = "Serialize",
+    variable_derives = "Deserialize"
 )]
 #[allow(dead_code)]
 struct IntrospectionQuery;
@@ -23,7 +24,7 @@ pub fn introspect_schema(
 
     let out: Box<dyn Write> = match output {
         Some(path) => Box::new(::std::fs::File::create(path)?),
-        None => Box::new(::std::io::stdout()),
+        None => Box::new(std::io::stdout()),
     };
 
     let request_body: graphql_client::QueryBody<()> = graphql_client::QueryBody {

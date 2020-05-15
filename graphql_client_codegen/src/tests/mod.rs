@@ -1,26 +1,22 @@
-mod github;
-
 #[test]
 fn schema_with_keywords_works() {
-    use crate::{
-        codegen, generated_module, schema::Schema, CodegenMode, GraphQLClientCodegenOptions,
-    };
-    use graphql_parser;
+    use crate::{generated_module, schema::Schema, CodegenMode, GraphQLClientCodegenOptions};
 
     let query_string = include_str!("keywords_query.graphql");
     let query = graphql_parser::parse_query(query_string).expect("Parse keywords query");
     let schema = graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
         .expect("Parse keywords schema");
-    let schema = Schema::from(&schema);
+    let schema = Schema::from(schema);
 
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
-    let operations = codegen::all_operations(&query);
-    for operation in &operations {
+    let query = crate::query::resolve(&schema, &query).unwrap();
+
+    for (_id, operation) in query.operations() {
         let generated_tokens = generated_module::GeneratedModule {
             query_string,
             schema: &schema,
-            query_document: &query,
-            operation,
+            operation: &operation.name,
+            resolved_query: &query,
             options: &options,
         }
         .to_token_stream()
