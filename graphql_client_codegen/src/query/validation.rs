@@ -1,7 +1,9 @@
-use super::{full_path_prefix, BoundQuery, Query, Selection, SelectionId};
+use super::{full_path_prefix, BoundQuery, Query, QueryValidationError, Selection, SelectionId};
 use crate::schema::TypeId;
 
-pub(super) fn validate_typename_presence(query: &BoundQuery<'_>) -> anyhow::Result<()> {
+pub(super) fn validate_typename_presence(
+    query: &BoundQuery<'_>,
+) -> Result<(), QueryValidationError> {
     for fragment in query.query.fragments.iter() {
         let type_id = match fragment.on {
             id @ TypeId::Interface(_) | id @ TypeId::Union(_) => id,
@@ -9,11 +11,11 @@ pub(super) fn validate_typename_presence(query: &BoundQuery<'_>) -> anyhow::Resu
         };
 
         if !selection_set_contains_type_name(fragment.on, &fragment.selection_set, query.query) {
-            anyhow::bail!(
+            return Err(QueryValidationError::new(format!(
                 "The `{}` fragment uses `{}` but does not select `__typename` on it. graphql-client cannot generate code for it. Please add `__typename` to the selection.",
                 &fragment.name,
                 type_id.name(query.schema),
-            )
+            )));
         }
     }
 
@@ -33,11 +35,11 @@ pub(super) fn validate_typename_presence(query: &BoundQuery<'_>) -> anyhow::Resu
 
     for selection in union_and_interface_field_selections {
         if !selection_set_contains_type_name(selection.1, selection.2, query.query) {
-            anyhow::bail!(
+            return Err(QueryValidationError::new(format!(
                 "The query uses `{path}` at `{selected_type}` but does not select `__typename` on it. graphql-client cannot generate code for it. Please add `__typename` to the selection.",
                 path = full_path_prefix(selection.0, query),
                 selected_type = selection.1.name(query.schema)
-            );
+            )));
         }
     }
 

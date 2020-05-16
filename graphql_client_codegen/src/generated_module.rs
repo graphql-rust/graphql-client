@@ -1,10 +1,21 @@
 use crate::{
     codegen_options::*,
     query::{BoundQuery, OperationId},
+    BoxError,
 };
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+#[error(
+    "Could not find an operation named {} in the query document.",
+    operation_name
+)]
+struct OperationNotFound {
+    operation_name: String,
+}
 
 /// This struct contains the parameters necessary to generate code for a given operation.
 pub(crate) struct GeneratedModule<'a> {
@@ -17,7 +28,7 @@ pub(crate) struct GeneratedModule<'a> {
 
 impl<'a> GeneratedModule<'a> {
     /// Generate the items for the variables and the response that will go inside the module.
-    fn build_impls(&self) -> anyhow::Result<TokenStream> {
+    fn build_impls(&self) -> Result<TokenStream, BoxError> {
         Ok(crate::codegen::response_for_query(
             self.root()?,
             &self.options,
@@ -28,21 +39,18 @@ impl<'a> GeneratedModule<'a> {
         )?)
     }
 
-    fn root(&self) -> anyhow::Result<OperationId> {
+    fn root(&self) -> Result<OperationId, OperationNotFound> {
         let op_name = self.options.normalization().operation(self.operation);
         self.resolved_query
             .select_operation(&op_name, *self.options.normalization())
             .map(|op| op.0)
-            .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "Could not find an operation named {} in the query document.",
-                    op_name
-                )
+            .ok_or_else(|| OperationNotFound {
+                operation_name: op_name.into(),
             })
     }
 
     /// Generate the module and all the code inside.
-    pub(crate) fn to_token_stream(&self) -> anyhow::Result<TokenStream> {
+    pub(crate) fn to_token_stream(&self) -> Result<TokenStream, BoxError> {
         let module_name = Ident::new(&self.operation.to_snake_case(), Span::call_site());
         let module_visibility = &self.options.module_visibility();
         let operation_name = self.operation;
