@@ -36,7 +36,7 @@ use thiserror::Error;
 #[error("{0}")]
 struct GeneralError(String);
 
-type BoxError = Box<dyn std::error::Error + 'static>;
+type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type CacheMap<T> = std::sync::Mutex<HashMap<std::path::PathBuf, T>>;
 
 lazy_static! {

@@ -1,3 +1,4 @@
+use anyhow::*;
 use graphql_client::GraphQLQuery;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
 use std::path::PathBuf;

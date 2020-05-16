@@ -1,4 +1,4 @@
-use anyhow::*;
+use crate::{BoxError, GeneralError};
 use graphql_client_codegen::deprecation::DeprecationStrategy;
 use graphql_client_codegen::normalization::Normalization;
 
@@ -11,13 +11,13 @@ fn path_to_match() -> syn::Path {
 }
 
 /// Extract an configuration parameter specified in the `graphql` attribute.
-pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, anyhow::Error> {
+pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::Error> {
     let attributes = &ast.attrs;
     let graphql_path = path_to_match();
     let attribute = attributes
         .iter()
         .find(|attr| attr.path == graphql_path)
-        .ok_or_else(|| format_err!("The graphql attribute is missing"))?;
+        .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
     if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
         for item in items.nested.iter() {
             if let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) = item {
@@ -33,27 +33,27 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, anyhow
         }
     }
 
-    Err(format_err!("attribute not found"))
+    Err(syn::Error::new_spanned(ast, "Attribute not found"))
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
 pub fn extract_deprecation_strategy(
     ast: &syn::DeriveInput,
-) -> Result<DeprecationStrategy, anyhow::Error> {
+) -> Result<DeprecationStrategy, BoxError> {
     extract_attr(&ast, "deprecated")?
         .to_lowercase()
         .as_str()
         .parse()
-        .map_err(|_| format_err!("{}", DEPRECATION_ERROR))
+        .map_err(|_| GeneralError(DEPRECATION_ERROR.to_owned()).into())
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
-pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, anyhow::Error> {
+pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, BoxError> {
     extract_attr(&ast, "normalization")?
         .to_lowercase()
         .as_str()
         .parse()
-        .map_err(|_| format_err!("{}", NORMALIZATION_ERROR))
+        .map_err(|_| GeneralError(NORMALIZATION_ERROR.to_owned()).into())
 }
 
 #[cfg(test)]
