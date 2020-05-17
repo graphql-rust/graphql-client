@@ -19,6 +19,19 @@ use crate::{
     },
 };
 use std::collections::{HashMap, HashSet};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+#[error("{}", message)]
+pub(crate) struct QueryValidationError {
+    message: String,
+}
+
+impl QueryValidationError {
+    pub(crate) fn new(message: String) -> Self {
+        QueryValidationError { message }
+    }
+}
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub(crate) struct SelectionId(u32);
@@ -40,7 +53,7 @@ pub(crate) struct VariableId(u32);
 pub(crate) fn resolve(
     schema: &Schema,
     query: &graphql_parser::query::Document,
-) -> anyhow::Result<Query> {
+) -> Result<Query, QueryValidationError> {
     let mut resolved_query: Query = Default::default();
 
     create_roots(&mut resolved_query, query, schema)?;
@@ -80,7 +93,7 @@ fn create_roots(
     resolved_query: &mut Query,
     query: &graphql_parser::query::Document,
     schema: &Schema,
-) -> anyhow::Result<()> {
+) -> Result<(), QueryValidationError> {
     // First, give ids to all fragments and operations.
     for definition in &query.definitions {
         match definition {
@@ -89,11 +102,10 @@ fn create_roots(
                 resolved_query.fragments.push(ResolvedFragment {
                     name: fragment.name.clone(),
                     on: schema.find_type(on).ok_or_else(|| {
-                        anyhow::anyhow!(
+                        QueryValidationError::new(format!(
                             "Could not find type {} for fragment {} in schema.",
-                            on,
-                            fragment.name
-                        )
+                            on, fragment.name
+                        ))
                     })?,
                     selection_set: Vec::new(),
                 });
@@ -102,8 +114,9 @@ fn create_roots(
                 graphql_parser::query::OperationDefinition::Mutation(m),
             ) => {
                 let on = schema.mutation_type().ok_or_else(|| {
-                    anyhow::anyhow!(
+                    QueryValidationError::new(
                         "Query contains a mutation operation, but the schema has no mutation type."
+                            .to_owned(),
                     )
                 })?;
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
@@ -132,13 +145,15 @@ fn create_roots(
                 graphql_parser::query::OperationDefinition::Subscription(s),
             ) => {
                 let on = schema.subscription_type().ok_or_else(|| {
-                    anyhow::anyhow!(
-                        "Query contains a subscription operation, but the schema has no subscription type."
+                    QueryValidationError::new(
+                        "Query contains a subscription operation, but the schema has no subscription type.".to_owned()
                     )
                 })?;
 
                 if s.selection_set.items.len() != 1 {
-                    anyhow::bail!("{}", crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR)
+                    return Err(QueryValidationError::new(
+                        crate::constants::MULTIPLE_SUBSCRIPTION_FIELDS_ERROR.to_owned(),
+                    ));
                 }
 
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
@@ -156,7 +171,11 @@ fn create_roots(
             }
             graphql_parser::query::Definition::Operation(
                 graphql_parser::query::OperationDefinition::SelectionSet(_),
-            ) => anyhow::bail!("{}", crate::constants::SELECTION_SET_AT_ROOT),
+            ) => {
+                return Err(QueryValidationError::new(
+                    crate::constants::SELECTION_SET_AT_ROOT.to_owned(),
+                ))
+            }
         }
     }
 
@@ -167,20 +186,22 @@ fn resolve_fragment(
     query: &mut Query,
     schema: &Schema,
     fragment_definition: &graphql_parser::query::FragmentDefinition,
-) -> anyhow::Result<()> {
+) -> Result<(), QueryValidationError> {
     let graphql_parser::query::TypeCondition::On(on) = &fragment_definition.type_condition;
     let on = schema.find_type(&on).ok_or_else(|| {
-        anyhow::anyhow!(
+        QueryValidationError::new(format!(
             "Could not find type `{}` referenced by fragment `{}`",
-            on,
-            fragment_definition.name
-        )
+            on, fragment_definition.name
+        ))
     })?;
 
     let (id, _) = query
         .find_fragment(&fragment_definition.name)
         .ok_or_else(|| {
-            anyhow::anyhow!("Could not find fragment `{}`.", fragment_definition.name)
+            QueryValidationError::new(format!(
+                "Could not find fragment `{}`.",
+                fragment_definition.name
+            ))
         })?;
 
     resolve_selection(
@@ -200,7 +221,7 @@ fn resolve_union_selection(
     selection_set: &graphql_parser::query::SelectionSet,
     parent: SelectionParent,
     schema: &Schema,
-) -> anyhow::Result<()> {
+) -> Result<(), QueryValidationError> {
     for item in selection_set.items.iter() {
         match item {
             graphql_parser::query::Selection::Field(field) => {
@@ -208,7 +229,10 @@ fn resolve_union_selection(
                     let id = query.push_selection(Selection::Typename, parent);
                     parent.add_to_selection_set(query, id);
                 } else {
-                    anyhow::bail!("Invalid field selection on union field ({:?})", parent);
+                    return Err(QueryValidationError::new(format!(
+                        "Invalid field selection on union field ({:?})",
+                        parent
+                    )));
                 }
             }
             graphql_parser::query::Selection::InlineFragment(inline_fragment) => {
@@ -219,10 +243,10 @@ fn resolve_union_selection(
                 let (fragment_id, _fragment) = query
                     .find_fragment(&fragment_spread.fragment_name)
                     .ok_or_else(|| {
-                        anyhow::anyhow!(
+                        QueryValidationError::new(format!(
                             "Could not find fragment `{}` referenced by fragment spread.",
                             fragment_spread.fragment_name
-                        )
+                        ))
                     })?;
 
                 let id = query.push_selection(Selection::FragmentSpread(fragment_id), parent);
@@ -241,7 +265,7 @@ fn resolve_object_selection<'a>(
     selection_set: &graphql_parser::query::SelectionSet,
     parent: SelectionParent,
     schema: &'a Schema,
-) -> anyhow::Result<()> {
+) -> Result<(), QueryValidationError> {
     for item in selection_set.items.iter() {
         match item {
             graphql_parser::query::Selection::Field(field) => {
@@ -254,7 +278,11 @@ fn resolve_object_selection<'a>(
                 let (field_id, schema_field) = object
                     .get_field_by_name(&field.name, schema)
                     .ok_or_else(|| {
-                        anyhow::anyhow!("No field named {} on {}", &field.name, object.name())
+                        QueryValidationError::new(format!(
+                            "No field named {} on {}",
+                            &field.name,
+                            object.name()
+                        ))
                     })?;
 
                 let id = query.push_selection(
@@ -285,10 +313,10 @@ fn resolve_object_selection<'a>(
                 let (fragment_id, _fragment) = query
                     .find_fragment(&fragment_spread.fragment_name)
                     .ok_or_else(|| {
-                        anyhow::anyhow!(
+                        QueryValidationError::new(format!(
                             "Could not find fragment `{}` referenced by fragment spread.",
                             fragment_spread.fragment_name
-                        )
+                        ))
                     })?;
 
                 let id = query.push_selection(Selection::FragmentSpread(fragment_id), parent);
@@ -307,7 +335,7 @@ fn resolve_selection(
     selection_set: &graphql_parser::query::SelectionSet,
     parent: SelectionParent,
     schema: &Schema,
-) -> anyhow::Result<()> {
+) -> Result<(), QueryValidationError> {
     match on {
         TypeId::Object(oid) => {
             let object = schema.get_object(oid);
@@ -321,11 +349,12 @@ fn resolve_selection(
             resolve_union_selection(ctx, union_id, selection_set, parent, schema)?;
         }
         other => {
-            anyhow::ensure!(
-                selection_set.items.is_empty(),
-                "Selection set on non-object, non-interface type. ({:?})",
-                other
-            );
+            if !selection_set.items.is_empty() {
+                return Err(QueryValidationError::new(format!(
+                    "Selection set on non-object, non-interface type. ({:?})",
+                    other
+                )));
+            }
         }
     };
 
@@ -337,16 +366,16 @@ fn resolve_inline_fragment(
     schema: &Schema,
     inline_fragment: &graphql_parser::query::InlineFragment,
     parent: SelectionParent,
-) -> anyhow::Result<SelectionId> {
+) -> Result<SelectionId, QueryValidationError> {
     let graphql_parser::query::TypeCondition::On(on) = inline_fragment
         .type_condition
         .as_ref()
         .expect("missing type condition on inline fragment");
     let type_id = schema.find_type(on).ok_or_else(|| {
-        anyhow::anyhow!(
+        QueryValidationError::new(format!(
             "Could not find type `{}` referenced by inline fragment.",
             on
-        )
+        ))
     })?;
 
     let id = query.push_selection(
@@ -372,12 +401,13 @@ fn resolve_operation(
     query: &mut Query,
     schema: &Schema,
     operation: &graphql_parser::query::OperationDefinition,
-) -> anyhow::Result<()> {
+) -> Result<(), QueryValidationError> {
     match operation {
         graphql_parser::query::OperationDefinition::Mutation(m) => {
             let on = schema.mutation_type().ok_or_else(|| {
-                anyhow::anyhow!(
+                QueryValidationError::new(
                     "Query contains a mutation operation, but the schema has no mutation type."
+                        .to_owned(),
                 )
             })?;
             let on = schema.get_object(on);
@@ -407,7 +437,7 @@ fn resolve_operation(
             )?;
         }
         graphql_parser::query::OperationDefinition::Subscription(s) => {
-            let on = schema.subscription_type().ok_or_else(|| anyhow::anyhow!("Query contains a subscription operation, but the schema has no subscription type."))?;
+            let on = schema.subscription_type().ok_or_else(|| QueryValidationError::new("Query contains a subscription operation, but the schema has no subscription type.".into()))?;
             let on = schema.get_object(on);
             let (id, _) = query.find_operation(s.name.as_ref().unwrap()).unwrap();
 

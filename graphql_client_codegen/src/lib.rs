@@ -6,7 +6,6 @@
 //!
 //! It is not meant to be used directly by users of the library.
 
-use anyhow::format_err;
 use lazy_static::*;
 use proc_macro2::TokenStream;
 use quote::*;
@@ -30,8 +29,14 @@ mod tests;
 
 pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
-use std::collections::HashMap;
+use std::{collections::HashMap, io};
+use thiserror::Error;
 
+#[derive(Debug, Error)]
+#[error("{0}")]
+struct GeneralError(String);
+
+type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type CacheMap<T> = std::sync::Mutex<HashMap<std::path::PathBuf, T>>;
 
 lazy_static! {
@@ -45,7 +50,7 @@ pub fn generate_module_token_stream(
     query_path: std::path::PathBuf,
     schema_path: &std::path::Path,
     options: GraphQLClientCodegenOptions,
-) -> anyhow::Result<TokenStream> {
+) -> Result<TokenStream, BoxError> {
     use std::collections::hash_map;
 
     let schema_extension = schema_path
@@ -62,14 +67,14 @@ pub fn generate_module_token_stream(
                 let schema_string = read_file(v.key())?;
                 let schema = match schema_extension {
                     "graphql" | "gql" => {
-                        let s = graphql_parser::schema::parse_schema(&schema_string).map_err(|parser_error| anyhow::anyhow!("Parser error: {}", parser_error))?;
+                        let s = graphql_parser::schema::parse_schema(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error)))?;
                         schema::Schema::from(s)
                     }
                     "json" => {
                         let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string)?;
                         schema::Schema::from(parsed)
                     }
-                    extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
+                    extension => return Err(GeneralError(format!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)).into())
                 };
 
                 v.insert(schema).clone()
@@ -85,7 +90,7 @@ pub fn generate_module_token_stream(
             hash_map::Entry::Vacant(v) => {
                 let query_string = read_file(v.key())?;
                 let query = graphql_parser::parse_query(&query_string)
-                    .map_err(|err| anyhow::anyhow!("Query parser error: {}", err))?;
+                    .map_err(|err| GeneralError(format!("Query parser error: {}", err)))?;
                 v.insert((query_string, query)).clone()
             }
         }
@@ -104,10 +109,11 @@ pub fn generate_module_token_stream(
         (Some(ops), _) => ops,
         (None, &CodegenMode::Cli) => query.operations().collect(),
         (None, &CodegenMode::Derive) => {
-            return Err(derive_operation_not_found_error(
+            return Err(GeneralError(derive_operation_not_found_error(
                 options.struct_ident(),
                 &query,
-            ));
+            ))
+            .into());
         }
     };
 
@@ -131,22 +137,41 @@ pub fn generate_module_token_stream(
     Ok(modules)
 }
 
-fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
+#[derive(Debug, Error)]
+enum ReadFileError {
+    #[error(
+        "Could not find file with path: {}\
+        Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".",
+        path
+    )]
+    FileNotFound {
+        path: String,
+        #[source]
+        io_error: io::Error,
+    },
+    #[error("Error reading file at: {}", path)]
+    ReadError {
+        path: String,
+        #[source]
+        io_error: io::Error,
+    },
+}
+
+fn read_file(path: &std::path::Path) -> Result<String, ReadFileError> {
     use std::fs;
     use std::io::prelude::*;
 
     let mut out = String::new();
-    let mut file = fs::File::open(path).map_err(|io_err| {
-        let err: anyhow::Error = io_err.into();
-        err.context(format!(
-            r#"
-            Could not find file with path: {}
-            Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = "src/my_query.graphql".
-            "#,
-            path.display()
-        ))
+    let mut file = fs::File::open(path).map_err(|io_error| ReadFileError::FileNotFound {
+        io_error,
+        path: path.display().to_string(),
     })?;
-    file.read_to_string(&mut out)?;
+
+    file.read_to_string(&mut out)
+        .map_err(|io_error| ReadFileError::ReadError {
+            io_error,
+            path: path.display().to_string(),
+        })?;
     Ok(out)
 }
 
@@ -154,7 +179,7 @@ fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
 fn derive_operation_not_found_error(
     ident: Option<&proc_macro2::Ident>,
     query: &crate::query::Query,
-) -> anyhow::Error {
+) -> String {
     let operation_name = ident.map(ToString::to_string);
     let struct_ident = operation_name.as_deref().unwrap_or("");
 
@@ -164,7 +189,7 @@ fn derive_operation_not_found_error(
         .collect();
     let available_operations: String = available_operations.join(", ");
 
-    return format_err!(
+    return format!(
         "The struct name does not match any defined operation in the query file.\nStruct name: {}\nDefined operations: {}",
         struct_ident,
         available_operations,

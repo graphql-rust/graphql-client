@@ -1,4 +1,7 @@
-use super::{BoundQuery, OperationId, Query, ResolvedFragmentId, SelectionId, UsedTypes};
+use super::{
+    BoundQuery, OperationId, Query, QueryValidationError, ResolvedFragmentId, SelectionId,
+    UsedTypes,
+};
 use crate::schema::{Schema, StoredField, StoredFieldId, TypeId};
 use heck::CamelCase;
 
@@ -7,7 +10,7 @@ use heck::CamelCase;
 pub(super) fn validate_type_conditions(
     selection_id: SelectionId,
     query: &BoundQuery<'_>,
-) -> anyhow::Result<()> {
+) -> Result<(), QueryValidationError> {
     let selection = query.query.get_selection(selection_id);
 
     let selected_type = match selection {
@@ -31,15 +34,17 @@ pub(super) fn validate_type_conditions(
         TypeId::Union(union_id) => {
             let union = query.schema.get_union(union_id);
 
-            anyhow::ensure!(
-                union
-                    .variants
-                    .iter()
-                    .any(|variant| *variant == selected_type),
-                "The spread {}... on {} is not valid.",
-                union.name,
-                selected_type.name(query.schema),
-            )
+            if !union
+                .variants
+                .iter()
+                .any(|variant| *variant == selected_type)
+            {
+                return Err(QueryValidationError::new(format!(
+                    "The spread {}... on {} is not valid.",
+                    union.name,
+                    selected_type.name(query.schema)
+                )));
+            }
         }
         TypeId::Interface(interface_id) => {
             let mut variants = query
@@ -47,12 +52,13 @@ pub(super) fn validate_type_conditions(
                 .objects()
                 .filter(|(_, obj)| obj.implements_interfaces.contains(&interface_id));
 
-            anyhow::ensure!(
-                variants.any(|(id, _)| TypeId::Object(id) == selected_type),
-                "The spread {}... on {} is not valid.",
-                parent_schema_type_id.name(query.schema),
-                selected_type.name(query.schema),
-            )
+            if !variants.any(|(id, _)| TypeId::Object(id) == selected_type) {
+                return Err(QueryValidationError::new(format!(
+                    "The spread {}... on {} is not valid.",
+                    parent_schema_type_id.name(query.schema),
+                    selected_type.name(query.schema),
+                )));
+            }
         }
         _ => (),
     }

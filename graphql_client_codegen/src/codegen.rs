@@ -7,7 +7,7 @@ use crate::{
     query::*,
     schema::{InputId, TypeId},
     type_qualifiers::GraphqlTypeQualifier,
-    GraphQLClientCodegenOptions,
+    GeneralError, GraphQLClientCodegenOptions,
 };
 use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -20,7 +20,7 @@ pub(crate) fn response_for_query(
     operation_id: OperationId,
     options: &GraphQLClientCodegenOptions,
     query: BoundQuery<'_>,
-) -> anyhow::Result<TokenStream> {
+) -> Result<TokenStream, GeneralError> {
     let all_used_types = all_used_types(operation_id, &query);
     let response_derives = render_derives(options.all_response_derives());
     let variable_derives = render_derives(options.all_variable_derives());
