@@ -1,16 +1,13 @@
-use futures::Future;
-use graphql_client::GraphQLQuery;
+use futures::{Future, FutureExt};
+use graphql_client::{web, GraphQLQuery, Response};
 use lazy_static::*;
-use std::cell::RefCell;
-use std::sync::Mutex;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
+use std::{cell::RefCell, sync::Mutex};
+use wasm_bindgen::{prelude::*, JsCast};
 
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "schema.json",
-    query_path = "examples/puppy_smiles.graphql",
+    query_path = "src/puppy_smiles.graphql",
     response_derives = "Debug"
 )]
 struct PuppySmiles;
@@ -23,28 +20,24 @@ lazy_static! {
     static ref LAST_ENTRY: Mutex<RefCell<Option<String>>> = Mutex::new(RefCell::new(None));
 }
 
-fn load_more() -> impl Future<Item = JsValue, Error = JsValue> {
-    let client = graphql_client::web::Client::new("https://www.graphqlhub.com/graphql");
+async fn load_more() -> Result<JsValue, JsValue> {
+    let client = web::Client::new("https://www.graphqlhub.com/graphql");
     let variables = puppy_smiles::Variables {
         after: LAST_ENTRY
             .lock()
             .ok()
             .and_then(|opt| opt.borrow().to_owned()),
     };
-    let response = client.call(PuppySmiles, variables);
+    let response = client.call(PuppySmiles, variables).await.map_err(|err| {
+        log(&format!(
+            "Could not fetch puppies. graphql_client_web error: {:?}",
+            err
+        ));
+        JsValue::NULL
+    })?;
 
-    response
-        .map(|response| {
-            render_response(response);
-            JsValue::NULL
-        })
-        .map_err(|err| {
-            log(&format!(
-                "Could not fetch puppies. graphql_client_web error: {:?}",
-                err
-            ));
-            JsValue::NULL
-        })
+    render_response(response);
+    Ok(JsValue::NULL)
 }
 
 fn document() -> web_sys::Document {
@@ -60,7 +53,12 @@ fn add_load_more_button() {
         .expect_throw("could not create button");
     btn.set_inner_html("I WANT MORE PUPPIES");
     let on_click = Closure::wrap(
-        Box::new(move || future_to_promise(load_more())) as Box<dyn FnMut() -> js_sys::Promise>
+        Box::new(move || {
+            wasm_bindgen_futures::spawn_local(async {
+                let _ = load_more().await;
+            });
+            JsValue::NULL
+        }) as Box<dyn FnMut() -> JsValue>, // Box::new(move || future_to_promise(load_more().boxed())) as Box<dyn FnMut() -> js_sys::Promise>
     );
     btn.add_event_listener_with_callback(
         "click",
@@ -78,14 +76,14 @@ fn add_load_more_button() {
     on_click.forget();
 }
 
-fn render_response(response: graphql_client_web::Response<puppy_smiles::ResponseData>) {
+fn render_response(response: Response<puppy_smiles::ResponseData>) {
     use std::fmt::Write;
 
     log(&format!("response body\n\n{:?}", response));
 
     let parent = document().body().expect_throw("no body");
 
-    let json: graphql_client_web::Response<puppy_smiles::ResponseData> = response;
+    let json: Response<puppy_smiles::ResponseData> = response;
     let response = document()
         .create_element("div")
         .expect_throw("could not create div");
