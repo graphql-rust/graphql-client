@@ -84,6 +84,8 @@ impl<'a> GeneratedModule<'a> {
             #module_visibility mod #module_name {
                 #![allow(dead_code)]
 
+                use std::result::Result;
+
                 pub const OPERATION_NAME: &'static str = #operation_name;
                 pub const QUERY: &'static str = #query_string;
 

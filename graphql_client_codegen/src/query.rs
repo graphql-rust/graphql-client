@@ -172,10 +172,9 @@ fn create_roots(
             graphql_parser::query::Definition::Operation(
                 graphql_parser::query::OperationDefinition::SelectionSet(_),
             ) => {
-                return Err(QueryValidationError::new(format!(
-                    "{}",
-                    crate::constants::SELECTION_SET_AT_ROOT
-                )))
+                return Err(QueryValidationError::new(
+                    crate::constants::SELECTION_SET_AT_ROOT.to_owned(),
+                ))
             }
         }
     }
@@ -406,9 +405,10 @@ fn resolve_operation(
     match operation {
         graphql_parser::query::OperationDefinition::Mutation(m) => {
             let on = schema.mutation_type().ok_or_else(|| {
-                QueryValidationError::new(format!(
+                QueryValidationError::new(
                     "Query contains a mutation operation, but the schema has no mutation type."
-                ))
+                        .to_owned(),
+                )
             })?;
             let on = schema.get_object(on);
 
