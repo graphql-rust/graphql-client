@@ -42,9 +42,7 @@ npm install --global prettier
 
 ### Running
 
-Verify you are using the stable channel (output of `rustc --version` does not contain "nightly" or "beta"). Then run fmt, clippy, and test as they are invoked in the `.travis.yml` file.
-
-If you are on the stable channel, then you can run fmt, clippy, and test as they are invoked in the `.travis.yml` file.
+If you are on the stable channel, then you can run fmt, clippy, and tests.
 
 ```
 cargo fmt --all -- --check
