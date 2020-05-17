@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+- (BREAKING) The codegen logic has undergone a near-complete rewrite. This means
+  less nested data types in several cases. The generated code
+  will break for some queries.
+- The custom browser HTTP client in the `web` feature was replaced with
+  `reqwest`.
+
 ## 0.9.0 - 2020-03-13
 
 ## Added
