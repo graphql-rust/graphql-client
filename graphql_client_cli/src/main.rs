@@ -28,6 +28,10 @@ enum Cli {
         /// --header 'X-Name: Value'
         #[structopt(long = "header")]
         headers: Vec<introspect_schema::Header>,
+        /// Disable ssl verification.
+        /// Default value is false.
+        #[structopt(long = "no-ssl")]
+        no_ssl: bool,
     },
     #[structopt(name = "generate")]
     Generate {
@@ -79,7 +83,8 @@ fn main() -> anyhow::Result<()> {
             output,
             authorization,
             headers,
-        } => introspect_schema::introspect_schema(&schema_location, output, authorization, headers),
+            no_ssl,
+        } => introspect_schema::introspect_schema(&schema_location, output, authorization, headers, no_ssl),
         Cli::Generate {
             variables_derives,
             response_derives,

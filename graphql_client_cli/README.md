@@ -14,11 +14,13 @@ cargo install graphql_client_cli --force
 Get the schema from a live GraphQL API. The schema is printed to stdout.
 
 USAGE:
-    graphql-client introspect-schema [OPTIONS] <schema_location>
+    graphql-client introspect-schema [FLAGS] [OPTIONS] <schema_location>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
+        --no_ssl     Set this option to disable ssl certificate verification. Default value is false.
+                     ssl verification is turned on by default.
 
 OPTIONS:
         --authorization <authorization>    Set the contents of the Authorizaiton header.
