@@ -34,7 +34,9 @@ pub fn introspect_schema(
         operation_name: introspection_query::OPERATION_NAME,
     };
 
-    let client = reqwest::Client::builder().danger_accept_invalid_certs(no_ssl).build()?;
+    let client = reqwest::Client::builder()
+        .danger_accept_invalid_certs(no_ssl)
+        .build()?;
 
     let mut req_builder = client.post(location).headers(construct_headers());
 
