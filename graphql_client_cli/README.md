@@ -19,7 +19,7 @@ USAGE:
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-        --no_ssl     Set this option to disable ssl certificate verification. Default value is false.
+        --no-ssl     Set this option to disable ssl certificate verification. Default value is false.
                      ssl verification is turned on by default.
 
 OPTIONS:
