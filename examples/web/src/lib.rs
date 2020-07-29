@@ -1,4 +1,3 @@
-use futures::{Future, FutureExt};
 use graphql_client::{web, GraphQLQuery, Response};
 use lazy_static::*;
 use std::{cell::RefCell, sync::Mutex};
