@@ -1,8 +1,8 @@
 [package]
-name = "web"
-version = "0.1.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 edition = "2018"
+name = "web"
+version = "0.1.0"
 
 # https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#profile-overrides
 #[profile.release]
@@ -12,26 +12,25 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-graphql_client = { path = "../../graphql_client", features = ["web"] }
+graphql_client = {path = "../../graphql_client", features = ["web"]}
+js-sys = "0.3.44"
+lazy_static = "1.4"
+serde = {version = "1.0.114", features = ["derive"]}
 wasm-bindgen = "^0.2"
-serde = { version = "1.0.67", features = ["derive"] }
-lazy_static = "1.0.1"
-js-sys = "0.3.6"
-futures = "0.3.5"
-wasm-bindgen-futures = "0.4.12"
+wasm-bindgen-futures = "0.4.17"
 
 [dependencies.web-sys]
-version = "0.3.6"
 features = [
-    "console",
-    "Document",
-    "Element",
-    "EventTarget",
-    "Node",
-    "HtmlBodyElement",
-    "HtmlDocument",
-    "HtmlElement",
+  "console",
+  "Document",
+  "Element",
+  "EventTarget",
+  "Node",
+  "HtmlBodyElement",
+  "HtmlDocument",
+  "HtmlElement",
 ]
+version = "0.3.6"
 
 # [[example]]
 # name = "web"
