@@ -50,9 +50,11 @@ optional = true
 version = "^0.4"
 
 [dev-dependencies]
-tokio = {version = "^0.2", features = ["rt-threaded", "macros"]}
 # Note: If we bumpup wasm-bindge-test version, we should change CI setting.
 wasm-bindgen-test = "^0.3"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+tokio = {version = "^0.2", features = ["rt-threaded", "macros"]}
 
 [features]
 client = ["reqwest"]

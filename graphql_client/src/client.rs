@@ -42,7 +42,7 @@ impl Client {
         &self,
         _query: Q,
         variables: Q::Variables,
-    ) -> Result<crate::Response<Q::ResponseData>, reqwest::Error> {
+    ) -> Result<crate::Response<Q::ResponseData>, ClientError> {
         // TODO: remove the unwrap
         // TODO: remove tests and test harness
         // TODO: custom headers
@@ -58,7 +58,28 @@ impl Client {
 
         dbg!(&text_response);
 
-        Ok(serde_json::from_str(&text_response).unwrap())
+        Ok(serde_json::from_str(&text_response)?)
+    }
+}
+
+/// TODO
+#[derive(Debug)]
+pub enum ClientError {
+    /// TODO
+    ReqwestError(reqwest::Error),
+    /// TODO
+    SerdeError(serde_json::Error),
+}
+
+impl From<reqwest::Error> for ClientError {
+    fn from(e: reqwest::Error) -> Self {
+        ClientError::ReqwestError(e)
+    }
+}
+
+impl From<serde_json::Error> for ClientError {
+    fn from(e: serde_json::Error) -> Self {
+        ClientError::SerdeError(e)
     }
 }
 

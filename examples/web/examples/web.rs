@@ -1,4 +1,3 @@
-use futures::Future;
 use graphql_client::GraphQLQuery;
 use lazy_static::*;
 use std::cell::RefCell;
@@ -6,6 +5,7 @@ use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
+use wasm_bindgen_futures::{spawn_local, JsFuture};
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -23,15 +23,15 @@ lazy_static! {
     static ref LAST_ENTRY: Mutex<RefCell<Option<String>>> = Mutex::new(RefCell::new(None));
 }
 
-fn load_more() -> impl Future<Item = JsValue, Error = JsValue> {
-    let client = graphql_client::web::Client::new("https://www.graphqlhub.com/graphql");
+async fn load_more() -> Result<JsValue, JsValue> {
+    let client = graphql_client::client::Client::new("https://www.graphqlhub.com/graphql");
     let variables = puppy_smiles::Variables {
         after: LAST_ENTRY
             .lock()
             .ok()
             .and_then(|opt| opt.borrow().to_owned()),
     };
-    let response = client.call(PuppySmiles, variables);
+    let response = client.call(PuppySmiles, variables).await;
 
     response
         .map(|response| {
@@ -59,9 +59,13 @@ fn add_load_more_button() {
         .create_element("button")
         .expect_throw("could not create button");
     btn.set_inner_html("I WANT MORE PUPPIES");
-    let on_click = Closure::wrap(
-        Box::new(move || future_to_promise(load_more())) as Box<dyn FnMut() -> js_sys::Promise>
-    );
+
+    let on_click = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
+        spawn_local(async {
+            load_more().await;
+        });
+    }) as Box<dyn FnMut(_)>);
+
     btn.add_event_listener_with_callback(
         "click",
         &on_click

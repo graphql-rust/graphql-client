@@ -1,36 +1,36 @@
 [package]
-name = "web"
-version = "0.1.0"
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 edition = "2018"
+name = "web"
+version = "0.1.0"
 
 # https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#profile-overrides
 #[profile.release]
 #lto = "thin"
 
 [dev-dependencies]
-graphql_client = { path = "../../graphql_client" }
-graphql_client_web = { path = "../../graphql_client_web" }
-wasm-bindgen = "^0.2"
-serde = { version = "1.0.67", features = ["derive"] }
+graphql_client = {path = "../../graphql_client"}
+graphql_client_web = {path = "../../graphql_client_web"}
+js-sys = "0.3.44"
 lazy_static = "1.0.1"
-js-sys = "0.3.6"
-futures = "0.1.25"
-wasm-bindgen-futures = "0.3.6"
+serde = {version = "1.0.67", features = ["derive"]}
+wasm-bindgen = "^0.2"
+wasm-bindgen-futures = "0.4.17"
 
 [dev-dependencies.web-sys]
-version = "0.3.6"
 features = [
-    "console",
-    "Document",
-    "Element",
-    "EventTarget",
-    "Node",
-    "HtmlBodyElement",
-    "HtmlDocument",
-    "HtmlElement",
+  "console",
+  "Document",
+  "Element",
+  "EventTarget",
+  "Node",
+  "HtmlBodyElement",
+  "HtmlDocument",
+  "HtmlElement",
+  'MouseEvent',
 ]
+version = "0.3.6"
 
 [[example]]
-name = "web"
 crate-type = ["cdylib"]
+name = "web"
