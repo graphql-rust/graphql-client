@@ -19,6 +19,7 @@ pub fn introspect_schema(
     output: Option<PathBuf>,
     authorization: Option<String>,
     headers: Vec<Header>,
+    no_ssl: bool,
 ) -> anyhow::Result<()> {
     use std::io::Write;
 
@@ -33,7 +34,9 @@ pub fn introspect_schema(
         operation_name: introspection_query::OPERATION_NAME,
     };
 
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .danger_accept_invalid_certs(no_ssl)
+        .build()?;
 
     let mut req_builder = client.post(location).headers(construct_headers());
 
