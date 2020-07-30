@@ -14,13 +14,13 @@ pub use graphql_query_derive::*;
 
 use serde::*;
 
-#[cfg(feature = "web")]
-pub mod web;
+#[cfg(feature = "client")]
+pub mod client;
 
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 
-doc_comment::doctest!("../../README.md");
+//doc_comment::doctest!("../../README.md");
 
 /// A convenience trait that can be used to build a GraphQL request body.
 ///
