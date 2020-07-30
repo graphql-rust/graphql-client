@@ -4,8 +4,7 @@ use std::cell::RefCell;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
-use wasm_bindgen_futures::{spawn_local, JsFuture};
+use wasm_bindgen_futures::spawn_local;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -62,7 +61,7 @@ fn add_load_more_button() {
 
     let on_click = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
         spawn_local(async {
-            load_more().await;
+            load_more().await.unwrap();
         });
     }) as Box<dyn FnMut(_)>);
 
