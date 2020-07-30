@@ -73,7 +73,7 @@ A typed GraphQL client library for Rust.
       // this is the important line
       let request_body = UnionQuery::build_query(variables);
 
-      let client = reqwest::Client::new();
+      let client = reqwest::blocking::Client::new();
       let mut res = client.post("/graphql").json(&request_body).send()?;
       let response_body: Response<union_query::ResponseData> = res.json()?;
       println!("{:#?}", response_body);
