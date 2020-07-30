@@ -74,4 +74,3 @@ input StringQueryOperatorInput {
 
 # The `Upload` scalar type represents a file upload.
 scalar Upload
-
