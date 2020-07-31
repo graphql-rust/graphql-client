@@ -23,7 +23,7 @@ lazy_static! {
 }
 
 async fn load_more() -> Result<JsValue, JsValue> {
-    let client = graphql_client::client::Client::new("https://www.graphqlhub.com/graphql");
+    let client = graphql_client::http::Client::new("https://www.graphqlhub.com/graphql");
     let variables = puppy_smiles::Variables {
         after: LAST_ENTRY
             .lock()

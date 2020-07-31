@@ -14,8 +14,8 @@ pub use graphql_query_derive::*;
 
 use serde::*;
 
-#[cfg(feature = "client")]
-pub mod client;
+#[cfg(feature = "http")]
+pub mod http;
 
 use std::collections::HashMap;
 use std::fmt::{self, Display};

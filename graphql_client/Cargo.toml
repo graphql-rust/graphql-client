@@ -57,6 +57,6 @@ wasm-bindgen-test = "^0.3"
 tokio = {version = "^0.2", features = ["rt-threaded", "macros"]}
 
 [features]
-client = ["reqwest"]
-default = ["client"]
-web = []
+default = ["http"]
+http = ["reqwest"]
+web = ["http"]

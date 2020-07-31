@@ -1,5 +1,5 @@
 // use futures::Future;
-use graphql_client::{client::Client, GraphQLQuery};
+use graphql_client::{http::Client, GraphQLQuery};
 // use wasm_bindgen::JsValue;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::wasm_bindgen_test_configure;
