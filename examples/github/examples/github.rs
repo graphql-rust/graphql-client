@@ -15,6 +15,15 @@ type URI = String;
 )]
 struct RepoView;
 
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "examples/schema.graphql",
+    query_path = "examples/query_1.graphql",
+    response_derives = "Debug"
+)]
+struct CodesOfConduct;
+
 #[derive(StructOpt)]
 #[structopt(author, about)]
 struct Command {
@@ -43,6 +52,20 @@ fn main() -> Result<(), anyhow::Error> {
 
     let args = Command::from_args();
 
+    let client = reqwest::Client::new();
+
+    let q = CodesOfConduct::build_query(codes_of_conduct::Variables {});
+
+    let mut res = client
+        .post("https://api.github.com/graphql")
+        .bearer_auth(config.github_api_token.clone())
+        .json(&q)
+        .send()?;
+    // let response_body: Response<repo_view::ResponseData> = res.json()?; // FIXME this compiles
+    let response_body: Response<codes_of_conduct::ResponseData> = res.json()?;
+
+    info!("{:?}", response_body);
+
     let repo = args.repo;
     let (owner, name) = parse_repo_name(&repo).unwrap_or(("tomhoule", "graphql-client"));
 
@@ -50,8 +73,6 @@ fn main() -> Result<(), anyhow::Error> {
         owner: owner.to_string(),
         name: name.to_string(),
     });
-
-    let client = reqwest::Client::new();
 
     let mut res = client
         .post("https://api.github.com/graphql")

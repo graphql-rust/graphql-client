@@ -22,3 +22,10 @@ query RepoView($owner: String!, $name: String!) {
     }
   }
 }
+
+query CodesOfConduct {
+  codesOfConduct {
+    key
+    name
+  }
+}
