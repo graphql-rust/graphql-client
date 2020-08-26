@@ -3,9 +3,71 @@ use graphql_client::*;
 use log::*;
 use prettytable::*;
 use serde::*;
+use serde::de::DeserializeOwned;
 use structopt::StructOpt;
 
 type URI = String;
+
+trait GraphQLClient {
+    fn send_request<REQ: Serialize + ?Sized, RES: DeserializeOwned>(
+        &self,
+        request_json: &REQ,
+    ) -> Result<RES, anyhow::Error>;
+}
+
+trait ExecutableQuery {
+    type Item: GraphQLQuery;
+
+    fn execute(
+        variables: <<Self as ExecutableQuery>::Item as GraphQLQuery>::Variables,
+        client: &impl GraphQLClient,
+    ) -> Result<Response<<<Self as ExecutableQuery>::Item as GraphQLQuery>::ResponseData>, anyhow::Error>
+    {
+        let query = <<Self as ExecutableQuery>::Item as GraphQLQuery>::build_query(variables);
+
+        let response_body: Response<
+            <<Self as ExecutableQuery>::Item as GraphQLQuery>::ResponseData,
+        > = client.send_request(&query)?;
+        return Ok(response_body);
+    }
+}
+// implement ExecutableQuery for all GraphQLQuery implementations
+impl<T: GraphQLQuery> ExecutableQuery for T {
+    type Item = Self;
+}
+
+struct GraphQLClientImpl {
+    client: reqwest::Client,
+    github_api_token: String,
+    url: String,
+}
+
+impl GraphQLClientImpl {
+    fn new(github_api_token: String) -> GraphQLClientImpl {
+        let client = reqwest::Client::new();
+        return GraphQLClientImpl {
+            client,
+            github_api_token,
+            url: "https://api.github.com/graphql".to_string(),
+        };
+    }
+}
+
+impl GraphQLClient for GraphQLClientImpl {
+    fn send_request<REQ: Serialize + ?Sized, RES: DeserializeOwned>(
+        &self,
+        request_json: &REQ,
+    ) -> Result<RES, anyhow::Error> {
+
+        let request_builder = self
+            .client
+            .post(&self.url)
+            .bearer_auth(&self.github_api_token)
+            .json(&request_json);
+        let mut response = request_builder.send()?;
+        return response.json().map_err(|e| anyhow::Error::new(e));
+    }
+}
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -52,35 +114,20 @@ fn main() -> Result<(), anyhow::Error> {
 
     let args = Command::from_args();
 
-    let client = reqwest::Client::new();
+    let client = GraphQLClientImpl::new(config.github_api_token);
 
-    let q = CodesOfConduct::build_query(codes_of_conduct::Variables {});
-
-    let mut res = client
-        .post("https://api.github.com/graphql")
-        .bearer_auth(config.github_api_token.clone())
-        .json(&q)
-        .send()?;
-    // let response_body: Response<repo_view::ResponseData> = res.json()?; // FIXME this compiles
-    let response_body: Response<codes_of_conduct::ResponseData> = res.json()?;
+    let response_body = CodesOfConduct::execute(codes_of_conduct::Variables {}, &client)?;
 
     info!("{:?}", response_body);
 
     let repo = args.repo;
     let (owner, name) = parse_repo_name(&repo).unwrap_or(("tomhoule", "graphql-client"));
 
-    let q = RepoView::build_query(repo_view::Variables {
+    let response_body = RepoView::execute(repo_view::Variables {
         owner: owner.to_string(),
         name: name.to_string(),
-    });
+    }, &client)?;
 
-    let mut res = client
-        .post("https://api.github.com/graphql")
-        .bearer_auth(config.github_api_token)
-        .json(&q)
-        .send()?;
-
-    let response_body: Response<repo_view::ResponseData> = res.json()?;
     info!("{:?}", response_body);
 
     if let Some(errors) = response_body.errors {
