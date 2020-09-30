@@ -5,7 +5,7 @@ authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Typed GraphQL requests and responses"
 repository = "https://github.com/graphql-rust/graphql-client"
 license = "Apache-2.0 OR MIT"
-keywords = ["graphql",  "api", "web", "webassembly", "wasm"]
+keywords = ["graphql", "api", "web", "webassembly", "wasm"]
 categories = ["network-programming", "web-programming", "wasm"]
 edition = "2018"
 
@@ -13,7 +13,7 @@ edition = "2018"
 doc-comment = "^0.3"
 anyhow = { version = "1.0", optional = true }
 thiserror = { version = "1.0", optional = true }
-graphql_query_derive = { path = "../graphql_query_derive", version = "0.9.0" }
+graphql_query_derive = { path = "../graphql_query_derive", version = "0.9.0", optional = true }
 serde_json = "1.0"
 serde = { version = "^1.0.78", features = ["derive"] }
 
@@ -32,13 +32,7 @@ optional = true
 [dependencies.web-sys]
 version = "^0.3"
 optional = true
-features = [
-    "Headers",
-    "Request",
-    "RequestInit",
-    "Response",
-    "Window",
-]
+features = ["Headers", "Request", "RequestInit", "Response", "Window"]
 
 [dependencies.wasm-bindgen]
 version = "^0.2"
@@ -56,6 +50,8 @@ reqwest = "^0.9"
 wasm-bindgen-test = "^0.2"
 
 [features]
+default = ["graphql_query_derive"]
+noderive = []
 web = [
     "anyhow",
     "thiserror",

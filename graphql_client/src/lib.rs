@@ -5,10 +5,12 @@
 #![deny(missing_docs)]
 #![warn(rust_2018_idioms)]
 
+#[cfg(feature = "graphql_query_derive")]
 #[allow(unused_imports)]
 #[macro_use]
 extern crate graphql_query_derive;
 
+#[cfg(feature = "graphql_query_derive")]
 #[doc(hidden)]
 pub use graphql_query_derive::*;
 
