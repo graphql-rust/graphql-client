@@ -51,7 +51,6 @@ wasm-bindgen-test = "^0.2"
 
 [features]
 default = ["graphql_query_derive"]
-noderive = []
 web = [
     "anyhow",
     "thiserror",
