@@ -43,7 +43,6 @@ impl Client {
         _query: Q,
         variables: Q::Variables,
     ) -> Result<crate::Response<Q::ResponseData>, ClientError> {
-        // TODO: remove the unwrap
         // TODO: remove tests and test harness
         // TODO: custom headers
         let reqwest_response = self
@@ -55,8 +54,6 @@ impl Client {
             .await?;
 
         let text_response = reqwest_response.text().await?;
-
-        dbg!(&text_response);
 
         Ok(serde_json::from_str(&text_response)?)
     }
