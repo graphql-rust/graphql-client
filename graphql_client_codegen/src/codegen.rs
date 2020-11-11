@@ -44,6 +44,7 @@ pub(crate) fn response_for_query(
 
     let q = quote! {
         use serde::{Serialize, Deserialize};
+        use super::*;
 
         #[allow(dead_code)]
         type Boolean = bool;
