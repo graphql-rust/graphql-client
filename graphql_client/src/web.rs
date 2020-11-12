@@ -79,7 +79,6 @@ impl Client {
         _query: Q,
         variables: Q::Variables,
     ) -> Result<crate::Response<Q::ResponseData>, ClientError> {
-        // this can be removed when we convert to async/await
         let window = web_sys::window().ok_or_else(|| ClientError::NoWindow)?;
         let body =
             serde_json::to_string(&Q::build_query(variables)).map_err(|_| ClientError::Body)?;

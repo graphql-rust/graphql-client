@@ -7,7 +7,7 @@ query Germany {
   }
 }
 
-query Country($countryCode: String!) {
+query Country($countryCode: ID!) {
   country(code: $countryCode) {
     name
     continent {
