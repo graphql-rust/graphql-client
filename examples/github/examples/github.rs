@@ -51,9 +51,9 @@ fn main() -> Result<(), anyhow::Error> {
         name: name.to_string(),
     });
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
 
-    let mut res = client
+    let res = client
         .post("https://api.github.com/graphql")
         .bearer_auth(config.github_api_token)
         .json(&q)

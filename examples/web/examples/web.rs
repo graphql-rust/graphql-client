@@ -1,4 +1,3 @@
-use futures::Future;
 use graphql_client::GraphQLQuery;
 use lazy_static::*;
 use std::cell::RefCell;
@@ -23,7 +22,7 @@ lazy_static! {
     static ref LAST_ENTRY: Mutex<RefCell<Option<String>>> = Mutex::new(RefCell::new(None));
 }
 
-fn load_more() -> impl Future<Item = JsValue, Error = JsValue> {
+async fn load_more() -> Result<JsValue, JsValue> {
     let client = graphql_client::web::Client::new("https://www.graphqlhub.com/graphql");
     let variables = puppy_smiles::Variables {
         after: LAST_ENTRY
@@ -31,20 +30,15 @@ fn load_more() -> impl Future<Item = JsValue, Error = JsValue> {
             .ok()
             .and_then(|opt| opt.borrow().to_owned()),
     };
-    let response = client.call(PuppySmiles, variables);
-
-    response
-        .map(|response| {
-            render_response(response);
-            JsValue::NULL
-        })
-        .map_err(|err| {
-            log(&format!(
-                "Could not fetch puppies. graphql_client_web error: {:?}",
-                err
-            ));
-            JsValue::NULL
-        })
+    let response = client.call(PuppySmiles, variables).await.map_err(|err| {
+        log(&format!(
+            "Could not fetch puppies. graphql_client_web error: {:?}",
+            err
+        ));
+        JsValue::NULL
+    })?;
+    render_response(response);
+    Ok(JsValue::NULL)
 }
 
 fn document() -> web_sys::Document {
