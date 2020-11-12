@@ -67,7 +67,7 @@ impl<'a> GeneratedModule<'a> {
                     const __QUERY_WORKAROUND: &str = include_str!(#path);
                 )
             })
-            .unwrap_or_else(|| quote! {});
+            .unwrap_or_default();
 
         let query_string = &self.query_string;
         let impls = self.build_impls()?;
