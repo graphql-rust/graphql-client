@@ -13,7 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0"
-reqwest = "^0.9"
+reqwest = { version = "^0.10", features = ["json", "blocking"] }
 graphql_client = { version = "0.9.0", path = "../graphql_client", features = [] }
 graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.9.0" }
 structopt = "0.3"

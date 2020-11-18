@@ -34,7 +34,7 @@ pub fn introspect_schema(
         operation_name: introspection_query::OPERATION_NAME,
     };
 
-    let client = reqwest::Client::builder()
+    let client = reqwest::blocking::Client::builder()
         .danger_accept_invalid_certs(no_ssl)
         .build()?;
 
@@ -48,7 +48,7 @@ pub fn introspect_schema(
         req_builder = req_builder.bearer_auth(token.as_str());
     };
 
-    let mut res = req_builder.json(&request_body).send()?;
+    let res = req_builder.json(&request_body).send()?;
 
     if res.status().is_success() {
         // do nothing

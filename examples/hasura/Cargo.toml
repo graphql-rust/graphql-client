@@ -10,7 +10,7 @@ graphql_client = { path = "../../graphql_client" }
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-reqwest = "^0.9.0"
+reqwest = { version = "^0.10", features = ["json", "blocking"] }
 prettytable-rs = "0.7.0"
 dotenv = "0.13.0"
 log = "0.4.3"

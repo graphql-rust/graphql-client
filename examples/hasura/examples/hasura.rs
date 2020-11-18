@@ -29,9 +29,9 @@ fn main() -> Result<(), anyhow::Error> {
         update_columns: vec![Name, Status, SalesforceUpdatedAt],
     });
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
 
-    let mut res = client
+    let res = client
         .post("https://localhost:8080/v1/graphql")
         .json(&q)
         .send()?;

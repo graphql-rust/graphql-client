@@ -2,7 +2,6 @@
 //! [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen).
 
 use crate::*;
-use futures::{Future, IntoFuture};
 use log::*;
 use std::collections::HashMap;
 use thiserror::*;
@@ -75,71 +74,56 @@ impl Client {
     ///
     // Lint disabled: We can pass by value because it's always an empty struct.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn call<Q: GraphQLQuery + 'static>(
+    pub async fn call<Q: GraphQLQuery + 'static>(
         &self,
         _query: Q,
         variables: Q::Variables,
-    ) -> impl Future<Item = crate::Response<Q::ResponseData>, Error = ClientError> + 'static {
-        // this can be removed when we convert to async/await
-        let endpoint = self.endpoint.clone();
-        let custom_headers = self.headers.clone();
+    ) -> Result<crate::Response<Q::ResponseData>, ClientError> {
+        let window = web_sys::window().ok_or_else(|| ClientError::NoWindow)?;
+        let body =
+            serde_json::to_string(&Q::build_query(variables)).map_err(|_| ClientError::Body)?;
 
-        web_sys::window()
-            .ok_or_else(|| ClientError::NoWindow)
-            .into_future()
-            .and_then(move |window| {
-                serde_json::to_string(&Q::build_query(variables))
-                    .map_err(|_| ClientError::Body)
-                    .map(move |body| (window, body))
-            })
-            .and_then(move |(window, body)| {
-                let mut request_init = web_sys::RequestInit::new();
-                request_init
-                    .method("POST")
-                    .body(Some(&JsValue::from_str(&body)));
+        let mut request_init = web_sys::RequestInit::new();
+        request_init
+            .method("POST")
+            .body(Some(&JsValue::from_str(&body)));
 
-                web_sys::Request::new_with_str_and_init(&endpoint, &request_init)
-                    .map_err(|_| ClientError::JsException)
-                    .map(|request| (window, request))
-                // "Request constructor threw");
-            })
-            .and_then(move |(window, request)| {
-                let headers = request.headers();
-                headers
-                    .set("Content-Type", "application/json")
-                    .map_err(|_| ClientError::RequestError)?;
-                headers
-                    .set("Accept", "application/json")
-                    .map_err(|_| ClientError::RequestError)?;
+        let request = web_sys::Request::new_with_str_and_init(&self.endpoint, &request_init)
+            .map_err(|_| ClientError::JsException)?;
 
-                for (header_name, header_value) in custom_headers.iter() {
-                    headers
-                        .set(header_name, header_value)
-                        .map_err(|_| ClientError::RequestError)?;
-                }
+        let headers = request.headers();
+        headers
+            .set("Content-Type", "application/json")
+            .map_err(|_| ClientError::RequestError)?;
+        headers
+            .set("Accept", "application/json")
+            .map_err(|_| ClientError::RequestError)?;
+        for (header_name, header_value) in self.headers.iter() {
+            headers
+                .set(header_name, header_value)
+                .map_err(|_| ClientError::RequestError)?;
+        }
 
-                Ok((window, request))
-            })
-            .and_then(move |(window, request)| {
-                JsFuture::from(window.fetch_with_request(&request))
-                    .map_err(|err| ClientError::Network(js_sys::Error::from(err).message().into()))
-            })
-            .and_then(move |res| {
-                debug!("response: {:?}", res);
-                res.dyn_into::<web_sys::Response>()
-                    .map_err(|_| ClientError::Cast)
-            })
-            .and_then(move |cast_response| {
-                cast_response.text().map_err(|_| ClientError::ResponseText)
-            })
-            .and_then(move |text_promise| {
-                JsFuture::from(text_promise).map_err(|_| ClientError::ResponseText)
-            })
-            .and_then(|text| {
-                let response_text = text.as_string().unwrap_or_default();
-                debug!("response text as string: {:?}", response_text);
-                serde_json::from_str(&response_text).map_err(|_| ClientError::ResponseShape)
-            })
+        let res = JsFuture::from(window.fetch_with_request(&request))
+            .await
+            .map_err(|err| ClientError::Network(js_sys::Error::from(err).message().into()))?;
+        debug!("response: {:?}", res);
+        let cast_response = res
+            .dyn_into::<web_sys::Response>()
+            .map_err(|_| ClientError::Cast)?;
+
+        let text_promise = cast_response
+            .text()
+            .map_err(|_| ClientError::ResponseText)?;
+        let text = JsFuture::from(text_promise)
+            .await
+            .map_err(|_| ClientError::ResponseText)?;
+
+        let response_text = text.as_string().unwrap_or_default();
+        debug!("response text as string: {:?}", response_text);
+        let response_data =
+            serde_json::from_str(&response_text).map_err(|_| ClientError::ResponseShape)?;
+        Ok(response_data)
     }
 }
 
