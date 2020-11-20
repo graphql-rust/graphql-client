@@ -51,7 +51,9 @@ fn main() -> Result<(), anyhow::Error> {
         name: name.to_string(),
     });
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::blocking::Client::builder()
+        .user_agent("graphql-rust/0.9.0")
+        .build()?;
 
     let res = client
         .post("https://api.github.com/graphql")
@@ -59,16 +61,10 @@ fn main() -> Result<(), anyhow::Error> {
         .json(&q)
         .send()?;
 
+    res.error_for_status_ref()?;
+
     let response_body: Response<repo_view::ResponseData> = res.json()?;
     info!("{:?}", response_body);
-
-    if let Some(errors) = response_body.errors {
-        println!("there are errors:");
-
-        for error in &errors {
-            println!("{:?}", error);
-        }
-    }
 
     let response_data: repo_view::ResponseData = response_body.data.expect("missing response data");
 
@@ -80,8 +76,8 @@ fn main() -> Result<(), anyhow::Error> {
     println!("{}/{} - 🌟 {}", owner, name, stars.unwrap_or(0),);
 
     let mut table = prettytable::Table::new();
-
-    table.add_row(row!(b => "issue", "comments"));
+    table.set_format(*prettytable::format::consts::FORMAT_NO_LINESEP_WITH_TITLE);
+    table.set_titles(row!(b => "issue", "comments"));
 
     for issue in &response_data
         .repository
