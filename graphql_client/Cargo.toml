@@ -41,6 +41,7 @@ optional = true
 [dev-dependencies]
 # Note: If we bumpup wasm-bindge-test version, we should change CI setting.
 wasm-bindgen-test = "^0.3"
+reqwest = { version = "^0.10", features = ["json", "blocking"] }
 
 [features]
 default = ["graphql_query_derive"]
