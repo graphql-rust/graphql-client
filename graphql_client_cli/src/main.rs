@@ -70,6 +70,10 @@ enum Cli {
         /// file, with the same name and the .rs extension.
         #[structopt(short = "o", long = "output-directory")]
         output_directory: Option<PathBuf>,
+        /// The module where the custom scalar definitions are located.
+        /// --custom-scalars-module='crate::gql::custom_scalars'
+        #[structopt(short = "p", long = "custom-scalars-module")]
+        custom_scalars_module: Option<String>,
     },
 }
 
@@ -101,6 +105,7 @@ fn main() -> anyhow::Result<()> {
             query_path,
             schema_path,
             selected_operation,
+            custom_scalars_module,
         } => generate::generate_code(generate::CliCodegenParams {
             variables_derives,
             response_derives,
@@ -111,6 +116,7 @@ fn main() -> anyhow::Result<()> {
             query_path,
             schema_path,
             selected_operation,
+            custom_scalars_module,
         }),
     }
 }

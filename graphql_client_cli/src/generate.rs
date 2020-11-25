@@ -17,6 +17,7 @@ pub(crate) struct CliCodegenParams {
     pub no_formatting: bool,
     pub module_visibility: Option<String>,
     pub output_directory: Option<PathBuf>,
+    pub custom_scalars_module: Option<String>,
 }
 
 pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
@@ -30,6 +31,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
         query_path,
         schema_path,
         selected_operation,
+        custom_scalars_module,
     } = params;
 
     let deprecation_strategy = deprecation_strategy.as_ref().and_then(|s| s.parse().ok());
@@ -57,6 +59,17 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
 
     if let Some(deprecation_strategy) = deprecation_strategy {
         options.set_deprecation_strategy(deprecation_strategy);
+    }
+
+    if let Some(custom_scalars_module) = custom_scalars_module {
+        let custom_scalars_module = syn::parse_str(&custom_scalars_module).with_context(|| {
+            format!(
+                "Invalid custom scalars module path: {}",
+                custom_scalars_module
+            )
+        })?;
+
+        options.set_custom_scalars_module(custom_scalars_module);
     }
 
     let gen = generate_module_token_stream(query_path.clone(), &schema_path, options).unwrap();

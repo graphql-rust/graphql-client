@@ -156,7 +156,11 @@ fn generate_scalar_definitions<'a, 'schema: 'a>(
                 proc_macro2::Span::call_site(),
             );
 
-            quote!(type #ident = super::#ident;)
+            if let Some(custom_scalars_module) = options.custom_scalars_module() {
+                quote!(type #ident = #custom_scalars_module::#ident;)
+            } else {
+                quote!(type #ident = super::#ident;)
+            }
         })
 }
 
