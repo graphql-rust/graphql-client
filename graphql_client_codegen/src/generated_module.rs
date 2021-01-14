@@ -86,8 +86,8 @@ impl<'a> GeneratedModule<'a> {
 
                 use std::result::Result;
 
-                pub const OPERATION_NAME: &'static str = #operation_name;
-                pub const QUERY: &'static str = #query_string;
+                pub const OPERATION_NAME: &str = #operation_name;
+                pub const QUERY: &str = #query_string;
 
                 #query_include
 

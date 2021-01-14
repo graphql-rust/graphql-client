@@ -608,7 +608,7 @@ impl UsedTypes {
             .map(move |enum_id| (enum_id, schema.get_enum(enum_id)))
     }
 
-    pub(crate) fn fragment_ids<'b>(&'b self) -> impl Iterator<Item = ResolvedFragmentId> + 'b {
+    pub(crate) fn fragment_ids(&self) -> impl Iterator<Item = ResolvedFragmentId> + '_ {
         self.fragments.iter().copied()
     }
 }
