@@ -2,7 +2,7 @@ use crate::deprecation::DeprecationStrategy;
 use crate::normalization::Normalization;
 use proc_macro2::Ident;
 use std::path::{Path, PathBuf};
-use syn::Visibility;
+use syn::{self, Visibility};
 
 /// Which context is this code generation effort taking place.
 #[derive(Debug)]
@@ -39,6 +39,8 @@ pub struct GraphQLClientCodegenOptions {
     schema_file: Option<PathBuf>,
     /// Normalization pattern for query types and names.
     normalization: Normalization,
+    /// Custom scalar definitions module path
+    custom_scalars_module: Option<syn::Path>,
 }
 
 impl GraphQLClientCodegenOptions {
@@ -56,6 +58,7 @@ impl GraphQLClientCodegenOptions {
             query_file: Default::default(),
             schema_file: Default::default(),
             normalization: Normalization::None,
+            custom_scalars_module: Default::default(),
         }
     }
 
@@ -173,5 +176,15 @@ impl GraphQLClientCodegenOptions {
     /// The normalization mode for the generated code.
     pub fn normalization(&self) -> &Normalization {
         &self.normalization
+    }
+
+    /// Get the custom scalar definitions module
+    pub fn custom_scalars_module(&self) -> Option<&syn::Path> {
+        self.custom_scalars_module.as_ref()
+    }
+
+    /// Set the custom scalar definitions module
+    pub fn set_custom_scalars_module(&mut self, module: syn::Path) {
+        self.custom_scalars_module = Some(module)
     }
 }

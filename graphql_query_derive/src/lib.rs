@@ -70,6 +70,7 @@ fn build_graphql_client_derive_options(
 ) -> Result<GraphQLClientCodegenOptions, BoxError> {
     let variables_derives = attributes::extract_attr(input, "variables_derives").ok();
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
+    let custom_scalars_module = attributes::extract_attr(input, "custom_scalars_module").ok();
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Derive);
     options.set_query_file(query_path);
@@ -91,6 +92,18 @@ fn build_graphql_client_derive_options(
     if let Ok(normalization) = attributes::extract_normalization(input) {
         options.set_normalization(normalization);
     };
+
+    // The user can give a path to a module that provides definitions for the custom scalars.
+    if let Some(custom_scalars_module) = custom_scalars_module {
+        let custom_scalars_module = syn::parse_str(&custom_scalars_module).map_err(|err| {
+            GeneralError(format!(
+                "Invalid custom scalars module path: {}. {}",
+                custom_scalars_module, err
+            ))
+        })?;
+
+        options.set_custom_scalars_module(custom_scalars_module);
+    }
 
     options.set_struct_ident(input.ident.clone());
     options.set_module_visibility(input.vis.clone());
