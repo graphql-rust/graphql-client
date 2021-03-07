@@ -41,6 +41,8 @@ pub struct GraphQLClientCodegenOptions {
     normalization: Normalization,
     /// Custom scalar definitions module path
     custom_scalars_module: Option<syn::Path>,
+    /// List of externally defined enum types. Type names must match those used in the schema exactly.
+    extern_enums: Vec<String>,
 }
 
 impl GraphQLClientCodegenOptions {
@@ -59,6 +61,7 @@ impl GraphQLClientCodegenOptions {
             schema_file: Default::default(),
             normalization: Normalization::None,
             custom_scalars_module: Default::default(),
+            extern_enums: Default::default(),
         }
     }
 
@@ -186,5 +189,15 @@ impl GraphQLClientCodegenOptions {
     /// Set the custom scalar definitions module
     pub fn set_custom_scalars_module(&mut self, module: syn::Path) {
         self.custom_scalars_module = Some(module)
+    }
+
+    /// Get the externally defined enums type names
+    pub fn extern_enums(&self) -> &[String] {
+        &self.extern_enums
+    }
+
+    /// Set the externally defined enums type names
+    pub fn set_extern_enums(&mut self, enums: Vec<String>) {
+        self.extern_enums = enums;
     }
 }

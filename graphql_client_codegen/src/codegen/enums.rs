@@ -23,7 +23,9 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
     );
     let normalization = options.normalization();
 
-    all_used_types.enums(query.schema).map(move |(_id, r#enum)| {
+    all_used_types.enums(query.schema)
+        .filter(move |(_id, r#enum)| !options.extern_enums().contains(&r#enum.name))
+        .map(move |(_id, r#enum)| {
         let variant_names: Vec<TokenStream> = r#enum
             .variants
             .iter()
