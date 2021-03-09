@@ -1,0 +1,22 @@
+schema {
+  query: ExternEnumQueryRoot
+}
+
+enum Direction {
+  NORTH
+  EAST
+  SOUTH
+  WEST
+}
+
+enum DistanceUnit {
+  METER
+  FEET
+  SOMETHING_ELSE_WITH_MULTIPLE_WORDS
+}
+
+type ExternEnumQueryRoot {
+  distance: Int!
+  unit: DistanceUnit!
+  direction: Direction
+}

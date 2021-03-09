@@ -36,6 +36,42 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::E
     Err(syn::Error::new_spanned(ast, "Attribute not found"))
 }
 
+/// Extract a list of configuration parameter values specified in the `graphql` attribute.
+pub fn extract_attr_list(ast: &syn::DeriveInput, attr: &str) -> Result<Vec<String>, syn::Error> {
+    let attributes = &ast.attrs;
+    let graphql_path = path_to_match();
+    let attribute = attributes
+        .iter()
+        .find(|attr| attr.path == graphql_path)
+        .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
+    if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
+        for item in items.nested.iter() {
+            if let syn::NestedMeta::Meta(syn::Meta::List(value_list)) = item {
+                if let Some(ident) = value_list.path.get_ident() {
+                    if ident == attr {
+                        return value_list
+                            .nested
+                            .iter()
+                            .map(|lit| {
+                                if let syn::NestedMeta::Lit(syn::Lit::Str(lit)) = lit {
+                                    Ok(lit.value())
+                                } else {
+                                    Err(syn::Error::new_spanned(
+                                        lit,
+                                        "Attribute inside value list must be a literal",
+                                    ))
+                                }
+                            })
+                            .collect();
+                    }
+                }
+            }
+        }
+    }
+
+    Err(syn::Error::new_spanned(ast, "Attribute not found"))
+}
+
 /// Get the deprecation from a struct attribute in the derive case.
 pub fn extract_deprecation_strategy(
     ast: &syn::DeriveInput,
