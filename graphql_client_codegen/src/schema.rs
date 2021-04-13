@@ -400,13 +400,13 @@ impl StoredInputType {
         }
     }
 
-    fn contains_type_without_indirection(
-        &self,
+    fn contains_type_without_indirection<'a>(
+        &'a self,
         input_id: InputId,
-        schema: &Schema,
-        visited_types: &mut HashSet<String>,
+        schema: &'a Schema,
+        visited_types: &mut HashSet<&'a str>,
     ) -> bool {
-        visited_types.insert(self.name.clone());
+        visited_types.insert(&self.name);
         // The input type is recursive if any of its members contains it, without indirection
         self.fields.iter().any(|(_name, field_type)| {
             // the field is indirected, so no boxing is needed
@@ -424,8 +424,8 @@ impl StoredInputType {
                 let input = schema.get_input(field_input_id);
 
                 // no need to visit type twice (prevents infinite recursion)
-                if visited_types.contains(&input.name) {
-                    return true;
+                if visited_types.contains(&input.name.as_str()) {
+                    return false;
                 }
 
                 // we check if the other input contains this one (without indirection)
@@ -440,7 +440,7 @@ impl StoredInputType {
 
 pub(crate) fn input_is_recursive_without_indirection(input_id: InputId, schema: &Schema) -> bool {
     let input = schema.get_input(input_id);
-    let mut visited_types = HashSet::<String>::new();
+    let mut visited_types = HashSet::<&str>::new();
     input.contains_type_without_indirection(input_id, schema, &mut visited_types)
 }
 impl std::convert::From<graphql_parser::schema::Document> for Schema {
