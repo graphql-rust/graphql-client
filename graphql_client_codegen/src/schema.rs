@@ -6,7 +6,7 @@ mod tests;
 
 use crate::query::UsedTypes;
 use crate::type_qualifiers::GraphqlTypeQualifier;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
@@ -400,7 +400,13 @@ impl StoredInputType {
         }
     }
 
-    fn contains_type_without_indirection(&self, input_id: InputId, schema: &Schema) -> bool {
+    fn contains_type_without_indirection(
+        &self,
+        input_id: InputId,
+        schema: &Schema,
+        visited_types: &mut HashSet<String>,
+    ) -> bool {
+        visited_types.insert(self.name.clone());
         // The input type is recursive if any of its members contains it, without indirection
         self.fields.iter().any(|(_name, field_type)| {
             // the field is indirected, so no boxing is needed
@@ -417,8 +423,13 @@ impl StoredInputType {
 
                 let input = schema.get_input(field_input_id);
 
+                // no need to visit type twice (prevents infinite recursion)
+                if visited_types.contains(&input.name) {
+                    return true;
+                }
+
                 // we check if the other input contains this one (without indirection)
-                input.contains_type_without_indirection(input_id, schema)
+                input.contains_type_without_indirection(input_id, schema, visited_types)
             } else {
                 // the field is not referring to an input type
                 false
@@ -429,9 +440,9 @@ impl StoredInputType {
 
 pub(crate) fn input_is_recursive_without_indirection(input_id: InputId, schema: &Schema) -> bool {
     let input = schema.get_input(input_id);
-    input.contains_type_without_indirection(input_id, schema)
+    let mut visited_types = HashSet::<String>::new();
+    input.contains_type_without_indirection(input_id, schema, &mut visited_types)
 }
-
 impl std::convert::From<graphql_parser::schema::Document> for Schema {
     fn from(ast: graphql_parser::schema::Document) -> Schema {
         graphql_parser_conversion::build_schema(ast)
