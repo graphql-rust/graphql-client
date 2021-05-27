@@ -178,7 +178,8 @@ fn render_variable_field_type(
     let normalized_name = options
         .normalization()
         .input_name(variable.type_name(query.schema));
-    let full_name = Ident::new(normalized_name.as_ref(), Span::call_site());
+    let safe_name = shared::keyword_replace(normalized_name.clone());
+    let full_name = Ident::new(safe_name.as_ref(), Span::call_site());
 
     decorate_type(&full_name, &variable.r#type.qualifiers)
 }
