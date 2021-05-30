@@ -1,4 +1,4 @@
-use super::shared::keyword_replace;
+use super::shared::{field_rename_annotation, keyword_replace};
 use crate::{
     codegen_options::GraphQLClientCodegenOptions,
     query::{BoundQuery, UsedTypes},
@@ -22,6 +22,7 @@ pub(super) fn generate_input_object_definitions(
 
             let fields = input.fields.iter().map(|(field_name, field_type)| {
                 let safe_field_name = keyword_replace(field_name);
+                let annotation = field_rename_annotation(field_name, safe_field_name.as_ref());
                 let name_ident = Ident::new(safe_field_name.as_ref(), Span::call_site());
                 let normalized_field_type_name = options
                     .normalization()
@@ -38,7 +39,7 @@ pub(super) fn generate_input_object_definitions(
                 } else {
                     field_type_tokens
                 };
-                quote!(pub #name_ident: #field_type)
+                quote!(#annotation pub #name_ident: #field_type)
             });
 
             quote! {
