@@ -168,7 +168,7 @@ fn calculate_selection<'a>(
                     .iter()
                     .map(|id| (id, context.query.query.get_selection(*id)))
                     .filter_map(|(id, selection)| {
-                        VariantSelection::from_selection(&selection, type_id, context.query)
+                        VariantSelection::from_selection(selection, type_id, context.query)
                             .map(|variant_selection| (*id, selection, variant_selection))
                     })
                     .collect();
@@ -188,7 +188,7 @@ fn calculate_selection<'a>(
 
                 if let Some((selection_id, selection, _variant)) = variant_selections.get(0) {
                     let mut variant_struct_name_str =
-                        full_path_prefix(*selection_id, &context.query);
+                        full_path_prefix(*selection_id, context.query);
                     variant_struct_name_str.reserve(2 + variant_name_str.len());
                     variant_struct_name_str.push_str("On");
                     variant_struct_name_str.push_str(variant_name_str);
@@ -258,7 +258,7 @@ fn calculate_selection<'a>(
 
         match selection {
             Selection::Field(field) => {
-                let (graphql_name, rust_name) = context.field_name(&field);
+                let (graphql_name, rust_name) = context.field_name(field);
                 let schema_field = field.schema_field(context.schema());
                 let field_type_id = schema_field.r#type.id;
 
@@ -295,7 +295,7 @@ fn calculate_selection<'a>(
                         });
                     }
                     TypeId::Object(_) | TypeId::Interface(_) | TypeId::Union(_) => {
-                        let struct_name_string = full_path_prefix(*id, &context.query);
+                        let struct_name_string = full_path_prefix(*id, context.query);
 
                         context.push_field(ExpandedField {
                             struct_id,
@@ -436,7 +436,7 @@ impl<'a> ExpandedVariant<'a> {
     fn render(&self) -> TokenStream {
         let name_ident = Ident::new(&self.name, Span::call_site());
         let optional_type_ident = self.variant_type.as_ref().map(|variant_type| {
-            let ident = Ident::new(&variant_type, Span::call_site());
+            let ident = Ident::new(variant_type, Span::call_site());
             quote!((#ident))
         });
 
@@ -507,7 +507,7 @@ impl<'a> ExpandedSelection<'a> {
 
             // If the type is aliased, stop here.
             if let Some(alias) = self.aliases.iter().find(|alias| alias.struct_id == type_id) {
-                let fragment_name = Ident::new(&alias.name, Span::call_site());
+                let fragment_name = Ident::new(alias.name, Span::call_site());
                 let fragment_name = if alias.boxed {
                     quote!(Box<#fragment_name>)
                 } else {

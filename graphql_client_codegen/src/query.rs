@@ -188,7 +188,7 @@ fn resolve_fragment(
     fragment_definition: &graphql_parser::query::FragmentDefinition,
 ) -> Result<(), QueryValidationError> {
     let graphql_parser::query::TypeCondition::On(on) = &fragment_definition.type_condition;
-    let on = schema.find_type(&on).ok_or_else(|| {
+    let on = schema.find_type(on).ok_or_else(|| {
         QueryValidationError::new(format!(
             "Could not find type `{}` referenced by fragment `{}`",
             on, fragment_definition.name

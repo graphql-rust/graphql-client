@@ -8,7 +8,7 @@ edition = "2018"
 anyhow = "1.0"
 graphql_client = { path = "../../graphql_client" }
 serde = "^1.0"
-reqwest = { version = "^0.10", features = ["json", "blocking"] }
+reqwest = { version = "^0.11", features = ["json", "blocking"] }
 prettytable-rs = "^0.7"
 structopt = "^0.3"
 dotenv = "^0.13"

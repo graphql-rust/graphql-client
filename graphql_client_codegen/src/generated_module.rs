@@ -31,7 +31,7 @@ impl<'a> GeneratedModule<'a> {
     fn build_impls(&self) -> Result<TokenStream, BoxError> {
         Ok(crate::codegen::response_for_query(
             self.root()?,
-            &self.options,
+            self.options,
             BoundQuery {
                 query: self.resolved_query,
                 schema: self.schema,
