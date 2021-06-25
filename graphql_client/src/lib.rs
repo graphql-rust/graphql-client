@@ -14,7 +14,7 @@ extern crate graphql_query_derive;
 #[doc(hidden)]
 pub use graphql_query_derive::*;
 
-#[cfg(feature = "reqwest")]
+#[cfg(any(feature = "reqwest", feature = "reqwest-blocking"))]
 pub mod reqwest;
 
 use serde::*;

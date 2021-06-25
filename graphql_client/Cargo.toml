@@ -17,3 +17,4 @@ serde_json = "1.0"
 
 [features]
 default = ["graphql_query_derive"]
+reqwest-blocking = ["reqwest/blocking"]
