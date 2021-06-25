@@ -1,4 +1,4 @@
-use graphql_client::GraphQLQuery;
+use graphql_client::{reqwest::post_graphql, GraphQLQuery};
 use lazy_static::*;
 use std::cell::RefCell;
 use std::sync::Mutex;
@@ -9,7 +9,7 @@ use wasm_bindgen_futures::future_to_promise;
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "schema.json",
-    query_path = "examples/puppy_smiles.graphql",
+    query_path = "src/puppy_smiles.graphql",
     response_derives = "Debug"
 )]
 struct PuppySmiles;
@@ -23,20 +23,22 @@ lazy_static! {
 }
 
 async fn load_more() -> Result<JsValue, JsValue> {
-    let client = graphql_client::web::Client::new("https://www.graphqlhub.com/graphql");
+    let url = "https://www.graphqlhub.com/graphql";
     let variables = puppy_smiles::Variables {
         after: LAST_ENTRY
             .lock()
             .ok()
             .and_then(|opt| opt.borrow().to_owned()),
     };
-    let response = client.call(PuppySmiles, variables).await.map_err(|err| {
-        log(&format!(
-            "Could not fetch puppies. graphql_client_web error: {:?}",
-            err
-        ));
-        JsValue::NULL
-    })?;
+
+    let client = reqwest::Client::new();
+
+    let response = post_graphql::<PuppySmiles, _>(&client, url, variables)
+        .await
+        .map_err(|err| {
+            log(&format!("Could not fetch puppies. error: {:?}", err));
+            JsValue::NULL
+        })?;
     render_response(response);
     Ok(JsValue::NULL)
 }
@@ -72,14 +74,14 @@ fn add_load_more_button() {
     on_click.forget();
 }
 
-fn render_response(response: graphql_client_web::Response<puppy_smiles::ResponseData>) {
+fn render_response(response: graphql_client::Response<puppy_smiles::ResponseData>) {
     use std::fmt::Write;
 
     log(&format!("response body\n\n{:?}", response));
 
     let parent = document().body().expect_throw("no body");
 
-    let json: graphql_client_web::Response<puppy_smiles::ResponseData> = response;
+    let json: graphql_client::Response<puppy_smiles::ResponseData> = response;
     let response = document()
         .create_element("div")
         .expect_throw("could not create div");

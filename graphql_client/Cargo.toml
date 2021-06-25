@@ -10,47 +10,10 @@ categories = ["network-programming", "web-programming", "wasm"]
 edition = "2018"
 
 [dependencies]
-doc-comment = "^0.3"
-anyhow = { version = "1.0", optional = true }
-thiserror = { version = "1.0", optional = true }
+reqwest = { version = "^0.11", features = ["json"], optional = true }
 graphql_query_derive = { path = "../graphql_query_derive", version = "0.9.0", optional = true }
-serde_json = "1.0"
 serde = { version = "^1.0.78", features = ["derive"] }
-
-[dependencies.js-sys]
-version = "^0.3"
-optional = true
-
-[dependencies.log]
-version = "^0.4"
-optional = true
-
-[dependencies.web-sys]
-version = "^0.3"
-optional = true
-features = ["Headers", "Request", "RequestInit", "Response", "Window"]
-
-[dependencies.wasm-bindgen]
-version = "^0.2"
-optional = true
-
-[dependencies.wasm-bindgen-futures]
-version = "^0.4"
-optional = true
-
-[dev-dependencies]
-# Note: If we bumpup wasm-bindge-test version, we should change CI setting.
-wasm-bindgen-test = "^0.3"
-reqwest = { version = "^0.10", features = ["json", "blocking"] }
+serde_json = "1.0"
 
 [features]
 default = ["graphql_query_derive"]
-web = [
-    "anyhow",
-    "thiserror",
-    "js-sys",
-    "log",
-    "wasm-bindgen",
-    "wasm-bindgen-futures",
-    "web-sys",
-]
