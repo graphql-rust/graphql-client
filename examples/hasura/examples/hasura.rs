@@ -1,3 +1,4 @@
+use ::reqwest::blocking::Client;
 use graphql_client::*;
 use log::*;
 use prettytable::*;
@@ -28,7 +29,7 @@ fn main() -> Result<(), anyhow::Error> {
         update_columns: vec![Name, Status, SalesforceUpdatedAt],
     });
 
-    let client = reqwest::blocking::Client::new();
+    let client = Client::new();
 
     let res = client
         .post("https://localhost:8080/v1/graphql")

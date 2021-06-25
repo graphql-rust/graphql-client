@@ -1,4 +1,3 @@
-use anyhow::*;
 use graphql_client::GraphQLQuery;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
 use std::path::PathBuf;
@@ -20,11 +19,11 @@ pub fn introspect_schema(
     authorization: Option<String>,
     headers: Vec<Header>,
     no_ssl: bool,
-) -> anyhow::Result<()> {
+) {
     use std::io::Write;
 
     let out: Box<dyn Write> = match output {
-        Some(path) => Box::new(::std::fs::File::create(path)?),
+        Some(path) => Box::new(::std::fs::File::create(path).unwrap()),
         None => Box::new(std::io::stdout()),
     };
 
@@ -36,7 +35,8 @@ pub fn introspect_schema(
 
     let client = reqwest::blocking::Client::builder()
         .danger_accept_invalid_certs(no_ssl)
-        .build()?;
+        .build()
+        .unwrap();
 
     let mut req_builder = client.post(location).headers(construct_headers());
 
@@ -48,7 +48,7 @@ pub fn introspect_schema(
         req_builder = req_builder.bearer_auth(token.as_str());
     };
 
-    let res = req_builder.json(&request_body).send()?;
+    let res = req_builder.json(&request_body).send().unwrap();
 
     if res.status().is_success() {
         // do nothing
@@ -58,9 +58,8 @@ pub fn introspect_schema(
         println!("Something else happened. Status: {:?}", res.status());
     }
 
-    let json: serde_json::Value = res.json()?;
-    serde_json::to_writer_pretty(out, &json)?;
-    Ok(())
+    let json: serde_json::Value = res.json().unwrap();
+    serde_json::to_writer_pretty(out, &json).unwrap();
 }
 
 fn construct_headers() -> HeaderMap {
@@ -77,12 +76,12 @@ pub struct Header {
 }
 
 impl FromStr for Header {
-    type Err = anyhow::Error;
+    type Err = String;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         // error: colon required for name/value pair
         if !input.contains(':') {
-            return Err(format_err!(
+            return Err(format!(
                 "Invalid header input. A colon is required to separate the name and value. [{}]",
                 input
             ));
@@ -95,7 +94,7 @@ impl FromStr for Header {
 
         // error: field name must be
         if name.is_empty() {
-            return Err(format_err!(
+            return Err(format!(
                 "Invalid header input. Field name is required before colon. [{}]",
                 input
             ));
@@ -103,7 +102,7 @@ impl FromStr for Header {
 
         // error: no whitespace in field name
         if name.split_whitespace().count() > 1 {
-            return Err(format_err!(
+            return Err(format!(
                 "Invalid header input. Whitespace not allowed in field name. [{}]",
                 input
             ));

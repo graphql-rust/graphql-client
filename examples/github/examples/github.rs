@@ -1,3 +1,4 @@
+use ::reqwest::blocking::Client;
 use anyhow::*;
 use graphql_client::*;
 use log::*;
@@ -51,9 +52,7 @@ fn main() -> Result<(), anyhow::Error> {
         name: name.to_string(),
     });
 
-    let client = reqwest::blocking::Client::builder()
-        .user_agent("graphql-rust/0.9.0")
-        .build()?;
+    let client = Client::builder().user_agent("graphql-rust/0.9.0").build()?;
 
     let res = client
         .post("https://api.github.com/graphql")

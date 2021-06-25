@@ -12,7 +12,6 @@ name = "graphql-client"
 path = "src/main.rs"
 
 [dependencies]
-anyhow = "1.0"
 reqwest = { version = "^0.11", features = ["json", "blocking"] }
 graphql_client = { version = "0.9.0", path = "../graphql_client", default-features = false, features = ["graphql_query_derive"] }
 graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.9.0" }

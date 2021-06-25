@@ -28,4 +28,5 @@ features = [
     "HtmlBodyElement",
     "HtmlDocument",
     "HtmlElement",
+    "Window",
 ]

@@ -1,3 +1,5 @@
+#![allow(clippy::redundant_clone)] // in structopt generated code
+
 use env_logger::fmt::{Color, Style, StyledValue};
 use log::Level;
 
@@ -73,7 +75,7 @@ enum Cli {
     },
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() {
     set_env_logger();
 
     let cli = Cli::from_args();

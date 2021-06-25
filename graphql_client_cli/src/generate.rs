@@ -1,4 +1,3 @@
-use anyhow::*;
 use graphql_client_codegen::{
     generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
 };
@@ -21,7 +20,7 @@ pub(crate) struct CliCodegenParams {
     pub custom_scalars_module: Option<String>,
 }
 
-pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
+pub(crate) fn generate_code(params: CliCodegenParams) {
     let CliCodegenParams {
         variables_derives,
         response_derives,
@@ -63,12 +62,8 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
     }
 
     if let Some(custom_scalars_module) = custom_scalars_module {
-        let custom_scalars_module = syn::parse_str(&custom_scalars_module).with_context(|| {
-            format!(
-                "Invalid custom scalars module path: {}",
-                custom_scalars_module
-            )
-        })?;
+        let custom_scalars_module =
+            syn::parse_str(&custom_scalars_module).expect("Invalid custom scalar module path");
 
         options.set_custom_scalars_module(custom_scalars_module);
     }
@@ -85,7 +80,8 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
     let query_file_name: ::std::ffi::OsString = query_path
         .file_name()
         .map(ToOwned::to_owned)
-        .ok_or_else(|| format_err!("Failed to find a file name in the provided query path."))?;
+        .ok_or_else(|| "Failed to find a file name in the provided query path.".to_owned())
+        .unwrap();
 
     let dest_file_path: PathBuf = output_directory
         .map(|output_dir| output_dir.join(query_file_name).with_extension("rs"))
@@ -93,10 +89,8 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
 
     log::info!("Writing generated query to {:?}", dest_file_path);
 
-    let mut file = File::create(dest_file_path)?;
-    write!(file, "{}", generated_code)?;
-
-    Ok(())
+    let mut file = File::create(dest_file_path).unwrap();
+    write!(file, "{}", generated_code).unwrap();
 }
 
 fn format(code: &str) -> String {
