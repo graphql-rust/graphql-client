@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-- [to be documnented] — A CLI and derive option to specify a module to import
-  custom scalar from. Thanks @miterst! ([PR](https://github.com/graphql-rust/graphql-client/pull/354))
+- The `web` feature is dropped. You can now use a `reqwest::Client` instead of the custom HTTP client.
+- Allow specifying externally defined enums (thanks @jakmeier)
+- Make the derive feature optional (but enabled by default)
+- `--no-ssl` param in CLI (thanks @danielharbor!)
+- The shape of some generated response types changed to be flatter and more ergonomic.
+- Many dependencies were dropped
+— A CLI and derive option to specify a module to import custom scalar from.
+  Thanks @miterst! ([PR](https://github.com/graphql-rust/graphql-client/pull/354))
 
 ## 0.9.0 - 2020-03-13
 

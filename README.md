@@ -3,7 +3,6 @@
 [![Github actions Status](https://github.com/graphql-rust/graphql-client/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/graphql-rust/graphql-client/actions)
 [![docs](https://docs.rs/graphql_client/badge.svg)](https://docs.rs/graphql_client/latest/graphql_client/)
 [![crates.io](https://img.shields.io/crates/v/graphql_client.svg)](https://crates.io/crates/graphql_client)
-[![Join the chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/juniper-graphql/graphql-client)
 
 A typed GraphQL client library for Rust.
 
@@ -19,7 +18,7 @@ A typed GraphQL client library for Rust.
 - Supports multiple operations per query document.
 - Supports setting GraphQL fields as deprecated and having the Rust compiler check
   their use.
-- [web client](./graphql_client_web) for boilerplate-free API calls from browsers.
+- Optional reqwest-based client for boilerplate-free API calls from browsers.
 
 ## Getting started
 
@@ -83,6 +82,15 @@ A typed GraphQL client library for Rust.
   ```
 
 [A complete example using the GitHub GraphQL API is available](https://github.com/graphql-rust/graphql-client/tree/master/examples/github), as well as sample [rustdoc output](https://www.tomhoule.com/docs/example_module/).
+
+## Alternative workflow using the CLI
+
+You can introspect GraphQL APIs and generate module from a command line interface to the library:
+
+```bash
+$ cargo install graphql_client_cli
+$ graphql-client --help
+```
 
 ## Deriving specific traits on the response
 
