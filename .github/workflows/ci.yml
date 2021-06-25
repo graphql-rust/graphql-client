@@ -41,14 +41,10 @@ jobs:
         profile: minimal
         toolchain: stable
         override: true
-    - name: Setup wasm-bindgen
-      run: |
-        rustup target add wasm32-unknown-unknown &&
-        sudo apt update && sudo apt install -y firefox-geckodriver &&
-        cargo install wasm-bindgen-cli
+        target: wasm32-unknown-unknown
     - name: Execute cargo test
       run: |
-        xvfb-run cargo test --manifest-path=./graphql_client/Cargo.toml --features="web" --target wasm32-unknown-unknown
+        cargo test --manifest-path=./graphql_client/Cargo.toml --features="reqwest" --target wasm32-unknown-unknown
   lint:
     name: Rustfmt and Clippy
     runs-on: ubuntu-latest
