@@ -18,14 +18,23 @@ use crate::{
         StoredInputType, StoredScalar, TypeId, UnionId,
     },
 };
-use std::collections::{HashMap, HashSet};
-use thiserror::Error;
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+};
 
-#[derive(Debug, Error)]
-#[error("{}", message)]
+#[derive(Debug)]
 pub(crate) struct QueryValidationError {
     message: String,
 }
+
+impl Display for QueryValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl std::error::Error for QueryValidationError {}
 
 impl QueryValidationError {
     pub(crate) fn new(message: String) -> Self {
