@@ -16,7 +16,6 @@ struct UpsertIssue;
 
 fn main() -> Result<(), anyhow::Error> {
     use upsert_issue::{IssuesUpdateColumn::*, *};
-    dotenv::dotenv().ok();
     env_logger::init();
 
     let q = UpsertIssue::build_query(Variables {

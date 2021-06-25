@@ -40,7 +40,7 @@ USAGE:
 FLAGS:
     -h, --help             Prints help information
         --no-formatting    If you don't want to execute rustfmt to generated code, set this option. Default value is
-                           false. Formating feature is disabled as default installation.
+                           false.
     -V, --version          Prints version information
 
 OPTIONS:
@@ -66,5 +66,5 @@ ARGS:
 If you want to use formatting feature, you should install like this.
 
 ```bash
-cargo install graphql_client_cli --features rustfmt --force
+cargo install graphql_client_cli
 ```

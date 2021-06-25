@@ -37,7 +37,6 @@ fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), anyhow::Error> {
 }
 
 fn main() -> Result<(), anyhow::Error> {
-    dotenv::dotenv().ok();
     env_logger::init();
 
     let config: Env = envy::from_env().context("while reading from environment")?;

@@ -1,9 +1,6 @@
 use env_logger::fmt::{Color, Style, StyledValue};
 use log::Level;
 
-#[cfg(feature = "rustfmt")]
-extern crate rustfmt_nightly as rustfmt;
-
 mod generate;
 mod introspect_schema;
 use std::path::PathBuf;
@@ -57,7 +54,6 @@ enum Cli {
         deprecation_strategy: Option<String>,
         /// If you don't want to execute rustfmt to generated code, set this option.
         /// Default value is false.
-        /// Formating feature is disabled as default installation.
         #[structopt(long = "no-formatting")]
         no_formatting: bool,
         /// You can choose module and target struct visibility from pub and private.

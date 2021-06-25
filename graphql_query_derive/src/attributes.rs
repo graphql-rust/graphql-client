@@ -78,7 +78,7 @@ pub fn extract_attr_list(ast: &syn::DeriveInput, attr: &str) -> Result<Vec<Strin
 pub fn extract_deprecation_strategy(
     ast: &syn::DeriveInput,
 ) -> Result<DeprecationStrategy, syn::Error> {
-    extract_attr(&ast, "deprecated")?
+    extract_attr(ast, "deprecated")?
         .to_lowercase()
         .as_str()
         .parse()
@@ -87,7 +87,7 @@ pub fn extract_deprecation_strategy(
 
 /// Get the deprecation from a struct attribute in the derive case.
 pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, syn::Error> {
-    extract_attr(&ast, "normalization")?
+    extract_attr(ast, "normalization")?
         .to_lowercase()
         .as_str()
         .parse()
