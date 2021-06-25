@@ -5,6 +5,7 @@ use prettytable::*;
 use serde::*;
 use structopt::StructOpt;
 
+#[allow(clippy::upper_case_acronyms)]
 type URI = String;
 
 #[derive(GraphQLQuery)]
@@ -79,16 +80,16 @@ fn main() -> Result<(), anyhow::Error> {
     table.set_format(*prettytable::format::consts::FORMAT_NO_LINESEP_WITH_TITLE);
     table.set_titles(row!(b => "issue", "comments"));
 
-    for issue in &response_data
+    for issue in response_data
         .repository
         .expect("missing repository")
         .issues
         .nodes
         .expect("issue nodes is null")
+        .iter()
+        .flatten()
     {
-        if let Some(issue) = issue {
-            table.add_row(row!(issue.title, issue.comments.total_count));
-        }
+        table.add_row(row!(issue.title, issue.comments.total_count));
     }
 
     table.printstd();

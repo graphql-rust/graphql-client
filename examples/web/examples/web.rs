@@ -98,11 +98,10 @@ fn render_response(response: graphql_client_web::Response<puppy_smiles::Response
         .map(|puppy| puppy.fullname_id.clone());
     LAST_ENTRY.lock().unwrap_throw().replace(new_cursor);
 
-    for puppy in &listings {
-        if let Some(puppy) = puppy {
-            write!(
-                inner_html,
-                r#"
+    for puppy in listings.iter().flatten() {
+        write!(
+            inner_html,
+            r#"
                     <div class="card" style="width: 26rem;">
                         <img class="img-thumbnail card-img-top" alt="{}" src="{}" />
                         <div class="card-body">
@@ -110,10 +109,9 @@ fn render_response(response: graphql_client_web::Response<puppy_smiles::Response
                         </div>
                     </div>
                     "#,
-                puppy.title, puppy.url, puppy.title
-            )
-            .expect_throw("write to string");
-        }
+            puppy.title, puppy.url, puppy.title
+        )
+        .expect_throw("write to string");
     }
     response.set_inner_html(&format!(
         "<h2>response:</h2><div class=\"container\"><div class=\"row\">{}</div></div>",
