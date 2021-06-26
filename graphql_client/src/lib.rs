@@ -1,6 +1,15 @@
-//! The top-level documentation resides on the [project README](https://github.com/graphql-rust/graphql-client) at the moment.
+//! The top-level documentation resides on the [project
+//! README](https://github.com/graphql-rust/graphql-client) at the moment.
 //!
-//! The main interface to this library is the custom derive that generates modules from a GraphQL query and schema. See the docs for the [`GraphQLQuery`] trait for a full example.
+//! The main interface to this library is the custom derive that generates
+//! modules from a GraphQL query and schema. See the docs for the
+//! [`GraphQLQuery`] trait for a full example.
+//!
+//! ## Cargo features
+//!
+//! - `graphql_query_derive` (default: on): enables the `#[derive(GraphqlQuery)]` custom derive.
+//! - `reqwest` (default: off): exposes the `graphql_client::reqwest::post_graphql()` function.
+//! - `reqwest_blocking` (default: off): exposes the blocking version, `graphql_client::reqwest::post_graphql_blocking()`.
 
 #![deny(missing_docs)]
 #![warn(rust_2018_idioms)]
