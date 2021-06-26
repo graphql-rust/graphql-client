@@ -1,3 +1,4 @@
+use crate::CliResult;
 use graphql_client::GraphQLQuery;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
 use std::path::PathBuf;
@@ -19,11 +20,11 @@ pub fn introspect_schema(
     authorization: Option<String>,
     headers: Vec<Header>,
     no_ssl: bool,
-) {
+) -> CliResult<()> {
     use std::io::Write;
 
     let out: Box<dyn Write> = match output {
-        Some(path) => Box::new(::std::fs::File::create(path).unwrap()),
+        Some(path) => Box::new(::std::fs::File::create(path)?),
         None => Box::new(std::io::stdout()),
     };
 
@@ -35,8 +36,7 @@ pub fn introspect_schema(
 
     let client = reqwest::blocking::Client::builder()
         .danger_accept_invalid_certs(no_ssl)
-        .build()
-        .unwrap();
+        .build()?;
 
     let mut req_builder = client.post(location).headers(construct_headers());
 
@@ -48,7 +48,7 @@ pub fn introspect_schema(
         req_builder = req_builder.bearer_auth(token.as_str());
     };
 
-    let res = req_builder.json(&request_body).send().unwrap();
+    let res = req_builder.json(&request_body).send()?;
 
     if res.status().is_success() {
         // do nothing
@@ -58,8 +58,10 @@ pub fn introspect_schema(
         println!("Something else happened. Status: {:?}", res.status());
     }
 
-    let json: serde_json::Value = res.json().unwrap();
-    serde_json::to_writer_pretty(out, &json).unwrap();
+    let json: serde_json::Value = res.json()?;
+    serde_json::to_writer_pretty(out, &json)?;
+
+    Ok(())
 }
 
 fn construct_headers() -> HeaderMap {

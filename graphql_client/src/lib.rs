@@ -9,7 +9,7 @@
 //!
 //! - `graphql_query_derive` (default: on): enables the `#[derive(GraphqlQuery)]` custom derive.
 //! - `reqwest` (default: off): exposes the `graphql_client::reqwest::post_graphql()` function.
-//! - `reqwest_blocking` (default: off): exposes the blocking version, `graphql_client::reqwest::post_graphql_blocking()`.
+//! - `reqwest-blocking` (default: off): exposes the blocking version, `graphql_client::reqwest::post_graphql_blocking()`.
 
 #![deny(missing_docs)]
 #![warn(rust_2018_idioms)]
@@ -26,7 +26,7 @@ pub use graphql_query_derive::*;
 #[cfg(any(feature = "reqwest", feature = "reqwest-blocking"))]
 pub mod reqwest;
 
-use serde::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 

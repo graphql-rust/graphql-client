@@ -1,12 +1,16 @@
 #![allow(clippy::redundant_clone)] // in structopt generated code
 
-use env_logger::fmt::{Color, Style, StyledValue};
-use log::Level;
-
+mod error;
 mod generate;
 mod introspect_schema;
+
+use env_logger::fmt::{Color, Style, StyledValue};
+use error::Error;
+use log::Level;
 use std::path::PathBuf;
 use structopt::StructOpt;
+
+type CliResult<T> = Result<T, Error>;
 
 #[derive(StructOpt)]
 #[structopt(author, about)]
@@ -75,7 +79,7 @@ enum Cli {
     },
 }
 
-fn main() {
+fn main() -> CliResult<()> {
     set_env_logger();
 
     let cli = Cli::from_args();

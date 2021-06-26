@@ -1,6 +1,9 @@
+use crate::error::Error;
+use crate::CliResult;
 use graphql_client_codegen::{
     generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
 };
+use std::ffi::OsString;
 use std::fs::File;
 use std::io::Write as _;
 use std::path::PathBuf;
@@ -20,7 +23,7 @@ pub(crate) struct CliCodegenParams {
     pub custom_scalars_module: Option<String>,
 }
 
-pub(crate) fn generate_code(params: CliCodegenParams) {
+pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
     let CliCodegenParams {
         variables_derives,
         response_derives,
@@ -62,26 +65,29 @@ pub(crate) fn generate_code(params: CliCodegenParams) {
     }
 
     if let Some(custom_scalars_module) = custom_scalars_module {
-        let custom_scalars_module =
-            syn::parse_str(&custom_scalars_module).expect("Invalid custom scalar module path");
+        let custom_scalars_module = syn::parse_str(&custom_scalars_module)
+            .map_err(|_| Error::message("Invalid custom scalar module path".to_owned()))?;
 
         options.set_custom_scalars_module(custom_scalars_module);
     }
 
-    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options).unwrap();
+    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)
+        .map_err(|err| Error::message(format!("Error generating module code: {}", err)))?;
 
     let generated_code = gen.to_string();
     let generated_code = if !no_formatting {
-        format(&generated_code)
+        format(&generated_code)?
     } else {
         generated_code
     };
 
-    let query_file_name: ::std::ffi::OsString = query_path
-        .file_name()
-        .map(ToOwned::to_owned)
-        .ok_or_else(|| "Failed to find a file name in the provided query path.".to_owned())
-        .unwrap();
+    let query_file_name: OsString =
+        query_path
+            .file_name()
+            .map(ToOwned::to_owned)
+            .ok_or_else(|| {
+                Error::message("Failed to find a file name in the provided query path.".to_owned())
+            })?;
 
     let dest_file_path: PathBuf = output_directory
         .map(|output_dir| output_dir.join(query_file_name).with_extension("rs"))
@@ -89,22 +95,29 @@ pub(crate) fn generate_code(params: CliCodegenParams) {
 
     log::info!("Writing generated query to {:?}", dest_file_path);
 
-    let mut file = File::create(dest_file_path).unwrap();
-    write!(file, "{}", generated_code).unwrap();
+    let mut file = File::create(&dest_file_path).map_err(|err| {
+        Error::source_with_message(
+            err,
+            format!("Creating file at {}", dest_file_path.display()),
+        )
+    })?;
+    write!(file, "{}", generated_code)?;
+
+    Ok(())
 }
 
-fn format(code: &str) -> String {
+fn format(code: &str) -> CliResult<String> {
     let binary = "rustfmt";
 
     let mut child = std::process::Command::new(binary)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
-        .unwrap();
+        .map_err(|err| Error::source_with_message(err, "Error spawning rustfmt".to_owned()))?;
     let child_stdin = child.stdin.as_mut().unwrap();
-    write!(child_stdin, "{}", code).unwrap();
+    write!(child_stdin, "{}", code)?;
 
-    let output = child.wait_with_output().unwrap();
+    let output = child.wait_with_output()?;
 
     if !output.status.success() {
         panic!(
@@ -113,5 +126,5 @@ fn format(code: &str) -> String {
         );
     }
 
-    String::from_utf8(output.stdout).unwrap()
+    Ok(String::from_utf8(output.stdout)?)
 }
