@@ -1,0 +1,28 @@
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+directive @defer on FIELD
+
+type Query {
+    fooBars: Self
+}
+
+type Self {
+    fooBars: Result
+}
+
+union Result = Foo | Bar | FooBar
+
+type Foo {
+    fooField: String!
+}
+
+type Bar {
+    barField: String!
+}
+
+type FooBar {
+    fooBarField: String!
+}

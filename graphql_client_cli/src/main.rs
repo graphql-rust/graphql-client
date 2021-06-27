@@ -9,6 +9,7 @@ use error::Error;
 use log::Level;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use Cli::Generate;
 
 type CliResult<T> = Result<T, Error>;
 
@@ -76,6 +77,10 @@ enum Cli {
         /// --custom-scalars-module='crate::gql::custom_scalars'
         #[structopt(short = "p", long = "custom-scalars-module")]
         custom_scalars_module: Option<String>,
+        /// A flag indicating if the enum representing the variants of a fragment union/interface should have a "other" variant
+        /// --fragments-other-variant
+        #[structopt(long = "fragments-other-variant")]
+        fragments_other_variant: bool,
     },
 }
 
@@ -97,7 +102,7 @@ fn main() -> CliResult<()> {
             headers,
             no_ssl,
         ),
-        Cli::Generate {
+        Generate {
             variables_derives,
             response_derives,
             deprecation_strategy,
@@ -108,6 +113,7 @@ fn main() -> CliResult<()> {
             schema_path,
             selected_operation,
             custom_scalars_module,
+            fragments_other_variant,
         } => generate::generate_code(generate::CliCodegenParams {
             query_path,
             schema_path,
@@ -119,6 +125,7 @@ fn main() -> CliResult<()> {
             module_visibility,
             output_directory,
             custom_scalars_module,
+            fragments_other_variant,
         }),
     }
 }
