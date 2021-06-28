@@ -8,58 +8,49 @@ use graphql_client_codegen::{
 };
 use std::{
     env,
-    fmt::Display,
     path::{Path, PathBuf},
 };
 
 use proc_macro2::TokenStream;
 
-type BoxError = Box<dyn std::error::Error + 'static>;
-
-#[derive(Debug)]
-struct GeneralError(String);
-
-impl Display for GeneralError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-impl std::error::Error for GeneralError {}
-
 #[proc_macro_derive(GraphQLQuery, attributes(graphql))]
 pub fn derive_graphql_query(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     match graphql_query_derive_inner(input) {
         Ok(ts) => ts,
-        Err(err) => panic!("{:?}", err),
+        Err(err) => err.to_compile_error().into(),
     }
 }
 
 fn graphql_query_derive_inner(
     input: proc_macro::TokenStream,
-) -> Result<proc_macro::TokenStream, BoxError> {
+) -> Result<proc_macro::TokenStream, syn::Error> {
     let input = TokenStream::from(input);
     let ast = syn::parse2(input)?;
     let (query_path, schema_path) = build_query_and_schema_path(&ast)?;
     let options = build_graphql_client_derive_options(&ast, query_path.clone())?;
-    Ok(
-        generate_module_token_stream(query_path, &schema_path, options)
-            .map(Into::into)
-            .map_err(|err| GeneralError(format!("Code generation failed: {}", err)))?,
-    )
+
+    generate_module_token_stream(query_path, &schema_path, options)
+        .map(Into::into)
+        .map_err(|err| {
+            syn::Error::new_spanned(
+                ast,
+                format!("Failed to generate GraphQLQuery impl: {}", err),
+            )
+        })
 }
 
-fn build_query_and_schema_path(input: &syn::DeriveInput) -> Result<(PathBuf, PathBuf), BoxError> {
+fn build_query_and_schema_path(input: &syn::DeriveInput) -> Result<(PathBuf, PathBuf), syn::Error> {
     let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").map_err(|_err| {
-        GeneralError("Checking that the CARGO_MANIFEST_DIR env variable is defined.".into())
+        syn::Error::new_spanned(
+            input,
+            "Error checking that the CARGO_MANIFEST_DIR env variable is defined.",
+        )
     })?;
 
-    let query_path = attributes::extract_attr(input, "query_path")
-        .map_err(|err| GeneralError(format!("Error extracting query path. {}", err)))?;
+    let query_path = attributes::extract_attr(input, "query_path")?;
     let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
     let query_path = Path::new(&query_path).to_path_buf();
-    let schema_path = attributes::extract_attr(input, "schema_path")
-        .map_err(|err| GeneralError(format!("Error extracting schema path. {}", err)))?;
+    let schema_path = attributes::extract_attr(input, "schema_path")?;
     let schema_path = Path::new(&cargo_manifest_dir).join(schema_path);
     Ok((query_path, schema_path))
 }
@@ -67,7 +58,7 @@ fn build_query_and_schema_path(input: &syn::DeriveInput) -> Result<(PathBuf, Pat
 fn build_graphql_client_derive_options(
     input: &syn::DeriveInput,
     query_path: PathBuf,
-) -> Result<GraphQLClientCodegenOptions, BoxError> {
+) -> Result<GraphQLClientCodegenOptions, syn::Error> {
     let variables_derives = attributes::extract_attr(input, "variables_derives").ok();
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
     let custom_scalars_module = attributes::extract_attr(input, "custom_scalars_module").ok();
@@ -96,12 +87,7 @@ fn build_graphql_client_derive_options(
 
     // The user can give a path to a module that provides definitions for the custom scalars.
     if let Some(custom_scalars_module) = custom_scalars_module {
-        let custom_scalars_module = syn::parse_str(&custom_scalars_module).map_err(|err| {
-            GeneralError(format!(
-                "Invalid custom scalars module path: {}. {}",
-                custom_scalars_module, err
-            ))
-        })?;
+        let custom_scalars_module = syn::parse_str(&custom_scalars_module)?;
 
         options.set_custom_scalars_module(custom_scalars_module);
     }

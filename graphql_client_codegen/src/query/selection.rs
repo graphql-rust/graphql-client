@@ -131,13 +131,13 @@ impl SelectionParent {
         }
     }
 
-    pub(crate) fn to_path_segment(&self, query: &BoundQuery<'_>) -> String {
+    pub(crate) fn to_path_segment(self, query: &BoundQuery<'_>) -> String {
         match self {
             SelectionParent::Field(id) | SelectionParent::InlineFragment(id) => {
-                query.query.get_selection(*id).to_path_segment(query)
+                query.query.get_selection(id).to_path_segment(query)
             }
-            SelectionParent::Operation(id) => query.query.get_operation(*id).to_path_segment(),
-            SelectionParent::Fragment(id) => query.query.get_fragment(*id).to_path_segment(),
+            SelectionParent::Operation(id) => query.query.get_operation(id).to_path_segment(),
+            SelectionParent::Fragment(id) => query.query.get_fragment(id).to_path_segment(),
         }
     }
 }

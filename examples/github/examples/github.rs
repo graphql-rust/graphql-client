@@ -1,10 +1,11 @@
+use ::reqwest::blocking::Client;
 use anyhow::*;
-use graphql_client::*;
+use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
 use log::*;
 use prettytable::*;
-use serde::*;
 use structopt::StructOpt;
 
+#[allow(clippy::upper_case_acronyms)]
 type URI = String;
 
 #[derive(GraphQLQuery)]
@@ -22,11 +23,6 @@ struct Command {
     repo: String,
 }
 
-#[derive(Deserialize, Debug)]
-struct Env {
-    github_api_token: String,
-}
-
 fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), anyhow::Error> {
     let mut parts = repo_name.split('/');
     match (parts.next(), parts.next()) {
@@ -36,34 +32,36 @@ fn parse_repo_name(repo_name: &str) -> Result<(&str, &str), anyhow::Error> {
 }
 
 fn main() -> Result<(), anyhow::Error> {
-    dotenv::dotenv().ok();
     env_logger::init();
 
-    let config: Env = envy::from_env().context("while reading from environment")?;
+    let github_api_token =
+        std::env::var("GITHUB_API_TOKEN").expect("Missing GITHUB_API_TOKEN env var");
 
     let args = Command::from_args();
 
     let repo = args.repo;
     let (owner, name) = parse_repo_name(&repo).unwrap_or(("tomhoule", "graphql-client"));
 
-    let q = RepoView::build_query(repo_view::Variables {
+    let variables = repo_view::Variables {
         owner: owner.to_string(),
         name: name.to_string(),
-    });
+    };
 
-    let client = reqwest::blocking::Client::builder()
+    let client = Client::builder()
         .user_agent("graphql-rust/0.9.0")
+        .default_headers(
+            std::iter::once((
+                reqwest::header::AUTHORIZATION,
+                reqwest::header::HeaderValue::from_str(&format!("Bearer {}", github_api_token))
+                    .unwrap(),
+            ))
+            .collect(),
+        )
         .build()?;
 
-    let res = client
-        .post("https://api.github.com/graphql")
-        .bearer_auth(config.github_api_token)
-        .json(&q)
-        .send()?;
+    let response_body =
+        post_graphql::<RepoView, _>(&client, "https://api.github.com/graphql", variables).unwrap();
 
-    res.error_for_status_ref()?;
-
-    let response_body: Response<repo_view::ResponseData> = res.json()?;
     info!("{:?}", response_body);
 
     let response_data: repo_view::ResponseData = response_body.data.expect("missing response data");
@@ -79,16 +77,16 @@ fn main() -> Result<(), anyhow::Error> {
     table.set_format(*prettytable::format::consts::FORMAT_NO_LINESEP_WITH_TITLE);
     table.set_titles(row!(b => "issue", "comments"));
 
-    for issue in &response_data
+    for issue in response_data
         .repository
         .expect("missing repository")
         .issues
         .nodes
         .expect("issue nodes is null")
+        .iter()
+        .flatten()
     {
-        if let Some(issue) = issue {
-            table.add_row(row!(issue.title, issue.comments.total_count));
-        }
+        table.add_row(row!(issue.title, issue.comments.total_count));
     }
 
     table.printstd();

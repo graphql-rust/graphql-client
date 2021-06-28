@@ -5,3 +5,4 @@ Cargo.lock
 .idea
 scripts/*
 !scripts/*.sh
+/.vscode

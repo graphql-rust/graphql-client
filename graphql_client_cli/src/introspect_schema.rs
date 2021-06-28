@@ -1,4 +1,4 @@
-use anyhow::*;
+use crate::CliResult;
 use graphql_client::GraphQLQuery;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
 use std::path::PathBuf;
@@ -20,7 +20,7 @@ pub fn introspect_schema(
     authorization: Option<String>,
     headers: Vec<Header>,
     no_ssl: bool,
-) -> anyhow::Result<()> {
+) -> CliResult<()> {
     use std::io::Write;
 
     let out: Box<dyn Write> = match output {
@@ -60,6 +60,7 @@ pub fn introspect_schema(
 
     let json: serde_json::Value = res.json()?;
     serde_json::to_writer_pretty(out, &json)?;
+
     Ok(())
 }
 
@@ -77,12 +78,12 @@ pub struct Header {
 }
 
 impl FromStr for Header {
-    type Err = anyhow::Error;
+    type Err = String;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         // error: colon required for name/value pair
         if !input.contains(':') {
-            return Err(format_err!(
+            return Err(format!(
                 "Invalid header input. A colon is required to separate the name and value. [{}]",
                 input
             ));
@@ -95,7 +96,7 @@ impl FromStr for Header {
 
         // error: field name must be
         if name.is_empty() {
-            return Err(format_err!(
+            return Err(format!(
                 "Invalid header input. Field name is required before colon. [{}]",
                 input
             ));
@@ -103,7 +104,7 @@ impl FromStr for Header {
 
         // error: no whitespace in field name
         if name.split_whitespace().count() > 1 {
-            return Err(format_err!(
+            return Err(format!(
                 "Invalid header input. Whitespace not allowed in field name. [{}]",
                 input
             ));

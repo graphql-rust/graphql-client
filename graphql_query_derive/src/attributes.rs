@@ -1,4 +1,3 @@
-use crate::{BoxError, GeneralError};
 use graphql_client_codegen::deprecation::DeprecationStrategy;
 use graphql_client_codegen::normalization::Normalization;
 
@@ -33,7 +32,10 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::E
         }
     }
 
-    Err(syn::Error::new_spanned(ast, "Attribute not found"))
+    Err(syn::Error::new_spanned(
+        &ast,
+        format!("Attribute `{}` not found", attr),
+    ))
 }
 
 /// Extract a list of configuration parameter values specified in the `graphql` attribute.
@@ -75,21 +77,21 @@ pub fn extract_attr_list(ast: &syn::DeriveInput, attr: &str) -> Result<Vec<Strin
 /// Get the deprecation from a struct attribute in the derive case.
 pub fn extract_deprecation_strategy(
     ast: &syn::DeriveInput,
-) -> Result<DeprecationStrategy, BoxError> {
-    extract_attr(&ast, "deprecated")?
+) -> Result<DeprecationStrategy, syn::Error> {
+    extract_attr(ast, "deprecated")?
         .to_lowercase()
         .as_str()
         .parse()
-        .map_err(|_| GeneralError(DEPRECATION_ERROR.to_owned()).into())
+        .map_err(|_| syn::Error::new_spanned(ast, DEPRECATION_ERROR.to_owned()))
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
-pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, BoxError> {
-    extract_attr(&ast, "normalization")?
+pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, syn::Error> {
+    extract_attr(ast, "normalization")?
         .to_lowercase()
         .as_str()
         .parse()
-        .map_err(|_| GeneralError(NORMALIZATION_ERROR.to_owned()).into())
+        .map_err(|_| syn::Error::new_spanned(ast, NORMALIZATION_ERROR))
 }
 
 #[cfg(test)]

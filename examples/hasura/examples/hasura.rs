@@ -1,4 +1,5 @@
-use graphql_client::*;
+use ::reqwest::blocking::Client;
+use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
 use log::*;
 use prettytable::*;
 
@@ -16,10 +17,9 @@ struct UpsertIssue;
 
 fn main() -> Result<(), anyhow::Error> {
     use upsert_issue::{IssuesUpdateColumn::*, *};
-    dotenv::dotenv().ok();
     env_logger::init();
 
-    let q = UpsertIssue::build_query(Variables {
+    let v = Variables {
         issues: vec![IssuesInsertInput {
             id: Some("001000000000000".to_string()),
             name: Some("Name".to_string()),
@@ -27,16 +27,12 @@ fn main() -> Result<(), anyhow::Error> {
             salesforce_updated_at: Some("2019-06-11T08:14:28Z".to_string()),
         }],
         update_columns: vec![Name, Status, SalesforceUpdatedAt],
-    });
+    };
 
-    let client = reqwest::blocking::Client::new();
+    let client = Client::new();
 
-    let res = client
-        .post("https://localhost:8080/v1/graphql")
-        .json(&q)
-        .send()?;
-
-    let response_body: Response<ResponseData> = res.json()?;
+    let response_body =
+        post_graphql::<UpsertIssue, _>(&client, "https://localhost:8080/v1/graphql", v)?;
     info!("{:?}", response_body);
 
     if let Some(errors) = response_body.errors {

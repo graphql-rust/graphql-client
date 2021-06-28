@@ -1,10 +1,13 @@
-use anyhow::*;
+use crate::error::Error;
+use crate::CliResult;
 use graphql_client_codegen::{
     generate_module_token_stream, CodegenMode, GraphQLClientCodegenOptions,
 };
+use std::ffi::OsString;
 use std::fs::File;
 use std::io::Write as _;
 use std::path::PathBuf;
+use std::process::Stdio;
 use syn::Token;
 
 pub(crate) struct CliCodegenParams {
@@ -20,7 +23,7 @@ pub(crate) struct CliCodegenParams {
     pub custom_scalars_module: Option<String>,
 }
 
-pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
+pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
     let CliCodegenParams {
         variables_derives,
         response_derives,
@@ -62,59 +65,66 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> Result<()> {
     }
 
     if let Some(custom_scalars_module) = custom_scalars_module {
-        let custom_scalars_module = syn::parse_str(&custom_scalars_module).with_context(|| {
-            format!(
-                "Invalid custom scalars module path: {}",
-                custom_scalars_module
-            )
-        })?;
+        let custom_scalars_module = syn::parse_str(&custom_scalars_module)
+            .map_err(|_| Error::message("Invalid custom scalar module path".to_owned()))?;
 
         options.set_custom_scalars_module(custom_scalars_module);
     }
 
-    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options).unwrap();
+    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)
+        .map_err(|err| Error::message(format!("Error generating module code: {}", err)))?;
 
     let generated_code = gen.to_string();
-    let generated_code = if cfg!(feature = "rustfmt") && !no_formatting {
-        format(&generated_code)
+    let generated_code = if !no_formatting {
+        format(&generated_code)?
     } else {
         generated_code
     };
 
-    let query_file_name: ::std::ffi::OsString = query_path
-        .file_name()
-        .map(ToOwned::to_owned)
-        .ok_or_else(|| format_err!("Failed to find a file name in the provided query path."))?;
+    let query_file_name: OsString =
+        query_path
+            .file_name()
+            .map(ToOwned::to_owned)
+            .ok_or_else(|| {
+                Error::message("Failed to find a file name in the provided query path.".to_owned())
+            })?;
 
     let dest_file_path: PathBuf = output_directory
         .map(|output_dir| output_dir.join(query_file_name).with_extension("rs"))
         .unwrap_or_else(move || query_path.with_extension("rs"));
 
-    let mut file = File::create(dest_file_path)?;
+    log::info!("Writing generated query to {:?}", dest_file_path);
+
+    let mut file = File::create(&dest_file_path).map_err(|err| {
+        Error::source_with_message(
+            err,
+            format!("Creating file at {}", dest_file_path.display()),
+        )
+    })?;
     write!(file, "{}", generated_code)?;
 
     Ok(())
 }
 
-#[allow(unused_variables)]
-fn format(codes: &str) -> String {
-    #[cfg(feature = "rustfmt")]
-    {
-        use rustfmt::{Config, Input, Session};
+fn format(code: &str) -> CliResult<String> {
+    let binary = "rustfmt";
 
-        let mut config = Config::default();
+    let mut child = std::process::Command::new(binary)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .map_err(|err| Error::source_with_message(err, "Error spawning rustfmt".to_owned()))?;
+    let child_stdin = child.stdin.as_mut().unwrap();
+    write!(child_stdin, "{}", code)?;
 
-        config.set().emit_mode(rustfmt_nightly::EmitMode::Stdout);
-        config.set().verbose(rustfmt_nightly::Verbosity::Quiet);
+    let output = child.wait_with_output()?;
 
-        let mut out = Vec::with_capacity(codes.len() * 2);
-
-        Session::new(config, Some(&mut out))
-            .format(Input::Text(codes.to_string()))
-            .unwrap_or_else(|err| panic!("rustfmt error: {}", err));
-
-        return String::from_utf8(out).unwrap();
+    if !output.status.success() {
+        panic!(
+            "rustfmt error\n\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
-    #[cfg(not(feature = "rustfmt"))]
-    unreachable!("called format() without the rustfmt feature")
+
+    Ok(String::from_utf8(output.stdout)?)
 }

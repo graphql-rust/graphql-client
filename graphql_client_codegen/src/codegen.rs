@@ -298,7 +298,7 @@ fn render_object_literal(
         .fields
         .iter()
         .map(|(name, r#type)| {
-            let field_name = Ident::new(&name, Span::call_site());
+            let field_name = Ident::new(name, Span::call_site());
             let provided_value = object_map.get(name);
             match provided_value {
                 Some(default_value) => {

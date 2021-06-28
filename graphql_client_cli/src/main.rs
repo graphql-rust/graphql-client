@@ -1,13 +1,16 @@
-use env_logger::fmt::{Color, Style, StyledValue};
-use log::Level;
+#![allow(clippy::redundant_clone)] // in structopt generated code
 
-#[cfg(feature = "rustfmt")]
-extern crate rustfmt_nightly as rustfmt;
-
+mod error;
 mod generate;
 mod introspect_schema;
+
+use env_logger::fmt::{Color, Style, StyledValue};
+use error::Error;
+use log::Level;
 use std::path::PathBuf;
 use structopt::StructOpt;
+
+type CliResult<T> = Result<T, Error>;
 
 #[derive(StructOpt)]
 #[structopt(author, about)]
@@ -57,7 +60,6 @@ enum Cli {
         deprecation_strategy: Option<String>,
         /// If you don't want to execute rustfmt to generated code, set this option.
         /// Default value is false.
-        /// Formating feature is disabled as default installation.
         #[structopt(long = "no-formatting")]
         no_formatting: bool,
         /// You can choose module and target struct visibility from pub and private.
@@ -77,7 +79,7 @@ enum Cli {
     },
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> CliResult<()> {
     set_env_logger();
 
     let cli = Cli::from_args();
@@ -107,15 +109,15 @@ fn main() -> anyhow::Result<()> {
             selected_operation,
             custom_scalars_module,
         } => generate::generate_code(generate::CliCodegenParams {
-            variables_derives,
-            response_derives,
-            deprecation_strategy,
-            module_visibility,
-            no_formatting,
-            output_directory,
             query_path,
             schema_path,
             selected_operation,
+            variables_derives,
+            response_derives,
+            deprecation_strategy,
+            no_formatting,
+            module_visibility,
+            output_directory,
             custom_scalars_module,
         }),
     }

@@ -17,4 +17,3 @@ quote = "^1.0"
 serde_json = "1.0"
 serde = { version = "^1.0", features = ["derive"] }
 syn = "^1.0"
-thiserror = "1.0.10"
