@@ -43,8 +43,6 @@ pub struct GraphQLClientCodegenOptions {
     custom_scalars_module: Option<syn::Path>,
     /// List of externally defined enum types. Type names must match those used in the schema exactly.
     extern_enums: Vec<String>,
-    /// Flag to trigger generation of Other variant for fragments Enum
-    fragments_other_variant: bool,
 }
 
 impl GraphQLClientCodegenOptions {
@@ -64,7 +62,6 @@ impl GraphQLClientCodegenOptions {
             normalization: Normalization::None,
             custom_scalars_module: Default::default(),
             extern_enums: Default::default(),
-            fragments_other_variant: Default::default(),
         }
     }
 
@@ -202,15 +199,5 @@ impl GraphQLClientCodegenOptions {
     /// Set the externally defined enums type names
     pub fn set_extern_enums(&mut self, enums: Vec<String>) {
         self.extern_enums = enums;
-    }
-
-    /// Set the graphql client codegen options's fragments other variant.
-    pub fn set_fragments_other_variant(&mut self, fragments_other_variant: bool) {
-        self.fragments_other_variant = fragments_other_variant;
-    }
-
-    /// Get a reference to the graphql client codegen options's fragments other variant.
-    pub fn fragments_other_variant(&self) -> &bool {
-        &self.fragments_other_variant
     }
 }

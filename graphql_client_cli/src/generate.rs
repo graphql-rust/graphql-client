@@ -21,7 +21,6 @@ pub(crate) struct CliCodegenParams {
     pub module_visibility: Option<String>,
     pub output_directory: Option<PathBuf>,
     pub custom_scalars_module: Option<String>,
-    pub fragments_other_variant: bool,
 }
 
 pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
@@ -36,7 +35,6 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
         schema_path,
         selected_operation,
         custom_scalars_module,
-        fragments_other_variant,
     } = params;
 
     let deprecation_strategy = deprecation_strategy.as_ref().and_then(|s| s.parse().ok());
@@ -49,8 +47,6 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
         }
         .into(),
     );
-
-    options.set_fragments_other_variant(fragments_other_variant);
 
     if let Some(selected_operation) = selected_operation {
         options.set_operation_name(selected_operation);
