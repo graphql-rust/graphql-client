@@ -63,11 +63,9 @@ fn build_graphql_client_derive_options(
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
     let custom_scalars_module = attributes::extract_attr(input, "custom_scalars_module").ok();
     let extern_enums = attributes::extract_attr_list(input, "extern_enums").ok();
-    let fragments_other_variant: bool = attributes::extract_fragments_other_variant(input);
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Derive);
     options.set_query_file(query_path);
-    options.set_fragments_other_variant(fragments_other_variant);
 
     if let Some(variables_derives) = variables_derives {
         options.set_variables_derives(variables_derives);
