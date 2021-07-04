@@ -48,7 +48,7 @@ fn main() -> Result<(), anyhow::Error> {
     };
 
     let client = Client::builder()
-        .user_agent("graphql-rust/0.9.0")
+        .user_agent("graphql-rust/0.10.0")
         .default_headers(
             std::iter::once((
                 reqwest::header::AUTHORIZATION,
