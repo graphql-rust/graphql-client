@@ -173,7 +173,7 @@ mod test {
         struct MyQuery;
         ";
         let parsed = syn::parse_str(input).unwrap();
-        assert_eq!(extract_fragments_other_variant(&parsed), true);
+        assert!(extract_fragments_other_variant(&parsed));
     }
 
     #[test]
@@ -188,7 +188,7 @@ mod test {
         struct MyQuery;
         ";
         let parsed = syn::parse_str(input).unwrap();
-        assert_eq!(extract_fragments_other_variant(&parsed), false);
+        assert!(!extract_fragments_other_variant(&parsed));
     }
 
     #[test]
@@ -203,7 +203,7 @@ mod test {
         struct MyQuery;
         ";
         let parsed = syn::parse_str(input).unwrap();
-        assert_eq!(extract_fragments_other_variant(&parsed), false);
+        assert!(!extract_fragments_other_variant(&parsed));
     }
 
     #[test]
@@ -217,6 +217,6 @@ mod test {
         struct MyQuery;
         ";
         let parsed = syn::parse_str(input).unwrap();
-        assert_eq!(extract_fragments_other_variant(&parsed), false);
+        assert!(!extract_fragments_other_variant(&parsed));
     }
 }
