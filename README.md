@@ -1,6 +1,6 @@
 # graphql_client
 
-[![Github actions Status](https://github.com/graphql-rust/graphql-client/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/graphql-rust/graphql-client/actions)
+[![Github actions Status](https://github.com/graphql-rust/graphql-client/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/graphql-rust/graphql-client/actions)
 [![docs](https://docs.rs/graphql_client/badge.svg)](https://docs.rs/graphql_client/latest/graphql_client/)
 [![crates.io](https://img.shields.io/crates/v/graphql_client.svg)](https://crates.io/crates/graphql_client)
 
@@ -28,7 +28,7 @@ A typed GraphQL client library for Rust.
 
 - In order to provide precise types for a response, graphql_client needs to read the query and the schema at compile-time.
 
-  To download the schema, you have multiple options. This projects provides a [CLI](https://github.com/graphql-rust/graphql-client/tree/master/graphql_client_cli), however it does not matter what tool you use, the resulting `schema.json` is the same.
+  To download the schema, you have multiple options. This projects provides a [CLI](https://github.com/graphql-rust/graphql-client/tree/main/graphql_client_cli), however it does not matter what tool you use, the resulting `schema.json` is the same.
 
 - We now have everything we need to derive Rust types for our query. This is achieved through a procedural macro, as in the following snippet:
 
@@ -81,7 +81,7 @@ A typed GraphQL client library for Rust.
   }
   ```
 
-[A complete example using the GitHub GraphQL API is available](https://github.com/graphql-rust/graphql-client/tree/master/examples/github), as well as sample [rustdoc output](https://www.tomhoule.com/docs/example_module/).
+[A complete example using the GitHub GraphQL API is available](https://github.com/graphql-rust/graphql-client/tree/main/examples/github), as well as sample [rustdoc output](https://www.tomhoule.com/docs/example_module/).
 
 ## Alternative workflow using the CLI
 
@@ -167,7 +167,7 @@ There is an [`include`](https://doc.rust-lang.org/cargo/reference/manifest.html#
 
 ## Examples
 
-See the [examples directory](https://github.com/graphql-rust/graphql-client/tree/master/examples) in this repository.
+See the [examples directory](https://github.com/graphql-rust/graphql-client/tree/main/examples) in this repository.
 
 ## Contributors
 
@@ -189,7 +189,7 @@ Warmest thanks to all those who contributed in any way (not only code) to this p
 ## Code of conduct
 
 Anyone who interacts with this project in any space, including but not limited to
-this GitHub repository, must follow our [code of conduct](https://github.com/graphql-rust/graphql-client/blob/master/CODE_OF_CONDUCT.md).
+this GitHub repository, must follow our [code of conduct](https://github.com/graphql-rust/graphql-client/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
