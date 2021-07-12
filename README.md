@@ -110,7 +110,19 @@ struct UnionQuery;
 
 ## Custom scalars
 
-The generated code will reference the scalar types as defined in the server schema. This means you have to provide matching rust types in the scope of the struct under derive. It can be as simple as declarations like `type Email = String;`. This gives you complete freedom on how to treat custom scalars, as long as they can be deserialized.
+In GraphQL, five scalar types, `Int`, `Float`, `String`, `Boolean`, and `ID`, are available out of the box and are automatically mapped to equivalent types in Rust. However, in addition, custom scalar types can be defined by service providers by adding declarations like `scalar URI` to the server schema.
+
+If such custom scalar types are defined in the schema, depending on the content of the query, the generated code will also reference those scalar types. This means you have to provide matching Rust types in the scope of the struct under derive. It can be as simple as declarations like `type URI = String;`. This gives you complete freedom on how to treat custom scalars, as long as they can be deserialized. If such declarations are not provided, you will get build errors like this:
+
+```
+error[E0412]: cannot find type `URI` in module `super`
+   |
+   | #[derive(GraphQLQuery)]
+   |          ^^^^^^^^^^^^ not found in `super`
+   |
+   = note: possible candidate is found in another module, you can import it into scope:
+           crate::repo_view::URI
+```
 
 ## Deprecations
 
