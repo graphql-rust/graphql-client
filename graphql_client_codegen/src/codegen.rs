@@ -165,7 +165,10 @@ fn generate_scalar_definitions<'a, 'schema: 'a>(
 }
 
 fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToTokens {
-    let idents = derives.map(|s| Ident::new(s, Span::call_site()));
+    let idents = derives.map(|s| {
+        syn::parse_str::<syn::Path>(s)
+            .expect(format!("couldn't parse {} as a derive Path", s).as_str())
+    });
 
     quote!(#[derive(#(#idents),*)])
 }
