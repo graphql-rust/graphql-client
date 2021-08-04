@@ -4,6 +4,7 @@ use crate::{
     query::{BoundQuery, UsedTypes},
     schema::input_is_recursive_without_indirection,
 };
+use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
@@ -21,7 +22,7 @@ pub(super) fn generate_input_object_definitions(
             let struct_name = Ident::new(safe_name.as_ref(), Span::call_site());
 
             let fields = input.fields.iter().map(|(field_name, field_type)| {
-                let safe_field_name = keyword_replace(field_name);
+                let safe_field_name = keyword_replace(field_name.to_snake_case());
                 let annotation = field_rename_annotation(field_name, safe_field_name.as_ref());
                 let name_ident = Ident::new(safe_field_name.as_ref(), Span::call_site());
                 let normalized_field_type_name = options

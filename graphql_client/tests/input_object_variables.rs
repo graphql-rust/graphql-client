@@ -80,6 +80,24 @@ fn recursive_input_objects_can_be_constructed() {
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
     response_derives = "Debug, PartialEq"
 )]
+pub struct InputCaseTestsQuery;
+
+#[test]
+fn input_objects_are_all_snake_case() {
+    use input_case_tests_query::*;
+
+    let _ = CaseTestInput {
+        field_with_snake_case: "hello from".to_string(),
+        other_field_with_camel_case: "the other side".to_string(),
+    };
+}
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    query_path = "tests/input_object_variables/input_object_variables_query.graphql",
+    schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
+    response_derives = "Debug, PartialEq"
+)]
 pub struct IndirectlyRecursiveInputQuery;
 
 #[test]
