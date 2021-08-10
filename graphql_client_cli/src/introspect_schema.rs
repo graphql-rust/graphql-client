@@ -1,3 +1,4 @@
+use crate::error::Error;
 use crate::CliResult;
 use graphql_client::GraphQLQuery;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
@@ -53,9 +54,14 @@ pub fn introspect_schema(
     if res.status().is_success() {
         // do nothing
     } else if res.status().is_server_error() {
-        println!("server error!");
+        return Err(Error::message("server error!".into()));
     } else {
-        println!("Something else happened. Status: {:?}", res.status());
+        let status = res.status();
+        let error_message = match res.text() {
+            Ok(msg) => format!("HTTP {}: {}", status, msg),
+            Err(_) => format!("HTTP {}", status),
+        };
+        return Err(Error::message(error_message));
     }
 
     let json: serde_json::Value = res.json()?;
