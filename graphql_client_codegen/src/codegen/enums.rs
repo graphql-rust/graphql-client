@@ -75,7 +75,7 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
 
             impl<'de> ::serde::Deserialize<'de> for #name {
                 fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-                    let s = <String>::deserialize(deserializer)?;
+                    let s: String = ::serde::Deserialize::deserialize(deserializer)?;
 
                     match s.as_str() {
                         #(#variant_str => Ok(#constructors),)*
