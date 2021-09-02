@@ -11,3 +11,7 @@ query RecursiveInputQuery($input: RecursiveInput!) {
 query IndirectlyRecursiveInputQuery($input: IndirectlyRecursiveInput!) {
   saveRecursiveInput(recursiveInput: $input)
 }
+
+query InputCaseTestsQuery($input: CaseTestInput!) {
+  testQueryCase(caseTestInput: $input)
+}

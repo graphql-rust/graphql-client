@@ -39,8 +39,18 @@ input IndirectlyRecursiveInputTailPart {
   recursed_field: IndirectlyRecursiveInput
 }
 
+input CaseTestInput {
+  field_with_snake_case: String!
+  otherFieldWithCamelCase: String!
+}
+
+type CaseTestResult {
+  result: String!
+}
+
 type InputObjectVariablesQuery {
   echo(message: Message!, options: Options = { pgpSignature: true }): EchoResult
+  testQueryCase(caseTestInput: CaseTestInput!): CaseTestResult
   saveRecursiveInput(recursiveInput: RecursiveInput!): Category
 }
 
