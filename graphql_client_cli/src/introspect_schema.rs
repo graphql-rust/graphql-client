@@ -58,7 +58,10 @@ pub fn introspect_schema(
     } else {
         let status = res.status();
         let error_message = match res.text() {
-            Ok(msg) => format!("HTTP {}: {}", status, msg),
+            Ok(msg) => match serde_json::from_str::<serde_json::Value>(&msg) {
+                Ok(json) => format!("HTTP {}\n{}", status, serde_json::to_string_pretty(&json)?),
+                Err(_) => format!("HTTP {}: {}", status, msg),
+            },
             Err(_) => format!("HTTP {}", status),
         };
         return Err(Error::message(error_message));
