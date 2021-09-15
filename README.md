@@ -81,7 +81,7 @@ A typed GraphQL client library for Rust.
   }
   ```
 
-[A complete example using the GitHub GraphQL API is available](https://github.com/graphql-rust/graphql-client/tree/main/examples/github), as well as sample [rustdoc output](https://www.tomhoule.com/docs/example_module/).
+[A complete example using the GitHub GraphQL API is available](https://github.com/graphql-rust/graphql-client/tree/main/examples/github).
 
 ## Alternative workflow using the CLI
 
