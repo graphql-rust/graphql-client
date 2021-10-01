@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use graphql_client_codegen::deprecation::DeprecationStrategy;
 use graphql_client_codegen::normalization::Normalization;
 
@@ -94,6 +96,13 @@ pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, sy
         .map_err(|_| syn::Error::new_spanned(ast, NORMALIZATION_ERROR))
 }
 
+pub fn extract_fragments_other_variant(ast: &syn::DeriveInput) -> bool {
+    extract_attr(&ast, "fragments_other_variant")
+        .ok()
+        .and_then(|s| FromStr::from_str(s.as_str()).ok())
+        .unwrap_or(false)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -150,5 +159,64 @@ mod test {
             Ok(_) => panic!("parsed unexpectedly"),
             Err(e) => assert_eq!(&format!("{}", e), DEPRECATION_ERROR),
         };
+    }
+
+    #[test]
+    fn test_fragments_other_variant_set_to_true() {
+        let input = "
+        #[derive(GraphQLQuery)]
+        #[graphql(
+            schema_path = \"x\",
+            query_path = \"x\",
+            fragments_other_variant = \"true\",
+        )]
+        struct MyQuery;
+        ";
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(extract_fragments_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_fragments_other_variant_set_to_false() {
+        let input = "
+        #[derive(GraphQLQuery)]
+        #[graphql(
+            schema_path = \"x\",
+            query_path = \"x\",
+            fragments_other_variant = \"false\",
+        )]
+        struct MyQuery;
+        ";
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(!extract_fragments_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_fragments_other_variant_set_to_invalid() {
+        let input = "
+        #[derive(GraphQLQuery)]
+        #[graphql(
+            schema_path = \"x\",
+            query_path = \"x\",
+            fragments_other_variant = \"invalid\",
+        )]
+        struct MyQuery;
+        ";
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(!extract_fragments_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_fragments_other_variant_unset() {
+        let input = "
+        #[derive(GraphQLQuery)]
+        #[graphql(
+            schema_path = \"x\",
+            query_path = \"x\",
+        )]
+        struct MyQuery;
+        ";
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(!extract_fragments_other_variant(&parsed));
     }
 }

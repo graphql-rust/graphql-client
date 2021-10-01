@@ -197,6 +197,7 @@ fn calculate_selection<'a>(
                         name: variant_name_str.into(),
                         variant_type: Some(variant_struct_name_str.clone().into()),
                         on: struct_id,
+                        is_default_variant: false,
                     });
 
                     let expanded_type = ExpandedType {
@@ -247,8 +248,18 @@ fn calculate_selection<'a>(
                         name: variant_name_str.into(),
                         on: struct_id,
                         variant_type: None,
+                        is_default_variant: false,
                     });
                 }
+            }
+
+            if *options.fragments_other_variant() {
+                context.push_variant(ExpandedVariant {
+                    name: "Unknown".into(),
+                    on: struct_id,
+                    variant_type: None,
+                    is_default_variant: true,
+                });
             }
         }
     }
@@ -430,6 +441,7 @@ struct ExpandedVariant<'a> {
     name: Cow<'a, str>,
     variant_type: Option<Cow<'a, str>>,
     on: ResponseTypeId,
+    is_default_variant: bool,
 }
 
 impl<'a> ExpandedVariant<'a> {
@@ -440,7 +452,14 @@ impl<'a> ExpandedVariant<'a> {
             quote!((#ident))
         });
 
-        quote!(#name_ident #optional_type_ident)
+        if self.is_default_variant {
+            quote! {
+                    #[serde(other)]
+            #name_ident #optional_type_ident
+                }
+        } else {
+            quote!(#name_ident #optional_type_ident)
+        }
     }
 }
 
