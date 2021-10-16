@@ -15,3 +15,9 @@ query IndirectlyRecursiveInputQuery($input: IndirectlyRecursiveInput!) {
 query InputCaseTestsQuery($input: CaseTestInput!) {
   testQueryCase(caseTestInput: $input)
 }
+
+query RustNameQuery($msg: Message, $extern: String) {
+  echo(message: $msg, extern: $extern) {
+    result
+  }
+}

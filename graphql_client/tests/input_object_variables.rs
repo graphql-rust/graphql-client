@@ -117,3 +117,32 @@ fn indirectly_recursive_input_objects_can_be_constructed() {
         })),
     };
 }
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    query_path = "tests/input_object_variables/input_object_variables_query.graphql",
+    schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
+    variables_derives = "Default",
+    response_derives = "Debug, PartialEq"
+)]
+pub struct RustNameQuery;
+
+#[test]
+fn rust_name_correctly_mapped() {
+    use rust_name_query::*;
+    let value = serde_json::to_value(&Variables {
+        extern_: Some("hello".to_owned()),
+        msg: <_>::default(),
+    })
+    .unwrap();
+    assert_eq!(
+        value
+            .as_object()
+            .unwrap()
+            .get("extern")
+            .unwrap()
+            .as_str()
+            .unwrap(),
+        "hello"
+    );
+}
