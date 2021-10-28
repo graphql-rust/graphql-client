@@ -3,9 +3,11 @@ use crate::{generated_module, schema::Schema, CodegenMode, GraphQLClientCodegenO
 #[test]
 fn schema_with_keywords_works() {
     let query_string = include_str!("keywords_query.graphql");
-    let query = graphql_parser::parse_query(query_string).expect("Parse keywords query");
-    let schema = graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
-        .expect("Parse keywords schema");
+    let query: graphql_parser::query::Document<'_, String> =
+        graphql_parser::parse_query(query_string).expect("Parse keywords query");
+    let schema: graphql_parser::schema::Document<'_, String> =
+        graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
+            .expect("Parse keywords schema");
     let schema = Schema::from(schema);
 
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
@@ -41,9 +43,11 @@ fn schema_with_keywords_works() {
 #[test]
 fn fragments_other_variant_should_generate_unknown_other_variant() {
     let query_string = include_str!("foobars_query.graphql");
-    let query = graphql_parser::parse_query(query_string).expect("Parse foobars query");
-    let schema = graphql_parser::parse_schema(include_str!("foobars_schema.graphql"))
-        .expect("Parse foobars schema");
+    let query: graphql_parser::query::Document<'_, String> =
+        graphql_parser::parse_query(query_string).expect("Parse foobars query");
+    let schema: graphql_parser::schema::Document<'_, String> =
+        graphql_parser::parse_schema(include_str!("foobars_schema.graphql"))
+            .expect("Parse foobars schema");
     let schema = Schema::from(schema);
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
@@ -80,9 +84,11 @@ fn fragments_other_variant_should_generate_unknown_other_variant() {
 #[test]
 fn fragments_other_variant_false_should_not_generate_unknown_other_variant() {
     let query_string = include_str!("foobars_query.graphql");
-    let query = graphql_parser::parse_query(query_string).expect("Parse foobars query");
-    let schema = graphql_parser::parse_schema(include_str!("foobars_schema.graphql"))
-        .expect("Parse foobars schema");
+    let query: graphql_parser::query::Document<'_, String> =
+        graphql_parser::parse_query(query_string).expect("Parse foobars query");
+    let schema: graphql_parser::schema::Document<'_, String> =
+        graphql_parser::parse_schema(include_str!("foobars_schema.graphql"))
+            .expect("Parse foobars schema");
     let schema = Schema::from(schema);
 
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);

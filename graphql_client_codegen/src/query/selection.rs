@@ -7,10 +7,13 @@ use heck::CamelCase;
 
 /// This checks that the `on` clause on fragment spreads and inline fragments
 /// are valid in their context.
-pub(super) fn validate_type_conditions(
+pub(super) fn validate_type_conditions<'a, T>(
     selection_id: SelectionId,
-    query: &BoundQuery<'_>,
-) -> Result<(), QueryValidationError> {
+    query: &BoundQuery<'a, '_, '_, T>,
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let selection = query.query.get_selection(selection_id);
 
     let selected_type = match selection {
@@ -76,7 +79,10 @@ pub(super) enum SelectionParent {
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
 impl SelectionParent {
-    fn schema_type_id(&self, query: &BoundQuery<'_>) -> TypeId {
+    fn schema_type_id<'a, T>(&self, query: &BoundQuery<'a, '_, '_, T>) -> TypeId
+    where
+        T: graphql_parser::query::Text<'a> + std::default::Default,
+    {
         match self {
             SelectionParent::Fragment(fragment_id) => query.query.get_fragment(*fragment_id).on,
             SelectionParent::Operation(operation_id) => {
@@ -97,7 +103,13 @@ impl SelectionParent {
         }
     }
 
-    pub(super) fn add_to_selection_set(&self, q: &mut Query, selection_id: SelectionId) {
+    pub(super) fn add_to_selection_set<'a, T>(
+        &self,
+        q: &mut Query<'a, T>,
+        selection_id: SelectionId,
+    ) where
+        T: graphql_parser::query::Text<'a> + std::default::Default,
+    {
         match self {
             SelectionParent::Field(parent_selection_id)
             | SelectionParent::InlineFragment(parent_selection_id) => {
@@ -131,7 +143,10 @@ impl SelectionParent {
         }
     }
 
-    pub(crate) fn to_path_segment(self, query: &BoundQuery<'_>) -> String {
+    pub(crate) fn to_path_segment<'a, T>(self, query: &BoundQuery<'a, '_, '_, T>) -> String
+    where
+        T: graphql_parser::query::Text<'a> + std::default::Default,
+    {
         match self {
             SelectionParent::Field(id) | SelectionParent::InlineFragment(id) => {
                 query.query.get_selection(id).to_path_segment(query)
@@ -165,7 +180,13 @@ impl Selection {
         }
     }
 
-    pub(crate) fn collect_used_types(&self, used_types: &mut UsedTypes, query: &BoundQuery<'_>) {
+    pub(crate) fn collect_used_types<'a, T>(
+        &self,
+        used_types: &mut UsedTypes,
+        query: &'a BoundQuery<'a, '_, '_, T>,
+    ) where
+        T: graphql_parser::query::Text<'a> + std::default::Default,
+    {
         match self {
             Selection::Field(field) => {
                 let stored_field = query.schema.get_field(field.field_id);
@@ -202,7 +223,14 @@ impl Selection {
         }
     }
 
-    pub(crate) fn contains_fragment(&self, fragment_id: ResolvedFragmentId, query: &Query) -> bool {
+    pub(crate) fn contains_fragment<'a, T>(
+        &self,
+        fragment_id: ResolvedFragmentId,
+        query: &Query<'a, T>,
+    ) -> bool
+    where
+        T: graphql_parser::query::Text<'a> + std::default::Default,
+    {
         match self {
             Selection::FragmentSpread(id) => *id == fragment_id,
             _ => self.subselection().iter().any(|selection_id| {
@@ -221,7 +249,10 @@ impl Selection {
         }
     }
 
-    pub(super) fn to_path_segment(&self, query: &BoundQuery<'_>) -> String {
+    pub(super) fn to_path_segment<'a, T>(&self, query: &BoundQuery<'a, '_, '_, T>) -> String
+    where
+        T: graphql_parser::query::Text<'a> + std::default::Default,
+    {
         match self {
             Selection::Field(field) => field
                 .alias
@@ -247,6 +278,7 @@ pub(crate) struct InlineFragment {
 
 #[derive(Debug)]
 pub(crate) struct SelectedField {
+    // TODO make this Option<graphql_parser::query::Text>?
     pub(crate) alias: Option<String>,
     pub(crate) field_id: StoredFieldId,
     pub(crate) selection_set: Vec<SelectionId>,

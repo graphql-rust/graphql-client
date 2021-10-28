@@ -15,7 +15,13 @@ impl ResolvedFragment {
     }
 }
 
-pub(crate) fn fragment_is_recursive(fragment_id: ResolvedFragmentId, query: &Query) -> bool {
+pub(crate) fn fragment_is_recursive<'a, T>(
+    fragment_id: ResolvedFragmentId,
+    query: &'a Query<'a, T>,
+) -> bool
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let fragment = query.get_fragment(fragment_id);
 
     query

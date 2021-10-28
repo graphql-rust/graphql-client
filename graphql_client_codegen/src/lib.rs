@@ -47,7 +47,7 @@ type CacheMap<T> = std::sync::Mutex<HashMap<std::path::PathBuf, T>>;
 
 lazy_static! {
     static ref SCHEMA_CACHE: CacheMap<schema::Schema> = CacheMap::default();
-    static ref QUERY_CACHE: CacheMap<(String, graphql_parser::query::Document)> =
+    static ref QUERY_CACHE: CacheMap<(String, graphql_parser::query::Document<'static, String>)> =
         CacheMap::default();
 }
 
@@ -73,7 +73,7 @@ pub fn generate_module_token_stream(
                 let schema_string = read_file(v.key())?;
                 let schema = match schema_extension {
                     "graphql" | "gql" => {
-                        let s = graphql_parser::schema::parse_schema(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error)))?;
+                        let s: graphql_parser::schema::Document<'_, String> = graphql_parser::schema::parse_schema(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error)))?;
                         schema::Schema::from(s)
                     }
                     "json" => {
@@ -192,10 +192,13 @@ fn read_file(path: &std::path::Path) -> Result<String, ReadFileError> {
 }
 
 /// In derive mode, build an error when the operation with the same name as the struct is not found.
-fn derive_operation_not_found_error(
+fn derive_operation_not_found_error<'a, T>(
     ident: Option<&proc_macro2::Ident>,
-    query: &crate::query::Query,
-) -> String {
+    query: &'a crate::query::Query<'a, T>,
+) -> String
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let operation_name = ident.map(ToString::to_string);
     let struct_ident = operation_name.as_deref().unwrap_or("");
 

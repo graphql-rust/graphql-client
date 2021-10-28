@@ -59,11 +59,14 @@ pub(crate) struct ResolvedFragmentId(u32);
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct VariableId(u32);
 
-pub(crate) fn resolve(
-    schema: &Schema,
-    query: &graphql_parser::query::Document,
-) -> Result<Query, QueryValidationError> {
-    let mut resolved_query: Query = Default::default();
+pub(crate) fn resolve<'doc, 'schema, T>(
+    schema: &'schema Schema,
+    query: &graphql_parser::query::Document<'doc, T>,
+) -> Result<Query<'doc, T>, QueryValidationError>
+where
+    T: Clone + graphql_parser::query::Text<'doc> + std::default::Default,
+{
+    let mut resolved_query: Query<'_, T> = Default::default();
 
     create_roots(&mut resolved_query, query, schema)?;
 
@@ -98,21 +101,24 @@ pub(crate) fn resolve(
     Ok(resolved_query)
 }
 
-fn create_roots(
-    resolved_query: &mut Query,
-    query: &graphql_parser::query::Document,
+fn create_roots<'a, T>(
+    resolved_query: &mut Query<'a, T>,
+    query: &graphql_parser::query::Document<'a, T>,
     schema: &Schema,
-) -> Result<(), QueryValidationError> {
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     // First, give ids to all fragments and operations.
     for definition in &query.definitions {
         match definition {
             graphql_parser::query::Definition::Fragment(fragment) => {
                 let graphql_parser::query::TypeCondition::On(on) = &fragment.type_condition;
                 resolved_query.fragments.push(ResolvedFragment {
-                    name: fragment.name.clone(),
-                    on: schema.find_type(on).ok_or_else(|| {
+                    name: fragment.name.as_ref().to_string(),
+                    on: schema.find_type(on.as_ref()).ok_or_else(|| {
                         QueryValidationError::new(format!(
-                            "Could not find type {} for fragment {} in schema.",
+                            "Could not find type {:?} for fragment {:?} in schema.",
                             on, fragment.name
                         ))
                     })?,
@@ -130,7 +136,12 @@ fn create_roots(
                 })?;
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     object_id: on,
-                    name: m.name.as_ref().expect("mutation without name").to_owned(),
+                    name: m
+                        .name
+                        .as_ref()
+                        .expect("mutation without name")
+                        .as_ref()
+                        .to_owned(),
                     _operation_type: operations::OperationType::Mutation,
                     selection_set: Vec::with_capacity(m.selection_set.items.len()),
                 };
@@ -142,7 +153,12 @@ fn create_roots(
             ) => {
                 let on = schema.query_type();
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
-                    name: q.name.as_ref().expect("query without name").to_owned(),
+                    name: q
+                        .name
+                        .as_ref()
+                        .expect("query without name")
+                        .as_ref()
+                        .to_owned(),
                     _operation_type: operations::OperationType::Query,
                     object_id: on,
                     selection_set: Vec::with_capacity(q.selection_set.items.len()),
@@ -170,6 +186,7 @@ fn create_roots(
                         .name
                         .as_ref()
                         .expect("subscription without name")
+                        .as_ref()
                         .to_owned(),
                     _operation_type: operations::OperationType::Subscription,
                     object_id: on,
@@ -191,24 +208,27 @@ fn create_roots(
     Ok(())
 }
 
-fn resolve_fragment(
-    query: &mut Query,
-    schema: &Schema,
-    fragment_definition: &graphql_parser::query::FragmentDefinition,
-) -> Result<(), QueryValidationError> {
+fn resolve_fragment<'doc, 'schema, T>(
+    query: &mut Query<'doc, T>,
+    schema: &'schema Schema,
+    fragment_definition: &graphql_parser::query::FragmentDefinition<'doc, T>,
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc> + std::default::Default,
+{
     let graphql_parser::query::TypeCondition::On(on) = &fragment_definition.type_condition;
-    let on = schema.find_type(on).ok_or_else(|| {
+    let on = schema.find_type(on.as_ref()).ok_or_else(|| {
         QueryValidationError::new(format!(
-            "Could not find type `{}` referenced by fragment `{}`",
+            "Could not find type `{:?}` referenced by fragment `{:?}`",
             on, fragment_definition.name
         ))
     })?;
 
     let (id, _) = query
-        .find_fragment(&fragment_definition.name)
+        .find_fragment(fragment_definition.name.as_ref())
         .ok_or_else(|| {
             QueryValidationError::new(format!(
-                "Could not find fragment `{}`.",
+                "Could not find fragment `{:?}`.",
                 fragment_definition.name
             ))
         })?;
@@ -224,17 +244,20 @@ fn resolve_fragment(
     Ok(())
 }
 
-fn resolve_union_selection(
-    query: &mut Query,
+fn resolve_union_selection<'doc, 'schema, T>(
+    query: &mut Query<'doc, T>,
     _union_id: UnionId,
-    selection_set: &graphql_parser::query::SelectionSet,
+    selection_set: &graphql_parser::query::SelectionSet<'doc, T>,
     parent: SelectionParent,
-    schema: &Schema,
-) -> Result<(), QueryValidationError> {
+    schema: &'schema Schema,
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc> + std::default::Default,
+{
     for item in selection_set.items.iter() {
         match item {
             graphql_parser::query::Selection::Field(field) => {
-                if field.name == TYPENAME_FIELD {
+                if field.name.as_ref() == TYPENAME_FIELD {
                     let id = query.push_selection(Selection::Typename, parent);
                     parent.add_to_selection_set(query, id);
                 } else {
@@ -250,10 +273,10 @@ fn resolve_union_selection(
             }
             graphql_parser::query::Selection::FragmentSpread(fragment_spread) => {
                 let (fragment_id, _fragment) = query
-                    .find_fragment(&fragment_spread.fragment_name)
+                    .find_fragment(fragment_spread.fragment_name.as_ref())
                     .ok_or_else(|| {
                         QueryValidationError::new(format!(
-                            "Could not find fragment `{}` referenced by fragment spread.",
+                            "Could not find fragment `{:?}` referenced by fragment spread.",
                             fragment_spread.fragment_name
                         ))
                     })?;
@@ -268,27 +291,30 @@ fn resolve_union_selection(
     Ok(())
 }
 
-fn resolve_object_selection<'a>(
-    query: &mut Query,
+fn resolve_object_selection<'doc, 'schema, T>(
+    query: &mut Query<'doc, T>,
     object: &dyn crate::schema::ObjectLike,
-    selection_set: &graphql_parser::query::SelectionSet,
+    selection_set: &graphql_parser::query::SelectionSet<'doc, T>,
     parent: SelectionParent,
-    schema: &'a Schema,
-) -> Result<(), QueryValidationError> {
+    schema: &'schema Schema,
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc> + std::default::Default,
+{
     for item in selection_set.items.iter() {
         match item {
             graphql_parser::query::Selection::Field(field) => {
-                if field.name == TYPENAME_FIELD {
+                if field.name.as_ref() == TYPENAME_FIELD {
                     let id = query.push_selection(Selection::Typename, parent);
                     parent.add_to_selection_set(query, id);
                     continue;
                 }
 
                 let (field_id, schema_field) = object
-                    .get_field_by_name(&field.name, schema)
+                    .get_field_by_name(field.name.as_ref(), schema)
                     .ok_or_else(|| {
                         QueryValidationError::new(format!(
-                            "No field named {} on {}",
+                            "No field named {:?} on {}",
                             &field.name,
                             object.name()
                         ))
@@ -296,7 +322,7 @@ fn resolve_object_selection<'a>(
 
                 let id = query.push_selection(
                     Selection::Field(SelectedField {
-                        alias: field.alias.clone(),
+                        alias: field.alias.as_ref().map(|x| x.as_ref().to_owned()),
                         field_id,
                         selection_set: Vec::with_capacity(selection_set.items.len()),
                     }),
@@ -320,10 +346,10 @@ fn resolve_object_selection<'a>(
             }
             graphql_parser::query::Selection::FragmentSpread(fragment_spread) => {
                 let (fragment_id, _fragment) = query
-                    .find_fragment(&fragment_spread.fragment_name)
+                    .find_fragment(fragment_spread.fragment_name.as_ref())
                     .ok_or_else(|| {
                         QueryValidationError::new(format!(
-                            "Could not find fragment `{}` referenced by fragment spread.",
+                            "Could not find fragment `{:?}` referenced by fragment spread.",
                             fragment_spread.fragment_name
                         ))
                     })?;
@@ -338,13 +364,16 @@ fn resolve_object_selection<'a>(
     Ok(())
 }
 
-fn resolve_selection(
-    ctx: &mut Query,
+fn resolve_selection<'doc, 'schema, T>(
+    ctx: &mut Query<'doc, T>,
     on: TypeId,
-    selection_set: &graphql_parser::query::SelectionSet,
+    selection_set: &graphql_parser::query::SelectionSet<'doc, T>,
     parent: SelectionParent,
-    schema: &Schema,
-) -> Result<(), QueryValidationError> {
+    schema: &'schema Schema,
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc> + std::default::Default,
+{
     match on {
         TypeId::Object(oid) => {
             let object = schema.get_object(oid);
@@ -370,19 +399,22 @@ fn resolve_selection(
     Ok(())
 }
 
-fn resolve_inline_fragment(
-    query: &mut Query,
-    schema: &Schema,
-    inline_fragment: &graphql_parser::query::InlineFragment,
+fn resolve_inline_fragment<'doc, 'schema, T>(
+    query: &mut Query<'doc, T>,
+    schema: &'schema Schema,
+    inline_fragment: &graphql_parser::query::InlineFragment<'doc, T>,
     parent: SelectionParent,
-) -> Result<SelectionId, QueryValidationError> {
+) -> Result<SelectionId, QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc> + std::default::Default,
+{
     let graphql_parser::query::TypeCondition::On(on) = inline_fragment
         .type_condition
         .as_ref()
         .expect("missing type condition on inline fragment");
-    let type_id = schema.find_type(on).ok_or_else(|| {
+    let type_id = schema.find_type(on.as_ref()).ok_or_else(|| {
         QueryValidationError::new(format!(
-            "Could not find type `{}` referenced by inline fragment.",
+            "Could not find type `{:?}` referenced by inline fragment.",
             on
         ))
     })?;
@@ -406,11 +438,14 @@ fn resolve_inline_fragment(
     Ok(id)
 }
 
-fn resolve_operation(
-    query: &mut Query,
-    schema: &Schema,
-    operation: &graphql_parser::query::OperationDefinition,
-) -> Result<(), QueryValidationError> {
+fn resolve_operation<'doc, 'schema, T>(
+    query: &mut Query<'doc, T>,
+    schema: &'schema Schema,
+    operation: &graphql_parser::query::OperationDefinition<'doc, T>,
+) -> Result<(), QueryValidationError>
+where
+    T: Clone + graphql_parser::query::Text<'doc> + std::default::Default,
+{
     match operation {
         graphql_parser::query::OperationDefinition::Mutation(m) => {
             let on = schema.mutation_type().ok_or_else(|| {
@@ -421,7 +456,9 @@ fn resolve_operation(
             })?;
             let on = schema.get_object(on);
 
-            let (id, _) = query.find_operation(m.name.as_ref().unwrap()).unwrap();
+            let (id, _) = query
+                .find_operation(m.name.as_ref().unwrap().as_ref())
+                .unwrap();
 
             resolve_variables(query, &m.variable_definitions, schema, id);
             resolve_object_selection(
@@ -434,7 +471,9 @@ fn resolve_operation(
         }
         graphql_parser::query::OperationDefinition::Query(q) => {
             let on = schema.get_object(schema.query_type());
-            let (id, _) = query.find_operation(q.name.as_ref().unwrap()).unwrap();
+            let (id, _) = query
+                .find_operation(q.name.as_ref().unwrap().as_ref())
+                .unwrap();
 
             resolve_variables(query, &q.variable_definitions, schema, id);
             resolve_object_selection(
@@ -448,7 +487,9 @@ fn resolve_operation(
         graphql_parser::query::OperationDefinition::Subscription(s) => {
             let on = schema.subscription_type().ok_or_else(|| QueryValidationError::new("Query contains a subscription operation, but the schema has no subscription type.".into()))?;
             let on = schema.get_object(on);
-            let (id, _) = query.find_operation(s.name.as_ref().unwrap()).unwrap();
+            let (id, _) = query
+                .find_operation(s.name.as_ref().unwrap().as_ref())
+                .unwrap();
 
             resolve_variables(query, &s.variable_definitions, schema, id);
             resolve_object_selection(
@@ -468,15 +509,21 @@ fn resolve_operation(
 }
 
 #[derive(Default)]
-pub(crate) struct Query {
+pub(crate) struct Query<'a, T>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     fragments: Vec<ResolvedFragment>,
     operations: Vec<ResolvedOperation>,
     selection_parent_idx: HashMap<SelectionId, SelectionParent>,
     selections: Vec<Selection>,
-    variables: Vec<ResolvedVariable>,
+    variables: Vec<ResolvedVariable<'a, T>>,
 }
 
-impl Query {
+impl<'a, T> Query<'a, T>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     fn push_selection(&mut self, node: Selection, parent: SelectionParent) -> SelectionId {
         let id = SelectionId(self.selections.len() as u32);
         self.selections.push(node);
@@ -486,7 +533,7 @@ impl Query {
         id
     }
 
-    pub fn operations(&self) -> impl Iterator<Item = (OperationId, &ResolvedOperation)> {
+    pub fn operations(&'a self) -> impl Iterator<Item = (OperationId, &ResolvedOperation)> {
         walk_operations(self)
     }
 
@@ -509,11 +556,11 @@ impl Query {
     }
 
     /// Selects the first operation matching `struct_name`. Returns `None` when the query document defines no operation, or when the selected operation does not match any defined operation.
-    pub(crate) fn select_operation<'a>(
+    pub(crate) fn select_operation(
         &'a self,
         name: &str,
         normalization: Normalization,
-    ) -> Option<(OperationId, &'a ResolvedOperation)> {
+    ) -> Option<(OperationId, &ResolvedOperation)> {
         walk_operations(self).find(|(_id, op)| normalization.operation(&op.name) == name)
     }
 
@@ -540,7 +587,7 @@ impl Query {
             .map(|(idx, selection)| (SelectionId(idx as u32), selection))
     }
 
-    fn walk_selection_set<'a>(
+    fn walk_selection_set(
         &'a self,
         selection_ids: &'a [SelectionId],
     ) -> impl Iterator<Item = (SelectionId, &'a Selection)> + 'a {
@@ -551,14 +598,22 @@ impl Query {
 }
 
 #[derive(Debug)]
-pub(crate) struct ResolvedVariable {
+pub(crate) struct ResolvedVariable<'a, T>
+where
+    T: graphql_parser::query::Text<'a>,
+{
     pub(crate) operation_id: OperationId,
     pub(crate) name: String,
-    pub(crate) default: Option<graphql_parser::query::Value>,
+    // Note that even if we wanted to simplify T = String here, we'd still be
+    // stuck with the lifetime parameter which is the real issue.
+    pub(crate) default: Option<graphql_parser::query::Value<'a, T>>,
     pub(crate) r#type: StoredFieldType,
 }
 
-impl ResolvedVariable {
+impl<'a, T> ResolvedVariable<'a, T>
+where
+    T: graphql_parser::query::Text<'a>,
+{
     pub(crate) fn type_name<'schema>(&self, schema: &'schema Schema) -> &'schema str {
         self.r#type.id.name(schema)
     }
@@ -622,25 +677,30 @@ impl UsedTypes {
     }
 }
 
-fn resolve_variables(
-    query: &mut Query,
-    variables: &[graphql_parser::query::VariableDefinition],
+fn resolve_variables<'a, T>(
+    query: &mut Query<'a, T>,
+    variables: &[graphql_parser::query::VariableDefinition<'a, T>],
     schema: &Schema,
     operation_id: OperationId,
-) {
+) where
+    T: Clone + graphql_parser::query::Text<'a> + std::default::Default,
+{
     for var in variables {
         query.variables.push(ResolvedVariable {
             operation_id,
-            name: var.name.clone(),
+            name: var.name.as_ref().to_owned(),
             default: var.default_value.clone(),
             r#type: resolve_field_type(schema, &var.var_type),
         });
     }
 }
 
-pub(crate) fn walk_operations(
-    query: &Query,
-) -> impl Iterator<Item = (OperationId, &ResolvedOperation)> {
+pub(crate) fn walk_operations<'a, T>(
+    query: &'a Query<'a, T>,
+) -> impl Iterator<Item = (OperationId, &'a ResolvedOperation)>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     query
         .operations
         .iter()
@@ -648,16 +708,25 @@ pub(crate) fn walk_operations(
         .map(|(id, op)| (OperationId(id as u32), op))
 }
 
-pub(crate) fn operation_has_no_variables(operation_id: OperationId, query: &Query) -> bool {
+pub(crate) fn operation_has_no_variables<'a, T>(
+    operation_id: OperationId,
+    query: &'a Query<'a, T>,
+) -> bool
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     walk_operation_variables(operation_id, query)
         .next()
         .is_none()
 }
 
-pub(crate) fn walk_operation_variables(
+pub(crate) fn walk_operation_variables<'a, T>(
     operation_id: OperationId,
-    query: &Query,
-) -> impl Iterator<Item = (VariableId, &ResolvedVariable)> {
+    query: &'a Query<'a, T>,
+) -> impl Iterator<Item = (VariableId, &'a ResolvedVariable<'a, T>)>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     query
         .variables
         .iter()
@@ -666,7 +735,13 @@ pub(crate) fn walk_operation_variables(
         .filter(move |(_id, var)| var.operation_id == operation_id)
 }
 
-pub(crate) fn all_used_types(operation_id: OperationId, query: &BoundQuery<'_>) -> UsedTypes {
+pub(crate) fn all_used_types<'a, T>(
+    operation_id: OperationId,
+    query: &'a BoundQuery<'a, '_, '_, T>,
+) -> UsedTypes
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let mut used_types = UsedTypes::default();
 
     let operation = query.query.get_operation(operation_id);
@@ -682,7 +757,13 @@ pub(crate) fn all_used_types(operation_id: OperationId, query: &BoundQuery<'_>) 
     used_types
 }
 
-pub(crate) fn full_path_prefix(selection_id: SelectionId, query: &BoundQuery<'_>) -> String {
+pub(crate) fn full_path_prefix<'doc, T>(
+    selection_id: SelectionId,
+    query: &BoundQuery<'doc, '_, '_, T>,
+) -> String
+where
+    T: graphql_parser::query::Text<'doc> + std::default::Default,
+{
     let mut path = match query.query.get_selection(selection_id) {
         Selection::FragmentSpread(_) | Selection::InlineFragment(_) => Vec::new(),
         selection => vec![selection.to_path_segment(query)],
@@ -706,7 +787,10 @@ pub(crate) fn full_path_prefix(selection_id: SelectionId, query: &BoundQuery<'_>
 }
 
 #[derive(Clone, Copy)]
-pub(crate) struct BoundQuery<'a> {
-    pub(crate) query: &'a Query,
-    pub(crate) schema: &'a Schema,
+pub(crate) struct BoundQuery<'doc, 'query, 'schema, T>
+where
+    T: graphql_parser::query::Text<'doc> + std::default::Default,
+{
+    pub(crate) query: &'query Query<'doc, T>,
+    pub(crate) schema: &'schema Schema,
 }

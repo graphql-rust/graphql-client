@@ -7,7 +7,8 @@ const SCHEMA_GRAPHQL: &str = include_str!("github_schema.graphql");
 fn ast_from_graphql_and_json_produce_the_same_schema() {
     let json: graphql_introspection_query::introspection_response::IntrospectionResponse =
         serde_json::from_str(SCHEMA_JSON).unwrap();
-    let graphql_parser_schema = graphql_parser::parse_schema(SCHEMA_GRAPHQL).unwrap();
+    let graphql_parser_schema: graphql_parser::schema::Document<'_, String> =
+        graphql_parser::parse_schema(SCHEMA_GRAPHQL).unwrap();
     let mut json = Schema::from(json);
     let mut gql = Schema::from(graphql_parser_schema);
 

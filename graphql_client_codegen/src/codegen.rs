@@ -16,17 +16,20 @@ use selection::*;
 use std::collections::BTreeMap;
 
 /// The main code generation function.
-pub(crate) fn response_for_query(
+pub(crate) fn response_for_query<'a, 'b: 'a, 'schema: 'a, T>(
     operation_id: OperationId,
-    options: &GraphQLClientCodegenOptions,
-    query: BoundQuery<'_>,
-) -> Result<TokenStream, GeneralError> {
+    options: &'b GraphQLClientCodegenOptions,
+    query: BoundQuery<'a, 'a, 'schema, T>,
+) -> Result<TokenStream, GeneralError>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let all_used_types = all_used_types(operation_id, &query);
     let response_derives = render_derives(options.all_response_derives());
     let variable_derives = render_derives(options.all_variable_derives());
 
-    let scalar_definitions = generate_scalar_definitions(&all_used_types, options, query);
-    let enum_definitions = enums::generate_enum_definitions(&all_used_types, options, query);
+    let scalar_definitions = generate_scalar_definitions(&all_used_types, options, &query);
+    let enum_definitions = enums::generate_enum_definitions(&all_used_types, options, &query);
     let fragment_definitions =
         generate_fragment_definitions(&all_used_types, &response_derives, options, &query);
     let input_object_definitions = inputs::generate_input_object_definitions(
@@ -71,12 +74,15 @@ pub(crate) fn response_for_query(
     Ok(q)
 }
 
-fn generate_variables_struct(
+fn generate_variables_struct<'a, 'schema, T>(
     operation_id: OperationId,
     variable_derives: &impl quote::ToTokens,
     options: &GraphQLClientCodegenOptions,
-    query: &BoundQuery<'_>,
-) -> TokenStream {
+    query: &BoundQuery<'a, 'a, 'schema, T>,
+) -> TokenStream
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     if operation_has_no_variables(operation_id, query.query) {
         return quote!(
             #variable_derives
@@ -127,11 +133,14 @@ fn generate_variables_struct(
     variables_struct
 }
 
-fn generate_variable_struct_field(
-    variable: &ResolvedVariable,
+fn generate_variable_struct_field<'a, 'schema, T>(
+    variable: &ResolvedVariable<'a, T>,
     options: &GraphQLClientCodegenOptions,
-    query: &BoundQuery<'_>,
-) -> TokenStream {
+    query: &BoundQuery<'a, '_, 'schema, T>,
+) -> TokenStream
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let snake_case_name = variable.name.to_snake_case();
     let safe_name = shared::keyword_replace(&snake_case_name);
     let ident = Ident::new(&safe_name, Span::call_site());
@@ -141,11 +150,14 @@ fn generate_variable_struct_field(
     quote::quote!(#annotation pub #ident : #r#type)
 }
 
-fn generate_scalar_definitions<'a, 'schema: 'a>(
+fn generate_scalar_definitions<'a: 'c, 'b: 'a, 'c, 'schema: 'a, T>(
     all_used_types: &'a crate::query::UsedTypes,
-    options: &'a GraphQLClientCodegenOptions,
-    query: BoundQuery<'schema>,
-) -> impl Iterator<Item = TokenStream> + 'a {
+    options: &'b GraphQLClientCodegenOptions,
+    query: &'c BoundQuery<'a, '_, 'schema, T>,
+) -> impl Iterator<Item = TokenStream> + 'a
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     all_used_types
         .scalars(query.schema)
         .map(move |(_id, scalar)| {
@@ -172,11 +184,14 @@ fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToT
     quote!(#[derive(#(#idents),*)])
 }
 
-fn render_variable_field_type(
-    variable: &ResolvedVariable,
+fn render_variable_field_type<'a, 'schema, T>(
+    variable: &ResolvedVariable<'a, T>,
     options: &GraphQLClientCodegenOptions,
-    query: &BoundQuery<'_>,
-) -> TokenStream {
+    query: &BoundQuery<'a, '_, 'schema, T>,
+) -> TokenStream
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let normalized_name = options
         .normalization()
         .input_name(variable.type_name(query.schema));
@@ -224,24 +239,30 @@ fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStr
     qualified
 }
 
-fn generate_fragment_definitions<'a>(
+fn generate_fragment_definitions<'a, 'schema, T>(
     all_used_types: &'a UsedTypes,
     response_derives: &'a impl quote::ToTokens,
     options: &'a GraphQLClientCodegenOptions,
-    query: &'a BoundQuery<'a>,
-) -> impl Iterator<Item = TokenStream> + 'a {
+    query: &'a BoundQuery<'a, '_, 'schema, T>,
+) -> impl Iterator<Item = TokenStream> + 'a
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     all_used_types.fragment_ids().map(move |fragment_id| {
         selection::render_fragment(fragment_id, options, query).render(&response_derives)
     })
 }
 
 /// For default value constructors.
-fn graphql_parser_value_to_literal(
-    value: &graphql_parser::query::Value,
+fn graphql_parser_value_to_literal<'a, 'schema, T>(
+    value: &graphql_parser::query::Value<'a, T>,
     ty: TypeId,
     is_optional: bool,
-    query: &BoundQuery<'_>,
-) -> TokenStream {
+    query: &BoundQuery<'a, '_, 'schema, T>,
+) -> TokenStream
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     use graphql_parser::query::Value;
 
     let inner = match value {
@@ -260,7 +281,10 @@ fn graphql_parser_value_to_literal(
             let i = i.as_i64();
             quote!(#i)
         }
-        Value::Enum(en) => quote!(#en),
+        Value::Enum(en) => {
+            let en_string = en.as_ref().to_string();
+            quote!(#en_string)
+        }
         Value::List(inner) => {
             let elements = inner
                 .iter()
@@ -289,11 +313,15 @@ fn graphql_parser_value_to_literal(
 }
 
 /// For default value constructors.
-fn render_object_literal(
-    object_map: &BTreeMap<String, graphql_parser::query::Value>,
+// TODO object_map keys should be T::Value
+fn render_object_literal<'a, 'schema, T>(
+    object_map: &BTreeMap<T::Value, graphql_parser::query::Value<'a, T>>,
     input_id: InputId,
-    query: &BoundQuery<'_>,
-) -> TokenStream {
+    query: &BoundQuery<'a, '_, 'schema, T>,
+) -> TokenStream
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let input = query.schema.get_input(input_id);
     let constructor = Ident::new(&input.name, Span::call_site());
     let fields: Vec<TokenStream> = input

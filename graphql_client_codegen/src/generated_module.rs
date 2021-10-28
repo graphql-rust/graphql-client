@@ -24,15 +24,21 @@ impl Display for OperationNotFound {
 impl Error for OperationNotFound {}
 
 /// This struct contains the parameters necessary to generate code for a given operation.
-pub(crate) struct GeneratedModule<'a> {
+pub(crate) struct GeneratedModule<'a, T>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     pub operation: &'a str,
     pub query_string: &'a str,
-    pub resolved_query: &'a crate::query::Query,
+    pub resolved_query: &'a crate::query::Query<'a, T>,
     pub schema: &'a crate::schema::Schema,
     pub options: &'a crate::GraphQLClientCodegenOptions,
 }
 
-impl<'a> GeneratedModule<'a> {
+impl<'a, T> GeneratedModule<'a, T>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     /// Generate the items for the variables and the response that will go inside the module.
     fn build_impls(&self) -> Result<TokenStream, BoxError> {
         Ok(crate::codegen::response_for_query(

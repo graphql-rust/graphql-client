@@ -1,9 +1,12 @@
 use super::{full_path_prefix, BoundQuery, Query, QueryValidationError, Selection, SelectionId};
 use crate::schema::TypeId;
 
-pub(super) fn validate_typename_presence(
-    query: &BoundQuery<'_>,
-) -> Result<(), QueryValidationError> {
+pub(super) fn validate_typename_presence<'a, T>(
+    query: &BoundQuery<'a, '_, '_, T>,
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     for fragment in query.query.fragments.iter() {
         let type_id = match fragment.on {
             id @ TypeId::Interface(_) | id @ TypeId::Union(_) => id,
@@ -46,11 +49,14 @@ pub(super) fn validate_typename_presence(
     Ok(())
 }
 
-fn selection_set_contains_type_name(
+fn selection_set_contains_type_name<'a, T>(
     parent_type_id: TypeId,
     selection_set: &[SelectionId],
-    query: &Query,
-) -> bool {
+    query: &Query<'a, T>,
+) -> bool
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     for id in selection_set {
         let selection = query.get_selection(*id);
 

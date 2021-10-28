@@ -8,12 +8,15 @@ use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
-pub(super) fn generate_input_object_definitions(
+pub(super) fn generate_input_object_definitions<'a, 'schema, T>(
     all_used_types: &UsedTypes,
     options: &GraphQLClientCodegenOptions,
     variable_derives: &impl quote::ToTokens,
-    query: &BoundQuery<'_>,
-) -> Vec<TokenStream> {
+    query: &BoundQuery<'a, '_, 'schema, T>,
+) -> Vec<TokenStream>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     all_used_types
         .inputs(query.schema)
         .map(|(_input_id, input)| {

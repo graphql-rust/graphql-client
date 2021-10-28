@@ -11,11 +11,14 @@ use quote::quote;
  * Generated "variant_names" enum:  pub enum AnEnum { where_, self_, Other(String), }
  * Generated serialize line: "AnEnum::where_ => "where","
  */
-pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
+pub(super) fn generate_enum_definitions<'a, 'b: 'a, 'c, 'schema: 'a, T>(
     all_used_types: &'a crate::query::UsedTypes,
-    options: &'a GraphQLClientCodegenOptions,
-    query: BoundQuery<'schema>,
-) -> impl Iterator<Item = TokenStream> + 'a {
+    options: &'b GraphQLClientCodegenOptions,
+    query: &'c BoundQuery<'a, '_, 'schema, T>,
+) -> impl Iterator<Item = TokenStream> + 'a
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let derives = render_derives(
         options
             .all_response_derives()

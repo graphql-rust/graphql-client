@@ -19,11 +19,14 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::borrow::Cow;
 
-pub(crate) fn render_response_data_fields<'a>(
+pub(crate) fn render_response_data_fields<'a, 'b: 'a, 'query, 'schema, T>(
     operation_id: OperationId,
     options: &'a GraphQLClientCodegenOptions,
-    query: &'a BoundQuery<'a>,
-) -> ExpandedSelection<'a> {
+    query: &'b BoundQuery<'a, 'query, 'schema, T>,
+) -> ExpandedSelection<'a, 'query, 'schema, T>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let operation = query.query.get_operation(operation_id);
     let mut expanded_selection = ExpandedSelection {
         query,
@@ -49,11 +52,14 @@ pub(crate) fn render_response_data_fields<'a>(
     expanded_selection
 }
 
-pub(super) fn render_fragment<'a>(
+pub(super) fn render_fragment<'a, 'query, 'schema, T>(
     fragment_id: ResolvedFragmentId,
     options: &'a GraphQLClientCodegenOptions,
-    query: &'a BoundQuery<'a>,
-) -> ExpandedSelection<'a> {
+    query: &'a BoundQuery<'a, 'query, 'schema, T>,
+) -> ExpandedSelection<'a, 'query, 'schema, T>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     let fragment = query.query.get_fragment(fragment_id);
     let mut expanded_selection = ExpandedSelection {
         query,
@@ -87,11 +93,14 @@ enum VariantSelection<'a> {
 
 impl<'a> VariantSelection<'a> {
     /// The second argument is the parent type id, so it can be excluded.
-    fn from_selection(
+    fn from_selection<T>(
         selection: &'a Selection,
         type_id: TypeId,
-        query: &BoundQuery<'a>,
-    ) -> Option<VariantSelection<'a>> {
+        query: &BoundQuery<'a, 'a, '_, T>,
+    ) -> Option<VariantSelection<'a>>
+    where
+        T: graphql_parser::query::Text<'a> + std::default::Default,
+    {
         match selection {
             Selection::InlineFragment(inline_fragment) => {
                 Some(VariantSelection::InlineFragment(inline_fragment))
@@ -119,13 +128,15 @@ impl<'a> VariantSelection<'a> {
     }
 }
 
-fn calculate_selection<'a>(
-    context: &mut ExpandedSelection<'a>,
+fn calculate_selection<'a, 'schema, T>(
+    context: &mut ExpandedSelection<'a, '_, 'schema, T>,
     selection_set: &[SelectionId],
     struct_id: ResponseTypeId,
     type_id: TypeId,
     options: &'a GraphQLClientCodegenOptions,
-) {
+) where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     // If the selection only contains a fragment, replace the selection with
     // that fragment.
     if selection_set.len() == 1 {
@@ -467,8 +478,11 @@ pub(crate) struct ExpandedType<'a> {
     name: Cow<'a, str>,
 }
 
-pub(crate) struct ExpandedSelection<'a> {
-    query: &'a BoundQuery<'a>,
+pub(crate) struct ExpandedSelection<'a, 'query, 'schema, T>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
+    query: &'a BoundQuery<'a, 'query, 'schema, T>,
     types: Vec<ExpandedType<'a>>,
     fields: Vec<ExpandedField<'a>>,
     variants: Vec<ExpandedVariant<'a>>,
@@ -476,7 +490,10 @@ pub(crate) struct ExpandedSelection<'a> {
     options: &'a GraphQLClientCodegenOptions,
 }
 
-impl<'a> ExpandedSelection<'a> {
+impl<'a, 'query, 'schema, T> ExpandedSelection<'a, 'query, 'schema, T>
+where
+    T: graphql_parser::query::Text<'a> + std::default::Default,
+{
     pub(crate) fn schema(&self) -> &'a Schema {
         self.query.schema
     }
