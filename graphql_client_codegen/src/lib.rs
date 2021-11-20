@@ -47,7 +47,7 @@ type CacheMap<T> = std::sync::Mutex<HashMap<std::path::PathBuf, T>>;
 
 lazy_static! {
     static ref SCHEMA_CACHE: CacheMap<schema::Schema> = CacheMap::default();
-    static ref QUERY_CACHE: CacheMap<(String, graphql_parser::query::Document)> =
+    static ref QUERY_CACHE: CacheMap<(String, graphql_parser::query::Document<'static, String>)> =
         CacheMap::default();
 }
 
@@ -63,6 +63,7 @@ pub fn generate_module_token_stream(
         .extension()
         .and_then(std::ffi::OsStr::to_str)
         .unwrap_or("INVALID");
+    let schema_string;
 
     // Check the schema cache.
     let schema: schema::Schema = {
@@ -70,10 +71,10 @@ pub fn generate_module_token_stream(
         match lock.entry(schema_path.to_path_buf()) {
             hash_map::Entry::Occupied(o) => o.get().clone(),
             hash_map::Entry::Vacant(v) => {
-                let schema_string = read_file(v.key())?;
+                schema_string = read_file(v.key())?;
                 let schema = match schema_extension {
                     "graphql" | "gql" => {
-                        let s = graphql_parser::schema::parse_schema(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error)))?;
+                        let s = graphql_parser::schema::parse_schema::<&str>(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error)))?;
                         schema::Schema::from(s)
                     }
                     "json" => {
@@ -96,7 +97,8 @@ pub fn generate_module_token_stream(
             hash_map::Entry::Vacant(v) => {
                 let query_string = read_file(v.key())?;
                 let query = graphql_parser::parse_query(&query_string)
-                    .map_err(|err| GeneralError(format!("Query parser error: {}", err)))?;
+                    .map_err(|err| GeneralError(format!("Query parser error: {}", err)))?
+                    .into_static();
                 v.insert((query_string, query)).clone()
             }
         }
