@@ -102,7 +102,8 @@ impl GraphQLClientCodegenOptions {
             .variables_derives
             .as_deref()
             .into_iter()
-            .flat_map(|s| s.split(','));
+            .flat_map(|s| s.split(','))
+            .map(|s| s.trim());
 
         std::iter::once("Serialize").chain(additional)
     }
