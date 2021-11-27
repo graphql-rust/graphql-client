@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+- The `variables_derives` now trims whitespace from individual derivation traits.
+
 ## 0.10.0 - 2021-07-04
 
 - The `web` feature is dropped. You can now use a `reqwest::Client` instead of the custom HTTP client.
