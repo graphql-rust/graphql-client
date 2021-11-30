@@ -181,6 +181,7 @@ impl Display for PathFragment {
 ///             extensions: None,
 ///         },
 ///     ]),
+///     extensions: None,
 /// };
 ///
 /// assert_eq!(body, expected);
@@ -275,6 +276,7 @@ impl Display for Error {
 ///         dogs: vec![Dog { name: "Strelka".to_owned() }],
 ///     }),
 ///     errors: Some(vec![]),
+///     extensions: None,
 /// };
 ///
 /// assert_eq!(body, expected);
@@ -288,6 +290,8 @@ pub struct Response<Data> {
     pub data: Option<Data>,
     /// The top-level errors returned by the server.
     pub errors: Option<Vec<Error>>,
+    /// The top-level errors returned by the server.
+    pub extensions: Option<serde_json::Value>,
 }
 
 #[cfg(test)]
