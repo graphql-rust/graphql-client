@@ -16,11 +16,13 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
     options: &'a GraphQLClientCodegenOptions,
     query: BoundQuery<'schema>,
 ) -> impl Iterator<Item = TokenStream> + 'a {
-    let derives = render_derives(
-        options
-            .all_response_derives()
-            .filter(|d| !&["Serialize", "Deserialize", "Default"].contains(d)),
-    );
+    let traits = options
+        .all_response_derives()
+        .chain(options.all_variable_derives())
+        .filter(|d| !&["Serialize", "Deserialize", "Default"].contains(d))
+        // Use BTreeSet instead of HashSet for a stable ordering.
+        .collect::<std::collections::BTreeSet<_>>();
+    let derives = render_derives(traits.into_iter());
     let normalization = options.normalization();
 
     all_used_types.enums(query.schema)
