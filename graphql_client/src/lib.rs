@@ -290,8 +290,9 @@ pub struct Response<Data> {
     pub data: Option<Data>,
     /// The top-level errors returned by the server.
     pub errors: Option<Vec<Error>>,
-    /// The top-level errors returned by the server.
-    pub extensions: Option<serde_json::Value>,
+    /// Additional extensions. Their exact format is defined by the server.
+    /// See [GraphQL Response Specification](https://github.com/graphql/graphql-spec/blob/main/spec/Section%207%20--%20Response.md#response-format)
+    pub extensions: Option<HashMap<String, serde_json::Value>>,
 }
 
 #[cfg(test)]
