@@ -18,6 +18,6 @@ pub(crate) struct ResolvedOperation {
 
 impl ResolvedOperation {
     pub(crate) fn to_path_segment(&self) -> String {
-        self.name.to_camel_case()
+        self.name.to_upper_camel_case()
     }
 }

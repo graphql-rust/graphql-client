@@ -3,7 +3,7 @@ use super::{
     UsedTypes,
 };
 use crate::schema::{Schema, StoredField, StoredFieldId, TypeId};
-use heck::CamelCase;
+use heck::ToUpperCamelCase;
 
 /// This checks that the `on` clause on fragment spreads and inline fragments
 /// are valid in their context.
@@ -226,13 +226,13 @@ impl Selection {
             Selection::Field(field) => field
                 .alias
                 .as_ref()
-                .map(|alias| alias.to_camel_case())
+                .map(|alias| alias.to_upper_camel_case())
                 .unwrap_or_else(move || {
-                    query.schema.get_field(field.field_id).name.to_camel_case()
+                    query.schema.get_field(field.field_id).name.to_upper_camel_case()
                 }),
             Selection::InlineFragment(inline_fragment) => format!(
                 "On{}",
-                inline_fragment.type_id.name(query.schema).to_camel_case()
+                inline_fragment.type_id.name(query.schema).to_upper_camel_case()
             ),
             other => unreachable!("{:?} in to_path_segment", other),
         }

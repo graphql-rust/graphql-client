@@ -1,4 +1,4 @@
-use heck::CamelCase;
+use heck::ToUpperCamelCase;
 use std::borrow::Cow;
 
 /// Normalization conventions available for generated code.
@@ -14,7 +14,7 @@ impl Normalization {
     fn camel_case(self, name: &str) -> Cow<'_, str> {
         match self {
             Self::None => name.into(),
-            Self::Rust => name.to_camel_case().into(),
+            Self::Rust => name.to_upper_camel_case().into(),
         }
     }
 
