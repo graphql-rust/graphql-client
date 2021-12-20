@@ -4,7 +4,7 @@ use crate::{
     query::{BoundQuery, UsedTypes},
     schema::input_is_recursive_without_indirection,
 };
-use heck::SnakeCase;
+use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
