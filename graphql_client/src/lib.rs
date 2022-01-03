@@ -23,7 +23,7 @@ extern crate graphql_query_derive;
 #[doc(hidden)]
 pub use graphql_query_derive::*;
 
-#[cfg(any(feature = "reqwest", feature = "reqwest-blocking"))]
+#[cfg(any(feature = "reqwest", feature = "reqwest-rustls", feature = "reqwest-blocking"))]
 pub mod reqwest;
 
 use serde::{Deserialize, Serialize};

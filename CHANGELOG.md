@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 
 - The `variables_derives` now trims whitespace from individual derivation traits.
+- The new `reqwest-rustls` feature works like the `reqwest` feature but with
+  `rustls` rather than `native-tls`.
 
 ## 0.10.0 - 2021-07-04
 
