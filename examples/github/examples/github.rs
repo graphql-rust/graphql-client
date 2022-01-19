@@ -1,9 +1,9 @@
 use ::reqwest::blocking::Client;
 use anyhow::*;
+use clap::Parser;
 use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
 use log::*;
 use prettytable::*;
-use structopt::StructOpt;
 
 #[allow(clippy::upper_case_acronyms)]
 type URI = String;
@@ -16,10 +16,10 @@ type URI = String;
 )]
 struct RepoView;
 
-#[derive(StructOpt)]
-#[structopt(author, about)]
+#[derive(Parser)]
+#[clap(author, about, version)]
 struct Command {
-    #[structopt(name = "repository")]
+    #[clap(name = "repository")]
     repo: String,
 }
 
@@ -37,7 +37,7 @@ fn main() -> Result<(), anyhow::Error> {
     let github_api_token =
         std::env::var("GITHUB_API_TOKEN").expect("Missing GITHUB_API_TOKEN env var");
 
-    let args = Command::from_args();
+    let args = Command::parse();
 
     let repo = args.repo;
     let (owner, name) = parse_repo_name(&repo).unwrap_or(("tomhoule", "graphql-client"));

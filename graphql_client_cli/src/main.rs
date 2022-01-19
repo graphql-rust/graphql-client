@@ -1,85 +1,83 @@
-#![allow(clippy::redundant_clone)] // in structopt generated code
-
 mod error;
 mod generate;
 mod introspect_schema;
 
+use clap::Parser;
 use env_logger::fmt::{Color, Style, StyledValue};
 use error::Error;
 use log::Level;
 use std::path::PathBuf;
-use structopt::StructOpt;
 use Cli::Generate;
 
 type CliResult<T> = Result<T, Error>;
 
-#[derive(StructOpt)]
-#[structopt(author, about)]
+#[derive(Parser)]
+#[clap(author, about, version)]
 enum Cli {
     /// Get the schema from a live GraphQL API. The schema is printed to stdout.
-    #[structopt(name = "introspect-schema")]
+    #[clap(name = "introspect-schema")]
     IntrospectSchema {
         /// The URL of a GraphQL endpoint to introspect.
         schema_location: String,
         /// Where to write the JSON for the introspected schema.
-        #[structopt(parse(from_os_str))]
-        #[structopt(long = "output")]
+        #[clap(parse(from_os_str))]
+        #[clap(long = "output")]
         output: Option<PathBuf>,
         /// Set the contents of the Authorizaiton header.
-        #[structopt(long = "authorization")]
+        #[clap(long = "authorization")]
         authorization: Option<String>,
         /// Specify custom headers.
         /// --header 'X-Name: Value'
-        #[structopt(long = "header")]
+        #[clap(long = "header")]
         headers: Vec<introspect_schema::Header>,
         /// Disable ssl verification.
         /// Default value is false.
-        #[structopt(long = "no-ssl")]
+        #[clap(long = "no-ssl")]
         no_ssl: bool,
     },
-    #[structopt(name = "generate")]
+    #[clap(name = "generate")]
     Generate {
         /// Path to GraphQL schema file (.json or .graphql).
-        #[structopt(short = "s", long = "schema-path")]
+        #[clap(short = 's', long = "schema-path")]
         schema_path: PathBuf,
         /// Path to the GraphQL query file.
         query_path: PathBuf,
         /// Name of target query. If you don't set this parameter, cli generate all queries in query file.
-        #[structopt(long = "selected-operation")]
+        #[clap(long = "selected-operation")]
         selected_operation: Option<String>,
         /// Additional derives that will be added to the generated structs and enums for the variables.
         /// --variables-derives='Serialize,PartialEq'
-        #[structopt(short = "I", long = "variables-derives")]
+        #[clap(short = 'I', long = "variables-derives")]
         variables_derives: Option<String>,
         /// Additional derives that will be added to the generated structs and enums for the response.
         /// --output-derives='Serialize,PartialEq'
-        #[structopt(short = "O", long = "response-derives")]
+        #[clap(short = 'O', long = "response-derives")]
         response_derives: Option<String>,
         /// You can choose deprecation strategy from allow, deny, or warn.
         /// Default value is warn.
-        #[structopt(short = "d", long = "deprecation-strategy")]
+        #[clap(short = 'd', long = "deprecation-strategy")]
         deprecation_strategy: Option<String>,
         /// If you don't want to execute rustfmt to generated code, set this option.
         /// Default value is false.
-        #[structopt(long = "no-formatting")]
+        #[clap(long = "no-formatting")]
         no_formatting: bool,
         /// You can choose module and target struct visibility from pub and private.
         /// Default value is pub.
-        #[structopt(short = "m", long = "module-visibility")]
+        #[clap(short = 'm', long = "module-visibility")]
         module_visibility: Option<String>,
         /// The directory in which the code will be generated.
         ///
         /// If this option is omitted, the code will be generated next to the .graphql
         /// file, with the same name and the .rs extension.
-        #[structopt(short = "o", long = "output-directory")]
+        #[clap(short = 'o', long = "output-directory")]
         output_directory: Option<PathBuf>,
         /// The module where the custom scalar definitions are located.
         /// --custom-scalars-module='crate::gql::custom_scalars'
-        #[structopt(short = "p", long = "custom-scalars-module")]
+        #[clap(short = 'p', long = "custom-scalars-module")]
         custom_scalars_module: Option<String>,
         /// A flag indicating if the enum representing the variants of a fragment union/interface should have a "other" variant
         /// --fragments-other-variant
-        #[structopt(long = "fragments-other-variant")]
+        #[clap(long = "fragments-other-variant")]
         fragments_other_variant: bool,
     },
 }
@@ -87,7 +85,7 @@ enum Cli {
 fn main() -> CliResult<()> {
     set_env_logger();
 
-    let cli = Cli::from_args();
+    let cli = Cli::parse();
     match cli {
         Cli::IntrospectSchema {
             schema_location,
