@@ -10,6 +10,6 @@ graphql_client = { path = "../../graphql_client", features = ["reqwest-blocking"
 serde = "^1.0"
 reqwest = { version = "^0.11", features = ["json", "blocking"] }
 prettytable-rs = "^0.7"
-structopt = "^0.3"
+clap = { version = "^3.0", features = ["derive"] }
 log = "^0.4"
 env_logger = "^0.5"
