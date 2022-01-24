@@ -11,14 +11,19 @@ edition = "2018"
 homepage = "https://github.com/graphql-rust/graphql-client"
 readme = "../README.md"
 
+[package.metadata.docs.rs]
+features = ["reqwest"]
+
 [dependencies]
 serde = { version = "^1.0.78", features = ["derive"] }
 serde_json = "1.0"
 
 # Optional dependencies
 graphql_query_derive = { path = "../graphql_query_derive", version = "0.10.0", optional = true }
-reqwest = { version = "^0.11", features = ["json"], optional = true }
+reqwest-crate = { package = "reqwest", version = "^0.11", features = ["json"], default-features = false, optional = true }
 
 [features]
 default = ["graphql_query_derive"]
-reqwest-blocking = ["reqwest/blocking"]
+reqwest = ["reqwest-crate", "reqwest-crate/default-tls"]
+reqwest-rustls = ["reqwest-crate", "reqwest-crate/rustls-tls"]
+reqwest-blocking = ["reqwest-crate/blocking"]
