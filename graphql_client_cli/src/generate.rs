@@ -24,6 +24,8 @@ pub(crate) struct CliCodegenParams {
     pub fragments_other_variant: bool,
 }
 
+const WARNING_SUPPRESSION: &str = "#![allow(clippy::all, warnings)]";
+
 pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
     let CliCodegenParams {
         variables_derives,
@@ -78,7 +80,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
     let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)
         .map_err(|err| Error::message(format!("Error generating module code: {}", err)))?;
 
-    let generated_code = gen.to_string();
+    let generated_code = format!("{}\n{}", WARNING_SUPPRESSION, gen);
     let generated_code = if !no_formatting {
         format(&generated_code)?
     } else {
