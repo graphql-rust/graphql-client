@@ -587,34 +587,49 @@ pub(crate) struct UsedTypes {
 }
 
 impl UsedTypes {
+    // We sort the returned inputs and other types in order to ensure that the
+    // generated code is the same every time when given the schema. Without
+    // sorting the order is random, and code generated with the CLI tool may
+    // change even when the source schema does not change.
     pub(crate) fn inputs<'s, 'a: 's>(
         &'s self,
         schema: &'a Schema,
     ) -> impl Iterator<Item = (InputId, &'a StoredInputType)> + 's {
-        schema
+        let mut inputs = schema
             .inputs()
             .filter(move |(id, _input)| self.types.contains(&TypeId::Input(*id)))
+            .collect::<Vec<_>>();
+        inputs.sort_by_key(|(_id, input)| input.name.as_str());
+        inputs.into_iter()
     }
 
     pub(crate) fn scalars<'s, 'a: 's>(
         &'s self,
         schema: &'a Schema,
     ) -> impl Iterator<Item = (ScalarId, &'a StoredScalar)> + 's {
-        self.types
+        let mut scalars = self
+            .types
             .iter()
             .filter_map(TypeId::as_scalar_id)
             .map(move |scalar_id| (scalar_id, schema.get_scalar(scalar_id)))
             .filter(|(_id, scalar)| !crate::schema::DEFAULT_SCALARS.contains(&scalar.name.as_str()))
+            .collect::<Vec<_>>();
+        scalars.sort_by_key(|(_id, scalar)| scalar.name.as_str());
+        scalars.into_iter()
     }
 
     pub(crate) fn enums<'a, 'schema: 'a>(
         &'a self,
         schema: &'schema Schema,
     ) -> impl Iterator<Item = (EnumId, &'schema StoredEnum)> + 'a {
-        self.types
+        let mut enums = self
+            .types
             .iter()
             .filter_map(TypeId::as_enum_id)
             .map(move |enum_id| (enum_id, schema.get_enum(enum_id)))
+            .collect::<Vec<_>>();
+        enums.sort_by_key(|(_id, enum_)| enum_.name.as_str());
+        enums.into_iter()
     }
 
     pub(crate) fn fragment_ids(&self) -> impl Iterator<Item = ResolvedFragmentId> + '_ {
