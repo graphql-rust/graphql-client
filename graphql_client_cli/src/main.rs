@@ -50,7 +50,7 @@ enum Cli {
         #[clap(short = 'I', long = "variables-derives")]
         variables_derives: Option<String>,
         /// Additional derives that will be added to the generated structs and enums for the response.
-        /// --output-derives='Serialize,PartialEq'
+        /// --response-derives='Serialize,PartialEq'
         #[clap(short = 'O', long = "response-derives")]
         response_derives: Option<String>,
         /// You can choose deprecation strategy from allow, deny, or warn.
