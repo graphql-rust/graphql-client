@@ -19,7 +19,7 @@ pub struct GraphQLClientCodegenOptions {
     pub mode: CodegenMode,
     /// Name of the operation we want to generate code for. If it does not match, we use all queries.
     pub operation_name: Option<String>,
-    /// The name of implemention target struct.
+    /// The name of implementation target struct.
     pub struct_name: Option<String>,
     /// The struct for which we derive GraphQLQuery.
     struct_ident: Option<Ident>,
@@ -142,7 +142,7 @@ impl GraphQLClientCodegenOptions {
         self.module_visibility = Some(visibility);
     }
 
-    /// The name of implemention target struct.
+    /// The name of implementation target struct.
     pub fn set_struct_name(&mut self, struct_name: String) {
         self.struct_name = Some(struct_name);
     }

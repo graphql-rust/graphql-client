@@ -5,7 +5,7 @@ All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## Pull requests
 
-Before opening large pull requests, it is prefered that the change be discussed in a github issue first. This helps keep everyone on the same page, and facilitates a smoother code review process.
+Before opening large pull requests, it is preferred that the change be discussed in a github issue first. This helps keep everyone on the same page, and facilitates a smoother code review process.
 
 ## Testing
 
