@@ -443,8 +443,12 @@ pub(crate) fn input_is_recursive_without_indirection(input_id: InputId, schema: 
     let mut visited_types = HashSet::<&str>::new();
     input.contains_type_without_indirection(input_id, schema, &mut visited_types)
 }
-impl std::convert::From<graphql_parser::schema::Document> for Schema {
-    fn from(ast: graphql_parser::schema::Document) -> Schema {
+impl<'doc, T> std::convert::From<graphql_parser::schema::Document<'doc, T>> for Schema
+where
+    T: graphql_parser::query::Text<'doc>,
+    T::Value: AsRef<str>,
+{
+    fn from(ast: graphql_parser::schema::Document<'doc, T>) -> Schema {
         graphql_parser_conversion::build_schema(ast)
     }
 }
@@ -459,10 +463,13 @@ impl std::convert::From<graphql_introspection_query::introspection_response::Int
     }
 }
 
-pub(crate) fn resolve_field_type(
+pub(crate) fn resolve_field_type<'doc, T>(
     schema: &Schema,
-    inner: &graphql_parser::schema::Type,
-) -> StoredFieldType {
+    inner: &graphql_parser::schema::Type<'doc, T>,
+) -> StoredFieldType
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     use crate::type_qualifiers::graphql_parser_depth;
     use graphql_parser::schema::Type::*;
 
@@ -483,7 +490,7 @@ pub(crate) fn resolve_field_type(
             }
             NamedType(name) => {
                 return StoredFieldType {
-                    id: schema.find_type_id(name),
+                    id: schema.find_type_id(name.as_ref()),
                     qualifiers,
                 }
             }

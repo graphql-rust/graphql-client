@@ -59,10 +59,13 @@ pub(crate) struct ResolvedFragmentId(u32);
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct VariableId(u32);
 
-pub(crate) fn resolve(
+pub(crate) fn resolve<'doc, T>(
     schema: &Schema,
-    query: &graphql_parser::query::Document,
-) -> Result<Query, QueryValidationError> {
+    query: &graphql_parser::query::Document<'doc, T>,
+) -> Result<Query, QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     let mut resolved_query: Query = Default::default();
 
     create_roots(&mut resolved_query, query, schema)?;
@@ -98,22 +101,25 @@ pub(crate) fn resolve(
     Ok(resolved_query)
 }
 
-fn create_roots(
+fn create_roots<'doc, T>(
     resolved_query: &mut Query,
-    query: &graphql_parser::query::Document,
+    query: &graphql_parser::query::Document<'doc, T>,
     schema: &Schema,
-) -> Result<(), QueryValidationError> {
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     // First, give ids to all fragments and operations.
     for definition in &query.definitions {
         match definition {
             graphql_parser::query::Definition::Fragment(fragment) => {
                 let graphql_parser::query::TypeCondition::On(on) = &fragment.type_condition;
                 resolved_query.fragments.push(ResolvedFragment {
-                    name: fragment.name.clone(),
-                    on: schema.find_type(on).ok_or_else(|| {
+                    name: fragment.name.as_ref().into(),
+                    on: schema.find_type(on.as_ref()).ok_or_else(|| {
                         QueryValidationError::new(format!(
                             "Could not find type {} for fragment {} in schema.",
-                            on, fragment.name
+                            on.as_ref(), fragment.name.as_ref()
                         ))
                     })?,
                     selection_set: Vec::new(),
@@ -130,7 +136,7 @@ fn create_roots(
                 })?;
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     object_id: on,
-                    name: m.name.as_ref().expect("mutation without name").to_owned(),
+                    name: m.name.as_ref().expect("mutation without name").as_ref().into(),
                     _operation_type: operations::OperationType::Mutation,
                     selection_set: Vec::with_capacity(m.selection_set.items.len()),
                 };
@@ -142,7 +148,7 @@ fn create_roots(
             ) => {
                 let on = schema.query_type();
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
-                    name: q.name.as_ref().expect("query without name").to_owned(),
+                    name: q.name.as_ref().expect("query without name").as_ref().into(),
                     _operation_type: operations::OperationType::Query,
                     object_id: on,
                     selection_set: Vec::with_capacity(q.selection_set.items.len()),
@@ -170,7 +176,8 @@ fn create_roots(
                         .name
                         .as_ref()
                         .expect("subscription without name")
-                        .to_owned(),
+                        .as_ref()
+                        .into(),
                     _operation_type: operations::OperationType::Subscription,
                     object_id: on,
                     selection_set: Vec::with_capacity(s.selection_set.items.len()),
@@ -191,25 +198,28 @@ fn create_roots(
     Ok(())
 }
 
-fn resolve_fragment(
+fn resolve_fragment<'doc, T>(
     query: &mut Query,
     schema: &Schema,
-    fragment_definition: &graphql_parser::query::FragmentDefinition,
-) -> Result<(), QueryValidationError> {
+    fragment_definition: &graphql_parser::query::FragmentDefinition<'doc, T>,
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     let graphql_parser::query::TypeCondition::On(on) = &fragment_definition.type_condition;
-    let on = schema.find_type(on).ok_or_else(|| {
+    let on = schema.find_type(on.as_ref()).ok_or_else(|| {
         QueryValidationError::new(format!(
             "Could not find type `{}` referenced by fragment `{}`",
-            on, fragment_definition.name
+            on.as_ref(), fragment_definition.name.as_ref()
         ))
     })?;
 
     let (id, _) = query
-        .find_fragment(&fragment_definition.name)
+        .find_fragment(fragment_definition.name.as_ref())
         .ok_or_else(|| {
             QueryValidationError::new(format!(
                 "Could not find fragment `{}`.",
-                fragment_definition.name
+                fragment_definition.name.as_ref()
             ))
         })?;
 
@@ -224,17 +234,20 @@ fn resolve_fragment(
     Ok(())
 }
 
-fn resolve_union_selection(
+fn resolve_union_selection<'doc, T>(
     query: &mut Query,
     _union_id: UnionId,
-    selection_set: &graphql_parser::query::SelectionSet,
+    selection_set: &graphql_parser::query::SelectionSet<'doc, T>,
     parent: SelectionParent,
     schema: &Schema,
-) -> Result<(), QueryValidationError> {
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     for item in selection_set.items.iter() {
         match item {
             graphql_parser::query::Selection::Field(field) => {
-                if field.name == TYPENAME_FIELD {
+                if field.name.as_ref() == TYPENAME_FIELD {
                     let id = query.push_selection(Selection::Typename, parent);
                     parent.add_to_selection_set(query, id);
                 } else {
@@ -250,11 +263,11 @@ fn resolve_union_selection(
             }
             graphql_parser::query::Selection::FragmentSpread(fragment_spread) => {
                 let (fragment_id, _fragment) = query
-                    .find_fragment(&fragment_spread.fragment_name)
+                    .find_fragment(fragment_spread.fragment_name.as_ref())
                     .ok_or_else(|| {
                         QueryValidationError::new(format!(
                             "Could not find fragment `{}` referenced by fragment spread.",
-                            fragment_spread.fragment_name
+                            fragment_spread.fragment_name.as_ref()
                         ))
                     })?;
 
@@ -268,35 +281,38 @@ fn resolve_union_selection(
     Ok(())
 }
 
-fn resolve_object_selection<'a>(
+fn resolve_object_selection<'a, 'doc, T>(
     query: &mut Query,
     object: &dyn crate::schema::ObjectLike,
-    selection_set: &graphql_parser::query::SelectionSet,
+    selection_set: &graphql_parser::query::SelectionSet<'doc, T>,
     parent: SelectionParent,
     schema: &'a Schema,
-) -> Result<(), QueryValidationError> {
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     for item in selection_set.items.iter() {
         match item {
             graphql_parser::query::Selection::Field(field) => {
-                if field.name == TYPENAME_FIELD {
+                if field.name.as_ref() == TYPENAME_FIELD {
                     let id = query.push_selection(Selection::Typename, parent);
                     parent.add_to_selection_set(query, id);
                     continue;
                 }
 
                 let (field_id, schema_field) = object
-                    .get_field_by_name(&field.name, schema)
+                    .get_field_by_name(field.name.as_ref(), schema)
                     .ok_or_else(|| {
                         QueryValidationError::new(format!(
                             "No field named {} on {}",
-                            &field.name,
+                            field.name.as_ref(),
                             object.name()
                         ))
                     })?;
 
                 let id = query.push_selection(
                     Selection::Field(SelectedField {
-                        alias: field.alias.clone(),
+                        alias: field.alias.as_ref().map(|alias| alias.as_ref().into()),
                         field_id,
                         selection_set: Vec::with_capacity(selection_set.items.len()),
                     }),
@@ -320,11 +336,11 @@ fn resolve_object_selection<'a>(
             }
             graphql_parser::query::Selection::FragmentSpread(fragment_spread) => {
                 let (fragment_id, _fragment) = query
-                    .find_fragment(&fragment_spread.fragment_name)
+                    .find_fragment(fragment_spread.fragment_name.as_ref())
                     .ok_or_else(|| {
                         QueryValidationError::new(format!(
                             "Could not find fragment `{}` referenced by fragment spread.",
-                            fragment_spread.fragment_name
+                            fragment_spread.fragment_name.as_ref()
                         ))
                     })?;
 
@@ -338,13 +354,16 @@ fn resolve_object_selection<'a>(
     Ok(())
 }
 
-fn resolve_selection(
+fn resolve_selection<'doc, T>(
     ctx: &mut Query,
     on: TypeId,
-    selection_set: &graphql_parser::query::SelectionSet,
+    selection_set: &graphql_parser::query::SelectionSet<'doc, T>,
     parent: SelectionParent,
     schema: &Schema,
-) -> Result<(), QueryValidationError> {
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     match on {
         TypeId::Object(oid) => {
             let object = schema.get_object(oid);
@@ -370,20 +389,23 @@ fn resolve_selection(
     Ok(())
 }
 
-fn resolve_inline_fragment(
+fn resolve_inline_fragment<'doc, T>(
     query: &mut Query,
     schema: &Schema,
-    inline_fragment: &graphql_parser::query::InlineFragment,
+    inline_fragment: &graphql_parser::query::InlineFragment<'doc, T>,
     parent: SelectionParent,
-) -> Result<SelectionId, QueryValidationError> {
+) -> Result<SelectionId, QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     let graphql_parser::query::TypeCondition::On(on) = inline_fragment
         .type_condition
         .as_ref()
         .expect("missing type condition on inline fragment");
-    let type_id = schema.find_type(on).ok_or_else(|| {
+    let type_id = schema.find_type(on.as_ref()).ok_or_else(|| {
         QueryValidationError::new(format!(
             "Could not find type `{}` referenced by inline fragment.",
-            on
+            on.as_ref()
         ))
     })?;
 
@@ -406,11 +428,14 @@ fn resolve_inline_fragment(
     Ok(id)
 }
 
-fn resolve_operation(
+fn resolve_operation<'doc, T>(
     query: &mut Query,
     schema: &Schema,
-    operation: &graphql_parser::query::OperationDefinition,
-) -> Result<(), QueryValidationError> {
+    operation: &graphql_parser::query::OperationDefinition<'doc, T>,
+) -> Result<(), QueryValidationError>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     match operation {
         graphql_parser::query::OperationDefinition::Mutation(m) => {
             let on = schema.mutation_type().ok_or_else(|| {
@@ -421,7 +446,7 @@ fn resolve_operation(
             })?;
             let on = schema.get_object(on);
 
-            let (id, _) = query.find_operation(m.name.as_ref().unwrap()).unwrap();
+            let (id, _) = query.find_operation(m.name.as_ref().map(|name| name.as_ref()).unwrap()).unwrap();
 
             resolve_variables(query, &m.variable_definitions, schema, id);
             resolve_object_selection(
@@ -434,7 +459,7 @@ fn resolve_operation(
         }
         graphql_parser::query::OperationDefinition::Query(q) => {
             let on = schema.get_object(schema.query_type());
-            let (id, _) = query.find_operation(q.name.as_ref().unwrap()).unwrap();
+            let (id, _) = query.find_operation(q.name.as_ref().map(|name| name.as_ref()).unwrap()).unwrap();
 
             resolve_variables(query, &q.variable_definitions, schema, id);
             resolve_object_selection(
@@ -448,7 +473,7 @@ fn resolve_operation(
         graphql_parser::query::OperationDefinition::Subscription(s) => {
             let on = schema.subscription_type().ok_or_else(|| QueryValidationError::new("Query contains a subscription operation, but the schema has no subscription type.".into()))?;
             let on = schema.get_object(on);
-            let (id, _) = query.find_operation(s.name.as_ref().unwrap()).unwrap();
+            let (id, _) = query.find_operation(s.name.as_ref().map(|name| name.as_ref()).unwrap()).unwrap();
 
             resolve_variables(query, &s.variable_definitions, schema, id);
             resolve_object_selection(
@@ -554,7 +579,7 @@ impl Query {
 pub(crate) struct ResolvedVariable {
     pub(crate) operation_id: OperationId,
     pub(crate) name: String,
-    pub(crate) default: Option<graphql_parser::query::Value>,
+    pub(crate) default: Option<graphql_parser::query::Value<'static, String>>,
     pub(crate) r#type: StoredFieldType,
 }
 
@@ -622,17 +647,20 @@ impl UsedTypes {
     }
 }
 
-fn resolve_variables(
+fn resolve_variables<'doc, T>(
     query: &mut Query,
-    variables: &[graphql_parser::query::VariableDefinition],
+    variables: &[graphql_parser::query::VariableDefinition<'doc, T>],
     schema: &Schema,
     operation_id: OperationId,
-) {
+)
+where
+    T: graphql_parser::query::Text<'doc>,
+{
     for var in variables {
         query.variables.push(ResolvedVariable {
             operation_id,
-            name: var.name.clone(),
-            default: var.default_value.clone(),
+            name: var.name.as_ref().into(),
+            default: var.default_value.as_ref().map(|dflt| dflt.into_static()),
             r#type: resolve_field_type(schema, &var.var_type),
         });
     }

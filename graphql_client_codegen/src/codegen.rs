@@ -236,12 +236,16 @@ fn generate_fragment_definitions<'a>(
 }
 
 /// For default value constructors.
-fn graphql_parser_value_to_literal(
-    value: &graphql_parser::query::Value,
+fn graphql_parser_value_to_literal<'doc, T>(
+    value: &graphql_parser::query::Value<'doc, T>,
     ty: TypeId,
     is_optional: bool,
     query: &BoundQuery<'_>,
-) -> TokenStream {
+) -> TokenStream
+where
+    T: graphql_parser::query::Text<'doc>,
+    T::Value: quote::ToTokens,
+{
     use graphql_parser::query::Value;
 
     let inner = match value {
@@ -289,11 +293,15 @@ fn graphql_parser_value_to_literal(
 }
 
 /// For default value constructors.
-fn render_object_literal(
-    object_map: &BTreeMap<String, graphql_parser::query::Value>,
+fn render_object_literal<'doc, T>(
+    object_map: &BTreeMap<T::Value, graphql_parser::query::Value<'doc, T>>,
     input_id: InputId,
     query: &BoundQuery<'_>,
-) -> TokenStream {
+) -> TokenStream
+where
+    T: graphql_parser::query::Text<'doc>,
+    T::Value: quote::ToTokens,
+{
     let input = query.schema.get_input(input_id);
     let constructor = Ident::new(&input.name, Span::call_site());
     let fields: Vec<TokenStream> = input
