@@ -141,6 +141,7 @@ pub struct FullType {
 #[serde(rename_all = "camelCase")]
 pub struct FullTypeFieldsArgs {
     #[serde(flatten)]
+    #[allow(dead_code)]
     input_value: InputValue,
 }
 
@@ -242,6 +243,7 @@ pub struct SchemaTypes {
 #[serde(rename_all = "camelCase")]
 pub struct SchemaDirectivesArgs {
     #[serde(flatten)]
+    #[allow(dead_code)]
     input_value: InputValue,
 }
 
@@ -261,6 +263,7 @@ pub struct Schema {
     pub mutation_type: Option<SchemaMutationType>,
     pub subscription_type: Option<SchemaSubscriptionType>,
     pub types: Option<Vec<Option<SchemaTypes>>>,
+    #[allow(dead_code)]
     directives: Option<Vec<Option<SchemaDirectives>>>,
 }
 
