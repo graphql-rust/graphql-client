@@ -60,7 +60,7 @@ fn add_load_more_button() {
     );
     btn.add_event_listener_with_callback(
         "click",
-        &on_click
+        on_click
             .as_ref()
             .dyn_ref()
             .expect_throw("on click is not a Function"),

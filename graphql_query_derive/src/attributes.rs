@@ -97,7 +97,7 @@ pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, sy
 }
 
 pub fn extract_fragments_other_variant(ast: &syn::DeriveInput) -> bool {
-    extract_attr(&ast, "fragments_other_variant")
+    extract_attr(ast, "fragments_other_variant")
         .ok()
         .and_then(|s| FromStr::from_str(s.as_str()).ok())
         .unwrap_or(false)
