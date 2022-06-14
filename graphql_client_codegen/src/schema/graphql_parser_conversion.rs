@@ -2,7 +2,9 @@ use super::{Schema, StoredInputFieldType, TypeId};
 use crate::schema::resolve_field_type;
 use graphql_parser::schema::{self as parser, Definition, Document, TypeDefinition, UnionType};
 
-pub(super) fn build_schema<'doc, T>(mut src: graphql_parser::schema::Document<'doc, T>) -> super::Schema
+pub(super) fn build_schema<'doc, T>(
+    mut src: graphql_parser::schema::Document<'doc, T>,
+) -> super::Schema
 where
     T: graphql_parser::query::Text<'doc>,
     T::Value: AsRef<str>,
@@ -161,11 +163,16 @@ where
     schema.stored_unions.push(stored_union);
 }
 
-fn ingest_object<'doc, T>(schema: &mut Schema, obj: &mut graphql_parser::schema::ObjectType<'doc, T>)
-where
+fn ingest_object<'doc, T>(
+    schema: &mut Schema,
+    obj: &mut graphql_parser::schema::ObjectType<'doc, T>,
+) where
     T: graphql_parser::query::Text<'doc>,
 {
-    let object_id = schema.find_type_id(obj.name.as_ref()).as_object_id().unwrap();
+    let object_id = schema
+        .find_type_id(obj.name.as_ref())
+        .as_object_id()
+        .unwrap();
     let mut field_ids = Vec::with_capacity(obj.fields.len());
 
     for field in obj.fields.iter_mut() {
@@ -193,8 +200,10 @@ where
     schema.push_object(object);
 }
 
-fn ingest_scalar<'doc, T>(schema: &mut Schema, scalar: &mut graphql_parser::schema::ScalarType<'doc, T>)
-where
+fn ingest_scalar<'doc, T>(
+    schema: &mut Schema,
+    scalar: &mut graphql_parser::schema::ScalarType<'doc, T>,
+) where
     T: graphql_parser::query::Text<'doc>,
 {
     let name: String = scalar.name.as_ref().into();
@@ -225,8 +234,10 @@ where
     schema.push_enum(enm);
 }
 
-fn ingest_interface<'doc, T>(schema: &mut Schema, interface: &mut graphql_parser::schema::InterfaceType<'doc, T>)
-where
+fn ingest_interface<'doc, T>(
+    schema: &mut Schema,
+    interface: &mut graphql_parser::schema::InterfaceType<'doc, T>,
+) where
     T: graphql_parser::query::Text<'doc>,
 {
     let interface_id = schema
@@ -299,7 +310,9 @@ where
     schema.stored_inputs.push(input);
 }
 
-fn objects_mut<'a, 'doc: 'a, T>(doc: &'a mut Document<'doc, T>) -> impl Iterator<Item = &'a mut parser::ObjectType<'doc, T>>
+fn objects_mut<'a, 'doc: 'a, T>(
+    doc: &'a mut Document<'doc, T>,
+) -> impl Iterator<Item = &'a mut parser::ObjectType<'doc, T>>
 where
     T: graphql_parser::query::Text<'doc>,
 {
@@ -309,7 +322,9 @@ where
     })
 }
 
-fn interfaces_mut<'a, 'doc: 'a, T>(doc: &'a mut Document<'doc, T>) -> impl Iterator<Item = &'a mut parser::InterfaceType<'doc, T>>
+fn interfaces_mut<'a, 'doc: 'a, T>(
+    doc: &'a mut Document<'doc, T>,
+) -> impl Iterator<Item = &'a mut parser::InterfaceType<'doc, T>>
 where
     T: graphql_parser::query::Text<'doc>,
 {
@@ -319,7 +334,9 @@ where
     })
 }
 
-fn unions_mut<'a, 'doc: 'a, T>(doc: &'a mut Document<'doc, T>) -> impl Iterator<Item = &'a mut parser::UnionType<'doc, T>>
+fn unions_mut<'a, 'doc: 'a, T>(
+    doc: &'a mut Document<'doc, T>,
+) -> impl Iterator<Item = &'a mut parser::UnionType<'doc, T>>
 where
     T: graphql_parser::query::Text<'doc>,
 {
@@ -329,7 +346,9 @@ where
     })
 }
 
-fn enums_mut<'a, 'doc: 'a, T>(doc: &'a mut Document<'doc, T>) -> impl Iterator<Item = &'a mut parser::EnumType<'doc, T>>
+fn enums_mut<'a, 'doc: 'a, T>(
+    doc: &'a mut Document<'doc, T>,
+) -> impl Iterator<Item = &'a mut parser::EnumType<'doc, T>>
 where
     T: graphql_parser::query::Text<'doc>,
 {
@@ -339,7 +358,9 @@ where
     })
 }
 
-fn inputs_mut<'a, 'doc: 'a, T>(doc: &'a mut Document<'doc, T>) -> impl Iterator<Item = &'a mut parser::InputObjectType<'doc, T>>
+fn inputs_mut<'a, 'doc: 'a, T>(
+    doc: &'a mut Document<'doc, T>,
+) -> impl Iterator<Item = &'a mut parser::InputObjectType<'doc, T>>
 where
     T: graphql_parser::query::Text<'doc>,
 {

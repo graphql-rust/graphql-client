@@ -5,7 +5,8 @@ fn schema_with_keywords_works() {
     let query_string = include_str!("keywords_query.graphql");
     let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse keywords query");
     let schema = graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
-        .expect("Parse keywords schema").into_static();
+        .expect("Parse keywords schema")
+        .into_static();
     let schema = Schema::from(schema);
 
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
@@ -43,7 +44,8 @@ fn fragments_other_variant_should_generate_unknown_other_variant() {
     let query_string = include_str!("foobars_query.graphql");
     let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse foobars query");
     let schema = graphql_parser::parse_schema(include_str!("foobars_schema.graphql"))
-        .expect("Parse foobars schema").into_static();
+        .expect("Parse foobars schema")
+        .into_static();
     let schema = Schema::from(schema);
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
@@ -82,7 +84,8 @@ fn fragments_other_variant_false_should_not_generate_unknown_other_variant() {
     let query_string = include_str!("foobars_query.graphql");
     let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse foobars query");
     let schema = graphql_parser::parse_schema(include_str!("foobars_schema.graphql"))
-        .expect("Parse foobars schema").into_static();
+        .expect("Parse foobars schema")
+        .into_static();
     let schema = Schema::from(schema);
 
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
