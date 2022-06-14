@@ -229,7 +229,7 @@ impl Display for Error {
             .as_ref()
             .and_then(|locations| locations.iter().next())
             .cloned()
-            .unwrap_or_else(Location::default);
+            .unwrap_or_default();
 
         write!(f, "{}:{}:{}: {}", path, loc.line, loc.column, self.message)
     }
