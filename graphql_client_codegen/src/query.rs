@@ -119,7 +119,8 @@ where
                     on: schema.find_type(on.as_ref()).ok_or_else(|| {
                         QueryValidationError::new(format!(
                             "Could not find type {} for fragment {} in schema.",
-                            on.as_ref(), fragment.name.as_ref()
+                            on.as_ref(),
+                            fragment.name.as_ref(),
                         ))
                     })?,
                     selection_set: Vec::new(),
@@ -136,7 +137,12 @@ where
                 })?;
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
                     object_id: on,
-                    name: m.name.as_ref().expect("mutation without name").as_ref().into(),
+                    name: m
+                        .name
+                        .as_ref()
+                        .expect("mutation without name")
+                        .as_ref()
+                        .into(),
                     _operation_type: operations::OperationType::Mutation,
                     selection_set: Vec::with_capacity(m.selection_set.items.len()),
                 };
@@ -210,7 +216,8 @@ where
     let on = schema.find_type(on.as_ref()).ok_or_else(|| {
         QueryValidationError::new(format!(
             "Could not find type `{}` referenced by fragment `{}`",
-            on.as_ref(), fragment_definition.name.as_ref()
+            on.as_ref(),
+            fragment_definition.name.as_ref(),
         ))
     })?;
 
@@ -446,7 +453,9 @@ where
             })?;
             let on = schema.get_object(on);
 
-            let (id, _) = query.find_operation(m.name.as_ref().map(|name| name.as_ref()).unwrap()).unwrap();
+            let (id, _) = query
+                .find_operation(m.name.as_ref().map(|name| name.as_ref()).unwrap())
+                .unwrap();
 
             resolve_variables(query, &m.variable_definitions, schema, id);
             resolve_object_selection(
@@ -459,7 +468,9 @@ where
         }
         graphql_parser::query::OperationDefinition::Query(q) => {
             let on = schema.get_object(schema.query_type());
-            let (id, _) = query.find_operation(q.name.as_ref().map(|name| name.as_ref()).unwrap()).unwrap();
+            let (id, _) = query
+                .find_operation(q.name.as_ref().map(|name| name.as_ref()).unwrap())
+                .unwrap();
 
             resolve_variables(query, &q.variable_definitions, schema, id);
             resolve_object_selection(
@@ -473,7 +484,9 @@ where
         graphql_parser::query::OperationDefinition::Subscription(s) => {
             let on = schema.subscription_type().ok_or_else(|| QueryValidationError::new("Query contains a subscription operation, but the schema has no subscription type.".into()))?;
             let on = schema.get_object(on);
-            let (id, _) = query.find_operation(s.name.as_ref().map(|name| name.as_ref()).unwrap()).unwrap();
+            let (id, _) = query
+                .find_operation(s.name.as_ref().map(|name| name.as_ref()).unwrap())
+                .unwrap();
 
             resolve_variables(query, &s.variable_definitions, schema, id);
             resolve_object_selection(
@@ -652,8 +665,7 @@ fn resolve_variables<'doc, T>(
     variables: &[graphql_parser::query::VariableDefinition<'doc, T>],
     schema: &Schema,
     operation_id: OperationId,
-)
-where
+) where
     T: graphql_parser::query::Text<'doc>,
 {
     for var in variables {

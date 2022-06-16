@@ -23,7 +23,11 @@ extern crate graphql_query_derive;
 #[doc(hidden)]
 pub use graphql_query_derive::*;
 
-#[cfg(any(feature = "reqwest", feature = "reqwest-rustls", feature = "reqwest-blocking"))]
+#[cfg(any(
+    feature = "reqwest",
+    feature = "reqwest-rustls",
+    feature = "reqwest-blocking"
+))]
 pub mod reqwest;
 
 use serde::{Deserialize, Serialize};
@@ -225,7 +229,7 @@ impl Display for Error {
             .as_ref()
             .and_then(|locations| locations.iter().next())
             .cloned()
-            .unwrap_or_else(Location::default);
+            .unwrap_or_default();
 
         write!(f, "{}:{}:{}: {}", path, loc.line, loc.column, self.message)
     }

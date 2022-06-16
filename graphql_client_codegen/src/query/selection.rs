@@ -228,11 +228,18 @@ impl Selection {
                 .as_ref()
                 .map(|alias| alias.to_upper_camel_case())
                 .unwrap_or_else(move || {
-                    query.schema.get_field(field.field_id).name.to_upper_camel_case()
+                    query
+                        .schema
+                        .get_field(field.field_id)
+                        .name
+                        .to_upper_camel_case()
                 }),
             Selection::InlineFragment(inline_fragment) => format!(
                 "On{}",
-                inline_fragment.type_id.name(query.schema).to_upper_camel_case()
+                inline_fragment
+                    .type_id
+                    .name(query.schema)
+                    .to_upper_camel_case()
             ),
             other => unreachable!("{:?} in to_path_segment", other),
         }
