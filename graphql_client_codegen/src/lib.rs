@@ -29,7 +29,7 @@ mod tests;
 
 pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
-use std::{collections::HashMap, fmt::Display, io};
+use std::{collections::BTreeMap, fmt::Display, io};
 
 #[derive(Debug)]
 struct GeneralError(String);
@@ -43,7 +43,7 @@ impl Display for GeneralError {
 impl std::error::Error for GeneralError {}
 
 type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
-type CacheMap<T> = std::sync::Mutex<HashMap<std::path::PathBuf, T>>;
+type CacheMap<T> = std::sync::Mutex<BTreeMap<std::path::PathBuf, T>>;
 
 lazy_static! {
     static ref SCHEMA_CACHE: CacheMap<schema::Schema> = CacheMap::default();
@@ -57,7 +57,7 @@ pub fn generate_module_token_stream(
     schema_path: &std::path::Path,
     options: GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, BoxError> {
-    use std::collections::hash_map;
+    use std::collections::btree_map;
 
     let schema_extension = schema_path
         .extension()
@@ -69,8 +69,8 @@ pub fn generate_module_token_stream(
     let schema: schema::Schema = {
         let mut lock = SCHEMA_CACHE.lock().expect("schema cache is poisoned");
         match lock.entry(schema_path.to_path_buf()) {
-            hash_map::Entry::Occupied(o) => o.get().clone(),
-            hash_map::Entry::Vacant(v) => {
+            btree_map::Entry::Occupied(o) => o.get().clone(),
+            btree_map::Entry::Vacant(v) => {
                 schema_string = read_file(v.key())?;
                 let schema = match schema_extension {
                     "graphql" | "gql" => {
@@ -93,8 +93,8 @@ pub fn generate_module_token_stream(
     let (query_string, query) = {
         let mut lock = QUERY_CACHE.lock().expect("query cache is poisoned");
         match lock.entry(query_path) {
-            hash_map::Entry::Occupied(o) => o.get().clone(),
-            hash_map::Entry::Vacant(v) => {
+            btree_map::Entry::Occupied(o) => o.get().clone(),
+            btree_map::Entry::Vacant(v) => {
                 let query_string = read_file(v.key())?;
                 let query = graphql_parser::parse_query(&query_string)
                     .map_err(|err| GeneralError(format!("Query parser error: {}", err)))?

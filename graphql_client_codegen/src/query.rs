@@ -19,7 +19,7 @@ use crate::{
     },
 };
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     fmt::Display,
 };
 
@@ -42,7 +42,7 @@ impl QueryValidationError {
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct SelectionId(u32);
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct OperationId(u32);
@@ -53,7 +53,7 @@ impl OperationId {
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ResolvedFragmentId(u32);
 
 #[derive(Debug, Clone, Copy)]
@@ -509,7 +509,7 @@ where
 pub(crate) struct Query {
     fragments: Vec<ResolvedFragment>,
     operations: Vec<ResolvedOperation>,
-    selection_parent_idx: HashMap<SelectionId, SelectionParent>,
+    selection_parent_idx: BTreeMap<SelectionId, SelectionParent>,
     selections: Vec<Selection>,
     variables: Vec<ResolvedVariable>,
 }
@@ -620,8 +620,8 @@ impl ResolvedVariable {
 
 #[derive(Debug, Default)]
 pub(crate) struct UsedTypes {
-    pub(crate) types: HashSet<TypeId>,
-    fragments: HashSet<ResolvedFragmentId>,
+    pub(crate) types: BTreeSet<TypeId>,
+    fragments: BTreeSet<ResolvedFragmentId>,
 }
 
 impl UsedTypes {
