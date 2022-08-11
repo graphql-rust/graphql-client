@@ -32,7 +32,7 @@ pub mod reqwest;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{self, Display};
+use std::fmt::{self, Display, Write};
 
 /// A convenience trait that can be used to build a GraphQL request body.
 ///
@@ -215,7 +215,7 @@ impl Display for Error {
                 fragments
                     .iter()
                     .fold(String::new(), |mut acc, item| {
-                        acc.push_str(&format!("{}/", item));
+                        let _ = write!(acc, "{}/", item);
                         acc
                     })
                     .trim_end_matches('/')
