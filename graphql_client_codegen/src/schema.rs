@@ -6,7 +6,7 @@ mod tests;
 
 use crate::query::UsedTypes;
 use crate::type_qualifiers::GraphqlTypeQualifier;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
@@ -44,25 +44,25 @@ pub(crate) enum StoredFieldParent {
     Interface(InterfaceId),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) struct ObjectId(u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct ObjectFieldId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) struct InterfaceId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) struct ScalarId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) struct UnionId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) struct EnumId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) struct InputId(u32);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -98,7 +98,7 @@ pub(crate) struct StoredScalar {
     pub(crate) name: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) enum TypeId {
     Object(ObjectId),
     Scalar(ScalarId),
@@ -222,7 +222,7 @@ pub(crate) struct Schema {
     stored_scalars: Vec<StoredScalar>,
     stored_enums: Vec<StoredEnum>,
     stored_inputs: Vec<StoredInputType>,
-    names: HashMap<String, TypeId>,
+    names: BTreeMap<String, TypeId>,
 
     pub(crate) query_type: Option<ObjectId>,
     pub(crate) mutation_type: Option<ObjectId>,
@@ -239,7 +239,7 @@ impl Schema {
             stored_scalars: Vec::with_capacity(DEFAULT_SCALARS.len()),
             stored_enums: Vec::new(),
             stored_inputs: Vec::new(),
-            names: HashMap::new(),
+            names: BTreeMap::new(),
             query_type: None,
             mutation_type: None,
             subscription_type: None,
@@ -404,7 +404,7 @@ impl StoredInputType {
         &'a self,
         input_id: InputId,
         schema: &'a Schema,
-        visited_types: &mut HashSet<&'a str>,
+        visited_types: &mut BTreeSet<&'a str>,
     ) -> bool {
         visited_types.insert(&self.name);
         // The input type is recursive if any of its members contains it, without indirection
@@ -440,7 +440,7 @@ impl StoredInputType {
 
 pub(crate) fn input_is_recursive_without_indirection(input_id: InputId, schema: &Schema) -> bool {
     let input = schema.get_input(input_id);
-    let mut visited_types = HashSet::<&str>::new();
+    let mut visited_types = BTreeSet::<&str>::new();
     input.contains_type_without_indirection(input_id, schema, &mut visited_types)
 }
 impl<'doc, T> std::convert::From<graphql_parser::schema::Document<'doc, T>> for Schema
