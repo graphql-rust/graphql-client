@@ -19,6 +19,7 @@ A typed GraphQL client library for Rust.
 - Supports setting GraphQL fields as deprecated and having the Rust compiler check
   their use.
 - Optional reqwest-based client for boilerplate-free API calls from browsers.
+- Implicit and explicit null support.
 
 ## Getting started
 
@@ -104,6 +105,21 @@ use graphql_client::GraphQLQuery;
     schema_path = "tests/unions/union_schema.graphql",
     query_path = "tests/unions/union_query.graphql",
     response_derives = "Serialize,PartialEq",
+)]
+struct UnionQuery;
+```
+## Implicit Null
+
+The generated code will skip the serialization of `None` values. By default it's `false`.
+
+```rust
+use graphql_client::GraphQLQuery;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/unions/union_schema.graphql",
+    query_path = "tests/unions/union_query.graphql",
+    skip_serializing_none = "true"
 )]
 struct UnionQuery;
 ```
