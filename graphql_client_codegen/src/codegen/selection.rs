@@ -405,6 +405,18 @@ impl<'a> ExpandedField<'a> {
             qualified_type
         };
 
+        let optional_skip_none = if *options.skip_none()
+            && self
+                .field_type_qualifiers
+                .get(0)
+                .map(|qualifier| !qualifier.is_required())
+                .unwrap_or(false)
+        {
+            Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
+        } else {
+            None
+        };
+
         let optional_rename = self
             .graphql_name
             .as_ref()
@@ -427,6 +439,7 @@ impl<'a> ExpandedField<'a> {
             };
 
         let tokens = quote! {
+            #optional_skip_none
             #optional_flatten
             #optional_rename
             #optional_deprecation_annotation

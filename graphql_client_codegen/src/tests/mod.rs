@@ -117,3 +117,45 @@ fn fragments_other_variant_false_should_not_generate_unknown_other_variant() {
         };
     }
 }
+
+#[test]
+fn skip_none_should_generate_serde_skip_serializing() {
+    let query_string = include_str!("keywords_query.graphql");
+    let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse keywords query");
+    let schema = graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
+        .expect("Parse keywords schema")
+        .into_static();
+    let schema = Schema::from(schema);
+
+    let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
+
+    options.set_skip_none(true);
+
+    let query = crate::query::resolve(&schema, &query).unwrap();
+
+    for (_id, operation) in query.operations() {
+        let generated_tokens = generated_module::GeneratedModule {
+            query_string,
+            schema: &schema,
+            operation: &operation.name,
+            resolved_query: &query,
+            options: &options,
+        }
+        .to_token_stream()
+        .expect("Generate keywords module");
+
+        let generated_code = generated_tokens.to_string();
+
+        let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
+
+        match r {
+            Ok(_) => {
+                println!("{}", generated_code);
+                assert!(generated_code.contains("skip_serializing_if"));
+            }
+            Err(e) => {
+                panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
+            }
+        };
+    }
+}
