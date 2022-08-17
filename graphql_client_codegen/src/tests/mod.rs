@@ -119,7 +119,7 @@ fn fragments_other_variant_false_should_not_generate_unknown_other_variant() {
 }
 
 #[test]
-fn skip_none_should_generate_serde_skip_serializing() {
+fn skip_serializing_none_should_generate_serde_skip_serializing() {
     let query_string = include_str!("keywords_query.graphql");
     let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse keywords query");
     let schema = graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
@@ -129,7 +129,7 @@ fn skip_none_should_generate_serde_skip_serializing() {
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
-    options.set_skip_none(true);
+    options.set_skip_serializing_none(true);
 
     let query = crate::query::resolve(&schema, &query).unwrap();
 

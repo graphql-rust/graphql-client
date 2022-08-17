@@ -405,7 +405,7 @@ impl<'a> ExpandedField<'a> {
             qualified_type
         };
 
-        let optional_skip_none = if *options.skip_none()
+        let optional_skip_serializing_none = if *options.skip_serializing_none()
             && self
                 .field_type_qualifiers
                 .get(0)
@@ -439,7 +439,7 @@ impl<'a> ExpandedField<'a> {
             };
 
         let tokens = quote! {
-            #optional_skip_none
+            #optional_skip_serializing_none
             #optional_flatten
             #optional_rename
             #optional_deprecation_annotation

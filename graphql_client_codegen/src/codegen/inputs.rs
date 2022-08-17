@@ -29,7 +29,7 @@ pub(super) fn generate_input_object_definitions(
                 let normalized_field_type_name = options
                     .normalization()
                     .field_type(field_type.id.name(query.schema));
-                let optional_skip_none = if *options.skip_none() && field_type.is_optional() {
+                let optional_skip_serializing_none = if *options.skip_serializing_none() && field_type.is_optional() {
                     Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
                 } else {
                     None
@@ -48,7 +48,7 @@ pub(super) fn generate_input_object_definitions(
                 };
 
                 quote!(
-                    #optional_skip_none
+                    #optional_skip_serializing_none
                     #annotation pub #name_ident: #field_type
                 )
             });
