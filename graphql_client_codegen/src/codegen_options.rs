@@ -45,6 +45,8 @@ pub struct GraphQLClientCodegenOptions {
     extern_enums: Vec<String>,
     /// Flag to trigger generation of Other variant for fragments Enum
     fragments_other_variant: bool,
+    /// Skip Serialization of None values.
+    skip_none: bool,
 }
 
 impl GraphQLClientCodegenOptions {
@@ -65,6 +67,7 @@ impl GraphQLClientCodegenOptions {
             custom_scalars_module: Default::default(),
             extern_enums: Default::default(),
             fragments_other_variant: Default::default(),
+            skip_none: Default::default(),
         }
     }
 
@@ -213,5 +216,15 @@ impl GraphQLClientCodegenOptions {
     /// Get a reference to the graphql client codegen options's fragments other variant.
     pub fn fragments_other_variant(&self) -> &bool {
         &self.fragments_other_variant
+    }
+
+    /// Set the graphql client codegen option's skip none value.
+    pub fn set_skip_none(&mut self, skip_none: bool) {
+        self.skip_none = skip_none
+    }
+
+    /// Get a reference to the graphql client codegen option's skip none value.
+    pub fn skip_none(&self) -> &bool {
+        &self.skip_none
     }
 }

@@ -43,11 +43,20 @@ pub(super) fn generate_input_object_definitions(
                 quote!(#annotation pub #name_ident: #field_type)
             });
 
-            quote! {
-                #variable_derives
-                pub struct #struct_name {
-                    #(#fields,)*
-                }
+            match *options.skip_none() {
+                true => quote! {
+                    #[serde(skip_serializing_if = "Option::is_none")]
+                    #variable_derives
+                    pub struct #struct_name{
+                        #(#fields,)*
+                    }
+                },
+                false => quote! {
+                    #variable_derives
+                    pub struct #struct_name{
+                        #(#fields,)*
+                    }
+                },
             }
         })
         .collect()

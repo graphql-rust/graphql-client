@@ -103,6 +103,13 @@ pub fn extract_fragments_other_variant(ast: &syn::DeriveInput) -> bool {
         .unwrap_or(false)
 }
 
+pub fn extract_skip_none(ast: &syn::DeriveInput) -> bool {
+    extract_attr(ast, "skip_none")
+        .ok()
+        .and_then(|s| FromStr::from_str(s.as_str()).ok())
+        .unwrap_or(false)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -218,5 +225,64 @@ mod test {
         ";
         let parsed = syn::parse_str(input).unwrap();
         assert!(!extract_fragments_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_skip_none_set_to_true() {
+        let input = r#"
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+                skip_none = "true"
+            )]
+            struct MyQuery;
+        "#;
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(extract_skip_none(&parsed));
+    }
+
+    #[test]
+    fn test_skip_none_set_to_false() {
+        let input = r#"
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+                skip_none = "false"
+            )]
+            struct MyQuery;
+        "#;
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(!extract_skip_none(&parsed));
+    }
+
+    #[test]
+    fn test_skip_none_set_to_invalid() {
+        let input = r#"
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+                skip_none = "invalid"
+            )]
+            struct MyQuery;
+        "#;
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(!extract_skip_none(&parsed));
+    }
+
+    #[test]
+    fn test_skip_none_unset() {
+        let input = r#"
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+            )]
+            struct MyQuery;
+        "#;
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(!extract_skip_none(&parsed));
     }
 }
