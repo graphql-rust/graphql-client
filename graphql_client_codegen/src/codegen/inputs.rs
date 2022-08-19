@@ -3,7 +3,6 @@ use crate::{
     codegen_options::GraphQLClientCodegenOptions,
     query::{BoundQuery, UsedTypes},
     schema::input_is_recursive_without_indirection,
-    type_qualifiers::GraphqlTypeQualifier,
 };
 use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -29,11 +28,12 @@ pub(super) fn generate_input_object_definitions(
                 let normalized_field_type_name = options
                     .normalization()
                     .field_type(field_type.id.name(query.schema));
-                let optional_skip_serializing_none = if *options.skip_serializing_none() && field_type.is_optional() {
-                    Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
-                } else {
-                    None
-                };
+                let optional_skip_serializing_none =
+                    if *options.skip_serializing_none() && field_type.is_optional() {
+                        Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
+                    } else {
+                        None
+                    };
                 let type_name = Ident::new(normalized_field_type_name.as_ref(), Span::call_site());
                 let field_type_tokens = super::decorate_type(&type_name, &field_type.qualifiers);
                 let field_type = if field_type
