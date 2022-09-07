@@ -119,7 +119,7 @@ use graphql_client::GraphQLQuery;
 #[graphql(
     schema_path = "tests/unions/union_schema.graphql",
     query_path = "tests/unions/union_query.graphql",
-    skip_serializing_none = "true"
+    skip_serializing_none
 )]
 struct UnionQuery;
 ```
