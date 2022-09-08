@@ -11,6 +11,32 @@ fn path_to_match() -> syn::Path {
     syn::parse_str("graphql").expect("`graphql` is a valid path")
 }
 
+pub fn ident_exists(ast: &syn::DeriveInput, ident: &str) -> Result<(), syn::Error> {
+    let graphql_path = path_to_match();
+    let attribute = ast
+        .attrs
+        .iter()
+        .find(|attr| attr.path == graphql_path)
+        .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
+
+    if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
+        for item in items.nested.iter() {
+            if let syn::NestedMeta::Meta(syn::Meta::Path(path)) = item {
+                if let Some(ident_) = path.get_ident() {
+                    if ident_ == ident {
+                        return Ok(());
+                    }
+                }
+            }
+        }
+    }
+
+    Err(syn::Error::new_spanned(
+        &ast,
+        format!("Ident `{}` not found", ident),
+    ))
+}
+
 /// Extract an configuration parameter specified in the `graphql` attribute.
 pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::Error> {
     let attributes = &ast.attrs;
@@ -101,6 +127,10 @@ pub fn extract_fragments_other_variant(ast: &syn::DeriveInput) -> bool {
         .ok()
         .and_then(|s| FromStr::from_str(s.as_str()).ok())
         .unwrap_or(false)
+}
+
+pub fn extract_skip_serializing_none(ast: &syn::DeriveInput) -> bool {
+    ident_exists(ast, "skip_serializing_none").is_ok()
 }
 
 #[cfg(test)]
@@ -218,5 +248,34 @@ mod test {
         ";
         let parsed = syn::parse_str(input).unwrap();
         assert!(!extract_fragments_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_skip_serializing_none_set() {
+        let input = r#"
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+                skip_serializing_none
+            )]
+            struct MyQuery;
+        "#;
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(extract_skip_serializing_none(&parsed));
+    }
+
+    #[test]
+    fn test_skip_serializing_none_unset() {
+        let input = r#"
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+            )]
+            struct MyQuery;
+        "#;
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(!extract_skip_serializing_none(&parsed));
     }
 }

@@ -1,0 +1,25 @@
+schema {
+  mutation: Mutation
+}
+
+# The query type, represents all of the entry points into our object graph
+type Mutation {
+  optInput(mutation: Param!): Named
+}
+
+input Param {
+  data: Author!
+}
+
+input Author {
+  id: String,
+  name: String!
+}
+
+# A named entity
+type Named {
+  # The ID of the entity
+  id: ID!
+  # The name of the entity
+  name: String!
+}
