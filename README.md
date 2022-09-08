@@ -110,7 +110,7 @@ struct UnionQuery;
 ```
 ## Implicit Null
 
-The generated code will skip the serialization of `None` values. By default it's `false`.
+The generated code will skip the serialization of `None` values.
 
 ```rust
 use graphql_client::GraphQLQuery;
