@@ -140,6 +140,20 @@ error[E0412]: cannot find type `URI` in module `super`
            crate::repo_view::URI
 ```
 
+If you would like to customize how some of the five default scalars are represented, you can use the `skip_default_scalars` option. You will then have to define your own types for them like for custom scalars.
+
+```rust
+use graphql_client::GraphQLQuery;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "tests/unions/union_schema.graphql",
+    query_path = "tests/unions/union_query.graphql",
+    skip_default_scalars
+)]
+struct UnionQuery;
+```
+
 ## Deprecations
 
 The generated code has support for [`@deprecated`](http://facebook.github.io/graphql/June2018/#sec-Field-Deprecation)
