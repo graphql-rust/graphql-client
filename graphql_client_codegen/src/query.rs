@@ -637,12 +637,15 @@ impl UsedTypes {
     pub(crate) fn scalars<'s, 'a: 's>(
         &'s self,
         schema: &'a Schema,
+        include_default: bool,
     ) -> impl Iterator<Item = (ScalarId, &'a StoredScalar)> + 's {
         self.types
             .iter()
             .filter_map(TypeId::as_scalar_id)
             .map(move |scalar_id| (scalar_id, schema.get_scalar(scalar_id)))
-            .filter(|(_id, scalar)| !crate::schema::DEFAULT_SCALARS.contains(&scalar.name.as_str()))
+            .filter(move |(_id, scalar)| {
+                include_default || !crate::schema::DEFAULT_SCALARS.contains(&scalar.name.as_str())
+            })
     }
 
     pub(crate) fn enums<'a, 'schema: 'a>(

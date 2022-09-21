@@ -39,6 +39,8 @@ pub struct GraphQLClientCodegenOptions {
     schema_file: Option<PathBuf>,
     /// Normalization pattern for query types and names.
     normalization: Normalization,
+    /// Don't define default scalar types and let the user define them instead.
+    skip_default_scalars: bool,
     /// Custom scalar definitions module path
     custom_scalars_module: Option<syn::Path>,
     /// List of externally defined enum types. Type names must match those used in the schema exactly.
@@ -64,6 +66,7 @@ impl GraphQLClientCodegenOptions {
             query_file: Default::default(),
             schema_file: Default::default(),
             normalization: Normalization::None,
+            skip_default_scalars: Default::default(),
             custom_scalars_module: Default::default(),
             extern_enums: Default::default(),
             fragments_other_variant: Default::default(),
@@ -186,6 +189,16 @@ impl GraphQLClientCodegenOptions {
     /// The normalization mode for the generated code.
     pub fn normalization(&self) -> &Normalization {
         &self.normalization
+    }
+
+    /// Set the graphql client codegen option's skip default scalars value.
+    pub fn set_skip_default_scalars(&mut self, skip_default_scalars: bool) {
+        self.skip_default_scalars = skip_default_scalars
+    }
+
+    /// Get a reference to the graphql client codegen option's skip default scalars value.
+    pub fn skip_default_scalars(&self) -> &bool {
+        &self.skip_default_scalars
     }
 
     /// Get the custom scalar definitions module

@@ -61,6 +61,7 @@ fn build_graphql_client_derive_options(
 ) -> Result<GraphQLClientCodegenOptions, syn::Error> {
     let variables_derives = attributes::extract_attr(input, "variables_derives").ok();
     let response_derives = attributes::extract_attr(input, "response_derives").ok();
+    let skip_default_scalars: bool = attributes::extract_skip_default_scalars(input);
     let custom_scalars_module = attributes::extract_attr(input, "custom_scalars_module").ok();
     let extern_enums = attributes::extract_attr_list(input, "extern_enums").ok();
     let fragments_other_variant: bool = attributes::extract_fragments_other_variant(input);
@@ -68,6 +69,7 @@ fn build_graphql_client_derive_options(
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Derive);
     options.set_query_file(query_path);
+    options.set_skip_default_scalars(skip_default_scalars);
     options.set_fragments_other_variant(fragments_other_variant);
     options.set_skip_serializing_none(skip_serializing_none);
 
