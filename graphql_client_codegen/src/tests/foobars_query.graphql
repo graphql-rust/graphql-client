@@ -1,16 +1,16 @@
 query FooBarsQuery {
+  fooBars {
     fooBars {
-        fooBars {
-            __typename
-            ... on Foo {
-                fooField
-            }
-            ... on Bar {
-                barField
-            }
-            ... on FooBar {
-                fooBarField
-            }
-        }
+      __typename
+      ... on Foo {
+        fooField
+      }
+      ... on Bar {
+        barField
+      }
+      ... on FooBar {
+        fooBarField
+      }
     }
+  }
 }

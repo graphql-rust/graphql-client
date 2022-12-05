@@ -12,7 +12,7 @@ input Param {
 }
 
 input Author {
-  id: String,
+  id: String
   name: String!
 }
 

@@ -1,28 +1,28 @@
 schema {
-    query: Query
-    mutation: Mutation
+  query: Query
+  mutation: Mutation
 }
 
 directive @defer on FIELD
 
 type Query {
-    fooBars: Self
+  fooBars: Self
 }
 
 type Self {
-    fooBars: Result
+  fooBars: Result
 }
 
 union Result = Foo | Bar | FooBar
 
 type Foo {
-    fooField: String!
+  fooField: String!
 }
 
 type Bar {
-    barField: String!
+  barField: String!
 }
 
 type FooBar {
-    fooBarField: String!
+  fooBarField: String!
 }

@@ -49,7 +49,11 @@ type CaseTestResult {
 }
 
 type InputObjectVariablesQuery {
-  echo(message: Message!, options: Options = { pgpSignature: true }, extern: String = ""): EchoResult
+  echo(
+    message: Message!
+    options: Options = { pgpSignature: true }
+    extern: String = ""
+  ): EchoResult
   testQueryCase(caseTestInput: CaseTestInput!): CaseTestResult
   saveRecursiveInput(recursiveInput: RecursiveInput!): Category
 }
