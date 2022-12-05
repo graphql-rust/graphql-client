@@ -6,7 +6,7 @@ use serde::Deserialize;
  *
  * They rename the fields to use SCREAMING_SNAKE_CASE for deserialization, as it is the standard for GraphQL enums.
  */
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Direction {
     North,
@@ -15,7 +15,7 @@ pub enum Direction {
     West,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum DistanceUnit {
     Meter,
@@ -39,7 +39,7 @@ pub struct SingleExternEnumQuery;
 #[graphql(
     schema_path = "tests/extern_enums/schema.graphql",
     query_path = "tests/extern_enums/multiple_extern_enums_query.graphql",
-    response_derives = "Debug, PartialEq",
+    response_derives = "Debug, PartialEq, Eq",
     extern_enums("Direction", "DistanceUnit")
 )]
 pub struct MultipleExternEnumsQuery;

@@ -4,7 +4,7 @@ use graphql_client::*;
 #[graphql(
     query_path = "tests/interfaces/interface_with_type_refining_fragment_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug, PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct QueryOnInterface;
 
@@ -12,7 +12,7 @@ pub struct QueryOnInterface;
 #[graphql(
     query_path = "tests/unions/type_refining_fragment_on_union_query.graphql",
     schema_path = "tests/unions/union_schema.graphql",
-    response_derives = "PartialEq, Debug"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct QueryOnUnion;
 

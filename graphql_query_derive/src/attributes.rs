@@ -32,7 +32,7 @@ pub fn ident_exists(ast: &syn::DeriveInput, ident: &str) -> Result<(), syn::Erro
     }
 
     Err(syn::Error::new_spanned(
-        &ast,
+        ast,
         format!("Ident `{}` not found", ident),
     ))
 }
@@ -61,7 +61,7 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::E
     }
 
     Err(syn::Error::new_spanned(
-        &ast,
+        ast,
         format!("Attribute `{}` not found", attr),
     ))
 }

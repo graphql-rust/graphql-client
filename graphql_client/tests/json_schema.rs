@@ -7,7 +7,7 @@ type Uuid = String;
 #[graphql(
     query_path = "tests/json_schema/query.graphql",
     schema_path = "tests/json_schema/schema_1.json",
-    response_derives = "Debug,PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct WithSchema1;
 

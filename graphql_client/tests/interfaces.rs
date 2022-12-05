@@ -6,7 +6,7 @@ const RESPONSE: &str = include_str!("interfaces/interface_response.json");
 #[graphql(
     query_path = "tests/interfaces/interface_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug, PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct InterfaceQuery;
 
@@ -57,7 +57,7 @@ fn interface_deserialization() {
 #[graphql(
     query_path = "tests/interfaces/interface_not_on_everything_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug,PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct InterfaceNotOnEverythingQuery;
 
@@ -111,7 +111,7 @@ fn interface_not_on_everything_deserialization() {
 #[graphql(
     query_path = "tests/interfaces/interface_with_fragment_query.graphql",
     schema_path = "tests/interfaces/interface_schema.graphql",
-    response_derives = "Debug,PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct InterfaceWithFragmentQuery;
 

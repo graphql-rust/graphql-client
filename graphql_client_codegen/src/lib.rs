@@ -207,9 +207,9 @@ fn derive_operation_not_found_error(
         .collect();
     let available_operations: String = available_operations.join(", ");
 
-    return format!(
+    format!(
         "The struct name does not match any defined operation in the query file.\nStruct name: {}\nDefined operations: {}",
         struct_ident,
         available_operations,
-    );
+    )
 }

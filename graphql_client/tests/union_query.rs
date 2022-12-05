@@ -7,7 +7,7 @@ const FRAGMENT_AND_MORE_RESPONSE: &str = include_str!("unions/fragment_and_more_
 #[graphql(
     query_path = "tests/unions/union_query.graphql",
     schema_path = "tests/unions/union_schema.graphql",
-    response_derives = "PartialEq, Debug"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct UnionQuery;
 
@@ -15,7 +15,7 @@ pub struct UnionQuery;
 #[graphql(
     query_path = "tests/unions/union_query.graphql",
     schema_path = "tests/unions/union_schema.graphql",
-    response_derives = "PartialEq, Debug"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct FragmentOnUnion;
 
@@ -23,7 +23,7 @@ pub struct FragmentOnUnion;
 #[graphql(
     query_path = "tests/unions/union_query.graphql",
     schema_path = "tests/unions/union_schema.graphql",
-    response_derives = "PartialEq, Debug"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct FragmentAndMoreOnUnion;
 

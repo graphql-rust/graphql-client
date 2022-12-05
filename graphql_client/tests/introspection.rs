@@ -4,7 +4,7 @@ use graphql_client::*;
 #[graphql(
     query_path = "tests/introspection/introspection_query.graphql",
     schema_path = "tests/introspection/introspection_schema.graphql",
-    response_derives = "Debug,PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct IntrospectionQuery;
 
