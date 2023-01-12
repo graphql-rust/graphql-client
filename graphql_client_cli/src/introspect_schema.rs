@@ -80,7 +80,7 @@ fn construct_headers() -> HeaderMap {
     headers
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Header {
     name: String,
     value: String,

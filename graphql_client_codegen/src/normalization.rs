@@ -2,7 +2,7 @@ use heck::ToUpperCamelCase;
 use std::borrow::Cow;
 
 /// Normalization conventions available for generated code.
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Normalization {
     /// Use naming conventions from the schema.
     None,

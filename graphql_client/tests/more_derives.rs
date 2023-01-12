@@ -4,7 +4,7 @@ use graphql_client::*;
 #[graphql(
     schema_path = "tests/more_derives/schema.graphql",
     query_path = "tests/more_derives/query.graphql",
-    response_derives = "Debug, PartialEq, std::cmp::PartialOrd"
+    response_derives = "Debug, PartialEq, Eq, std::cmp::PartialOrd"
 )]
 pub struct MoreDerives;
 

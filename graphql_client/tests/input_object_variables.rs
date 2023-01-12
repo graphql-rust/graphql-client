@@ -29,7 +29,7 @@ type Email = String;
 #[graphql(
     query_path = "tests/input_object_variables/input_object_variables_query_defaults.graphql",
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
-    response_derives = "Debug, PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct DefaultInputObjectVariablesQuery;
 
@@ -52,7 +52,7 @@ fn input_object_variables_default() {
 #[graphql(
     query_path = "tests/input_object_variables/input_object_variables_query.graphql",
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
-    response_derives = "Debug, PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct RecursiveInputQuery;
 
@@ -78,7 +78,7 @@ fn recursive_input_objects_can_be_constructed() {
 #[graphql(
     query_path = "tests/input_object_variables/input_object_variables_query.graphql",
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
-    response_derives = "Debug, PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct InputCaseTestsQuery;
 
@@ -96,7 +96,7 @@ fn input_objects_are_all_snake_case() {
 #[graphql(
     query_path = "tests/input_object_variables/input_object_variables_query.graphql",
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
-    response_derives = "Debug, PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct IndirectlyRecursiveInputQuery;
 
@@ -123,7 +123,7 @@ fn indirectly_recursive_input_objects_can_be_constructed() {
     query_path = "tests/input_object_variables/input_object_variables_query.graphql",
     schema_path = "tests/input_object_variables/input_object_variables_schema.graphql",
     variables_derives = "Default",
-    response_derives = "Debug, PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct RustNameQuery;
 

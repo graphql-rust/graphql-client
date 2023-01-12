@@ -99,7 +99,7 @@ pub struct QueryBody<Variables> {
 }
 
 /// Represents a location inside a query string. Used in errors. See [`Error`].
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Location {
     /// The line number in the query string where the error originated (starting from 1).
     pub line: i32,
@@ -108,7 +108,7 @@ pub struct Location {
 }
 
 /// Part of a path in a query. It can be an object key or an array index. See [`Error`].
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum PathFragment {
     /// A key inside an object
@@ -193,7 +193,7 @@ impl Display for PathFragment {
 /// #     Ok(())
 /// # }
 /// ```
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Error {
     /// The human-readable error message. This is the only required field.
     pub message: String,
@@ -288,7 +288,7 @@ impl Display for Error {
 /// #     Ok(())
 /// # }
 /// ```
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Response<Data> {
     /// The absent, partial or complete response data.
     pub data: Option<Data>,

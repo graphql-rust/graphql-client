@@ -15,7 +15,7 @@ const RESPONSE: &str = include_str!("subscription/subscription_query_response.js
 #[graphql(
     schema_path = "tests/subscription/subscription_schema.graphql",
     query_path = "tests/subscription/subscription_query.graphql",
-    response_derives = "Debug, PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct SubscriptionQuery;
 

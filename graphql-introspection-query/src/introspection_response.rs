@@ -78,7 +78,7 @@ impl<'de> Deserialize<'de> for __DirectiveLocation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum __TypeKind {
     SCALAR,
     OBJECT,

@@ -4,7 +4,7 @@ use graphql_client::GraphQLQuery;
 #[graphql(
     query_path = "tests/operation_selection/queries.graphql",
     schema_path = "tests/operation_selection/schema.graphql",
-    response_derives = "Debug,PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct Heights;
 
@@ -12,7 +12,7 @@ pub struct Heights;
 #[graphql(
     query_path = "tests/operation_selection/queries.graphql",
     schema_path = "tests/operation_selection/schema.graphql",
-    response_derives = "Debug,PartialEq"
+    response_derives = "Debug, PartialEq, Eq"
 )]
 pub struct Echo;
 

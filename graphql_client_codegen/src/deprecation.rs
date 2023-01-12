@@ -1,5 +1,5 @@
 /// Whether an item is deprecated, with context.
-#[derive(Debug, PartialEq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum DeprecationStatus {
     /// Not deprecated
     Current,
@@ -8,7 +8,7 @@ pub enum DeprecationStatus {
 }
 
 /// The available deprecation strategies.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DeprecationStrategy {
     /// Allow use of deprecated items in queries, and say nothing.
     Allow,
