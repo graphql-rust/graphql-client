@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.12.0 - 2023-01-12
+
+- Switch to BTree to make codegen's output deterministic
+- Add support for `skip_none` and `skip_serializing_none`
+- Fix CI
+
+## 0.11.0 - 2022-06-21
 
 - The `variables_derives` now trims whitespace from individual derivation traits.
 - The new `reqwest-rustls` feature works like the `reqwest` feature but with
@@ -17,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Support Paths in response derives
 - cli: Display server responses when introspection failed
 - upgrade to graphql_parser 0.4
+- Add support for `fragments-other-variant`
 
 ## 0.10.0 - 2021-07-04
 
