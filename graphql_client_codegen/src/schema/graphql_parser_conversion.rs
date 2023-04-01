@@ -1,6 +1,8 @@
 use super::{Schema, StoredInputFieldType, TypeId};
 use crate::schema::resolve_field_type;
-use graphql_parser::schema::{self as parser, Definition, Document, TypeDefinition, UnionType};
+use graphql_parser::schema::{
+    self as parser, Definition, Document, TypeDefinition, TypeExtension, UnionType,
+};
 
 pub(super) fn build_schema<'doc, T>(
     mut src: graphql_parser::schema::Document<'doc, T>,
@@ -36,6 +38,8 @@ where
     interfaces_mut(src).for_each(|iface| ingest_interface(schema, iface));
 
     objects_mut(src).for_each(|obj| ingest_object(schema, obj));
+    extend_object_type_extensions_mut(src)
+        .for_each(|ext| ingest_object_type_extension(schema, ext));
 
     inputs_mut(src).for_each(|input| ingest_input(schema, input));
 
@@ -200,6 +204,40 @@ fn ingest_object<'doc, T>(
     schema.push_object(object);
 }
 
+fn ingest_object_type_extension<'doc, T>(
+    schema: &mut Schema,
+    ext: &mut graphql_parser::schema::ObjectTypeExtension<'doc, T>,
+) where
+    T: graphql_parser::query::Text<'doc>,
+{
+    let object_id = schema
+        .find_type_id(ext.name.as_ref())
+        .as_object_id()
+        .unwrap();
+    let mut field_ids = Vec::with_capacity(ext.fields.len());
+
+    for field in ext.fields.iter_mut() {
+        let field = super::StoredField {
+            name: field.name.as_ref().into(),
+            r#type: resolve_field_type(schema, &field.field_type),
+            parent: super::StoredFieldParent::Object(object_id),
+            deprecation: find_deprecation(&field.directives),
+        };
+
+        field_ids.push(schema.push_field(field));
+    }
+
+    let iface_ids = ext
+        .implements_interfaces
+        .iter()
+        .map(|iface_name| schema.find_interface(iface_name.as_ref()))
+        .collect::<Vec<_>>();
+
+    let object = schema.get_object_mut(object_id);
+    object.implements_interfaces.extend(iface_ids);
+    object.fields.extend(field_ids);
+}
+
 fn ingest_scalar<'doc, T>(
     schema: &mut Schema,
     scalar: &mut graphql_parser::schema::ScalarType<'doc, T>,
@@ -324,6 +362,18 @@ where
 {
     doc.definitions.iter_mut().filter_map(|def| match def {
         Definition::TypeDefinition(TypeDefinition::Object(obj)) => Some(obj),
+        _ => None,
+    })
+}
+
+fn extend_object_type_extensions_mut<'a, 'doc: 'a, T>(
+    doc: &'a mut Document<'doc, T>,
+) -> impl Iterator<Item = &'a mut parser::ObjectTypeExtension<'doc, T>>
+where
+    T: graphql_parser::query::Text<'doc>,
+{
+    doc.definitions.iter_mut().filter_map(|def| match def {
+        Definition::TypeExtension(TypeExtension::Object(obj)) => Some(obj),
         _ => None,
     })
 }
