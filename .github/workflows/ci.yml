@@ -18,6 +18,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     name: Cargo test
     runs-on: ${{ matrix.os }}
+    if: "github.repository == 'graphql-rust/graphql-client'"
     steps:
     - name: Checkout sources
       uses: actions/checkout@v2
@@ -32,6 +33,7 @@ jobs:
   wasm_build:
     name: Cargo build for wasm
     runs-on: ubuntu-latest
+    if: "github.repository == 'graphql-rust/graphql-client'"
     steps:
     - name: Checkout sources
       uses: actions/checkout@v2
@@ -48,6 +50,7 @@ jobs:
   lint:
     name: Rustfmt and Clippy
     runs-on: ubuntu-latest
+    if: "github.repository == 'graphql-rust/graphql-client'"
     steps:
     - name: Checkout sources
       uses: actions/checkout@v2
@@ -65,6 +68,7 @@ jobs:
   prettier:
     name: Check prettier
     runs-on: ubuntu-latest
+    if: "github.repository == 'graphql-rust/graphql-client'"
     steps:
     - name: Checkout sources
       uses: actions/checkout@v2
