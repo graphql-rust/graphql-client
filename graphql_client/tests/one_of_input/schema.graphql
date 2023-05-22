@@ -1,0 +1,24 @@
+schema {
+  mutation: Mutation
+}
+
+type Mutation {
+  oneOfMutation(mutation: Param!): Int
+}
+
+input Param @oneOf {
+  author: Author
+  name: String
+  recursiveDirect: Param
+  recursiveIndirect: Recursive
+  requiredInts: [Int!]
+  optionalInts: [Int]
+}
+
+input Author {
+  id: Int!
+}
+
+input Recursive {
+  param: Param!
+}
