@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         rust: ["stable", "beta", "nightly"]
-        os: [ubuntu-18.04, macos-latest]
+        os: [ubuntu-latest, macos-latest]
     name: Cargo test
     runs-on: ${{ matrix.os }}
     steps:
@@ -31,7 +31,7 @@ jobs:
       run: cargo test --all --tests --examples
   wasm_build:
     name: Cargo build for wasm
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout sources
       uses: actions/checkout@v2
