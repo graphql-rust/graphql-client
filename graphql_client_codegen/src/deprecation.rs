@@ -8,20 +8,15 @@ pub enum DeprecationStatus {
 }
 
 /// The available deprecation strategies.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub enum DeprecationStrategy {
     /// Allow use of deprecated items in queries, and say nothing.
     Allow,
     /// Fail compilation if a deprecated item is used.
     Deny,
     /// Allow use of deprecated items in queries, but warn about them (default).
+    #[default]
     Warn,
-}
-
-impl Default for DeprecationStrategy {
-    fn default() -> Self {
-        DeprecationStrategy::Warn
-    }
 }
 
 impl std::str::FromStr for DeprecationStrategy {

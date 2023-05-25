@@ -153,7 +153,7 @@ fn set_env_logger() {
         .init();
 }
 
-fn colored_level<'a>(style: &'a mut Style, level: Level) -> StyledValue<'a, &'static str> {
+fn colored_level(style: &mut Style, level: Level) -> StyledValue<'_, &'static str> {
     match level {
         Level::Trace => style.set_color(Color::Magenta).value("TRACE"),
         Level::Debug => style.set_color(Color::Blue).value("DEBUG"),
