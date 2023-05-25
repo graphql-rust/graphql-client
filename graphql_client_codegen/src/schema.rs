@@ -210,6 +210,7 @@ impl StoredInputFieldType {
 pub(crate) struct StoredInputType {
     pub(crate) name: String,
     pub(crate) fields: Vec<(String, StoredInputFieldType)>,
+    pub(crate) is_one_of: bool,
 }
 
 /// Intermediate representation for a parsed GraphQL schema used during code generation.

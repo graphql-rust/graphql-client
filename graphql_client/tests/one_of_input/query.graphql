@@ -1,0 +1,3 @@
+mutation OneOfMutation($param: Param!) {
+  oneOfMutation(query: $param)
+}

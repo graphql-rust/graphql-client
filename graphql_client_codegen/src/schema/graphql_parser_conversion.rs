@@ -289,6 +289,11 @@ fn ingest_input<'doc, T>(schema: &mut Schema, input: &mut parser::InputObjectTyp
 where
     T: graphql_parser::query::Text<'doc>,
 {
+    let is_one_of = input
+        .directives
+        .iter()
+        .any(|directive| directive.name.as_ref() == "oneOf");
+
     let input = super::StoredInputType {
         name: input.name.as_ref().into(),
         fields: input
@@ -305,6 +310,7 @@ where
                 )
             })
             .collect(),
+        is_one_of,
     };
 
     schema.stored_inputs.push(input);
