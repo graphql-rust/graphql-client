@@ -16,8 +16,8 @@ pub struct Heights;
 )]
 pub struct Echo;
 
-const HEIGHTS_RESPONSE: &str = r##"{"mountainHeight": 224, "buildingHeight": 12}"##;
-const ECHO_RESPONSE: &str = r##"{"echo": "tiramisù"}"##;
+const HEIGHTS_RESPONSE: &str = r#"{"mountainHeight": 224, "buildingHeight": 12}"#;
+const ECHO_RESPONSE: &str = r#"{"echo": "tiramisù"}"#;
 
 #[test]
 fn operation_selection_works() {
