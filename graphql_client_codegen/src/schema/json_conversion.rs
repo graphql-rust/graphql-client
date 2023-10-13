@@ -247,7 +247,7 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
                     })
                     .collect()
             })
-            .unwrap_or_else(Vec::new),
+            .unwrap_or_default(),
         fields: field_ids,
     };
 
