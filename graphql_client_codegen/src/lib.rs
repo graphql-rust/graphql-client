@@ -130,7 +130,7 @@ pub fn generate_module_token_stream(
 
     for operation in &operations {
         let generated = generated_module::GeneratedModule {
-            query_string: query_string.as_str(),
+            query_string: extract_query_string(query_string.as_str(),&operation.1.name),
             schema: &schema,
             resolved_query: &query,
             operation: &operation.1.name,
@@ -143,6 +143,23 @@ pub fn generate_module_token_stream(
     let modules = quote! { #(#modules)* };
 
     Ok(modules)
+}
+
+/// If there are multiple queries in the same file, they are all concatenated into one string which
+/// requires manual adjustments after generation. This function extracts the relevant query string
+/// Assumes that all queries start with "query operation_name" and are followed by another "query".
+/// If the extraction fails due to some reason, the original query string is returned.
+fn extract_query_string<'a>(input: &'a str, operation_name: &str) -> &'a str {
+    let end_identifier = "query";
+    let start_identifier = "query ".to_owned() + operation_name;
+    if let Some(start) = input.find(&start_identifier) {
+        return if let Some(end) = input[start + start_identifier.len()..].find(end_identifier) {
+            &input[start..start + start_identifier.len() + end]
+        } else {
+            &input[start..]
+        }
+    }
+    input
 }
 
 #[derive(Debug)]
