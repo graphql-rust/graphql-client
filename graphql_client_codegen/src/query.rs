@@ -59,6 +59,11 @@ pub(crate) struct ResolvedFragmentId(u32);
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct VariableId(u32);
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct QueryStringPosition {
+    pub(crate) start: Option<graphql_parser::Pos>,
+    pub(crate) end: Option<graphql_parser::Pos>,
+}
 pub(crate) fn resolve<'doc, T>(
     schema: &Schema,
     query: &graphql_parser::query::Document<'doc, T>,
@@ -97,7 +102,7 @@ where
             },
         )?
     }
-
+    resolved_query.post_process_query_string_positions();
     Ok(resolved_query)
 }
 
@@ -465,6 +470,10 @@ where
                 SelectionParent::Operation(id),
                 schema,
             )?;
+            query.query_string_positions.push(QueryStringPosition {
+                start: Some(m.position),
+                end: None,
+            });
         }
         graphql_parser::query::OperationDefinition::Query(q) => {
             let on = schema.get_object(schema.query_type());
@@ -480,6 +489,10 @@ where
                 SelectionParent::Operation(id),
                 schema,
             )?;
+            query.query_string_positions.push(QueryStringPosition {
+                start: Some(q.position),
+                end: None,
+            });
         }
         graphql_parser::query::OperationDefinition::Subscription(s) => {
             let on = schema.subscription_type().ok_or_else(|| QueryValidationError::new("Query contains a subscription operation, but the schema has no subscription type.".into()))?;
@@ -496,6 +509,10 @@ where
                 SelectionParent::Operation(id),
                 schema,
             )?;
+            query.query_string_positions.push(QueryStringPosition {
+                start: Some(s.position),
+                end: None,
+            });
         }
         graphql_parser::query::OperationDefinition::SelectionSet(_) => {
             unreachable!("unnamed queries are not supported")
@@ -512,6 +529,7 @@ pub(crate) struct Query {
     selection_parent_idx: BTreeMap<SelectionId, SelectionParent>,
     selections: Vec<Selection>,
     variables: Vec<ResolvedVariable>,
+    query_string_positions: Vec<QueryStringPosition>,
 }
 
 impl Query {
@@ -585,6 +603,19 @@ impl Query {
         selection_ids
             .iter()
             .map(move |id| (*id, self.get_selection(*id)))
+    }
+
+    fn post_process_query_string_positions(&mut self) {
+        // Only multiple operations require post processing
+        if self.query_string_positions.len() > 1 {
+            // The last query is skipped on purpose
+            for i in 0..self.query_string_positions.len() - 1 {
+                self.query_string_positions[i].end = self.query_string_positions[i + 1].start;
+            }
+        }
+    }
+    pub fn get_query_string_positions(&self) -> &Vec<QueryStringPosition> {
+        &self.query_string_positions
     }
 }
 

@@ -1,0 +1,25 @@
+query LargestSales($limit: Int!, $contract: String!) {
+  sales (first: $limit, where : {contract : $contract} orderBy: price, orderDirection: desc) {
+    timestamp
+    price
+    nft {
+      tokenId
+    }
+  }
+}
+
+query RecentSales($limit: Int!, $contract: String!) {
+  sales (first: $limit, where : {contract : $contract} orderBy: timestamp, orderDirection: desc) {
+    timestamp
+    price
+    nft {
+      tokenId
+    }
+  }
+}
+
+query DailySales($limit: Int!, $contract: String!, $ts: Int!) {
+    sales(first: $limit, where: { contract: $contract, timestamp_gt: $ts }, orderBy: timestamp, orderDirection: desc) {
+      price
+    }
+}
