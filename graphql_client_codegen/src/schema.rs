@@ -327,6 +327,12 @@ impl Schema {
             .expect("Schema::get_object")
     }
 
+    pub(crate) fn get_object_mut(&mut self, object_id: ObjectId) -> &mut StoredObject {
+        self.stored_objects
+            .get_mut(object_id.0 as usize)
+            .expect("Schema::get_object_mut")
+    }
+
     pub(crate) fn get_field(&self, field_id: StoredFieldId) -> &StoredField {
         self.stored_fields.get(field_id.0).unwrap()
     }
