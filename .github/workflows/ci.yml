@@ -21,13 +21,11 @@ jobs:
     if: "github.repository == 'graphql-rust/graphql-client'"
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Install toolchain
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@master
       with:
-        profile: minimal
         toolchain: ${{ matrix.rust }}
-        override: true
     - name: Execute cargo test
       run: cargo test --all --tests --examples
   wasm_build:
@@ -36,13 +34,10 @@ jobs:
     if: "github.repository == 'graphql-rust/graphql-client'"
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Install toolchain
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        profile: minimal
-        toolchain: stable
-        override: true
         target: wasm32-unknown-unknown
     - name: Execute cargo build
       run: |
@@ -53,25 +48,22 @@ jobs:
     if: "github.repository == 'graphql-rust/graphql-client'"
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Install toolchain
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        profile: minimal
-        toolchain: stable
-        override: true
         components: clippy,rustfmt
     - name: Execute cargo fmt
       run: cargo fmt --all -- --check
     - name: Execute cargo clippy
-      run: cargo clippy --tests --examples -- -D warnings
+      run: cargo clippy --all --all-targets --all-features -- -D warnings
   prettier:
     name: Check prettier
     runs-on: ubuntu-latest
     if: "github.repository == 'graphql-rust/graphql-client'"
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Install node.js
       run: sudo apt update && sudo apt-get install -y nodejs
     - name: Execute prettier

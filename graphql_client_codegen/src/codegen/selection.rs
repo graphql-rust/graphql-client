@@ -186,7 +186,7 @@ fn calculate_selection<'a>(
                     })
                     .collect();
 
-                if let Some((selection_id, selection, _variant)) = variant_selections.get(0) {
+                if let Some((selection_id, selection, _variant)) = variant_selections.first() {
                     let mut variant_struct_name_str =
                         full_path_prefix(*selection_id, context.query);
                     variant_struct_name_str.reserve(2 + variant_name_str.len());
@@ -408,7 +408,7 @@ impl<'a> ExpandedField<'a> {
         let optional_skip_serializing_none = if *options.skip_serializing_none()
             && self
                 .field_type_qualifiers
-                .get(0)
+                .first()
                 .map(|qualifier| !qualifier.is_required())
                 .unwrap_or(false)
         {

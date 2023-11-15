@@ -200,7 +200,7 @@ impl StoredInputFieldType {
 
     pub(crate) fn is_optional(&self) -> bool {
         self.qualifiers
-            .get(0)
+            .first()
             .map(|qualifier| !qualifier.is_required())
             .unwrap_or(true)
     }
