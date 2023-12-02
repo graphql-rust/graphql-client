@@ -76,3 +76,13 @@ jobs:
       run: sudo apt update && sudo apt-get install -y nodejs
     - name: Execute prettier
       run: npx prettier --debug-check -l './**/*.json' './**/*.graphql'
+
+  msrv:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@cargo-no-dev-deps
+      - uses: dtolnay/rust-toolchain@1.62.1  # also set in Cargo.toml
+      - run: cargo no-dev-deps check -p graphql_client
