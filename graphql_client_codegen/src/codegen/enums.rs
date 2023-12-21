@@ -59,18 +59,27 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
 
         let name = name_ident;
 
+        let fallback_name = if let Some(other_vname) = options.serde_enum_fallback_variant_name() {
+            other_vname.to_owned()
+        } else {
+            "Other".to_string()
+        };
+
+        let fallback_ident = Ident::new(&fallback_name, Span::call_site());
+        let fallback_variant =  quote!(#fallback_ident);
+
         quote! {
             #derives
             pub enum #name {
                 #(#variant_names,)*
-                Other(String),
+                #fallback_variant(String)
             }
 
             impl ::serde::Serialize for #name {
                 fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
                     ser.serialize_str(match *self {
                         #(#constructors => #variant_str,)*
-                        #name::Other(ref s) => &s,
+                        #name::#fallback_variant(ref s) => &s,
                     })
                 }
             }
@@ -81,7 +90,7 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
 
                     match s.as_str() {
                         #(#variant_str => Ok(#constructors),)*
-                        _ => Ok(#name::Other(s)),
+                        _ => Ok(#name::#fallback_variant(s)),
                     }
                 }
             }
