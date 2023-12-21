@@ -64,11 +64,13 @@ fn build_graphql_client_derive_options(
     let custom_scalars_module = attributes::extract_attr(input, "custom_scalars_module").ok();
     let extern_enums = attributes::extract_attr_list(input, "extern_enums").ok();
     let fragments_other_variant: bool = attributes::extract_fragments_other_variant(input);
+    let serde_enum_fallback_variant_name: Option<String> = attributes::extract_attr(input, "serde_enum_fallback_variant_name").ok();
     let skip_serializing_none: bool = attributes::extract_skip_serializing_none(input);
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Derive);
     options.set_query_file(query_path);
     options.set_fragments_other_variant(fragments_other_variant);
+    options.set_serde_enum_fallback_variant_name(serde_enum_fallback_variant_name);
     options.set_skip_serializing_none(skip_serializing_none);
 
     if let Some(variables_derives) = variables_derives {
