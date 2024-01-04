@@ -1,161 +1,127 @@
-use crate::{generated_module, schema::Schema, CodegenMode, GraphQLClientCodegenOptions};
+use std::path::PathBuf;
+
+use crate::{generate_module_token_stream_from_string, CodegenMode, GraphQLClientCodegenOptions};
+
+const KEYWORDS_QUERY: &str = include_str!("keywords_query.graphql");
+const KEYWORDS_SCHEMA_PATH: &str = "keywords_schema.graphql";
+
+const FOOBARS_QUERY: &str = include_str!("foobars_query.graphql");
+const FOOBARS_SCHEMA_PATH: &str = "foobars_schema.graphql";
+
+fn build_schema_path(path: &str) -> PathBuf {
+    std::env::current_dir()
+        .unwrap()
+        .join("src/tests")
+        .join(path)
+}
 
 #[test]
 fn schema_with_keywords_works() {
-    let query_string = include_str!("keywords_query.graphql");
-    let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse keywords query");
-    let schema = graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
-        .expect("Parse keywords schema")
-        .into_static();
-    let schema = Schema::from(schema);
+    let query_string = KEYWORDS_QUERY;
+    let schema_path = build_schema_path(KEYWORDS_SCHEMA_PATH);
 
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
-    let query = crate::query::resolve(&schema, &query).unwrap();
 
-    for (_id, operation) in query.operations() {
-        let generated_tokens = generated_module::GeneratedModule {
-            query_string,
-            schema: &schema,
-            operation: &operation.name,
-            resolved_query: &query,
-            options: &options,
+    let generated_tokens =
+        generate_module_token_stream_from_string(query_string, &schema_path, options)
+            .expect("Generate keywords module");
+
+    let generated_code = generated_tokens.to_string();
+
+    // Parse generated code. All keywords should be correctly escaped.
+    let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
+    match r {
+        Ok(_) => {
+            // Rust keywords should be escaped / renamed now
+            assert!(generated_code.contains("pub in_"));
+            assert!(generated_code.contains("extern_"));
         }
-        .to_token_stream()
-        .expect("Generate keywords module");
-        let generated_code = generated_tokens.to_string();
-
-        // Parse generated code. All keywords should be correctly escaped.
-        let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
-        match r {
-            Ok(_) => {
-                // Rust keywords should be escaped / renamed now
-                assert!(generated_code.contains("pub in_"));
-                assert!(generated_code.contains("extern_"));
-            }
-            Err(e) => {
-                panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
-            }
-        };
-    }
+        Err(e) => {
+            panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
+        }
+    };
 }
 
 #[test]
 fn fragments_other_variant_should_generate_unknown_other_variant() {
-    let query_string = include_str!("foobars_query.graphql");
-    let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse foobars query");
-    let schema = graphql_parser::parse_schema(include_str!("foobars_schema.graphql"))
-        .expect("Parse foobars schema")
-        .into_static();
-    let schema = Schema::from(schema);
+    let query_string = FOOBARS_QUERY;
+    let schema_path = build_schema_path(FOOBARS_SCHEMA_PATH);
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
     options.set_fragments_other_variant(true);
-    let query = crate::query::resolve(&schema, &query).unwrap();
 
-    for (_id, operation) in query.operations() {
-        let generated_tokens = generated_module::GeneratedModule {
-            query_string,
-            schema: &schema,
-            operation: &operation.name,
-            resolved_query: &query,
-            options: &options,
+    let generated_tokens =
+        generate_module_token_stream_from_string(query_string, &schema_path, options)
+            .expect("Generate foobars module");
+
+    let generated_code = generated_tokens.to_string();
+
+    let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
+    match r {
+        Ok(_) => {
+            // Rust keywords should be escaped / renamed now
+            assert!(generated_code.contains("# [serde (other)] Unknown"));
+            assert!(generated_code.contains("Unknown"));
         }
-        .to_token_stream()
-        .expect("Generate foobars module");
-        let generated_code = generated_tokens.to_string();
-
-        let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
-        match r {
-            Ok(_) => {
-                // Rust keywords should be escaped / renamed now
-                assert!(generated_code.contains("# [serde (other)] Unknown"));
-                assert!(generated_code.contains("Unknown"));
-            }
-            Err(e) => {
-                panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
-            }
-        };
-    }
+        Err(e) => {
+            panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
+        }
+    };
 }
 
 #[test]
 fn fragments_other_variant_false_should_not_generate_unknown_other_variant() {
-    let query_string = include_str!("foobars_query.graphql");
-    let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse foobars query");
-    let schema = graphql_parser::parse_schema(include_str!("foobars_schema.graphql"))
-        .expect("Parse foobars schema")
-        .into_static();
-    let schema = Schema::from(schema);
+    let query_string = FOOBARS_QUERY;
+    let schema_path = build_schema_path(FOOBARS_SCHEMA_PATH);
 
-    let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
+    let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
-    let query = crate::query::resolve(&schema, &query).unwrap();
+    options.set_fragments_other_variant(false);
 
-    for (_id, operation) in query.operations() {
-        let generated_tokens = generated_module::GeneratedModule {
-            query_string,
-            schema: &schema,
-            operation: &operation.name,
-            resolved_query: &query,
-            options: &options,
+    let generated_tokens =
+        generate_module_token_stream_from_string(query_string, &schema_path, options)
+            .expect("Generate foobars module token stream");
+
+    let generated_code = generated_tokens.to_string();
+
+    let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
+    match r {
+        Ok(_) => {
+            // Rust keywords should be escaped / renamed now
+            assert!(!generated_code.contains("# [serde (other)] Unknown"));
+            assert!(!generated_code.contains("Unknown"));
         }
-        .to_token_stream()
-        .expect("Generate foobars module");
-        let generated_code = generated_tokens.to_string();
-
-        let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
-        match r {
-            Ok(_) => {
-                // Rust keywords should be escaped / renamed now
-                assert!(!generated_code.contains("# [serde (other)] Unknown"));
-                assert!(!generated_code.contains("Unknown"));
-            }
-            Err(e) => {
-                panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
-            }
-        };
-    }
+        Err(e) => {
+            panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
+        }
+    };
 }
 
 #[test]
 fn skip_serializing_none_should_generate_serde_skip_serializing() {
-    let query_string = include_str!("keywords_query.graphql");
-    let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse keywords query");
-    let schema = graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
-        .expect("Parse keywords schema")
-        .into_static();
-    let schema = Schema::from(schema);
+    let query_string = KEYWORDS_QUERY;
+    let schema_path = build_schema_path(KEYWORDS_SCHEMA_PATH);
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
     options.set_skip_serializing_none(true);
 
-    let query = crate::query::resolve(&schema, &query).unwrap();
+    let generated_tokens =
+        generate_module_token_stream_from_string(query_string, &schema_path, options)
+            .expect("Generate foobars module");
 
-    for (_id, operation) in query.operations() {
-        let generated_tokens = generated_module::GeneratedModule {
-            query_string,
-            schema: &schema,
-            operation: &operation.name,
-            resolved_query: &query,
-            options: &options,
+    let generated_code = generated_tokens.to_string();
+
+    let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
+
+    match r {
+        Ok(_) => {
+            println!("{}", generated_code);
+            assert!(generated_code.contains("skip_serializing_if"));
         }
-        .to_token_stream()
-        .expect("Generate keywords module");
-
-        let generated_code = generated_tokens.to_string();
-
-        let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
-
-        match r {
-            Ok(_) => {
-                println!("{}", generated_code);
-                assert!(generated_code.contains("skip_serializing_if"));
-            }
-            Err(e) => {
-                panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
-            }
-        };
-    }
+        Err(e) => {
+            panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
+        }
+    };
 }

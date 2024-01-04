@@ -2,13 +2,12 @@
 #![warn(rust_2018_idioms)]
 #![allow(clippy::option_option)]
 
-//! Crate for internal use by other graphql-client crates, for code generation.
-//!
-//! It is not meant to be used directly by users of the library.
+//! Crate for Rust code generation from a GraphQL query, schema, and options.
 
 use lazy_static::*;
 use proc_macro2::TokenStream;
 use quote::*;
+use schema::Schema;
 
 mod codegen;
 mod codegen_options;
@@ -44,67 +43,92 @@ impl std::error::Error for GeneralError {}
 
 type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type CacheMap<T> = std::sync::Mutex<BTreeMap<std::path::PathBuf, T>>;
+type QueryDocument = graphql_parser::query::Document<'static, String>;
 
 lazy_static! {
-    static ref SCHEMA_CACHE: CacheMap<schema::Schema> = CacheMap::default();
-    static ref QUERY_CACHE: CacheMap<(String, graphql_parser::query::Document<'static, String>)> =
-        CacheMap::default();
+    static ref SCHEMA_CACHE: CacheMap<Schema> = CacheMap::default();
+    static ref QUERY_CACHE: CacheMap<(String, QueryDocument)> = CacheMap::default();
 }
 
-/// Generates Rust code given a query document, a schema and options.
+fn get_set_cached<T: Clone>(
+    cache: &CacheMap<T>,
+    key: &std::path::Path,
+    value_func: impl FnOnce() -> T,
+) -> T {
+    let mut lock = cache.lock().expect("cache is poisoned");
+    lock.entry(key.into()).or_insert_with(value_func).clone()
+}
+
+fn query_document(query_string: &str) -> Result<QueryDocument, BoxError> {
+    let document = graphql_parser::parse_query(query_string)
+        .map_err(|err| GeneralError(format!("Query parser error: {}", err)))?
+        .into_static();
+    Ok(document)
+}
+
+fn get_set_query_from_file(query_path: &std::path::Path) -> (String, QueryDocument) {
+    get_set_cached(&QUERY_CACHE, query_path, || {
+        let query_string = read_file(query_path).unwrap();
+        let query_document = query_document(&query_string).unwrap();
+        (query_string, query_document)
+    })
+}
+
+fn get_set_schema_from_file(schema_path: &std::path::Path) -> Schema {
+    get_set_cached(&SCHEMA_CACHE, schema_path, || {
+        let schema_extension = schema_path
+            .extension()
+            .map(|ext| ext.to_str().expect("Path must be valid UTF-8"))
+            .unwrap_or("<no extension>");
+        let schema_string = read_file(schema_path).unwrap();
+        match schema_extension {
+            "graphql" | "gql" => {
+                let s = graphql_parser::schema::parse_schema::<&str>(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error))).unwrap();
+                Schema::from(s)
+            }
+            "json" => {
+                let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string).unwrap();
+                Schema::from(parsed)
+            }
+            extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
+        }
+    })
+}
+
+/// Generates Rust code given a path to a query file, a path to a schema file, and options.
 pub fn generate_module_token_stream(
     query_path: std::path::PathBuf,
     schema_path: &std::path::Path,
     options: GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, BoxError> {
-    use std::collections::btree_map;
+    let query = get_set_query_from_file(query_path.as_path());
+    let schema = get_set_schema_from_file(schema_path);
 
-    let schema_extension = schema_path
-        .extension()
-        .and_then(std::ffi::OsStr::to_str)
-        .unwrap_or("INVALID");
-    let schema_string;
+    generate_module_token_stream_inner(&query, &schema, options)
+}
 
-    // Check the schema cache.
-    let schema: schema::Schema = {
-        let mut lock = SCHEMA_CACHE.lock().expect("schema cache is poisoned");
-        match lock.entry(schema_path.to_path_buf()) {
-            btree_map::Entry::Occupied(o) => o.get().clone(),
-            btree_map::Entry::Vacant(v) => {
-                schema_string = read_file(v.key())?;
-                let schema = match schema_extension {
-                    "graphql" | "gql" => {
-                        let s = graphql_parser::schema::parse_schema::<&str>(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error)))?;
-                        schema::Schema::from(s)
-                    }
-                    "json" => {
-                        let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string)?;
-                        schema::Schema::from(parsed)
-                    }
-                    extension => return Err(GeneralError(format!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)).into())
-                };
+/// Generates Rust code given a query string, a path to a schema file, and options.
+pub fn generate_module_token_stream_from_string(
+    query_string: &str,
+    schema_path: &std::path::Path,
+    options: GraphQLClientCodegenOptions,
+) -> Result<TokenStream, BoxError> {
+    let query = (query_string.to_string(), query_document(query_string)?);
+    let schema = get_set_schema_from_file(schema_path);
 
-                v.insert(schema).clone()
-            }
-        }
-    };
+    generate_module_token_stream_inner(&query, &schema, options)
+}
+
+/// Generates Rust code given a query string and query document, a schema, and options.
+fn generate_module_token_stream_inner(
+    query: &(String, QueryDocument),
+    schema: &Schema,
+    options: GraphQLClientCodegenOptions,
+) -> Result<TokenStream, BoxError> {
+    let (query_string, query_document) = query;
 
     // We need to qualify the query with the path to the crate it is part of
-    let (query_string, query) = {
-        let mut lock = QUERY_CACHE.lock().expect("query cache is poisoned");
-        match lock.entry(query_path) {
-            btree_map::Entry::Occupied(o) => o.get().clone(),
-            btree_map::Entry::Vacant(v) => {
-                let query_string = read_file(v.key())?;
-                let query = graphql_parser::parse_query(&query_string)
-                    .map_err(|err| GeneralError(format!("Query parser error: {}", err)))?
-                    .into_static();
-                v.insert((query_string, query)).clone()
-            }
-        }
-    };
-
-    let query = crate::query::resolve(&schema, &query)?;
+    let query = crate::query::resolve(schema, query_document)?;
 
     // Determine which operation we are generating code for. This will be used in operationName.
     let operations = options
@@ -131,7 +155,7 @@ pub fn generate_module_token_stream(
     for operation in &operations {
         let generated = generated_module::GeneratedModule {
             query_string: query_string.as_str(),
-            schema: &schema,
+            schema,
             resolved_query: &query,
             operation: &operation.1.name,
             options: &options,
