@@ -154,7 +154,7 @@ where
             ) => {
                 let on = schema.query_type();
                 let resolved_operation: ResolvedOperation = ResolvedOperation {
-                    name: q.name.as_ref().expect("query without name").as_ref().into(),
+                    name: q.name.as_ref().expect("query without name. Instead of `query (...)`, write `query SomeName(...)` in your .graphql file").as_ref().into(),
                     _operation_type: operations::OperationType::Query,
                     object_id: on,
                     selection_set: Vec::with_capacity(q.selection_set.items.len()),
