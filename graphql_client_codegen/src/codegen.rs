@@ -99,7 +99,7 @@ fn generate_variables_struct(
                     variable
                         .r#type
                         .qualifiers
-                        .get(0)
+                        .first()
                         .map(|qual| !qual.is_required())
                         .unwrap_or(true),
                     query,
