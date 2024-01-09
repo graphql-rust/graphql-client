@@ -23,7 +23,7 @@ enum Cli {
         #[clap(parse(from_os_str))]
         #[clap(long = "output")]
         output: Option<PathBuf>,
-        /// Set the contents of the Authorizaiton header.
+        /// Set the contents of the Authorization header.
         #[clap(long = "authorization")]
         authorization: Option<String>,
         /// Specify custom headers.
