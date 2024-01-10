@@ -1,6 +1,5 @@
 [workspace]
 resolver = "2"
-rust-version = "1.62.1"  # also set in CI
 members = [
     "graphql_client",
     "graphql_client_cli",
@@ -11,3 +10,6 @@ members = [
     # Example crates.
     "examples/*",
 ]
+
+[workspace.package]
+rust-version = "1.62.1"  # also set in CI
