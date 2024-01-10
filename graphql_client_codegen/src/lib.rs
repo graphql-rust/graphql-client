@@ -125,12 +125,12 @@ pub fn generate_module_token_stream(
         }
     };
 
+    let query_strings = extract_queries(query_string.as_str(), query.get_query_string_positions());
     // The generated modules.
     let mut modules = Vec::with_capacity(operations.len());
-
-    for operation in &operations {
+    for (index, operation) in operations.iter().enumerate() {
         let generated = generated_module::GeneratedModule {
-            query_string: query_string.as_str(),
+            query_string: query_strings[index],
             schema: &schema,
             resolved_query: &query,
             operation: &operation.1.name,
@@ -143,6 +143,42 @@ pub fn generate_module_token_stream(
     let modules = quote! { #(#modules)* };
 
     Ok(modules)
+}
+
+/// extracts single query strings from the larger query string using positions which are assumed to be present
+fn extract_queries<'a>(
+    query_string: &'a str,
+    positions: &[query::QueryStringPosition],
+) -> Vec<&'a str> {
+    positions
+        .iter()
+        .map(|position| {
+            let start_pos = &position.start.unwrap();
+            let start_idx = get_string_index(query_string, start_pos.line, start_pos.column);
+
+            let end_idx = match &position.end {
+                Some(end_pos) => get_string_index(query_string, end_pos.line, end_pos.column),
+                None => query_string.len(),
+            };
+
+            &query_string[start_idx..end_idx]
+        })
+        .collect()
+}
+/// helper function for extract_queries
+fn get_string_index(s: &str, line: usize, column: usize) -> usize {
+    let mut current_line = 1;
+
+    for (i, c) in s.char_indices() {
+        if current_line == line {
+            return i + column - 1;
+        }
+        if c == '\n' {
+            current_line += 1;
+        }
+    }
+
+    s.len() // Return the end of the string if the line/column isn't found
 }
 
 #[derive(Debug)]
