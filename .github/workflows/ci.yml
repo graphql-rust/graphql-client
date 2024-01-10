@@ -84,5 +84,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/install-action@cargo-no-dev-deps
-      - uses: dtolnay/rust-toolchain@1.62.1  # also set in Cargo.toml
+      - uses: dtolnay/rust-toolchain@1.64.0  # also set in Cargo.toml
       - run: cargo no-dev-deps check -p graphql_client
