@@ -45,8 +45,10 @@ pub struct GraphQLClientCodegenOptions {
     extern_enums: Vec<String>,
     /// Flag to trigger generation of Other variant for fragments Enum
     fragments_other_variant: bool,
+    /// Create Other variant with custom name for ser/de
+    serde_enum_fallback_variant_name: Option<String>,
     /// Skip Serialization of None values.
-    skip_serializing_none: bool,
+    skip_serializing_none: bool
 }
 
 impl GraphQLClientCodegenOptions {
@@ -67,6 +69,7 @@ impl GraphQLClientCodegenOptions {
             custom_scalars_module: Default::default(),
             extern_enums: Default::default(),
             fragments_other_variant: Default::default(),
+            serde_enum_fallback_variant_name: Default::default(),
             skip_serializing_none: Default::default(),
         }
     }
@@ -216,6 +219,16 @@ impl GraphQLClientCodegenOptions {
     /// Get a reference to the graphql client codegen options's fragments other variant.
     pub fn fragments_other_variant(&self) -> &bool {
         &self.fragments_other_variant
+    }
+
+    /// Set the graphql client codegen option's serde_enum_fallback_variant_name
+    pub fn set_serde_enum_fallback_variant_name(&mut self, serde_enum_fallback_variant_name: Option<String>) {
+        self.serde_enum_fallback_variant_name = serde_enum_fallback_variant_name;
+    }
+
+    /// Get a reference to the graphql client codegen option's serde_enum_fallback_variant_name
+    pub fn serde_enum_fallback_variant_name(&self) -> &Option<String> {
+        &self.serde_enum_fallback_variant_name
     }
 
     /// Set the graphql client codegen option's skip none value.

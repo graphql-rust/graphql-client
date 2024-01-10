@@ -64,7 +64,7 @@ fn fragments_other_variant_should_generate_unknown_other_variant() {
         .to_token_stream()
         .expect("Generate foobars module");
         let generated_code = generated_tokens.to_string();
-
+        
         let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
         match r {
             Ok(_) => {
@@ -152,6 +152,49 @@ fn skip_serializing_none_should_generate_serde_skip_serializing() {
             Ok(_) => {
                 println!("{}", generated_code);
                 assert!(generated_code.contains("skip_serializing_if"));
+            }
+            Err(e) => {
+                panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
+            }
+        };
+    }
+}
+
+#[test]
+fn serde_enum_custom_fallback_name() {
+    let query_string = include_str!("keywords_query.graphql");
+    let query = graphql_parser::parse_query::<&str>(query_string).expect("Parse keywords query");
+    let schema = graphql_parser::parse_schema(include_str!("keywords_schema.graphql"))
+        .expect("Parse keywords schema")
+        .into_static();
+    let schema = Schema::from(schema);
+
+    let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
+
+    options.set_serde_enum_fallback_variant_name(Some("Autre".to_string()));
+
+    let query = crate::query::resolve(&schema, &query).unwrap();
+
+    for (_id, operation) in query.operations() {
+        let generated_tokens = generated_module::GeneratedModule {
+            query_string,
+            schema: &schema,
+            operation: &operation.name,
+            resolved_query: &query,
+            options: &options,
+        }
+        .to_token_stream()
+        .expect("Generate keywords module");
+
+        let generated_code = generated_tokens.to_string();
+
+        let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
+
+        match r {
+            Ok(_) => {
+                println!("{}", generated_code);
+                assert!(!generated_code.contains("Other (String)"));
+                assert!(generated_code.contains("Autre (String)"));
             }
             Err(e) => {
                 panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
