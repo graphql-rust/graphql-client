@@ -1,0 +1,12 @@
+schema {
+  query: TestQuery
+}
+
+type TestQuery {
+  currentUser: TestUser
+}
+
+type TestUser {
+  name: String
+  id: ID
+}
