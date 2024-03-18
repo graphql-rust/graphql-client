@@ -2409,7 +2409,7 @@ type IssueTimelineConnection {
 
 "An item in an issue timeline"
 union IssueTimelineItem =
-    AssignedEvent
+  | AssignedEvent
   | ClosedEvent
   | Commit
   | CrossReferencedEvent
@@ -5008,7 +5008,7 @@ type PullRequestTimelineConnection {
 
 "An item in an pull request timeline"
 union PullRequestTimelineItem =
-    AssignedEvent
+  | AssignedEvent
   | BaseRefForcePushedEvent
   | ClosedEvent
   | Commit
@@ -6939,7 +6939,7 @@ type ReviewRequestedEvent implements Node {
 
 "The results of a search."
 union SearchResultItem =
-    Issue
+  | Issue
   | MarketplaceListing
   | Organization
   | PullRequest
