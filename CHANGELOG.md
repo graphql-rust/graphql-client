@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.14.0 - 2024-03-18
+
+- Add support for GraphQL’s `extend type` directive
+- Expose `generate_module_token_stream_from_string` to allow custom macro wrappers
+
 ## 0.13.0 - 2023-05-25
 
 - Add support for `@oneOf`
