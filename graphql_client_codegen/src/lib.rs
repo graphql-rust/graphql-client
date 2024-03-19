@@ -82,7 +82,7 @@ fn get_set_schema_from_file(schema_path: &std::path::Path) -> Schema {
             .unwrap_or("<no extension>");
         let schema_string = read_file(schema_path).unwrap();
         match schema_extension {
-            "graphql" | "gql" => {
+            "graphql" | "graphqls"| "gql" => {
                 let s = graphql_parser::schema::parse_schema::<&str>(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error))).unwrap();
                 Schema::from(s)
             }
@@ -90,7 +90,7 @@ fn get_set_schema_from_file(schema_path: &std::path::Path) -> Schema {
                 let parsed: graphql_introspection_query::introspection_response::IntrospectionResponse = serde_json::from_str(&schema_string).unwrap();
                 Schema::from(parsed)
             }
-            extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json and .graphql are supported)", extension)
+            extension => panic!("Unsupported extension for the GraphQL schema: {} (only .json, .graphql, .graphqls and .gql are supported)", extension)
         }
     })
 }
