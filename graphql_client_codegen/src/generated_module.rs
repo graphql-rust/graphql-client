@@ -104,7 +104,7 @@ impl<'a> GeneratedModule<'a> {
                 type Variables = #module_name::Variables;
                 type ResponseData = #module_name::ResponseData;
 
-                fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
+                fn build_query(variables: Self::Variables) -> graphql_client::QueryBody<Self::Variables> {
                     graphql_client::QueryBody {
                         variables,
                         query: #module_name::QUERY,
