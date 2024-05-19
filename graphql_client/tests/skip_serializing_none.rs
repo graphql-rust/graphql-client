@@ -13,7 +13,10 @@ fn skip_serializing_none() {
     use skip_serializing_none_mutation::*;
 
     let query = SkipSerializingNoneMutation::build_query(Variables {
-        foo: None,
+        optional_int: None,
+        optional_list: None,
+        non_optional_int: 1337,
+        non_optional_list: vec![],
         param: Some(Param {
             data: Author {
                 name: "test".to_owned(),
@@ -26,10 +29,17 @@ fn skip_serializing_none() {
 
     println!("{}", stringified);
 
-    assert!(stringified.contains(r#""variables":{"param":{"data":{"name":"test"}}}"#));
+    assert!(stringified.contains(r#""param":{"data":{"name":"test"}}"#));
+    assert!(stringified.contains(r#""nonOptionalInt":1337"#));
+    assert!(stringified.contains(r#""nonOptionalList":[]"#));
+    assert!(!stringified.contains(r#""optionalInt""#));
+    assert!(!stringified.contains(r#""optionalLint""#));
 
     let query = SkipSerializingNoneMutation::build_query(Variables {
-        foo: Some(42),
+        optional_int: Some(42),
+        optional_list: Some(vec![]),
+        non_optional_int: 1337,
+        non_optional_list: vec![],
         param: Some(Param {
             data: Author {
                 name: "test".to_owned(),
@@ -39,5 +49,9 @@ fn skip_serializing_none() {
     });
     let stringified = serde_json::to_string(&query).expect("SkipSerializingNoneMutation is valid");
     println!("{}", stringified);
-    assert!(stringified.contains(r#""variables":{"param":{"data":{"name":"test"}},"foo":42}"#));
+    assert!(stringified.contains(r#""param":{"data":{"name":"test"}}"#));
+    assert!(stringified.contains(r#""nonOptionalInt":1337"#));
+    assert!(stringified.contains(r#""nonOptionalList":[]"#));
+    assert!(stringified.contains(r#""optionalInt":42"#));
+    assert!(stringified.contains(r#""optionalList":[]"#));
 }
