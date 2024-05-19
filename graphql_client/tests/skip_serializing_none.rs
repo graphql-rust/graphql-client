@@ -33,7 +33,7 @@ fn skip_serializing_none() {
     assert!(stringified.contains(r#""nonOptionalInt":1337"#));
     assert!(stringified.contains(r#""nonOptionalList":[]"#));
     assert!(!stringified.contains(r#""optionalInt""#));
-    assert!(!stringified.contains(r#""optionalLint""#));
+    assert!(!stringified.contains(r#""optionalList""#));
 
     let query = SkipSerializingNoneMutation::build_query(Variables {
         optional_int: Some(42),
