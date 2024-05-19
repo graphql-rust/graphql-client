@@ -135,10 +135,19 @@ fn generate_variable_struct_field(
     let snake_case_name = variable.name.to_snake_case();
     let safe_name = shared::keyword_replace(&snake_case_name);
     let ident = Ident::new(&safe_name, Span::call_site());
-    let annotation = shared::field_rename_annotation(&variable.name, &safe_name);
+    let rename_annotation = shared::field_rename_annotation(&variable.name, &safe_name);
+    let skip_serializing_annotation = if *options.skip_serializing_none() {
+        if variable.r#type.qualifiers.first() != Some(&GraphqlTypeQualifier::Required) {
+            Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
+        } else {
+            None
+        }
+    } else {
+        None
+    };
     let r#type = render_variable_field_type(variable, options, query);
 
-    quote::quote!(#annotation pub #ident : #r#type)
+    quote::quote!(#skip_serializing_annotation #rename_annotation pub #ident : #r#type)
 }
 
 fn generate_scalar_definitions<'a, 'schema: 'a>(

@@ -1,4 +1,4 @@
-mutation SkipSerializingNoneMutation($param: Param) {
+mutation SkipSerializingNoneMutation($param: Param, $foo: Int) {
   optInput(query: $param) {
     name
     __typename
