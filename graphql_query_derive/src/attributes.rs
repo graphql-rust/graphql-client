@@ -122,6 +122,10 @@ pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, sy
         .map_err(|_| syn::Error::new_spanned(ast, NORMALIZATION_ERROR))
 }
 
+pub fn extract_skip_default_scalars(ast: &syn::DeriveInput) -> bool {
+    ident_exists(ast, "skip_default_scalars").is_ok()
+}
+
 pub fn extract_fragments_other_variant(ast: &syn::DeriveInput) -> bool {
     extract_attr(ast, "fragments_other_variant")
         .ok()

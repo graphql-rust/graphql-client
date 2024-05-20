@@ -36,6 +36,21 @@ pub(crate) fn response_for_query(
         &query,
     );
 
+    let default_scalar_definitions = if *options.skip_default_scalars() {
+        quote!()
+    } else {
+        quote! {
+            #[allow(dead_code)]
+            type Boolean = bool;
+            #[allow(dead_code)]
+            type Float = f64;
+            #[allow(dead_code)]
+            type Int = i64;
+            #[allow(dead_code)]
+            type ID = String;
+        }
+    };
+
     let variables_struct =
         generate_variables_struct(operation_id, &variable_derives, options, &query);
 
@@ -46,14 +61,7 @@ pub(crate) fn response_for_query(
         use serde::{Serialize, Deserialize};
         use super::*;
 
-        #[allow(dead_code)]
-        type Boolean = bool;
-        #[allow(dead_code)]
-        type Float = f64;
-        #[allow(dead_code)]
-        type Int = i64;
-        #[allow(dead_code)]
-        type ID = String;
+        #default_scalar_definitions
 
         #(#scalar_definitions)*
 
@@ -147,7 +155,7 @@ fn generate_scalar_definitions<'a, 'schema: 'a>(
     query: BoundQuery<'schema>,
 ) -> impl Iterator<Item = TokenStream> + 'a {
     all_used_types
-        .scalars(query.schema)
+        .scalars(query.schema, *options.skip_default_scalars())
         .map(move |(_id, scalar)| {
             let ident = syn::Ident::new(
                 options.normalization().scalar_name(&scalar.name).as_ref(),
