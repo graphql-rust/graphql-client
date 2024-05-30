@@ -11,7 +11,7 @@ use crate::{
 };
 use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use selection::*;
 use std::collections::BTreeMap;
 
@@ -21,6 +21,8 @@ pub(crate) fn response_for_query(
     options: &GraphQLClientCodegenOptions,
     query: BoundQuery<'_>,
 ) -> Result<TokenStream, GeneralError> {
+    let serde = options.serde_path();
+
     let all_used_types = all_used_types(operation_id, &query);
     let response_derives = render_derives(options.all_response_derives());
     let variable_derives = render_derives(options.all_variable_derives());
@@ -43,7 +45,7 @@ pub(crate) fn response_for_query(
         render_response_data_fields(operation_id, options, &query).render(&response_derives);
 
     let q = quote! {
-        use serde::{Serialize, Deserialize};
+        use #serde::{Serialize, Deserialize};
         use super::*;
 
         #[allow(dead_code)]
@@ -77,9 +79,13 @@ fn generate_variables_struct(
     options: &GraphQLClientCodegenOptions,
     query: &BoundQuery<'_>,
 ) -> TokenStream {
+    let serde = options.serde_path();
+    let serde_path = serde.to_token_stream().to_string();
+
     if operation_has_no_variables(operation_id, query.query) {
         return quote!(
             #variable_derives
+            #[serde(crate = #serde_path)]
             pub struct Variables;
         );
     }
@@ -115,6 +121,7 @@ fn generate_variables_struct(
 
     let variables_struct = quote!(
         #variable_derives
+        #[serde(crate = #serde_path)]
         pub struct Variables {
             #(#variable_fields,)*
         }
