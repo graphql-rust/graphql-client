@@ -16,7 +16,7 @@ use crate::{
 };
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use std::borrow::Cow;
 
 pub(crate) fn render_response_data_fields<'a>(
@@ -433,7 +433,7 @@ impl ExpandedField<'_> {
                 (Some(msg), DeprecationStrategy::Warn) => {
                     let optional_msg = msg.map(|msg| quote!((note = #msg)));
 
-                    Some(quote!(#[deprecated#optional_msg]))
+                    Some(quote!(#[deprecated #optional_msg]))
                 }
                 (Some(_), DeprecationStrategy::Deny) => return None,
             };
@@ -532,6 +532,9 @@ impl<'a> ExpandedSelection<'a> {
     }
 
     pub fn render(&self, response_derives: &impl quote::ToTokens) -> TokenStream {
+        let serde = self.options.serde_path();
+        let serde_path = serde.to_token_stream().to_string();
+
         let mut items = Vec::with_capacity(self.types.len());
 
         for (type_id, ty) in self.types() {
@@ -600,6 +603,7 @@ impl<'a> ExpandedSelection<'a> {
 
             let tokens = quote! {
                 #response_derives
+                #[serde(crate = #serde_path)]
                 pub struct #struct_name {
                     #(#fields,)*
                     #on_field

@@ -7,7 +7,6 @@ edition = "2018"
 [dev-dependencies]
 anyhow = "1.0"
 graphql_client = { path = "../../graphql_client", features = ["reqwest-blocking"] }
-serde = "^1.0"
 reqwest = { version = "0.12", features = ["json", "blocking"] }
 prettytable-rs = "^0.10.0"
 clap = { version = "^3.0", features = ["derive"] }
