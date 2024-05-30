@@ -7,7 +7,7 @@ use crate::{
 };
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 
 pub(super) fn generate_input_object_definitions(
     all_used_types: &UsedTypes,
@@ -33,6 +33,9 @@ fn generate_struct(
     variable_derives: &impl quote::ToTokens,
     query: &BoundQuery<'_>,
 ) -> TokenStream {
+    let serde = options.serde_path();
+    let serde_path = serde.to_token_stream().to_string();
+
     let normalized_name = options.normalization().input_name(input.name.as_str());
     let safe_name = keyword_replace(normalized_name);
     let struct_name = Ident::new(safe_name.as_ref(), Span::call_site());
@@ -71,6 +74,7 @@ fn generate_struct(
 
     quote! {
         #variable_derives
+        #[serde(crate = #serde_path)]
         pub struct #struct_name{
             #(#fields,)*
         }

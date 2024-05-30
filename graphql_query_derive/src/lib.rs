@@ -104,6 +104,7 @@ fn build_graphql_client_derive_options(
     options.set_struct_ident(input.ident.clone());
     options.set_module_visibility(input.vis.clone());
     options.set_operation_name(input.ident.to_string());
+    options.set_serde_path(syn::parse_quote!(graphql_client::_private::serde));
 
     Ok(options)
 }
