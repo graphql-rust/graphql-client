@@ -26,7 +26,10 @@ pub use graphql_query_derive::*;
 #[cfg(any(
     feature = "reqwest",
     feature = "reqwest-rustls",
-    feature = "reqwest-blocking"
+    feature = "reqwest-blocking",
+    feature = "reqwest11",
+    feature = "reqwest11-rustls",
+    feature = "reqwest11-blocking"
 ))]
 pub mod reqwest;
 

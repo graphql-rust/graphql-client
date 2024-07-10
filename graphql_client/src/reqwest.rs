@@ -1,10 +1,19 @@
 //! A concrete client implementation over HTTP with reqwest.
 
 use crate::GraphQLQuery;
+
+#[cfg(all(feature = "reqwest11-crate", not(feature = "reqwest-crate")))]
+use reqwest11_crate as reqwest;
+#[cfg(feature = "reqwest-crate")]
 use reqwest_crate as reqwest;
 
 /// Use the provided reqwest::Client to post a GraphQL request.
-#[cfg(any(feature = "reqwest", feature = "reqwest-rustls"))]
+#[cfg(any(
+    feature = "reqwest",
+    feature = "reqwest-rustls",
+    feature = "reqwest11",
+    feature = "reqwest11-rustls"
+))]
 pub async fn post_graphql<Q: GraphQLQuery, U: reqwest::IntoUrl>(
     client: &reqwest::Client,
     url: U,
@@ -17,7 +26,7 @@ pub async fn post_graphql<Q: GraphQLQuery, U: reqwest::IntoUrl>(
 }
 
 /// Use the provided reqwest::Client to post a GraphQL request.
-#[cfg(feature = "reqwest-blocking")]
+#[cfg(any(feature = "reqwest-blocking", feature = "reqwest11-blocking"))]
 pub fn post_graphql_blocking<Q: GraphQLQuery, U: reqwest::IntoUrl>(
     client: &reqwest::blocking::Client,
     url: U,
