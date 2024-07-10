@@ -24,12 +24,12 @@ extern crate graphql_query_derive;
 pub use graphql_query_derive::*;
 
 #[cfg(any(
-    feature = "reqwest",
-    feature = "reqwest-rustls",
-    feature = "reqwest-blocking",
     feature = "reqwest11",
     feature = "reqwest11-rustls",
-    feature = "reqwest11-blocking"
+    feature = "reqwest11-blocking",
+    feature = "reqwest12",
+    feature = "reqwest12-rustls",
+    feature = "reqwest12-blocking",
 ))]
 pub mod reqwest;
 

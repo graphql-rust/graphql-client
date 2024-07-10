@@ -21,13 +21,13 @@ serde_json = "1.0"
 # Optional dependencies
 graphql_query_derive = { path = "../graphql_query_derive", version = "0.14.0", optional = true }
 reqwest11-crate = { package = "reqwest", version = "^0.11", features = ["json"], default-features = false, optional = true }
-reqwest-crate = { package = "reqwest", version = "^0.12", features = ["json"], default-features = false, optional = true }
+reqwest12-crate = { package = "reqwest", version = "^0.12", features = ["json"], default-features = false, optional = true }
 
 [features]
 default = ["graphql_query_derive"]
 reqwest11 = ["reqwest11-crate", "reqwest11-crate/default-tls"]
 reqwest11-rustls = ["reqwest11-crate", "reqwest11-crate/rustls-tls"]
 reqwest11-blocking = ["reqwest11-crate/blocking"]
-reqwest = ["reqwest-crate", "reqwest-crate/default-tls"]
-reqwest-blocking = ["reqwest-crate/blocking"]
-reqwest-rustls = ["reqwest-crate", "reqwest-crate/rustls-tls"]
+reqwest12 = ["reqwest12-crate", "reqwest12-crate/default-tls"]
+reqwest12-blocking = ["reqwest12-crate/blocking"]
+reqwest12-rustls = ["reqwest12-crate", "reqwest12-crate/rustls-tls"]
