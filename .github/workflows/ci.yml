@@ -68,3 +68,13 @@ jobs:
       run: sudo apt update && sudo apt-get install -y nodejs
     - name: Execute prettier
       run: npx prettier --debug-check -l './**/*.json' './**/*.graphql'
+
+  minimal-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@cargo-minimal-versions
+      - run: cargo minimal-versions check --all-features
