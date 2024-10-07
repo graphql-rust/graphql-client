@@ -180,7 +180,7 @@ use graphql_client::GraphQLQuery;
     schema_path = "tests/unions/union_schema.graphql",
     query_path = "tests/unions/union_query.graphql",
 )]
-pub struct UnionQuery;
+pub struct Heights;
 ```
 
 There is an example [in the tests](./graphql_client/tests/operation_selection).
