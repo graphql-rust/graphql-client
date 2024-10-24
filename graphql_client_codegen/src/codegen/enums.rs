@@ -16,6 +16,7 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
     options: &'a GraphQLClientCodegenOptions,
     query: BoundQuery<'schema>,
 ) -> impl Iterator<Item = TokenStream> + 'a {
+    let serde = options.serde_path();
     let traits = options
         .all_response_derives()
         .chain(options.all_variable_derives())
@@ -66,8 +67,8 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
                 Other(String),
             }
 
-            impl ::serde::Serialize for #name {
-                fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+            impl #serde::Serialize for #name {
+                fn serialize<S: #serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
                     ser.serialize_str(match *self {
                         #(#constructors => #variant_str,)*
                         #name::Other(ref s) => &s,
@@ -75,9 +76,9 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
                 }
             }
 
-            impl<'de> ::serde::Deserialize<'de> for #name {
-                fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-                    let s: String = ::serde::Deserialize::deserialize(deserializer)?;
+            impl<'de> #serde::Deserialize<'de> for #name {
+                fn deserialize<D: #serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                    let s: String = #serde::Deserialize::deserialize(deserializer)?;
 
                     match s.as_str() {
                         #(#variant_str => Ok(#constructors),)*
