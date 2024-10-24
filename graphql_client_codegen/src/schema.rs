@@ -11,12 +11,6 @@ use std::collections::{BTreeMap, BTreeSet};
 pub(crate) const DEFAULT_SCALARS: &[&str] = &["ID", "String", "Int", "Float", "Boolean"];
 
 #[derive(Debug, PartialEq, Clone)]
-struct StoredObjectField {
-    name: String,
-    object: ObjectId,
-}
-
-#[derive(Debug, PartialEq, Clone)]
 pub(crate) struct StoredObject {
     pub(crate) name: String,
     pub(crate) fields: Vec<StoredFieldId>,
@@ -47,9 +41,6 @@ pub(crate) enum StoredFieldParent {
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) struct ObjectId(u32);
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
-pub(crate) struct ObjectFieldId(usize);
-
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub(crate) struct InterfaceId(usize);
 
@@ -67,9 +58,6 @@ pub(crate) struct InputId(u32);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct StoredFieldId(usize);
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-struct InputFieldId(usize);
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StoredInterface {
