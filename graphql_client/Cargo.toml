@@ -20,7 +20,7 @@ serde_json = "1.0"
 
 # Optional dependencies
 graphql_query_derive = { path = "../graphql_query_derive", version = "0.14.0", optional = true }
-reqwest-crate = { package = "reqwest", version = "^0.11", features = ["json"], default-features = false, optional = true }
+reqwest-crate = { package = "reqwest", version = ">=0.11, <=0.12", features = ["json"], default-features = false, optional = true }
 
 [features]
 default = ["graphql_query_derive"]
