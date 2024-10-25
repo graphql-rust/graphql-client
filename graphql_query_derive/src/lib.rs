@@ -47,10 +47,18 @@ fn build_query_and_schema_path(input: &syn::DeriveInput) -> Result<(PathBuf, Pat
         )
     })?;
 
-    let query_path = attributes::extract_attr(input, "query_path")?;
+    fn extract_and_expand_attr(input: &syn::DeriveInput, attr: &str) -> Result<String, syn::Error> {
+        let literal = attributes::extract_attr_literal(input, attr)?;
+
+        shellexpand::env(&literal.value())
+            .map(std::borrow::Cow::into_owned)
+            .map_err(|err| syn::Error::new_spanned(literal, err))
+    }
+
+    let query_path = extract_and_expand_attr(input, "query_path")?;
     let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
     let query_path = Path::new(&query_path).to_path_buf();
-    let schema_path = attributes::extract_attr(input, "schema_path")?;
+    let schema_path = extract_and_expand_attr(input, "schema_path")?;
     let schema_path = Path::new(&cargo_manifest_dir).join(schema_path);
     Ok((query_path, schema_path))
 }

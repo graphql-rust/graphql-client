@@ -37,22 +37,22 @@ pub fn ident_exists(ast: &syn::DeriveInput, ident: &str) -> Result<(), syn::Erro
     ))
 }
 
-/// Extract an configuration parameter specified in the `graphql` attribute.
-pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::Error> {
+/// Extract a literal string configuration parameter specified in the `graphql` attribute.
+pub fn extract_attr_literal(ast: &syn::DeriveInput, attr: &str) -> Result<syn::LitStr, syn::Error> {
     let attributes = &ast.attrs;
     let graphql_path = path_to_match();
     let attribute = attributes
         .iter()
         .find(|attr| attr.path == graphql_path)
         .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
-    if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
-        for item in items.nested.iter() {
+    if let syn::Meta::List(items) = attribute.parse_meta().expect("Attribute is well formatted") {
+        for item in items.nested.into_iter() {
             if let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) = item {
                 let syn::MetaNameValue { path, lit, .. } = name_value;
                 if let Some(ident) = path.get_ident() {
                     if ident == attr {
                         if let syn::Lit::Str(lit) = lit {
-                            return Ok(lit.value());
+                            return Ok(lit);
                         }
                     }
                 }
@@ -64,6 +64,11 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::E
         ast,
         format!("Attribute `{}` not found", attr),
     ))
+}
+
+/// Extract an configuration parameter specified in the `graphql` attribute.
+pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::Error> {
+    extract_attr_literal(ast, attr).map(|lit| lit.value())
 }
 
 /// Extract a list of configuration parameter values specified in the `graphql` attribute.
