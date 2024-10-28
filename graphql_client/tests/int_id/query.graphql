@@ -1,0 +1,6 @@
+query MoreDerives {
+  currentUser {
+    name
+    id
+  }
+}
