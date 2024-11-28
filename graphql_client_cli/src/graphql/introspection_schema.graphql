@@ -36,6 +36,12 @@ type __Type {
 
   # NON_NULL and LIST only
   ofType: __Type
+
+  # may be non-null for custom SCALAR, otherwise null.
+  specifiedByURL: String
+
+  # should be non-null for INPUT_OBJECT only
+  isOneOf: Boolean
 }
 
 type __Field {
