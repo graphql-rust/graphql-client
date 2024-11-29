@@ -1,4 +1,4 @@
-query IntrospectionQuery {
+query IntrospectionQuery($isOneOf: Boolean!) {
   __schema {
     queryType {
       name
@@ -27,7 +27,7 @@ fragment FullType on __Type {
   kind
   name
   description
-  isOneOf
+  isOneOf @include(if: $isOneOf)
   fields(includeDeprecated: true) {
     name
     description

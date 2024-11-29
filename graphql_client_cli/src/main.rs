@@ -5,6 +5,7 @@ mod introspect_schema;
 use clap::Parser;
 use env_logger::fmt::{Color, Style, StyledValue};
 use error::Error;
+use introspect_schema::IntrospectionOptions;
 use log::Level;
 use std::path::PathBuf;
 use Cli::Generate;
@@ -34,6 +35,10 @@ enum Cli {
         /// Default value is false.
         #[clap(long = "no-ssl")]
         no_ssl: bool,
+        /// Introspection Options
+        /// is-one-of will include IsOneOf in the introspection query.
+        #[clap(long = "options", action(clap::ArgAction::Append))]
+        options: Option<Vec<IntrospectionOptions>>,
     },
     #[clap(name = "generate")]
     Generate {
@@ -93,12 +98,14 @@ fn main() -> CliResult<()> {
             authorization,
             headers,
             no_ssl,
+            options,
         } => introspect_schema::introspect_schema(
             &schema_location,
             output,
             authorization,
             headers,
             no_ssl,
+            options,
         ),
         Generate {
             variables_derives,
