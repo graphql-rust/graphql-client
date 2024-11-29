@@ -9,7 +9,7 @@ anyhow = "1.0"
 graphql_client = { path = "../../graphql_client", features = ["reqwest-blocking"] }
 serde = "^1.0"
 reqwest = { version = "0.12", features = ["json", "blocking"] }
-prettytable-rs = "^0.7"
+prettytable-rs = "^0.10.0"
 clap = { version = "^3.0", features = ["derive"] }
 log = "^0.4"
 env_logger = "^0.5"
