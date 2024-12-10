@@ -1,11 +1,11 @@
 mod error;
 mod generate;
-mod introspect_schema;
+mod introspection_queries;
+mod introspection_schema;
 
 use clap::Parser;
 use env_logger::fmt::{Color, Style, StyledValue};
 use error::Error;
-use introspect_schema::IntrospectionOptions;
 use log::Level;
 use std::path::PathBuf;
 use Cli::Generate;
@@ -30,15 +30,21 @@ enum Cli {
         /// Specify custom headers.
         /// --header 'X-Name: Value'
         #[clap(long = "header")]
-        headers: Vec<introspect_schema::Header>,
+        headers: Vec<introspection_schema::Header>,
         /// Disable ssl verification.
         /// Default value is false.
         #[clap(long = "no-ssl")]
         no_ssl: bool,
-        /// Introspection Options
-        /// is-one-of will include IsOneOf in the introspection query.
-        #[clap(long = "options", action(clap::ArgAction::Append))]
-        options: Option<Vec<IntrospectionOptions>>,
+        /// Introspection Option: is-one-of will enable the @oneOf directive in the introspection query.
+        /// This is an proposed feature and is not compatible with many GraphQL servers.
+        /// Default value is false.
+        #[clap(long = "is-one-of")]
+        is_one_of: bool,
+        /// Introspection Option: specify-by-url will enable the @specifiedByURL directive in the introspection query.
+        /// This is an proposed feature and is not compatible with many GraphQL servers.
+        /// Default value is false.
+        #[clap(long = "specify-by-url")]
+        specify_by_url: bool,
     },
     #[clap(name = "generate")]
     Generate {
@@ -98,14 +104,16 @@ fn main() -> CliResult<()> {
             authorization,
             headers,
             no_ssl,
-            options,
-        } => introspect_schema::introspect_schema(
+            is_one_of,
+            specify_by_url,
+        } => introspection_schema::introspect_schema(
             &schema_location,
             output,
             authorization,
             headers,
             no_ssl,
-            options,
+            is_one_of,
+            specify_by_url,
         ),
         Generate {
             variables_derives,

@@ -1,24 +1,13 @@
 use crate::error::Error;
 use crate::CliResult;
-use graphql_client::{GraphQLQuery, QueryBody};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
-use serde_json::json;
-use std::fmt;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use clap::ValueEnum;
-use introspection_query::Variables;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "src/graphql/introspection_schema.graphql",
-    query_path = "src/graphql/introspection_query.graphql",
-    response_derives = "Serialize",
-    variable_derives = "Deserialize"
-)]
-#[allow(dead_code)]
-struct IntrospectionQuery;
+use crate::introspection_queries::{
+    introspection_query, introspection_query_with_is_one_of,
+    introspection_query_with_is_one_of_specified_by_url, introspection_query_with_specified_by,
+};
 
 pub fn introspect_schema(
     location: &str,
@@ -26,7 +15,8 @@ pub fn introspect_schema(
     authorization: Option<String>,
     headers: Vec<Header>,
     no_ssl: bool,
-    options: Option<Vec<IntrospectionOptions>>,
+    is_one_of: bool,
+    specify_by_url: bool,
 ) -> CliResult<()> {
     use std::io::Write;
 
@@ -35,8 +25,35 @@ pub fn introspect_schema(
         None => Box::new(std::io::stdout()),
     };
 
-    let request_body: QueryBody<introspection_query::Variables> =
-        IntrospectionQuery::build_query(construct_options(options));
+    let mut request_body: graphql_client::QueryBody<()> = graphql_client::QueryBody {
+        variables: (),
+        query: introspection_query::QUERY,
+        operation_name: introspection_query::OPERATION_NAME,
+    };
+
+    if is_one_of {
+        request_body = graphql_client::QueryBody {
+            variables: (),
+            query: introspection_query_with_is_one_of::QUERY,
+            operation_name: introspection_query_with_is_one_of::OPERATION_NAME,
+        }
+    }
+
+    if specify_by_url {
+        request_body = graphql_client::QueryBody {
+            variables: (),
+            query: introspection_query_with_specified_by::QUERY,
+            operation_name: introspection_query_with_specified_by::OPERATION_NAME,
+        }
+    }
+
+    if is_one_of && specify_by_url {
+        request_body = graphql_client::QueryBody {
+            variables: (),
+            query: introspection_query_with_is_one_of_specified_by_url::QUERY,
+            operation_name: introspection_query_with_is_one_of_specified_by_url::OPERATION_NAME,
+        }
+    }
 
     let client = reqwest::blocking::Client::builder()
         .danger_accept_invalid_certs(no_ssl)
@@ -126,41 +143,6 @@ impl FromStr for Header {
             name: name.to_string(),
             value: value.to_string(),
         })
-    }
-}
-
-#[derive(ValueEnum, Clone, Debug, PartialEq)]
-pub enum IntrospectionOptions {
-    /// Enable the @oneOf directive in the introspection query.
-    IsOneOf,
-    /// SpecifiedBy is is used within the type system definition language to
-    /// provide a scalar specification URL for specifying the behavior of custom scalar types.
-    SpecifiedBy,
-}
-
-fn construct_options(options: Option<Vec<IntrospectionOptions>>) -> introspection_query::Variables {
-    match options {
-        Some(opts) => introspection_query::Variables {
-            is_one_of: opts.contains(&IntrospectionOptions::IsOneOf),
-        },
-        None => introspection_query::Variables { is_one_of: false },
-    }
-}
-
-impl FromStr for IntrospectionOptions {
-    type Err = String;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        match input.to_lowercase().as_str() {
-            "isoneof" => Ok(IntrospectionOptions::IsOneOf),
-            _ => Err(format!("unknown option {:?}", input)),
-        }
-    }
-}
-
-impl fmt::Debug for Variables {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", json!(self))
     }
 }
 
