@@ -391,7 +391,7 @@ struct ExpandedField<'a> {
     boxed: bool,
 }
 
-impl<'a> ExpandedField<'a> {
+impl ExpandedField<'_> {
     fn render(&self, options: &GraphQLClientCodegenOptions) -> Option<TokenStream> {
         let ident = Ident::new(&self.rust_name, Span::call_site());
         let qualified_type = decorate_type(
@@ -457,7 +457,7 @@ struct ExpandedVariant<'a> {
     is_default_variant: bool,
 }
 
-impl<'a> ExpandedVariant<'a> {
+impl ExpandedVariant<'_> {
     fn render(&self) -> TokenStream {
         let name_ident = Ident::new(&self.name, Span::call_site());
         let optional_type_ident = self.variant_type.as_ref().map(|variant_type| {
