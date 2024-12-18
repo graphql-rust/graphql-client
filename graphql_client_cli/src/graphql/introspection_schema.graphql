@@ -36,6 +36,14 @@ type __Type {
 
   # NON_NULL and LIST only
   ofType: __Type
+
+  # may be non-null for custom SCALAR, otherwise null.
+  # https://spec.graphql.org/draft/#sec-Scalars.Custom-Scalars
+  specifiedByURL: String
+  specifiedBy: String
+
+  # should be non-null for INPUT_OBJECT only
+  isOneOf: Boolean
 }
 
 type __Field {

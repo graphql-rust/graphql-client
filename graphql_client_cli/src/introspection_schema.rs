@@ -1,19 +1,13 @@
 use crate::error::Error;
 use crate::CliResult;
-use graphql_client::GraphQLQuery;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
 use std::path::PathBuf;
 use std::str::FromStr;
 
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "src/graphql/introspection_schema.graphql",
-    query_path = "src/graphql/introspection_query.graphql",
-    response_derives = "Serialize",
-    variable_derives = "Deserialize"
-)]
-#[allow(dead_code)]
-struct IntrospectionQuery;
+use crate::introspection_queries::{
+    introspection_query, introspection_query_with_is_one_of,
+    introspection_query_with_is_one_of_specified_by_url, introspection_query_with_specified_by,
+};
 
 pub fn introspect_schema(
     location: &str,
@@ -21,6 +15,8 @@ pub fn introspect_schema(
     authorization: Option<String>,
     headers: Vec<Header>,
     no_ssl: bool,
+    is_one_of: bool,
+    specify_by_url: bool,
 ) -> CliResult<()> {
     use std::io::Write;
 
@@ -29,11 +25,35 @@ pub fn introspect_schema(
         None => Box::new(std::io::stdout()),
     };
 
-    let request_body: graphql_client::QueryBody<()> = graphql_client::QueryBody {
+    let mut request_body: graphql_client::QueryBody<()> = graphql_client::QueryBody {
         variables: (),
         query: introspection_query::QUERY,
         operation_name: introspection_query::OPERATION_NAME,
     };
+
+    if is_one_of {
+        request_body = graphql_client::QueryBody {
+            variables: (),
+            query: introspection_query_with_is_one_of::QUERY,
+            operation_name: introspection_query_with_is_one_of::OPERATION_NAME,
+        }
+    }
+
+    if specify_by_url {
+        request_body = graphql_client::QueryBody {
+            variables: (),
+            query: introspection_query_with_specified_by::QUERY,
+            operation_name: introspection_query_with_specified_by::OPERATION_NAME,
+        }
+    }
+
+    if is_one_of && specify_by_url {
+        request_body = graphql_client::QueryBody {
+            variables: (),
+            query: introspection_query_with_is_one_of_specified_by_url::QUERY,
+            operation_name: introspection_query_with_is_one_of_specified_by_url::OPERATION_NAME,
+        }
+    }
 
     let client = reqwest::blocking::Client::builder()
         .danger_accept_invalid_certs(no_ssl)
