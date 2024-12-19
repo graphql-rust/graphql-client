@@ -32,7 +32,7 @@ pub(crate) struct GeneratedModule<'a> {
     pub options: &'a crate::GraphQLClientCodegenOptions,
 }
 
-impl<'a> GeneratedModule<'a> {
+impl GeneratedModule<'_> {
     /// Generate the items for the variables and the response that will go inside the module.
     fn build_impls(&self) -> Result<TokenStream, BoxError> {
         Ok(crate::codegen::response_for_query(
