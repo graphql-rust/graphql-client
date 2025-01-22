@@ -47,6 +47,8 @@ pub struct GraphQLClientCodegenOptions {
     fragments_other_variant: bool,
     /// Skip Serialization of None values.
     skip_serializing_none: bool,
+    /// Path to the serde crate.
+    serde_path: syn::Path,
 }
 
 impl GraphQLClientCodegenOptions {
@@ -68,6 +70,7 @@ impl GraphQLClientCodegenOptions {
             extern_enums: Default::default(),
             fragments_other_variant: Default::default(),
             skip_serializing_none: Default::default(),
+            serde_path: syn::parse_quote!(::serde),
         }
     }
 
@@ -226,5 +229,15 @@ impl GraphQLClientCodegenOptions {
     /// Get a reference to the graphql client codegen option's skip none value.
     pub fn skip_serializing_none(&self) -> &bool {
         &self.skip_serializing_none
+    }
+
+    /// Set the path to used to resolve serde traits.
+    pub fn set_serde_path(&mut self, path: syn::Path) {
+        self.serde_path = path;
+    }
+
+    /// Get a reference to the path used to resolve serde traits.
+    pub fn serde_path(&self) -> &syn::Path {
+        &self.serde_path
     }
 }

@@ -299,6 +299,12 @@ pub struct Response<Data> {
     pub extensions: Option<HashMap<String, serde_json::Value>>,
 }
 
+/// Hidden module for types used by the codegen crate.
+#[doc(hidden)]
+pub mod _private {
+    pub use ::serde;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
