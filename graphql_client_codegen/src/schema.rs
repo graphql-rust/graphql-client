@@ -381,11 +381,10 @@ impl StoredInputType {
                 TypeId::Input(input_id) => {
                     if used_types.types.contains(&type_id) {
                         continue;
-                    } else {
-                        used_types.types.insert(type_id);
-                        let input = schema.get_input(input_id);
-                        input.used_input_ids_recursive(used_types, schema);
                     }
+                    used_types.types.insert(type_id);
+                    let input = schema.get_input(input_id);
+                    input.used_input_ids_recursive(used_types, schema);
                 }
                 TypeId::Enum(_) | TypeId::Scalar(_) => {
                     used_types.types.insert(type_id);
