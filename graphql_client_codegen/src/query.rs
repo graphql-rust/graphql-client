@@ -252,7 +252,7 @@ fn resolve_union_selection<'doc, T>(
 where
     T: graphql_parser::query::Text<'doc>,
 {
-    for item in selection_set.items.iter() {
+    for item in &selection_set.items {
         match item {
             graphql_parser::query::Selection::Field(field) => {
                 if field.name.as_ref() == TYPENAME_FIELD {
@@ -298,7 +298,7 @@ fn resolve_object_selection<'a, 'doc, T>(
 where
     T: graphql_parser::query::Text<'doc>,
 {
-    for item in selection_set.items.iter() {
+    for item in &selection_set.items {
         match item {
             graphql_parser::query::Selection::Field(field) => {
                 if field.name.as_ref() == TYPENAME_FIELD {

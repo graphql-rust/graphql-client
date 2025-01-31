@@ -4,7 +4,7 @@ use crate::schema::TypeId;
 pub(super) fn validate_typename_presence(
     query: &BoundQuery<'_>,
 ) -> Result<(), QueryValidationError> {
-    for fragment in query.query.fragments.iter() {
+    for fragment in &query.query.fragments {
         let type_id = match fragment.on {
             id @ TypeId::Interface(_) | id @ TypeId::Union(_) => id,
             _ => continue,
