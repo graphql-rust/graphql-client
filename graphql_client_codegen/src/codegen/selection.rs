@@ -521,7 +521,7 @@ impl<'a> ExpandedSelection<'a> {
     }
 
     fn push_type_alias(&mut self, alias: TypeAlias<'a>) {
-        self.aliases.push(alias)
+        self.aliases.push(alias);
     }
 
     fn push_variant(&mut self, variant: ExpandedVariant<'a>) {

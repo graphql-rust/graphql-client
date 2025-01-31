@@ -174,5 +174,5 @@ fn fragment_in_interface() {
                 },
             ])
         }
-    )
+    );
 }

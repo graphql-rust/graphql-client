@@ -328,7 +328,7 @@ mod tests {
                 path: None,
                 extensions: None,
             }
-        )
+        );
     }
 
     #[test]
@@ -363,7 +363,7 @@ mod tests {
                 ]),
                 extensions: None,
             }
-        )
+        );
     }
 
     #[test]
@@ -407,6 +407,6 @@ mod tests {
                 ]),
                 extensions: expected_extensions,
             }
-        )
+        );
     }
 }

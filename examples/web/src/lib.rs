@@ -15,7 +15,7 @@ use wasm_bindgen_futures::future_to_promise;
 struct PuppySmiles;
 
 fn log(s: &str) {
-    web_sys::console::log_1(&JsValue::from_str(s))
+    web_sys::console::log_1(&JsValue::from_str(s));
 }
 
 lazy_static! {
