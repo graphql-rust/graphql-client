@@ -10,3 +10,6 @@ members = [
     # Example crates.
     "examples/*",
 ]
+
+[workspace.package]
+rust-version = "1.64.0"

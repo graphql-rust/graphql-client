@@ -1,0 +1,42 @@
+version: 2
+updates:
+  # bump major and minor updates as soon as available
+  - package-ecosystem: cargo
+    target-branch: main # see https://github.com/dependabot/dependabot-core/issues/1778#issuecomment-1988140219
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-patch"
+
+  # bundle patch updates together on a monthly basis
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      patch-updates:
+        update-types:
+          - patch
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"
+
+  # bump actions as soon as available
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: chore
+      include: scope

@@ -64,15 +64,32 @@ jobs:
           toolchain: ${{ env.clippy_rust_version }}
           components: clippy
       - run: cargo clippy --all --all-targets --all-features -- -D warnings
-      
-  prettier:
-    name: Check prettier
+
+  msrv:
     runs-on: ubuntu-latest
-    if: github.repository == 'graphql-rust/graphql-client'
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
-    - name: Install node.js
-      run: sudo apt update && sudo apt-get install -y nodejs
-    - name: Execute prettier
-      run: npx prettier --debug-check -l './**/*.json' './**/*.graphql'
+      - uses: actions/checkout@master
+      - name: Get MSRV from Cargo.toml
+        run: |
+          MSRV=$(grep 'rust-version' Cargo.toml | sed 's/.*= *"\(.*\)".*/\1/')
+          echo "MSRV=$MSRV" >> $GITHUB_ENV
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.MSRV }}
+      - uses: taiki-e/install-action@cargo-no-dev-deps
+      - run: cargo no-dev-deps check -p graphql_client
+
+  # Automatically merge if it's a Dependabot PR that passes the build
+  dependabot:
+    needs: [test, wasm_build, lint, msrv]
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
