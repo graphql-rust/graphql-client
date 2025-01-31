@@ -1,9 +1,9 @@
 use crate::{
-    codegen_options::*,
+    codegen_options::CodegenMode,
     query::{BoundQuery, OperationId},
     BoxError,
 };
-use heck::*;
+use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::{error::Error, fmt::Display};

@@ -4,9 +4,9 @@
 
 //! Crate for Rust code generation from a GraphQL query, schema, and options.
 
-use lazy_static::*;
+use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
-use quote::*;
+use quote::quote;
 use schema::Schema;
 
 mod codegen;

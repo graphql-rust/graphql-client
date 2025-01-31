@@ -14,7 +14,7 @@ use crate::{
     type_qualifiers::GraphqlTypeQualifier,
     GraphQLClientCodegenOptions,
 };
-use heck::*;
+use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::borrow::Cow;

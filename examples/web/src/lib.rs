@@ -1,5 +1,5 @@
 use graphql_client::{reqwest::post_graphql, GraphQLQuery};
-use lazy_static::*;
+use lazy_static::lazy_static;
 use std::cell::RefCell;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;

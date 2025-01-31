@@ -1,9 +1,9 @@
 use ::reqwest::blocking::Client;
-use anyhow::*;
+use anyhow::{format_err, Ok, Result};
 use clap::Parser;
 use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
-use log::*;
-use prettytable::*;
+use log::info;
+use prettytable::row;
 
 #[allow(clippy::upper_case_acronyms)]
 type URI = String;
