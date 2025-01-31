@@ -93,7 +93,7 @@ jobs:
 
   # Automatically merge if it's a Dependabot PR that passes the build
   dependabot:
-    needs: [test, wasm_build, lint, prettier, msrv]
+    needs: [test, wasm_build, lint, msrv]
     permissions:
       contents: write
       pull-requests: write
