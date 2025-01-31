@@ -45,22 +45,26 @@ jobs:
     - name: Execute cargo build
       run: |
         cargo build --manifest-path=./graphql_client/Cargo.toml --features="reqwest" --target wasm32-unknown-unknown
-  lint:
-    name: Rustfmt and Clippy
+
+  rustfmt:
+    name: Rustfmt
     runs-on: ubuntu-latest
-    if: github.repository == 'graphql-rust/graphql-client'
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
-    - name: Install toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: ${{ env.clippy_rust_version }}
-        components: clippy,rustfmt
-    - name: Execute cargo fmt
-      run: cargo fmt --all -- --check
-    - name: Execute cargo clippy
-      run: cargo clippy --all --all-targets --all-features -- -D warnings
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+    - run: cargo fmt --all -- --check
+
+  lint:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.clippy_rust_version }}
+          components: clippy
+      - run: cargo clippy --all --all-targets --all-features -- -D warnings
+      
   prettier:
     name: Check prettier
     runs-on: ubuntu-latest
