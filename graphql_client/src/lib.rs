@@ -230,7 +230,7 @@ impl Display for Error {
             .locations
             .as_ref()
             .and_then(|locations| locations.iter().next())
-            .cloned()
+            .copied()
             .unwrap_or_default();
 
         write!(f, "{}:{}:{}: {}", path, loc.line, loc.column, self.message)
