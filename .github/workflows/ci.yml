@@ -10,6 +10,9 @@ on:
   schedule:
     - cron:  '0 2 * * *'
 
+env:
+  clippy_rust_version: '1.82'
+
 jobs:
   test:
     strategy:
@@ -52,6 +55,7 @@ jobs:
     - name: Install toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
+        toolchain: ${{ env.clippy_rust_version }}
         components: clippy,rustfmt
     - name: Execute cargo fmt
       run: cargo fmt --all -- --check
