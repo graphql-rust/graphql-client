@@ -609,7 +609,7 @@ impl ResolvedVariable {
 
                 input.used_input_ids_recursive(used_types, schema);
             }
-            type_id @ TypeId::Scalar(_) | type_id @ TypeId::Enum(_) => {
+            type_id @ (TypeId::Scalar(_) | TypeId::Enum(_)) => {
                 used_types.types.insert(type_id);
             }
             _ => (),

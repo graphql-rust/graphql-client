@@ -6,7 +6,7 @@ pub(super) fn validate_typename_presence(
 ) -> Result<(), QueryValidationError> {
     for fragment in &query.query.fragments {
         let type_id = match fragment.on {
-            id @ TypeId::Interface(_) | id @ TypeId::Union(_) => id,
+            id @ (TypeId::Interface(_) | TypeId::Union(_)) => id,
             _ => continue,
         };
 
@@ -25,7 +25,7 @@ pub(super) fn validate_typename_presence(
             .selections()
             .filter_map(|(selection_id, selection)| match selection {
                 Selection::Field(field) => match query.schema.get_field(field.field_id).r#type.id {
-                    id @ TypeId::Interface(_) | id @ TypeId::Union(_) => {
+                    id @ (TypeId::Interface(_) | TypeId::Union(_)) => {
                         Some((selection_id, id, &field.selection_set))
                     }
                     _ => None,
