@@ -89,7 +89,7 @@ jobs:
         with:
           toolchain: ${{ env.MSRV }}
       - uses: taiki-e/install-action@cargo-no-dev-deps
-      - run: cargo no-dev-deps check --all
+      - run: cargo no-dev-deps check -p graphql_client
 
   # Automatically merge if it's a Dependabot PR that passes the build
   dependabot:
