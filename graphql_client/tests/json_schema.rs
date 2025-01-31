@@ -33,7 +33,7 @@ fn json_schemas_work_with_and_without_data_field() {
         serde_json::from_value(response).unwrap();
 
     assert_eq!(
-        format!("{:?}", schema_1_result),
+        format!("{schema_1_result:?}"),
         format!("{:?}", schema_2_result)
     );
 }

@@ -36,7 +36,7 @@ async fn load_more() -> Result<JsValue, JsValue> {
     let response = post_graphql::<PuppySmiles, _>(&client, url, variables)
         .await
         .map_err(|err| {
-            log(&format!("Could not fetch puppies. error: {:?}", err));
+            log(&format!("Could not fetch puppies. error: {err:?}"));
             JsValue::NULL
         })?;
     render_response(response);
@@ -77,7 +77,7 @@ fn add_load_more_button() {
 fn render_response(response: graphql_client::Response<puppy_smiles::ResponseData>) {
     use std::fmt::Write;
 
-    log(&format!("response body\n\n{:?}", response));
+    log(&format!("response body\n\n{response:?}"));
 
     let parent = document().body().expect_throw("no body");
 
@@ -116,8 +116,7 @@ fn render_response(response: graphql_client::Response<puppy_smiles::ResponseData
         .expect_throw("write to string");
     }
     response.set_inner_html(&format!(
-        "<h2>response:</h2><div class=\"container\"><div class=\"row\">{}</div></div>",
-        inner_html
+        "<h2>response:</h2><div class=\"container\"><div class=\"row\">{inner_html}</div></div>"
     ));
     parent
         .append_child(&response)

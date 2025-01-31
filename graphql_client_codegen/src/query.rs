@@ -260,8 +260,7 @@ where
                     parent.add_to_selection_set(query, id);
                 } else {
                     return Err(QueryValidationError::new(format!(
-                        "Invalid field selection on union field ({:?})",
-                        parent
+                        "Invalid field selection on union field ({parent:?})"
                     )));
                 }
             }
@@ -387,8 +386,7 @@ where
         other => {
             if !selection_set.items.is_empty() {
                 return Err(QueryValidationError::new(format!(
-                    "Selection set on non-object, non-interface type. ({:?})",
-                    other
+                    "Selection set on non-object, non-interface type. ({other:?})"
                 )));
             }
         }

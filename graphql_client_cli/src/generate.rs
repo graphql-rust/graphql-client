@@ -91,9 +91,9 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
     }
 
     let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)
-        .map_err(|err| Error::message(format!("Error generating module code: {}", err)))?;
+        .map_err(|err| Error::message(format!("Error generating module code: {err}")))?;
 
-    let generated_code = format!("{}\n{}", WARNING_SUPPRESSION, gen);
+    let generated_code = format!("{WARNING_SUPPRESSION}\n{gen}");
     let generated_code = if !no_formatting {
         format(&generated_code)?
     } else {
@@ -120,7 +120,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
             format!("Creating file at {}", dest_file_path.display()),
         )
     })?;
-    write!(file, "{}", generated_code)?;
+    write!(file, "{generated_code}")?;
 
     Ok(())
 }
@@ -134,7 +134,7 @@ fn format(code: &str) -> CliResult<String> {
         .spawn()
         .map_err(|err| Error::source_with_message(err, "Error spawning rustfmt".to_owned()))?;
     let child_stdin = child.stdin.as_mut().unwrap();
-    write!(child_stdin, "{}", code)?;
+    write!(child_stdin, "{code}")?;
 
     let output = child.wait_with_output()?;
 

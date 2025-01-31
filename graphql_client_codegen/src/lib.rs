@@ -61,7 +61,7 @@ fn get_set_cached<T: Clone>(
 
 fn query_document(query_string: &str) -> Result<QueryDocument, BoxError> {
     let document = graphql_parser::parse_query(query_string)
-        .map_err(|err| GeneralError(format!("Query parser error: {}", err)))?
+        .map_err(|err| GeneralError(format!("Query parser error: {err}")))?
         .into_static();
     Ok(document)
 }
@@ -83,7 +83,7 @@ fn get_set_schema_from_file(schema_path: &std::path::Path) -> Schema {
         let schema_string = read_file(schema_path).unwrap();
         match schema_extension {
             "graphql" | "graphqls"| "gql" => {
-                let s = graphql_parser::schema::parse_schema::<&str>(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error))).unwrap();
+                let s = graphql_parser::schema::parse_schema::<&str>(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {parser_error}"))).unwrap();
                 Schema::from(s)
             }
             "json" => {
@@ -179,8 +179,8 @@ impl Display for ReadFileError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ReadFileError::FileNotFound { path, .. } => {
-                write!(f, "Could not find file with path: {}\n
-                Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".", path)
+                write!(f, "Could not find file with path: {path}\n
+                Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".")
             }
             ReadFileError::ReadError { path, .. } => {
                 f.write_str("Error reading file at: ")?;
@@ -232,8 +232,6 @@ fn derive_operation_not_found_error(
     let available_operations: String = available_operations.join(", ");
 
     format!(
-        "The struct name does not match any defined operation in the query file.\nStruct name: {}\nDefined operations: {}",
-        struct_ident,
-        available_operations,
+        "The struct name does not match any defined operation in the query file.\nStruct name: {struct_ident}\nDefined operations: {available_operations}",
     )
 }

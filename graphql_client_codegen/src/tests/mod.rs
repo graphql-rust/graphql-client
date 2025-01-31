@@ -117,7 +117,7 @@ fn skip_serializing_none_should_generate_serde_skip_serializing() {
 
     match r {
         Ok(_) => {
-            println!("{}", generated_code);
+            println!("{generated_code}");
             assert!(generated_code.contains("skip_serializing_if"));
         }
         Err(e) => {

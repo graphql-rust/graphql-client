@@ -14,10 +14,10 @@ pub struct InterfaceQuery;
 fn interface_deserialization() {
     use interface_query::*;
 
-    println!("{:?}", RESPONSE);
+    println!("{RESPONSE:?}");
     let response_data: interface_query::ResponseData = serde_json::from_str(RESPONSE).unwrap();
 
-    println!("{:?}", response_data);
+    println!("{response_data:?}");
 
     let expected = ResponseData {
         everything: Some(vec![
