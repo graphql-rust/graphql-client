@@ -4,7 +4,10 @@ mod selection;
 mod shared;
 
 use crate::{
-    query::*,
+    query::{
+        all_used_types, operation_has_no_variables, walk_operation_variables, BoundQuery,
+        OperationId, ResolvedVariable, UsedTypes,
+    },
     schema::{InputId, TypeId},
     type_qualifiers::GraphqlTypeQualifier,
     GeneralError, GraphQLClientCodegenOptions,
@@ -12,7 +15,7 @@ use crate::{
 use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
-use selection::*;
+use selection::render_response_data_fields;
 use std::collections::BTreeMap;
 
 /// The main code generation function.
