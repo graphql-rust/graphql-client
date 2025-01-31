@@ -122,8 +122,8 @@ pub enum PathFragment {
 impl Display for PathFragment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            PathFragment::Key(ref key) => write!(f, "{key}"),
-            PathFragment::Index(ref idx) => write!(f, "{idx}"),
+            Self::Key(ref key) => write!(f, "{key}"),
+            Self::Index(ref idx) => write!(f, "{idx}"),
         }
     }
 }

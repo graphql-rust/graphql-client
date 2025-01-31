@@ -38,7 +38,7 @@ impl std::error::Error for QueryValidationError {}
 
 impl QueryValidationError {
     pub(crate) fn new(message: String) -> Self {
-        QueryValidationError { message }
+        Self { message }
     }
 }
 
@@ -49,7 +49,7 @@ pub(crate) struct OperationId(u32);
 
 impl OperationId {
     pub(crate) fn new(idx: usize) -> Self {
-        OperationId(idx as u32)
+        Self(idx as u32)
     }
 }
 

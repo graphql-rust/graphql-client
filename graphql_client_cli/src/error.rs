@@ -9,7 +9,7 @@ pub struct Error {
 impl Error {
     #[track_caller]
     pub fn message(msg: String) -> Self {
-        Error {
+        Self {
             source: None,
             message: Some(msg),
             location: std::panic::Location::caller(),
@@ -21,7 +21,7 @@ impl Error {
         source: impl std::error::Error + Send + Sync + 'static,
         message: String,
     ) -> Self {
-        let mut err = Error::message(message);
+        let mut err = Self::message(message);
         err.source = Some(Box::new(source));
         err
     }
@@ -56,7 +56,7 @@ where
 {
     #[track_caller]
     fn from(err: T) -> Self {
-        Error {
+        Self {
             message: None,
             source: Some(Box::new(err)),
             location: std::panic::Location::caller(),
