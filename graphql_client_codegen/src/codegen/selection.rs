@@ -332,7 +332,7 @@ fn calculate_selection<'a>(
                         );
                     }
                     TypeId::Input(_) => unreachable!("field selection on input type"),
-                };
+                }
             }
             Selection::Typename => (),
             Selection::InlineFragment(_inline) => (),

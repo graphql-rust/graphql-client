@@ -188,7 +188,7 @@ mod test {
         match extract_deprecation_strategy(&parsed) {
             Ok(_) => panic!("parsed unexpectedly"),
             Err(e) => assert_eq!(&format!("{e}"), DEPRECATION_ERROR),
-        };
+        }
     }
 
     #[test]

@@ -67,7 +67,7 @@ pub fn introspect_schema(
 
     if let Some(token) = authorization {
         req_builder = req_builder.bearer_auth(token.as_str());
-    };
+    }
 
     let res = req_builder.json(&request_body).send()?;
 
