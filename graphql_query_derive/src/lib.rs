@@ -70,21 +70,21 @@ fn build_graphql_client_derive_options(
 
     if let Some(variables_derives) = variables_derives {
         options.set_variables_derives(variables_derives);
-    };
+    }
 
     if let Some(response_derives) = response_derives {
         options.set_response_derives(response_derives);
-    };
+    }
 
     // The user can determine what to do about deprecations.
     if let Ok(deprecation_strategy) = attributes::extract_deprecation_strategy(input) {
         options.set_deprecation_strategy(deprecation_strategy);
-    };
+    }
 
     // The user can specify the normalization strategy.
     if let Ok(normalization) = attributes::extract_normalization(input) {
         options.set_normalization(normalization);
-    };
+    }
 
     // The user can give a path to a module that provides definitions for the custom scalars.
     if let Some(custom_scalars_module) = custom_scalars_module {

@@ -76,7 +76,7 @@ where
             .names
             .get("Subscription")
             .and_then(|id| id.as_object_id());
-    };
+    }
 }
 
 fn populate_names_map<'doc, T>(schema: &mut Schema, definitions: &[Definition<'doc, T>])

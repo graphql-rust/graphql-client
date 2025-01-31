@@ -39,7 +39,7 @@ fn schema_with_keywords_works() {
         Err(e) => {
             panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
         }
-    };
+    }
 }
 
 #[test]
@@ -67,7 +67,7 @@ fn fragments_other_variant_should_generate_unknown_other_variant() {
         Err(e) => {
             panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
         }
-    };
+    }
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn fragments_other_variant_false_should_not_generate_unknown_other_variant() {
         Err(e) => {
             panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
         }
-    };
+    }
 }
 
 #[test]
@@ -123,5 +123,5 @@ fn skip_serializing_none_should_generate_serde_skip_serializing() {
         Err(e) => {
             panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
         }
-    };
+    }
 }
