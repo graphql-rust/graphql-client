@@ -12,4 +12,4 @@ members = [
 ]
 
 [workspace.package]
-rust-version = "1.64.0"  # also set in CI
+rust-version = "1.64.0"

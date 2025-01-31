@@ -79,10 +79,29 @@ jobs:
 
   msrv:
     runs-on: ubuntu-latest
-    env:
-      CARGO_NET_GIT_FETCH_WITH_CLI: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@master
+      - name: Get MSRV from Cargo.toml
+        run: |
+          MSRV=$(grep 'rust-version' Cargo.toml | sed 's/.*= *"\(.*\)".*/\1/')
+          echo "MSRV=$MSRV" >> $GITHUB_ENV
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.MSRV }}
       - uses: taiki-e/install-action@cargo-no-dev-deps
-      - uses: dtolnay/rust-toolchain@1.64.0  # also set in Cargo.toml
-      - run: cargo no-dev-deps check -p graphql_client
+      - run: cargo no-dev-deps check --all
+
+  # Automatically merge if it's a Dependabot PR that passes the build
+  dependabot:
+    needs: [test, wasm_build, lint, prettier, msrv]
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
