@@ -53,8 +53,8 @@ pub struct GraphQLClientCodegenOptions {
 
 impl GraphQLClientCodegenOptions {
     /// Creates an empty options object with default params. It probably wants to be configured.
-    pub fn new(mode: CodegenMode) -> GraphQLClientCodegenOptions {
-        GraphQLClientCodegenOptions {
+    pub fn new(mode: CodegenMode) -> Self {
+        Self {
             mode,
             variables_derives: Default::default(),
             response_derives: Default::default(),

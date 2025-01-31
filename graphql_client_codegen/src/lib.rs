@@ -178,11 +178,11 @@ enum ReadFileError {
 impl Display for ReadFileError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReadFileError::FileNotFound { path, .. } => {
+            Self::FileNotFound { path, .. } => {
                 write!(f, "Could not find file with path: {path}\n
                 Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".")
             }
-            ReadFileError::ReadError { path, .. } => {
+            Self::ReadError { path, .. } => {
                 f.write_str("Error reading file at: ")?;
                 f.write_str(path)
             }
@@ -193,8 +193,9 @@ impl Display for ReadFileError {
 impl std::error::Error for ReadFileError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            ReadFileError::FileNotFound { io_error, .. }
-            | ReadFileError::ReadError { io_error, .. } => Some(io_error),
+            Self::FileNotFound { io_error, .. } | Self::ReadError { io_error, .. } => {
+                Some(io_error)
+            }
         }
     }
 }

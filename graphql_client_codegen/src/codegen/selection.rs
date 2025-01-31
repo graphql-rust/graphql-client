@@ -91,7 +91,7 @@ impl<'a> VariantSelection<'a> {
         selection: &'a Selection,
         type_id: TypeId,
         query: &BoundQuery<'a>,
-    ) -> Option<VariantSelection<'a>> {
+    ) -> Option<Self> {
         match selection {
             Selection::InlineFragment(inline_fragment) => {
                 Some(VariantSelection::InlineFragment(inline_fragment))
