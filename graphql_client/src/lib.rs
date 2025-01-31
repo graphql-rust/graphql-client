@@ -30,6 +30,8 @@ pub use graphql_query_derive::*;
 ))]
 pub mod reqwest;
 
+pub mod serde_with;
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{self, Display, Write};
