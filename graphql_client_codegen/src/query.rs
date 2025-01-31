@@ -75,10 +75,10 @@ where
     for definition in &query.definitions {
         match definition {
             graphql_parser::query::Definition::Fragment(fragment) => {
-                resolve_fragment(&mut resolved_query, schema, fragment)?
+                resolve_fragment(&mut resolved_query, schema, fragment)?;
             }
             graphql_parser::query::Definition::Operation(operation) => {
-                resolve_operation(&mut resolved_query, schema, operation)?
+                resolve_operation(&mut resolved_query, schema, operation)?;
             }
         }
     }
@@ -96,7 +96,7 @@ where
                 query: &resolved_query,
                 schema,
             },
-        )?
+        )?;
     }
 
     Ok(resolved_query)
@@ -607,7 +607,7 @@ impl ResolvedVariable {
 
                 let input = schema.get_input(input_id);
 
-                input.used_input_ids_recursive(used_types, schema)
+                input.used_input_ids_recursive(used_types, schema);
             }
             type_id @ TypeId::Scalar(_) | type_id @ TypeId::Enum(_) => {
                 used_types.types.insert(type_id);

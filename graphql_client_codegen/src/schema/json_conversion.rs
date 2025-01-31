@@ -50,7 +50,7 @@ fn convert(src: &mut JsonSchema, schema: &mut Schema) {
     }
 
     for enm in enums_mut(src) {
-        ingest_enum(schema, enm)
+        ingest_enum(schema, enm);
     }
 
     for interface in interfaces_mut(src) {
@@ -62,7 +62,7 @@ fn convert(src: &mut JsonSchema, schema: &mut Schema) {
     }
 
     for unn in unions_mut(src) {
-        ingest_union(schema, unn)
+        ingest_union(schema, unn);
     }
 
     for input in inputs_mut(src) {

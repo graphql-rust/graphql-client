@@ -198,7 +198,7 @@ impl GraphQLClientCodegenOptions {
 
     /// Set the custom scalar definitions module
     pub fn set_custom_scalars_module(&mut self, module: syn::Path) {
-        self.custom_scalars_module = Some(module)
+        self.custom_scalars_module = Some(module);
     }
 
     /// Get the externally defined enums type names
@@ -223,7 +223,7 @@ impl GraphQLClientCodegenOptions {
 
     /// Set the graphql client codegen option's skip none value.
     pub fn set_skip_serializing_none(&mut self, skip_serializing_none: bool) {
-        self.skip_serializing_none = skip_serializing_none
+        self.skip_serializing_none = skip_serializing_none;
     }
 
     /// Get a reference to the graphql client codegen option's skip none value.
