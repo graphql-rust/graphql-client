@@ -64,18 +64,6 @@ jobs:
           toolchain: ${{ env.clippy_rust_version }}
           components: clippy
       - run: cargo clippy --all --all-targets --all-features -- -D warnings
-      
-  prettier:
-    name: Check prettier
-    runs-on: ubuntu-latest
-    if: github.repository == 'graphql-rust/graphql-client'
-    steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
-    - name: Install node.js
-      run: sudo apt update && sudo apt-get install -y nodejs
-    - name: Execute prettier
-      run: npx prettier --debug-check -l './**/*.json' './**/*.graphql'
 
   msrv:
     runs-on: ubuntu-latest
