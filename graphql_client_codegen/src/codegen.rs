@@ -147,10 +147,10 @@ fn generate_variable_struct_field(
     let ident = Ident::new(&safe_name, Span::call_site());
     let rename_annotation = shared::field_rename_annotation(&variable.name, &safe_name);
     let skip_serializing_annotation = if *options.skip_serializing_none() {
-        if variable.r#type.qualifiers.first() != Some(&GraphqlTypeQualifier::Required) {
-            Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
-        } else {
+        if variable.r#type.qualifiers.first() == Some(&GraphqlTypeQualifier::Required) {
             None
+        } else {
+            Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
         }
     } else {
         None
