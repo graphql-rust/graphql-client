@@ -107,7 +107,7 @@ pub fn extract_deprecation_strategy(
         .to_lowercase()
         .as_str()
         .parse()
-        .map_err(|_| syn::Error::new_spanned(ast, DEPRECATION_ERROR.to_owned()))
+        .map_err(|()| syn::Error::new_spanned(ast, DEPRECATION_ERROR.to_owned()))
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
@@ -116,7 +116,7 @@ pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, sy
         .to_lowercase()
         .as_str()
         .parse()
-        .map_err(|_| syn::Error::new_spanned(ast, NORMALIZATION_ERROR))
+        .map_err(|()| syn::Error::new_spanned(ast, NORMALIZATION_ERROR))
 }
 
 pub fn extract_fragments_other_variant(ast: &syn::DeriveInput) -> bool {
