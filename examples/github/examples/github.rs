@@ -52,7 +52,7 @@ fn main() -> Result<(), anyhow::Error> {
         .default_headers(
             std::iter::once((
                 reqwest::header::AUTHORIZATION,
-                reqwest::header::HeaderValue::from_str(&format!("Bearer {}", github_api_token))
+                reqwest::header::HeaderValue::from_str(&format!("Bearer {github_api_token}"))
                     .unwrap(),
             ))
             .collect(),

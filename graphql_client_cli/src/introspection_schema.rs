@@ -80,9 +80,9 @@ pub fn introspect_schema(
         let error_message = match res.text() {
             Ok(msg) => match serde_json::from_str::<serde_json::Value>(&msg) {
                 Ok(json) => format!("HTTP {}\n{}", status, serde_json::to_string_pretty(&json)?),
-                Err(_) => format!("HTTP {}: {}", status, msg),
+                Err(_) => format!("HTTP {status}: {msg}"),
             },
-            Err(_) => format!("HTTP {}", status),
+            Err(_) => format!("HTTP {status}"),
         };
         return Err(Error::message(error_message));
     }
@@ -113,8 +113,7 @@ impl FromStr for Header {
         // error: colon required for name/value pair
         if !input.contains(':') {
             return Err(format!(
-                "Invalid header input. A colon is required to separate the name and value. [{}]",
-                input
+                "Invalid header input. A colon is required to separate the name and value. [{input}]"
             ));
         }
 
@@ -126,16 +125,14 @@ impl FromStr for Header {
         // error: field name must be
         if name.is_empty() {
             return Err(format!(
-                "Invalid header input. Field name is required before colon. [{}]",
-                input
+                "Invalid header input. Field name is required before colon. [{input}]"
             ));
         }
 
         // error: no whitespace in field name
         if name.split_whitespace().count() > 1 {
             return Err(format!(
-                "Invalid header input. Whitespace not allowed in field name. [{}]",
-                input
+                "Invalid header input. Whitespace not allowed in field name. [{input}]"
             ));
         }
 
@@ -196,12 +193,7 @@ mod tests {
             let header = Header::from_str(input);
 
             assert!(header.is_ok(), "Expected ok: [{}]", input);
-            assert_eq!(
-                header.unwrap(),
-                **expected,
-                "Expected equality: [{}]",
-                input
-            );
+            assert_eq!(header.unwrap(), **expected, "Expected equality: [{input}]");
         }
     }
 }

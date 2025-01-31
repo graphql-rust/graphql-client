@@ -32,10 +32,7 @@ fn graphql_query_derive_inner(
     generate_module_token_stream(query_path, &schema_path, options)
         .map(Into::into)
         .map_err(|err| {
-            syn::Error::new_spanned(
-                ast,
-                format!("Failed to generate GraphQLQuery impl: {}", err),
-            )
+            syn::Error::new_spanned(ast, format!("Failed to generate GraphQLQuery impl: {err}"))
         })
 }
 
@@ -48,7 +45,7 @@ fn build_query_and_schema_path(input: &syn::DeriveInput) -> Result<(PathBuf, Pat
     })?;
 
     let query_path = attributes::extract_attr(input, "query_path")?;
-    let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
+    let query_path = format!("{cargo_manifest_dir}/{query_path}");
     let query_path = Path::new(&query_path).to_path_buf();
     let schema_path = attributes::extract_attr(input, "schema_path")?;
     let schema_path = Path::new(&cargo_manifest_dir).join(schema_path);

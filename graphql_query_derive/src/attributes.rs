@@ -33,7 +33,7 @@ pub fn ident_exists(ast: &syn::DeriveInput, ident: &str) -> Result<(), syn::Erro
 
     Err(syn::Error::new_spanned(
         ast,
-        format!("Ident `{}` not found", ident),
+        format!("Ident `{ident}` not found"),
     ))
 }
 
@@ -62,7 +62,7 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::E
 
     Err(syn::Error::new_spanned(
         ast,
-        format!("Attribute `{}` not found", attr),
+        format!("Attribute `{attr}` not found"),
     ))
 }
 
@@ -187,7 +187,7 @@ mod test {
         let parsed = syn::parse_str(input).unwrap();
         match extract_deprecation_strategy(&parsed) {
             Ok(_) => panic!("parsed unexpectedly"),
-            Err(e) => assert_eq!(&format!("{}", e), DEPRECATION_ERROR),
+            Err(e) => assert_eq!(&format!("{e}"), DEPRECATION_ERROR),
         };
     }
 
