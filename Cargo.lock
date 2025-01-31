@@ -458,7 +458,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "syn 1.0.109",
+ "syn 2.0.96",
 ]
 
 [[package]]
@@ -473,7 +473,7 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
- "syn 1.0.109",
+ "syn 2.0.96",
 ]
 
 [[package]]
@@ -482,7 +482,7 @@ version = "0.14.0"
 dependencies = [
  "graphql_client_codegen",
  "proc-macro2",
- "syn 1.0.109",
+ "syn 2.0.96",
 ]
 
 [[package]]
