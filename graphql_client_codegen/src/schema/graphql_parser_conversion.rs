@@ -179,7 +179,7 @@ fn ingest_object<'doc, T>(
         .unwrap();
     let mut field_ids = Vec::with_capacity(obj.fields.len());
 
-    for field in obj.fields.iter_mut() {
+    for field in &mut obj.fields {
         let field = super::StoredField {
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),
@@ -216,7 +216,7 @@ fn ingest_object_type_extension<'doc, T>(
         .unwrap();
     let mut field_ids = Vec::with_capacity(ext.fields.len());
 
-    for field in ext.fields.iter_mut() {
+    for field in &mut ext.fields {
         let field = super::StoredField {
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),
@@ -285,7 +285,7 @@ fn ingest_interface<'doc, T>(
 
     let mut field_ids = Vec::with_capacity(interface.fields.len());
 
-    for field in interface.fields.iter_mut() {
+    for field in &mut interface.fields {
         let field = super::StoredField {
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),
