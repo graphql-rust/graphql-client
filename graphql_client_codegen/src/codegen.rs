@@ -326,17 +326,16 @@ where
         .map(|(name, r#type)| {
             let field_name = Ident::new(name, Span::call_site());
             let provided_value = object_map.get(name);
-            match provided_value {
-                Some(default_value) => {
-                    let value = graphql_parser_value_to_literal(
-                        default_value,
-                        r#type.id,
-                        r#type.is_optional(),
-                        query,
-                    );
-                    quote!(#field_name: #value)
-                }
-                None => quote!(#field_name: None),
+            if let Some(default_value) = provided_value {
+                let value = graphql_parser_value_to_literal(
+                    default_value,
+                    r#type.id,
+                    r#type.is_optional(),
+                    query,
+                );
+                quote!(#field_name: #value)
+            } else {
+                quote!(#field_name: None)
             }
         })
         .collect();
