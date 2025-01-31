@@ -94,10 +94,10 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
         .map_err(|err| Error::message(format!("Error generating module code: {err}")))?;
 
     let generated_code = format!("{WARNING_SUPPRESSION}\n{gen}");
-    let generated_code = if !no_formatting {
-        format(&generated_code)?
-    } else {
+    let generated_code = if no_formatting {
         generated_code
+    } else {
+        format(&generated_code)?
     };
 
     let query_file_name: OsString =

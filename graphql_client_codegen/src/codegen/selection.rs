@@ -598,7 +598,9 @@ impl<'a> ExpandedSelection<'a> {
                 continue;
             }
 
-            let (on_field, on_enum) = if !on_variants.is_empty() {
+            let (on_field, on_enum) = if on_variants.is_empty() {
+                (None, None)
+            } else {
                 let enum_name = Ident::new(&format!("{}On", ty.name), Span::call_site());
 
                 let on_field = quote!(#[serde(flatten)] pub on: #enum_name);
@@ -612,8 +614,6 @@ impl<'a> ExpandedSelection<'a> {
                 );
 
                 (Some(on_field), Some(on_enum))
-            } else {
-                (None, None)
             };
 
             let tokens = quote! {

@@ -24,10 +24,10 @@ pub(crate) fn keyword_replace<'a>(needle: impl Into<Cow<'a, str>>) -> Cow<'a, st
 /// the equivalent rust name, produces a serde annotation to map them during
 /// (de)serialization if it is necessary, otherwise an empty TokenStream.
 pub(crate) fn field_rename_annotation(graphql_name: &str, rust_name: &str) -> Option<TokenStream> {
-    if graphql_name != rust_name {
-        Some(quote!(#[serde(rename = #graphql_name)]))
-    } else {
+    if graphql_name == rust_name {
         None
+    } else {
+        Some(quote!(#[serde(rename = #graphql_name)]))
     }
 }
 
