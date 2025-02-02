@@ -42,7 +42,7 @@ impl GeneratedModule<'_> {
                 query: self.resolved_query,
                 schema: self.schema,
             },
-        )?)
+        ))
     }
 
     fn root(&self) -> Result<OperationId, OperationNotFound> {

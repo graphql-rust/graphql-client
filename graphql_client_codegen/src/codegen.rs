@@ -10,7 +10,7 @@ use crate::{
     },
     schema::{InputId, TypeId},
     type_qualifiers::GraphqlTypeQualifier,
-    GeneralError, GraphQLClientCodegenOptions,
+    GraphQLClientCodegenOptions,
 };
 use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -23,7 +23,7 @@ pub(crate) fn response_for_query(
     operation_id: OperationId,
     options: &GraphQLClientCodegenOptions,
     query: BoundQuery<'_>,
-) -> Result<TokenStream, GeneralError> {
+) -> TokenStream {
     let serde = options.serde_path();
 
     let all_used_types = all_used_types(operation_id, &query);
@@ -47,7 +47,7 @@ pub(crate) fn response_for_query(
     let definitions =
         render_response_data_fields(operation_id, options, &query).render(&response_derives);
 
-    let q = quote! {
+    quote! {
         use #serde::{Serialize, Deserialize};
         use super::*;
 
@@ -71,9 +71,7 @@ pub(crate) fn response_for_query(
         #(#fragment_definitions)*
 
         #definitions
-    };
-
-    Ok(q)
+    }
 }
 
 fn generate_variables_struct(
