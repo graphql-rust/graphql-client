@@ -172,7 +172,7 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
                 schema,
                 &mut field.type_.as_mut().expect("take field type").type_ref,
             ),
-            deprecation: if let Some(true) = field.is_deprecated {
+            deprecation: if field.is_deprecated == Some(true) {
                 Some(field.deprecation_reason.clone())
             } else {
                 None
@@ -207,7 +207,7 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
                 schema,
                 &mut field.type_.as_mut().expect("take field type").type_ref,
             ),
-            deprecation: if let Some(true) = field.is_deprecated {
+            deprecation: if field.is_deprecated == Some(true) {
                 Some(field.deprecation_reason.clone())
             } else {
                 None

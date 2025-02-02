@@ -362,15 +362,12 @@ impl Schema {
     }
 
     fn find_type_id(&self, type_name: &str) -> TypeId {
-        match self.names.get(type_name) {
-            Some(id) => *id,
-            None => {
-                panic!(
-                    "graphql-client-codegen internal error: failed to resolve TypeId for `{}°.",
-                    type_name
-                );
-            }
-        }
+        self.names.get(type_name).copied().unwrap_or_else(|| {
+            panic!(
+                "graphql-client-codegen internal error: failed to resolve TypeId for `{}°.",
+                type_name
+            )
+        })
     }
 }
 
