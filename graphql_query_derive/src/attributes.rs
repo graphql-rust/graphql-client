@@ -20,7 +20,7 @@ pub fn ident_exists(ast: &syn::DeriveInput, ident: &str) -> Result<(), syn::Erro
         .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
 
     if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
-        for item in items.nested.iter() {
+        for item in &items.nested {
             if let syn::NestedMeta::Meta(syn::Meta::Path(path)) = item {
                 if let Some(ident_) = path.get_ident() {
                     if ident_ == ident {
@@ -33,7 +33,7 @@ pub fn ident_exists(ast: &syn::DeriveInput, ident: &str) -> Result<(), syn::Erro
 
     Err(syn::Error::new_spanned(
         ast,
-        format!("Ident `{}` not found", ident),
+        format!("Ident `{ident}` not found"),
     ))
 }
 
@@ -46,7 +46,7 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::E
         .find(|attr| attr.path == graphql_path)
         .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
     if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
-        for item in items.nested.iter() {
+        for item in &items.nested {
             if let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) = item {
                 let syn::MetaNameValue { path, lit, .. } = name_value;
                 if let Some(ident) = path.get_ident() {
@@ -62,7 +62,7 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::E
 
     Err(syn::Error::new_spanned(
         ast,
-        format!("Attribute `{}` not found", attr),
+        format!("Attribute `{attr}` not found"),
     ))
 }
 
@@ -75,7 +75,7 @@ pub fn extract_attr_list(ast: &syn::DeriveInput, attr: &str) -> Result<Vec<Strin
         .find(|attr| attr.path == graphql_path)
         .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
     if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
-        for item in items.nested.iter() {
+        for item in &items.nested {
             if let syn::NestedMeta::Meta(syn::Meta::List(value_list)) = item {
                 if let Some(ident) = value_list.path.get_ident() {
                     if ident == attr {
@@ -110,7 +110,7 @@ pub fn extract_deprecation_strategy(
         .to_lowercase()
         .as_str()
         .parse()
-        .map_err(|_| syn::Error::new_spanned(ast, DEPRECATION_ERROR.to_owned()))
+        .map_err(|()| syn::Error::new_spanned(ast, DEPRECATION_ERROR.to_owned()))
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
@@ -119,7 +119,7 @@ pub fn extract_normalization(ast: &syn::DeriveInput) -> Result<Normalization, sy
         .to_lowercase()
         .as_str()
         .parse()
-        .map_err(|_| syn::Error::new_spanned(ast, NORMALIZATION_ERROR))
+        .map_err(|()| syn::Error::new_spanned(ast, NORMALIZATION_ERROR))
 }
 
 pub fn extract_fragments_other_variant(ast: &syn::DeriveInput) -> bool {
@@ -187,8 +187,8 @@ mod test {
         let parsed = syn::parse_str(input).unwrap();
         match extract_deprecation_strategy(&parsed) {
             Ok(_) => panic!("parsed unexpectedly"),
-            Err(e) => assert_eq!(&format!("{}", e), DEPRECATION_ERROR),
-        };
+            Err(e) => assert_eq!(&format!("{e}"), DEPRECATION_ERROR),
+        }
     }
 
     #[test]

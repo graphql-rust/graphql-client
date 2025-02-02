@@ -98,68 +98,68 @@ pub(crate) enum TypeId {
 
 impl TypeId {
     fn r#enum(id: usize) -> Self {
-        TypeId::Enum(EnumId(id))
+        Self::Enum(EnumId(id))
     }
 
     fn interface(id: usize) -> Self {
-        TypeId::Interface(InterfaceId(id))
+        Self::Interface(InterfaceId(id))
     }
 
     fn union(id: usize) -> Self {
-        TypeId::Union(UnionId(id))
+        Self::Union(UnionId(id))
     }
 
     fn object(id: u32) -> Self {
-        TypeId::Object(ObjectId(id))
+        Self::Object(ObjectId(id))
     }
 
     fn input(id: u32) -> Self {
-        TypeId::Input(InputId(id))
+        Self::Input(InputId(id))
     }
 
     fn as_interface_id(&self) -> Option<InterfaceId> {
         match self {
-            TypeId::Interface(id) => Some(*id),
+            Self::Interface(id) => Some(*id),
             _ => None,
         }
     }
 
     fn as_object_id(&self) -> Option<ObjectId> {
         match self {
-            TypeId::Object(id) => Some(*id),
+            Self::Object(id) => Some(*id),
             _ => None,
         }
     }
 
     pub(crate) fn as_input_id(&self) -> Option<InputId> {
         match self {
-            TypeId::Input(id) => Some(*id),
+            Self::Input(id) => Some(*id),
             _ => None,
         }
     }
 
     pub(crate) fn as_scalar_id(&self) -> Option<ScalarId> {
         match self {
-            TypeId::Scalar(id) => Some(*id),
+            Self::Scalar(id) => Some(*id),
             _ => None,
         }
     }
 
     pub(crate) fn as_enum_id(&self) -> Option<EnumId> {
         match self {
-            TypeId::Enum(id) => Some(*id),
+            Self::Enum(id) => Some(*id),
             _ => None,
         }
     }
 
     pub(crate) fn name<'a>(&self, schema: &'a Schema) -> &'a str {
         match self {
-            TypeId::Object(obj) => schema.get_object(*obj).name.as_str(),
-            TypeId::Scalar(s) => schema.get_scalar(*s).name.as_str(),
-            TypeId::Interface(s) => schema.get_interface(*s).name.as_str(),
-            TypeId::Union(s) => schema.get_union(*s).name.as_str(),
-            TypeId::Enum(s) => schema.get_enum(*s).name.as_str(),
-            TypeId::Input(s) => schema.get_input(*s).name.as_str(),
+            Self::Object(obj) => schema.get_object(*obj).name.as_str(),
+            Self::Scalar(s) => schema.get_scalar(*s).name.as_str(),
+            Self::Interface(s) => schema.get_interface(*s).name.as_str(),
+            Self::Union(s) => schema.get_union(*s).name.as_str(),
+            Self::Enum(s) => schema.get_enum(*s).name.as_str(),
+            Self::Input(s) => schema.get_input(*s).name.as_str(),
         }
     }
 }
@@ -219,8 +219,8 @@ pub(crate) struct Schema {
 }
 
 impl Schema {
-    pub(crate) fn new() -> Schema {
-        let mut schema = Schema {
+    pub(crate) fn new() -> Self {
+        let mut schema = Self {
             stored_objects: Vec::new(),
             stored_interfaces: Vec::new(),
             stored_fields: Vec::new(),
@@ -362,15 +362,12 @@ impl Schema {
     }
 
     fn find_type_id(&self, type_name: &str) -> TypeId {
-        match self.names.get(type_name) {
-            Some(id) => *id,
-            None => {
-                panic!(
-                    "graphql-client-codegen internal error: failed to resolve TypeId for `{}°.",
-                    type_name
-                );
-            }
-        }
+        self.names.get(type_name).copied().unwrap_or_else(|| {
+            panic!(
+                "graphql-client-codegen internal error: failed to resolve TypeId for `{}°.",
+                type_name
+            )
+        })
     }
 }
 
@@ -381,11 +378,10 @@ impl StoredInputType {
                 TypeId::Input(input_id) => {
                     if used_types.types.contains(&type_id) {
                         continue;
-                    } else {
-                        used_types.types.insert(type_id);
-                        let input = schema.get_input(input_id);
-                        input.used_input_ids_recursive(used_types, schema);
                     }
+                    used_types.types.insert(type_id);
+                    let input = schema.get_input(input_id);
+                    input.used_input_ids_recursive(used_types, schema);
                 }
                 TypeId::Enum(_) | TypeId::Scalar(_) => {
                     used_types.types.insert(type_id);
@@ -443,7 +439,7 @@ where
     T: graphql_parser::query::Text<'doc>,
     T::Value: AsRef<str>,
 {
-    fn from(ast: graphql_parser::schema::Document<'doc, T>) -> Schema {
+    fn from(ast: graphql_parser::schema::Document<'doc, T>) -> Self {
         graphql_parser_conversion::build_schema(ast)
     }
 }

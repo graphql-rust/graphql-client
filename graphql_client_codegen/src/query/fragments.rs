@@ -1,6 +1,6 @@
 use super::{Query, ResolvedFragmentId, SelectionId};
 use crate::schema::TypeId;
-use heck::*;
+use heck::ToUpperCamelCase;
 
 #[derive(Debug)]
 pub(crate) struct ResolvedFragment {

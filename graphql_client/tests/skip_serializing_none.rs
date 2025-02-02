@@ -27,7 +27,7 @@ fn skip_serializing_none() {
 
     let stringified = serde_json::to_string(&query).expect("SkipSerializingNoneMutation is valid");
 
-    println!("{}", stringified);
+    println!("{stringified}");
 
     assert!(stringified.contains(r#""param":{"data":{"name":"test"}}"#));
     assert!(stringified.contains(r#""nonOptionalInt":1337"#));
@@ -48,7 +48,7 @@ fn skip_serializing_none() {
         }),
     });
     let stringified = serde_json::to_string(&query).expect("SkipSerializingNoneMutation is valid");
-    println!("{}", stringified);
+    println!("{stringified}");
     assert!(stringified.contains(r#""param":{"data":{"name":"test"}}"#));
     assert!(stringified.contains(r#""nonOptionalInt":1337"#));
     assert!(stringified.contains(r#""nonOptionalList":[]"#));
