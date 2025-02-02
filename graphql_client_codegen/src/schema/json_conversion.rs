@@ -297,14 +297,11 @@ fn ingest_input(schema: &mut Schema, input: &mut FullType) {
     schema.stored_inputs.push(input);
 }
 
-fn resolve_field_type(schema: &mut Schema, typeref: &mut TypeRef) -> super::StoredFieldType {
+fn resolve_field_type(schema: &Schema, typeref: &mut TypeRef) -> super::StoredFieldType {
     from_json_type_inner(schema, typeref)
 }
 
-fn resolve_input_field_type(
-    schema: &mut Schema,
-    typeref: &mut TypeRef,
-) -> super::StoredInputFieldType {
+fn resolve_input_field_type(schema: &Schema, typeref: &mut TypeRef) -> super::StoredInputFieldType {
     let field_type = from_json_type_inner(schema, typeref);
 
     super::StoredInputFieldType {
@@ -324,7 +321,7 @@ fn json_type_qualifiers_depth(typeref: &mut TypeRef) -> usize {
     }
 }
 
-fn from_json_type_inner(schema: &mut Schema, inner: &mut TypeRef) -> super::StoredFieldType {
+fn from_json_type_inner(schema: &Schema, inner: &mut TypeRef) -> super::StoredFieldType {
     use crate::type_qualifiers::GraphqlTypeQualifier;
     use graphql_introspection_query::introspection_response::__TypeKind;
 

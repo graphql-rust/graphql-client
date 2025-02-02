@@ -151,7 +151,7 @@ where
         });
 }
 
-fn ingest_union<'doc, T>(schema: &mut Schema, union: &mut UnionType<'doc, T>)
+fn ingest_union<'doc, T>(schema: &mut Schema, union: &UnionType<'doc, T>)
 where
     T: graphql_parser::query::Text<'doc>,
 {
@@ -238,10 +238,8 @@ fn ingest_object_type_extension<'doc, T>(
     object.fields.extend(field_ids);
 }
 
-fn ingest_scalar<'doc, T>(
-    schema: &mut Schema,
-    scalar: &mut graphql_parser::schema::ScalarType<'doc, T>,
-) where
+fn ingest_scalar<'doc, T>(schema: &mut Schema, scalar: &graphql_parser::schema::ScalarType<'doc, T>)
+where
     T: graphql_parser::query::Text<'doc>,
 {
     let name: String = scalar.name.as_ref().into();
