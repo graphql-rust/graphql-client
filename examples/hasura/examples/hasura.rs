@@ -16,7 +16,11 @@ type Timestamptz = String;
 struct UpsertIssue;
 
 fn main() -> Result<(), anyhow::Error> {
-    use upsert_issue::{IssuesInsertInput, IssuesUpdateColumn::*, Variables};
+    use upsert_issue::{
+        IssuesInsertInput,
+        IssuesUpdateColumn::{Name, SalesforceUpdatedAt, Status},
+        Variables,
+    };
     env_logger::init();
 
     let v = Variables {
