@@ -100,7 +100,7 @@ fn construct_headers() -> HeaderMap {
     headers
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Header {
     name: String,
     value: String,

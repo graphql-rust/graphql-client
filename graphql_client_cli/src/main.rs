@@ -21,15 +21,14 @@ enum Cli {
         /// The URL of a GraphQL endpoint to introspect.
         schema_location: String,
         /// Where to write the JSON for the introspected schema.
-        #[clap(parse(from_os_str))]
-        #[clap(long = "output")]
+        #[arg(long = "output")]
         output: Option<PathBuf>,
         /// Set the contents of the Authorization header.
-        #[clap(long = "authorization")]
+        #[arg(long = "authorization")]
         authorization: Option<String>,
         /// Specify custom headers.
         /// --header 'X-Name: Value'
-        #[clap(long = "header")]
+        #[arg(long = "header")]
         headers: Vec<introspection_schema::Header>,
         /// Disable ssl verification.
         /// Default value is false.
