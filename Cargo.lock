@@ -474,6 +474,7 @@ dependencies = [
  "serde",
  "serde_json",
  "syn 1.0.109",
+ "thiserror 2.0.11",
 ]
 
 [[package]]

@@ -30,16 +30,9 @@ pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
 use std::{collections::BTreeMap, fmt::Display, io};
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
 struct GeneralError(String);
-
-impl Display for GeneralError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-impl std::error::Error for GeneralError {}
 
 type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type CacheMap<T> = std::sync::Mutex<BTreeMap<std::path::PathBuf, T>>;
@@ -179,12 +172,10 @@ impl Display for ReadFileError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ReadFileError::FileNotFound { path, .. } => {
-                write!(f, "Could not find file with path: {}\n
-                Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".", path)
+                write!(f, "Could not find file with path: {path}\nHint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".")
             }
             ReadFileError::ReadError { path, .. } => {
-                f.write_str("Error reading file at: ")?;
-                f.write_str(path)
+                write!(f, "Error reading file at: {}", path)
             }
         }
     }
