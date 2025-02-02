@@ -109,7 +109,7 @@ impl GraphQLClientCodegenOptions {
             .as_deref()
             .into_iter()
             .flat_map(|s| s.split(','))
-            .map(|s| s.trim());
+            .map(str::trim);
 
         std::iter::once("Serialize").chain(additional)
     }
@@ -130,7 +130,7 @@ impl GraphQLClientCodegenOptions {
             .as_deref()
             .into_iter()
             .flat_map(|s| s.split(','))
-            .map(|s| s.trim())
+            .map(str::trim)
     }
 
     /// Comma-separated list of additional traits we want to derive for responses.
