@@ -29,7 +29,7 @@ fn graphql_query_derive_inner(
     let (query_path, schema_path) = build_query_and_schema_path(&ast)?;
     let options = build_graphql_client_derive_options(&ast, query_path.clone())?;
 
-    generate_module_token_stream(query_path, &schema_path, options)
+    generate_module_token_stream(&query_path, &schema_path, &options)
         .map(Into::into)
         .map_err(|err| {
             syn::Error::new_spanned(ast, format!("Failed to generate GraphQLQuery impl: {err}"))

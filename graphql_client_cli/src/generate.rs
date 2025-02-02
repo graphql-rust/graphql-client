@@ -90,7 +90,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
         options.set_custom_scalars_module(custom_scalars_module);
     }
 
-    let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)
+    let gen = generate_module_token_stream(&query_path, &schema_path, &options)
         .map_err(|err| Error::message(format!("Error generating module code: {err}")))?;
 
     let generated_code = format!("{WARNING_SUPPRESSION}\n{gen}");

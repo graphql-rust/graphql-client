@@ -23,7 +23,7 @@ fn schema_with_keywords_works() {
     let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
     let generated_tokens =
-        generate_module_token_stream_from_string(query_string, &schema_path, options)
+        generate_module_token_stream_from_string(query_string, &schema_path, &options)
             .expect("Generate keywords module");
 
     let generated_code = generated_tokens.to_string();
@@ -52,7 +52,7 @@ fn fragments_other_variant_should_generate_unknown_other_variant() {
     options.set_fragments_other_variant(true);
 
     let generated_tokens =
-        generate_module_token_stream_from_string(query_string, &schema_path, options)
+        generate_module_token_stream_from_string(query_string, &schema_path, &options)
             .expect("Generate foobars module");
 
     let generated_code = generated_tokens.to_string();
@@ -80,7 +80,7 @@ fn fragments_other_variant_false_should_not_generate_unknown_other_variant() {
     options.set_fragments_other_variant(false);
 
     let generated_tokens =
-        generate_module_token_stream_from_string(query_string, &schema_path, options)
+        generate_module_token_stream_from_string(query_string, &schema_path, &options)
             .expect("Generate foobars module token stream");
 
     let generated_code = generated_tokens.to_string();
@@ -108,7 +108,7 @@ fn skip_serializing_none_should_generate_serde_skip_serializing() {
     options.set_skip_serializing_none(true);
 
     let generated_tokens =
-        generate_module_token_stream_from_string(query_string, &schema_path, options)
+        generate_module_token_stream_from_string(query_string, &schema_path, &options)
             .expect("Generate foobars module");
 
     let generated_code = generated_tokens.to_string();

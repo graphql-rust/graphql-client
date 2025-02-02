@@ -96,11 +96,11 @@ fn get_set_schema_from_file(schema_path: &std::path::Path) -> Schema {
 
 /// Generates Rust code given a path to a query file, a path to a schema file, and options.
 pub fn generate_module_token_stream(
-    query_path: std::path::PathBuf,
+    query_path: &std::path::Path,
     schema_path: &std::path::Path,
-    options: GraphQLClientCodegenOptions,
+    options: &GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, BoxError> {
-    let query = get_set_query_from_file(query_path.as_path());
+    let query = get_set_query_from_file(query_path);
     let schema = get_set_schema_from_file(schema_path);
 
     generate_module_token_stream_inner(&query, &schema, options)
@@ -110,7 +110,7 @@ pub fn generate_module_token_stream(
 pub fn generate_module_token_stream_from_string(
     query_string: &str,
     schema_path: &std::path::Path,
-    options: GraphQLClientCodegenOptions,
+    options: &GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, BoxError> {
     let query = (query_string.to_string(), query_document(query_string)?);
     let schema = get_set_schema_from_file(schema_path);
@@ -122,7 +122,7 @@ pub fn generate_module_token_stream_from_string(
 fn generate_module_token_stream_inner(
     query: &(String, QueryDocument),
     schema: &Schema,
-    options: GraphQLClientCodegenOptions,
+    options: &GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, BoxError> {
     let (query_string, query_document) = query;
 
@@ -157,7 +157,7 @@ fn generate_module_token_stream_inner(
             schema,
             resolved_query: &query,
             operation: &operation.1.name,
-            options: &options,
+            options,
         }
         .to_token_stream()?;
         modules.push(generated);
