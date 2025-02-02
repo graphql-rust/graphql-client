@@ -4,7 +4,6 @@
 
 //! Crate for Rust code generation from a GraphQL query, schema, and options.
 
-use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use quote::quote;
 use schema::Schema;
@@ -45,10 +44,10 @@ type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type CacheMap<T> = std::sync::Mutex<BTreeMap<std::path::PathBuf, T>>;
 type QueryDocument = graphql_parser::query::Document<'static, String>;
 
-lazy_static! {
-    static ref SCHEMA_CACHE: CacheMap<Schema> = CacheMap::default();
-    static ref QUERY_CACHE: CacheMap<(String, QueryDocument)> = CacheMap::default();
-}
+static SCHEMA_CACHE: std::sync::LazyLock<CacheMap<Schema>> =
+    std::sync::LazyLock::new(CacheMap::default);
+static QUERY_CACHE: std::sync::LazyLock<CacheMap<(String, QueryDocument)>> =
+    std::sync::LazyLock::new(CacheMap::default);
 
 fn get_set_cached<T: Clone>(
     cache: &CacheMap<T>,
