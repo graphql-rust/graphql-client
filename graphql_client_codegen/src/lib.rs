@@ -28,18 +28,11 @@ mod tests;
 
 pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
 
-use std::{collections::BTreeMap, fmt::Display, io};
+use std::{collections::BTreeMap, io};
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
 struct GeneralError(String);
-
-impl Display for GeneralError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-impl std::error::Error for GeneralError {}
 
 type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type CacheMap<T> = std::sync::Mutex<BTreeMap<std::path::PathBuf, T>>;
@@ -169,34 +162,20 @@ fn generate_module_token_stream_inner(
     Ok(modules)
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 enum ReadFileError {
-    FileNotFound { path: String, io_error: io::Error },
-    ReadError { path: String, io_error: io::Error },
-}
-
-impl Display for ReadFileError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ReadFileError::FileNotFound { path, .. } => {
-                write!(f, "Could not find file with path: {}\n
-                Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".", path)
-            }
-            ReadFileError::ReadError { path, .. } => {
-                f.write_str("Error reading file at: ")?;
-                f.write_str(path)
-            }
-        }
-    }
-}
-
-impl std::error::Error for ReadFileError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            ReadFileError::FileNotFound { io_error, .. }
-            | ReadFileError::ReadError { io_error, .. } => Some(io_error),
-        }
-    }
+    #[error("Could not find file with path: {path}\nHint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".")]
+    FileNotFound {
+        path: String,
+        #[source]
+        io_error: io::Error,
+    },
+    #[error("Error reading file at: {path}")]
+    ReadError {
+        path: String,
+        #[source]
+        io_error: io::Error,
+    },
 }
 
 fn read_file(path: &std::path::Path) -> Result<String, ReadFileError> {

@@ -6,22 +6,12 @@ use crate::{
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use std::{error::Error, fmt::Display};
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("Could not find an operation named {operation_name} in the query document.")]
 struct OperationNotFound {
     operation_name: String,
 }
-
-impl Display for OperationNotFound {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("Could not find an operation named ")?;
-        f.write_str(&self.operation_name)?;
-        f.write_str(" in the query document.")
-    }
-}
-
-impl Error for OperationNotFound {}
 
 /// This struct contains the parameters necessary to generate code for a given operation.
 pub(crate) struct GeneratedModule<'a> {

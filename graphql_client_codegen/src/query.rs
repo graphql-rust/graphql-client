@@ -18,23 +18,13 @@ use crate::{
         StoredInputType, StoredScalar, TypeId, UnionId,
     },
 };
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    fmt::Display,
-};
+use std::collections::{BTreeMap, BTreeSet};
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("{message}")]
 pub(crate) struct QueryValidationError {
     message: String,
 }
-
-impl Display for QueryValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.message)
-    }
-}
-
-impl std::error::Error for QueryValidationError {}
 
 impl QueryValidationError {
     pub(crate) fn new(message: String) -> Self {
