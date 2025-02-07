@@ -15,9 +15,11 @@ struct OperationNotFound {
 
 impl Display for OperationNotFound {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("Could not find an operation named ")?;
-        f.write_str(&self.operation_name)?;
-        f.write_str(" in the query document.")
+        write!(
+            f,
+            "Could not find an operation named {} in the query document.",
+            &self.operation_name,
+        )
     }
 }
 
@@ -78,7 +80,7 @@ impl GeneratedModule<'_> {
         let query_string = &self.query_string;
         let impls = self.build_impls()?;
 
-        let struct_declaration: Option<_> = match self.options.mode {
+        let struct_declaration = match self.options.mode {
             CodegenMode::Cli => Some(quote!(#module_visibility struct #operation_name_ident;)),
             // The struct is already present in derive mode.
             CodegenMode::Derive => None,

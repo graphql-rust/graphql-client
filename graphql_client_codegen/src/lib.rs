@@ -182,8 +182,7 @@ impl Display for ReadFileError {
                 Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".")
             }
             Self::ReadError { path, .. } => {
-                f.write_str("Error reading file at: ")?;
-                f.write_str(path)
+                write!(f, "Error reading file at: {path}")
             }
         }
     }
