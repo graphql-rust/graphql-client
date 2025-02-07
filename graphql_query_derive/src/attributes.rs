@@ -1,4 +1,6 @@
+use proc_macro2::TokenTree;
 use std::str::FromStr;
+use syn::Meta;
 
 use graphql_client_codegen::deprecation::DeprecationStrategy;
 use graphql_client_codegen::normalization::Normalization;
@@ -6,26 +8,18 @@ use graphql_client_codegen::normalization::Normalization;
 const DEPRECATION_ERROR: &str = "deprecated must be one of 'allow', 'deny', or 'warn'";
 const NORMALIZATION_ERROR: &str = "normalization must be one of 'none' or 'rust'";
 
-/// The `graphql` attribute as a `syn::Path`.
-fn path_to_match() -> syn::Path {
-    syn::parse_str("graphql").expect("`graphql` is a valid path")
-}
-
 pub fn ident_exists(ast: &syn::DeriveInput, ident: &str) -> Result<(), syn::Error> {
-    let graphql_path = path_to_match();
     let attribute = ast
         .attrs
         .iter()
-        .find(|attr| attr.path == graphql_path)
+        .find(|attr| attr.path().is_ident("graphql"))
         .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
 
-    if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
-        for item in items.nested.iter() {
-            if let syn::NestedMeta::Meta(syn::Meta::Path(path)) = item {
-                if let Some(ident_) = path.get_ident() {
-                    if ident_ == ident {
-                        return Ok(());
-                    }
+    if let Meta::List(list) = &attribute.meta {
+        for item in list.tokens.clone().into_iter() {
+            if let TokenTree::Ident(ident_) = item {
+                if ident_ == ident {
+                    return Ok(());
                 }
             }
         }
@@ -39,21 +33,21 @@ pub fn ident_exists(ast: &syn::DeriveInput, ident: &str) -> Result<(), syn::Erro
 
 /// Extract an configuration parameter specified in the `graphql` attribute.
 pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::Error> {
-    let attributes = &ast.attrs;
-    let graphql_path = path_to_match();
-    let attribute = attributes
+    let attribute = ast
+        .attrs
         .iter()
-        .find(|attr| attr.path == graphql_path)
+        .find(|a| a.path().is_ident("graphql"))
         .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
-    if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
-        for item in items.nested.iter() {
-            if let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) = item {
-                let syn::MetaNameValue { path, lit, .. } = name_value;
-                if let Some(ident) = path.get_ident() {
-                    if ident == attr {
-                        if let syn::Lit::Str(lit) = lit {
-                            return Ok(lit.value());
-                        }
+
+    if let Meta::List(list) = &attribute.meta {
+        let mut iter = list.tokens.clone().into_iter();
+        while let Some(item) = iter.next() {
+            if let TokenTree::Ident(ident) = item {
+                if ident == attr {
+                    iter.next();
+                    if let Some(TokenTree::Literal(lit)) = iter.next() {
+                        let lit_str: syn::LitStr = syn::parse_str(&lit.to_string())?;
+                        return Ok(lit_str.value());
                     }
                 }
             }
@@ -68,38 +62,41 @@ pub fn extract_attr(ast: &syn::DeriveInput, attr: &str) -> Result<String, syn::E
 
 /// Extract a list of configuration parameter values specified in the `graphql` attribute.
 pub fn extract_attr_list(ast: &syn::DeriveInput, attr: &str) -> Result<Vec<String>, syn::Error> {
-    let attributes = &ast.attrs;
-    let graphql_path = path_to_match();
-    let attribute = attributes
+    let attribute = ast
+        .attrs
         .iter()
-        .find(|attr| attr.path == graphql_path)
+        .find(|a| a.path().is_ident("graphql"))
         .ok_or_else(|| syn::Error::new_spanned(ast, "The graphql attribute is missing"))?;
-    if let syn::Meta::List(items) = &attribute.parse_meta().expect("Attribute is well formatted") {
-        for item in items.nested.iter() {
-            if let syn::NestedMeta::Meta(syn::Meta::List(value_list)) = item {
-                if let Some(ident) = value_list.path.get_ident() {
-                    if ident == attr {
-                        return value_list
-                            .nested
-                            .iter()
-                            .map(|lit| {
-                                if let syn::NestedMeta::Lit(syn::Lit::Str(lit)) = lit {
-                                    Ok(lit.value())
-                                } else {
-                                    Err(syn::Error::new_spanned(
-                                        lit,
-                                        "Attribute inside value list must be a literal",
-                                    ))
-                                }
-                            })
-                            .collect();
+
+    let mut result = Vec::new();
+
+    if let Meta::List(list) = &attribute.meta {
+        let mut iter = list.tokens.clone().into_iter();
+        while let Some(item) = iter.next() {
+            if let TokenTree::Ident(ident) = item {
+                if ident == attr {
+                    if let Some(TokenTree::Group(group)) = iter.next() {
+                        for token in group.stream() {
+                            if let TokenTree::Literal(lit) = token {
+                                let lit_str: syn::LitStr = syn::parse_str(&lit.to_string())?;
+                                result.push(lit_str.value());
+                            }
+                        }
+                        return Ok(result);
                     }
                 }
             }
         }
     }
 
-    Err(syn::Error::new_spanned(ast, "Attribute not found"))
+    if result.is_empty() {
+        Err(syn::Error::new_spanned(
+            ast,
+            format!("Attribute list `{}` not found or empty", attr),
+        ))
+    } else {
+        Ok(result)
+    }
 }
 
 /// Get the deprecation from a struct attribute in the derive case.
@@ -277,5 +274,25 @@ mod test {
         "#;
         let parsed = syn::parse_str(input).unwrap();
         assert!(!extract_skip_serializing_none(&parsed));
+    }
+
+    #[test]
+    fn test_external_enums() {
+        let input = r#"
+            #[derive(Serialize, Deserialize, Debug)]
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+                extern_enums("Direction", "DistanceUnit"),
+            )]
+            struct MyQuery;
+        "#;
+        let parsed: syn::DeriveInput = syn::parse_str(input).unwrap();
+
+        assert_eq!(
+            extract_attr_list(&parsed, "extern_enums").ok().unwrap(),
+            vec!["Direction", "DistanceUnit"],
+        );
     }
 }
