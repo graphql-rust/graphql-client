@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::Write as _;
 use std::path::PathBuf;
 use std::process::Stdio;
-use syn::Token;
+use syn::{token::Paren, token::Pub, VisRestricted, Visibility};
 
 pub(crate) struct CliCodegenParams {
     pub query_path: PathBuf,
@@ -22,6 +22,7 @@ pub(crate) struct CliCodegenParams {
     pub output_directory: Option<PathBuf>,
     pub custom_scalars_module: Option<String>,
     pub fragments_other_variant: bool,
+    pub external_enums: Option<Vec<String>>,
 }
 
 const WARNING_SUPPRESSION: &str = "#![allow(clippy::all, warnings)]";
@@ -39,18 +40,26 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
         selected_operation,
         custom_scalars_module,
         fragments_other_variant,
+        external_enums,
     } = params;
 
     let deprecation_strategy = deprecation_strategy.as_ref().and_then(|s| s.parse().ok());
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
-    options.set_module_visibility(
-        syn::VisPublic {
-            pub_token: <Token![pub]>::default(),
-        }
-        .into(),
-    );
+    options.set_module_visibility(match _module_visibility {
+        Some(v) => match v.to_lowercase().as_str() {
+            "pub" => Visibility::Public(Pub::default()),
+            "inherited" => Visibility::Inherited,
+            _ => Visibility::Restricted(VisRestricted {
+                pub_token: Pub::default(),
+                in_token: None,
+                paren_token: Paren::default(),
+                path: syn::parse_str(&v).unwrap(),
+            }),
+        },
+        None => Visibility::Public(Pub::default()),
+    });
 
     options.set_fragments_other_variant(fragments_other_variant);
 
@@ -68,6 +77,10 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
 
     if let Some(deprecation_strategy) = deprecation_strategy {
         options.set_deprecation_strategy(deprecation_strategy);
+    }
+
+    if let Some(external_enums) = external_enums {
+        options.set_extern_enums(external_enums);
     }
 
     if let Some(custom_scalars_module) = custom_scalars_module {
