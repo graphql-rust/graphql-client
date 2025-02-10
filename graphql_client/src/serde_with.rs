@@ -2,6 +2,22 @@
 
 use serde::{Deserialize, Deserializer};
 
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum IntOrString {
+    Int(i64),
+    Str(String),
+}
+
+impl From<IntOrString> for String {
+    fn from(value: IntOrString) -> Self {
+        match value {
+            IntOrString::Int(n) => n.to_string(),
+            IntOrString::Str(s) => s,
+        }
+    }
+}
+
 /// Deserialize an optional ID type from either a String or an Integer representation.
 ///
 /// This is used by the codegen to enable String IDs to be deserialized from
@@ -10,18 +26,16 @@ pub fn deserialize_option_id<'de, D>(deserializer: D) -> Result<Option<String>, 
 where
     D: Deserializer<'de>,
 {
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum IntOrString {
-        Int(i64),
-        Str(String),
-    }
+    Option::<IntOrString>::deserialize(deserializer).map(|opt| opt.map(String::from))
+}
 
-    let res = Option::<IntOrString>::deserialize(deserializer)?;
-
-    Ok(match res {
-        None => None,
-        Some(IntOrString::Int(n)) => Some(n.to_string()),
-        Some(IntOrString::Str(s)) => Some(s),
-    })
+/// Deserialize an ID type from either a String or an Integer representation.
+///
+/// This is used by the codegen to enable String IDs to be deserialized from
+/// either Strings or Integers.
+pub fn deserialize_id<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    IntOrString::deserialize(deserializer).map(String::from)
 }
