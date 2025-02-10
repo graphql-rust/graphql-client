@@ -4,9 +4,11 @@ mod introspection_queries;
 mod introspection_schema;
 
 use clap::Parser;
-use env_logger::fmt::{Color, Style, StyledValue};
-use error::Error;
+use env_logger::fmt::style;
 use log::Level;
+
+use error::Error;
+
 use std::path::PathBuf;
 use Cli::Generate;
 
@@ -151,33 +153,66 @@ fn set_env_logger() {
     use std::io::Write;
 
     env_logger::Builder::from_default_env()
-        .format(|f, record| {
-            let mut style = f.style();
-            let level = colored_level(&mut style, record.level());
-            let mut style = f.style();
-            let file = style.set_bold(true).value("file");
-            let mut style = f.style();
-            let module = style.set_bold(true).value("module");
+        .format(|f, record | {
+            let level_style = colored_level(record.level());
+            let file_style = style::Style::new().bold();
+            let module_style = style::Style::new().bold();
             writeln!(
                 f,
-                "{} {}: {} {}: {}\n{}",
-                level,
-                file,
+                "{level_style}{}{level_style:#} {file_style}file{file_style:#}: {} {module_style}module{module_style:#}: {}\n{}",
+                record.level(),
                 record.file().unwrap(),
-                module,
                 record.target(),
                 record.args()
             )
-        })
-        .init();
+        }).init();
 }
 
-fn colored_level(style: &mut Style, level: Level) -> StyledValue<'_, &'static str> {
+fn colored_level(level: Level) -> style::Style {
     match level {
-        Level::Trace => style.set_color(Color::Magenta).value("TRACE"),
-        Level::Debug => style.set_color(Color::Blue).value("DEBUG"),
-        Level::Info => style.set_color(Color::Green).value("INFO "),
-        Level::Warn => style.set_color(Color::Yellow).value("WARN "),
-        Level::Error => style.set_color(Color::Red).value("ERROR"),
+        Level::Trace => style::Style::new().fg_color(Some(style::AnsiColor::Magenta.into())),
+        Level::Debug => style::Style::new().fg_color(Some(style::AnsiColor::Blue.into())),
+        Level::Info => style::Style::new().fg_color(Some(style::AnsiColor::Green.into())),
+        Level::Warn => style::Style::new().fg_color(Some(style::AnsiColor::Yellow.into())),
+        Level::Error => style::Style::new().fg_color(Some(style::AnsiColor::Red.into())),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use log::trace;
+    use std::env;
+
+    #[test]
+    fn test_colored_level() {
+        assert_eq!(
+            colored_level(Level::Trace),
+            style::Style::new().fg_color(Some(style::AnsiColor::Magenta.into()))
+        );
+        assert_eq!(
+            colored_level(Level::Debug),
+            style::Style::new().fg_color(Some(style::AnsiColor::Blue.into()))
+        );
+        assert_eq!(
+            colored_level(Level::Info),
+            style::Style::new().fg_color(Some(style::AnsiColor::Green.into()))
+        );
+        assert_eq!(
+            colored_level(Level::Warn),
+            style::Style::new().fg_color(Some(style::AnsiColor::Yellow.into()))
+        );
+        assert_eq!(
+            colored_level(Level::Error),
+            style::Style::new().fg_color(Some(style::AnsiColor::Red.into()))
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_set_env_logger() {
+        env::set_var("RUST_LOG", "trace");
+        set_env_logger();
+        trace!("this is trace")
     }
 }
