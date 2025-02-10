@@ -21,6 +21,7 @@ serde_json = "^1.0"
 log = "^0.4"
 env_logger = { version = "0.10.2", features = ["color"] }
 syn = { version = "^2.0", features = ["full"] }
+anstyle = "1.0.10"
 
 [features]
 default = []
