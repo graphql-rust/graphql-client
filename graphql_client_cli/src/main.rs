@@ -5,8 +5,10 @@ mod introspection_schema;
 
 use clap::Parser;
 use env_logger::fmt::{Color, Style, StyledValue};
-use error::Error;
 use log::Level;
+
+use error::Error;
+
 use std::path::PathBuf;
 use Cli::Generate;
 
