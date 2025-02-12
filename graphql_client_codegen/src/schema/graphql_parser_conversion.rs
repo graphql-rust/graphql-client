@@ -76,7 +76,7 @@ where
             .names
             .get("Subscription")
             .and_then(|id| id.as_object_id());
-    };
+    }
 }
 
 fn populate_names_map<'doc, T>(schema: &mut Schema, definitions: &[Definition<'doc, T>])
@@ -151,7 +151,7 @@ where
         });
 }
 
-fn ingest_union<'doc, T>(schema: &mut Schema, union: &mut UnionType<'doc, T>)
+fn ingest_union<'doc, T>(schema: &mut Schema, union: &UnionType<'doc, T>)
 where
     T: graphql_parser::query::Text<'doc>,
 {
@@ -179,7 +179,7 @@ fn ingest_object<'doc, T>(
         .unwrap();
     let mut field_ids = Vec::with_capacity(obj.fields.len());
 
-    for field in obj.fields.iter_mut() {
+    for field in &mut obj.fields {
         let field = super::StoredField {
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),
@@ -216,7 +216,7 @@ fn ingest_object_type_extension<'doc, T>(
         .unwrap();
     let mut field_ids = Vec::with_capacity(ext.fields.len());
 
-    for field in ext.fields.iter_mut() {
+    for field in &mut ext.fields {
         let field = super::StoredField {
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),
@@ -238,10 +238,8 @@ fn ingest_object_type_extension<'doc, T>(
     object.fields.extend(field_ids);
 }
 
-fn ingest_scalar<'doc, T>(
-    schema: &mut Schema,
-    scalar: &mut graphql_parser::schema::ScalarType<'doc, T>,
-) where
+fn ingest_scalar<'doc, T>(schema: &mut Schema, scalar: &graphql_parser::schema::ScalarType<'doc, T>)
+where
     T: graphql_parser::query::Text<'doc>,
 {
     let name: String = scalar.name.as_ref().into();
@@ -285,7 +283,7 @@ fn ingest_interface<'doc, T>(
 
     let mut field_ids = Vec::with_capacity(interface.fields.len());
 
-    for field in interface.fields.iter_mut() {
+    for field in &mut interface.fields {
         let field = super::StoredField {
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),

@@ -4,9 +4,8 @@
 
 //! Crate for Rust code generation from a GraphQL query, schema, and options.
 
-use lazy_static::*;
 use proc_macro2::TokenStream;
-use quote::*;
+use quote::quote;
 use schema::Schema;
 
 mod codegen;
@@ -45,10 +44,10 @@ type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type CacheMap<T> = std::sync::Mutex<BTreeMap<std::path::PathBuf, T>>;
 type QueryDocument = graphql_parser::query::Document<'static, String>;
 
-lazy_static! {
-    static ref SCHEMA_CACHE: CacheMap<Schema> = CacheMap::default();
-    static ref QUERY_CACHE: CacheMap<(String, QueryDocument)> = CacheMap::default();
-}
+static SCHEMA_CACHE: std::sync::LazyLock<CacheMap<Schema>> =
+    std::sync::LazyLock::new(CacheMap::default);
+static QUERY_CACHE: std::sync::LazyLock<CacheMap<(String, QueryDocument)>> =
+    std::sync::LazyLock::new(CacheMap::default);
 
 fn get_set_cached<T: Clone>(
     cache: &CacheMap<T>,
@@ -61,7 +60,7 @@ fn get_set_cached<T: Clone>(
 
 fn query_document(query_string: &str) -> Result<QueryDocument, BoxError> {
     let document = graphql_parser::parse_query(query_string)
-        .map_err(|err| GeneralError(format!("Query parser error: {}", err)))?
+        .map_err(|err| GeneralError(format!("Query parser error: {err}")))?
         .into_static();
     Ok(document)
 }
@@ -83,7 +82,7 @@ fn get_set_schema_from_file(schema_path: &std::path::Path) -> Schema {
         let schema_string = read_file(schema_path).unwrap();
         match schema_extension {
             "graphql" | "graphqls"| "gql" => {
-                let s = graphql_parser::schema::parse_schema::<&str>(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {}", parser_error))).unwrap();
+                let s = graphql_parser::schema::parse_schema::<&str>(&schema_string).map_err(|parser_error| GeneralError(format!("Parser error: {parser_error}"))).unwrap();
                 Schema::from(s)
             }
             "json" => {
@@ -97,11 +96,11 @@ fn get_set_schema_from_file(schema_path: &std::path::Path) -> Schema {
 
 /// Generates Rust code given a path to a query file, a path to a schema file, and options.
 pub fn generate_module_token_stream(
-    query_path: std::path::PathBuf,
+    query_path: &std::path::Path,
     schema_path: &std::path::Path,
-    options: GraphQLClientCodegenOptions,
+    options: &GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, BoxError> {
-    let query = get_set_query_from_file(query_path.as_path());
+    let query = get_set_query_from_file(query_path);
     let schema = get_set_schema_from_file(schema_path);
 
     generate_module_token_stream_inner(&query, &schema, options)
@@ -111,7 +110,7 @@ pub fn generate_module_token_stream(
 pub fn generate_module_token_stream_from_string(
     query_string: &str,
     schema_path: &std::path::Path,
-    options: GraphQLClientCodegenOptions,
+    options: &GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, BoxError> {
     let query = (query_string.to_string(), query_document(query_string)?);
     let schema = get_set_schema_from_file(schema_path);
@@ -123,7 +122,7 @@ pub fn generate_module_token_stream_from_string(
 fn generate_module_token_stream_inner(
     query: &(String, QueryDocument),
     schema: &Schema,
-    options: GraphQLClientCodegenOptions,
+    options: &GraphQLClientCodegenOptions,
 ) -> Result<TokenStream, BoxError> {
     let (query_string, query_document) = query;
 
@@ -158,7 +157,7 @@ fn generate_module_token_stream_inner(
             schema,
             resolved_query: &query,
             operation: &operation.1.name,
-            options: &options,
+            options,
         }
         .to_token_stream()?;
         modules.push(generated);
@@ -178,13 +177,12 @@ enum ReadFileError {
 impl Display for ReadFileError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReadFileError::FileNotFound { path, .. } => {
-                write!(f, "Could not find file with path: {}\n
-                Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".", path)
+            Self::FileNotFound { path, .. } => {
+                write!(f, "Could not find file with path: {path}\n
+                Hint: file paths in the GraphQLQuery attribute are relative to the project root (location of the Cargo.toml). Example: query_path = \"src/my_query.graphql\".")
             }
-            ReadFileError::ReadError { path, .. } => {
-                f.write_str("Error reading file at: ")?;
-                f.write_str(path)
+            Self::ReadError { path, .. } => {
+                write!(f, "Error reading file at: {path}")
             }
         }
     }
@@ -193,8 +191,9 @@ impl Display for ReadFileError {
 impl std::error::Error for ReadFileError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            ReadFileError::FileNotFound { io_error, .. }
-            | ReadFileError::ReadError { io_error, .. } => Some(io_error),
+            Self::FileNotFound { io_error, .. } | Self::ReadError { io_error, .. } => {
+                Some(io_error)
+            }
         }
     }
 }
@@ -232,8 +231,6 @@ fn derive_operation_not_found_error(
     let available_operations: String = available_operations.join(", ");
 
     format!(
-        "The struct name does not match any defined operation in the query file.\nStruct name: {}\nDefined operations: {}",
-        struct_ident,
-        available_operations,
+        "The struct name does not match any defined operation in the query file.\nStruct name: {struct_ident}\nDefined operations: {available_operations}",
     )
 }

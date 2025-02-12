@@ -53,8 +53,8 @@ pub struct GraphQLClientCodegenOptions {
 
 impl GraphQLClientCodegenOptions {
     /// Creates an empty options object with default params. It probably wants to be configured.
-    pub fn new(mode: CodegenMode) -> GraphQLClientCodegenOptions {
-        GraphQLClientCodegenOptions {
+    pub fn new(mode: CodegenMode) -> Self {
+        Self {
             mode,
             variables_derives: Default::default(),
             response_derives: Default::default(),
@@ -109,7 +109,7 @@ impl GraphQLClientCodegenOptions {
             .as_deref()
             .into_iter()
             .flat_map(|s| s.split(','))
-            .map(|s| s.trim());
+            .map(str::trim);
 
         std::iter::once("Serialize").chain(additional)
     }
@@ -130,7 +130,7 @@ impl GraphQLClientCodegenOptions {
             .as_deref()
             .into_iter()
             .flat_map(|s| s.split(','))
-            .map(|s| s.trim())
+            .map(str::trim)
     }
 
     /// Comma-separated list of additional traits we want to derive for responses.
@@ -198,7 +198,7 @@ impl GraphQLClientCodegenOptions {
 
     /// Set the custom scalar definitions module
     pub fn set_custom_scalars_module(&mut self, module: syn::Path) {
-        self.custom_scalars_module = Some(module)
+        self.custom_scalars_module = Some(module);
     }
 
     /// Get the externally defined enums type names
@@ -223,7 +223,7 @@ impl GraphQLClientCodegenOptions {
 
     /// Set the graphql client codegen option's skip none value.
     pub fn set_skip_serializing_none(&mut self, skip_serializing_none: bool) {
-        self.skip_serializing_none = skip_serializing_none
+        self.skip_serializing_none = skip_serializing_none;
     }
 
     /// Get a reference to the graphql client codegen option's skip none value.
