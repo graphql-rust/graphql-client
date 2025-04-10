@@ -1,6 +1,6 @@
 use super::SelectionId;
 use crate::schema::ObjectId;
-use heck::*;
+use heck::ToUpperCamelCase;
 
 #[derive(Debug, Clone)]
 pub(crate) enum OperationType {

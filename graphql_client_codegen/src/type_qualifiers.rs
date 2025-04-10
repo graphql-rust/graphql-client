@@ -6,7 +6,7 @@ pub(crate) enum GraphqlTypeQualifier {
 
 impl GraphqlTypeQualifier {
     pub(crate) fn is_required(&self) -> bool {
-        *self == GraphqlTypeQualifier::Required
+        *self == Self::Required
     }
 }
 
