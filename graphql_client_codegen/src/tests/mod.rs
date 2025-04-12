@@ -56,14 +56,13 @@ fn blended_custom_types_works() {
             .expect("Generate keywords module");
 
     let generated_code = generated_tokens.to_string();
-    eprintln!("{}", generated_code);
 
     // Parse generated code. Variables and returns should be replaced with custom types
     let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
     match r {
         Ok(_) => {
             // Variables and returns should be replaced with custom types
-            assert!(generated_code.contains("pub type ResponseData = external_crate :: Transaction"));
+            assert!(generated_code.contains("pub type SearchQuerySearch = external_crate :: Transaction"));
             assert!(generated_code.contains("pub type extern_ = external_crate :: ID"));
         }
         Err(e) => {
