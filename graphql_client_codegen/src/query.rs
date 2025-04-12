@@ -512,7 +512,7 @@ pub(crate) struct Query {
     operations: Vec<ResolvedOperation>,
     selection_parent_idx: BTreeMap<SelectionId, SelectionParent>,
     selections: Vec<Selection>,
-    variables: Vec<ResolvedVariable>,
+    pub(crate) variables: Vec<ResolvedVariable>,
 }
 
 impl Query {

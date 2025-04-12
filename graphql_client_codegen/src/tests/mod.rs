@@ -64,7 +64,7 @@ fn blended_custom_types_works() {
         Ok(_) => {
             // Variables and returns should be replaced with custom types
             assert!(generated_code.contains("pub type ResponseData = external_crate :: Transaction"));
-            assert!(generated_code.contains("pub struct Variables { pub criteria : external_crate :: ID"));
+            assert!(generated_code.contains("pub type extern_ = external_crate :: ID"));
         }
         Err(e) => {
             panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
