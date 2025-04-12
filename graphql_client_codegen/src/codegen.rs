@@ -39,7 +39,7 @@ pub(crate) fn response_for_query(
     );
 
     let variables_struct =
-        generate_variables_struct(operation_id, &variable_derives, options, &query);
+        generate_variables_struct(operation_id, &variable_derives, options, &query)?;
 
     let definitions =
         render_response_data_fields(operation_id, options, &query).render(&response_derives);
@@ -78,25 +78,30 @@ fn generate_variables_struct(
     variable_derives: &impl quote::ToTokens,
     options: &GraphQLClientCodegenOptions,
     query: &BoundQuery<'_>,
-) -> TokenStream {
+) -> Result<TokenStream, GeneralError> {
     let serde = options.serde_path();
     let serde_path = serde.to_token_stream().to_string();
 
     if operation_has_no_variables(operation_id, query.query) {
-        return quote!(
+        return Ok(quote!(
             #variable_derives
             #[serde(crate = #serde_path)]
             pub struct Variables;
-        );
+        ));
     }
 
+    let custom_variable_types = options.custom_variable_types();
     let variable_fields = walk_operation_variables(operation_id, query.query)
-        .map(|(_id, variable)| generate_variable_struct_field(variable, options, query));
+        .map(|(id, variable)| {
+            let custom_return_type = custom_variable_types.get(id.0 as usize);
+            generate_variable_struct_field(variable, options, query, custom_return_type)
+        });
     let variable_defaults =
-        walk_operation_variables(operation_id, query.query).map(|(_id, variable)| {
+        walk_operation_variables(operation_id, query.query).map(|(id, variable)| {
             let method_name = format!("default_{}", variable.name);
             let method_name = Ident::new(&method_name, Span::call_site());
-            let method_return_type = render_variable_field_type(variable, options, query);
+            let custom_return_type = custom_variable_types.get(id.0 as usize);
+            let method_return_type = render_variable_field_type(variable, options, query, custom_return_type);
 
             variable.default.as_ref().map(|default| {
                 let value = graphql_parser_value_to_literal(
@@ -131,13 +136,14 @@ fn generate_variables_struct(
         }
     );
 
-    variables_struct
+    Ok(variables_struct)
 }
 
 fn generate_variable_struct_field(
     variable: &ResolvedVariable,
     options: &GraphQLClientCodegenOptions,
     query: &BoundQuery<'_>,
+    custom_variables_type: Option<&String>,
 ) -> TokenStream {
     let snake_case_name = variable.name.to_snake_case();
     let safe_name = shared::keyword_replace(&snake_case_name);
@@ -152,7 +158,7 @@ fn generate_variable_struct_field(
     } else {
         None
     };
-    let r#type = render_variable_field_type(variable, options, query);
+    let r#type = render_variable_field_type(variable, options, query, custom_variables_type);
 
     quote::quote!(#skip_serializing_annotation #rename_annotation pub #ident : #r#type)
 }
@@ -192,17 +198,20 @@ fn render_variable_field_type(
     variable: &ResolvedVariable,
     options: &GraphQLClientCodegenOptions,
     query: &BoundQuery<'_>,
+    custom_variables_type: Option<&String>,
 ) -> TokenStream {
     let normalized_name = options
         .normalization()
         .input_name(variable.type_name(query.schema));
     let safe_name = shared::keyword_replace(normalized_name.clone());
-    let full_name = Ident::new(safe_name.as_ref(), Span::call_site());
-
-    decorate_type(&full_name, &variable.r#type.qualifiers)
+    if let Some(custom_variables_type) = custom_variables_type {
+        decorate_type(&syn::parse_str::<syn::Path>(custom_variables_type).unwrap(), &variable.r#type.qualifiers)
+    } else {
+        decorate_type(&Ident::new(safe_name.as_ref(), Span::call_site()), &variable.r#type.qualifiers)
+    }
 }
 
-fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStream {
+fn decorate_type<T: ToTokens>(ident: &T, qualifiers: &[GraphqlTypeQualifier]) -> TokenStream {
     let mut qualified = quote!(#ident);
 
     let mut non_null = false;

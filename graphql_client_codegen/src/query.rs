@@ -58,7 +58,7 @@ pub(crate) struct ResolvedFragmentId(u32);
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct VariableId(u32);
+pub(crate) struct VariableId(pub u32);
 
 pub(crate) fn resolve<'doc, T>(
     schema: &Schema,

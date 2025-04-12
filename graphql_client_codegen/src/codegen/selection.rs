@@ -18,6 +18,7 @@ use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::borrow::Cow;
+use syn::Path;
 
 pub(crate) fn render_response_data_fields<'a>(
     operation_id: OperationId,
@@ -137,6 +138,15 @@ fn calculate_selection<'a>(
                 name: &fragment.name,
                 struct_id,
                 boxed: fragment_is_recursive(*fragment_id, context.query.query),
+            });
+            return;
+        }
+
+        if let Some(custom_response_type) = options.custom_response_type() {
+            context.push_type_alias(TypeAlias {
+                name: custom_response_type.as_str(),
+                struct_id,
+                boxed: false,
             });
             return;
         }
@@ -557,14 +567,14 @@ impl<'a> ExpandedSelection<'a> {
 
             // If the type is aliased, stop here.
             if let Some(alias) = self.aliases.iter().find(|alias| alias.struct_id == type_id) {
-                let fragment_name = Ident::new(alias.name, Span::call_site());
-                let fragment_name = if alias.boxed {
-                    quote!(Box<#fragment_name>)
+                let type_name = syn::parse_str::<Path>(alias.name).unwrap();
+                let type_name = if alias.boxed {
+                    quote!(Box<#type_name>)
                 } else {
-                    quote!(#fragment_name)
+                    quote!(#type_name)
                 };
                 let item = quote! {
-                    pub type #struct_name = #fragment_name;
+                    pub type #struct_name = #type_name;
                 };
                 items.push(item);
                 continue;
