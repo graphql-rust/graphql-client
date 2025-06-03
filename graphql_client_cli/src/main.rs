@@ -94,6 +94,14 @@ enum Cli {
         /// List of externally defined enum types. Type names must match those used in the schema exactly
         #[clap(long = "external-enums", num_args(0..), action(clap::ArgAction::Append))]
         external_enums: Option<Vec<String>>,
+        /// Custom variable types to use
+        /// --custom-variable-types='external_crate::MyStruct,external_crate::MyStruct2'
+        #[clap(long = "custom-variable_types")]
+        custom_variable_types: Option<String>,
+        /// Custom response type to use
+        /// --custom-response-type='external_crate::MyResponse'
+        #[clap(long = "custom-response-type")]
+        custom_response_type: Option<String>,
     },
 }
 
@@ -131,7 +139,9 @@ fn main() -> CliResult<()> {
             selected_operation,
             custom_scalars_module,
             fragments_other_variant,
-            external_enums,
+            external_enums, 
+            custom_variable_types, 
+            custom_response_type,
         } => generate::generate_code(generate::CliCodegenParams {
             query_path,
             schema_path,
@@ -145,6 +155,8 @@ fn main() -> CliResult<()> {
             custom_scalars_module,
             fragments_other_variant,
             external_enums,
+            custom_variable_types,
+            custom_response_type,
         }),
     }
 }

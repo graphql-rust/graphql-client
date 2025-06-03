@@ -15,16 +15,36 @@ pub(super) fn generate_input_object_definitions(
     variable_derives: &impl quote::ToTokens,
     query: &BoundQuery<'_>,
 ) -> Vec<TokenStream> {
+    let custom_variable_types = options.custom_variable_types();
     all_used_types
         .inputs(query.schema)
-        .map(|(_input_id, input)| {
-            if input.is_one_of {
+        .map(|(input_id, input)| {
+            let custom_variable_type = query.query.variables.iter()
+                .enumerate()
+                .find(|(_, v) | v.r#type.id.as_input_id().is_some_and(|i| i == input_id))
+                .map(|(index, _)| custom_variable_types.get(index))
+                .flatten();
+            if let Some(custom_type) = custom_variable_type {
+                generate_type_def(input, options, custom_type)
+            } else if input.is_one_of {
                 generate_enum(input, options, variable_derives, query)
             } else {
                 generate_struct(input, options, variable_derives, query)
             }
         })
         .collect()
+}
+
+fn generate_type_def(
+    input: &StoredInputType,
+    options: &GraphQLClientCodegenOptions,
+    custom_type: &String,
+) -> TokenStream {
+    let custom_type = syn::parse_str::<syn::Path>(custom_type).unwrap();
+    let normalized_name = options.normalization().input_name(input.name.as_str());
+    let safe_name = keyword_replace(normalized_name);
+    let struct_name = Ident::new(safe_name.as_ref(), Span::call_site());
+    quote!(pub type #struct_name = #custom_type;)
 }
 
 fn generate_struct(

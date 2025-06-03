@@ -295,4 +295,44 @@ mod test {
             vec!["Direction", "DistanceUnit"],
         );
     }
+
+    #[test]
+    fn test_custom_variable_types() {
+        let input = r#"
+            #[derive(Serialize, Deserialize, Debug)]
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+                variable_types("extern_crate::Var1", "extern_crate::Var2"),
+            )]
+            struct MyQuery;
+        "#;
+        let parsed: syn::DeriveInput = syn::parse_str(input).unwrap();
+
+        assert_eq!(
+            extract_attr_list(&parsed, "variable_types").ok().unwrap(),
+            vec!["extern_crate::Var1", "extern_crate::Var2"],
+        );
+    }
+
+    #[test]
+    fn test_custom_response_type() {
+        let input = r#"
+            #[derive(Serialize, Deserialize, Debug)]
+            #[derive(GraphQLQuery)]
+            #[graphql(
+                schema_path = "x",
+                query_path = "x",
+                response_type = "extern_crate::Resp",
+            )]
+            struct MyQuery;
+        "#;
+        let parsed: syn::DeriveInput = syn::parse_str(input).unwrap();
+
+        assert_eq!(
+            extract_attr(&parsed, "response_type").ok().unwrap(),
+            "extern_crate::Resp",
+        );
+    }
 }

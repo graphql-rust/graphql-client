@@ -58,7 +58,7 @@ pub(crate) struct ResolvedFragmentId(u32);
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct VariableId(u32);
+pub(crate) struct VariableId(pub u32);
 
 pub(crate) fn resolve<'doc, T>(
     schema: &Schema,
@@ -512,7 +512,7 @@ pub(crate) struct Query {
     operations: Vec<ResolvedOperation>,
     selection_parent_idx: BTreeMap<SelectionId, SelectionParent>,
     selections: Vec<Selection>,
-    variables: Vec<ResolvedVariable>,
+    pub(crate) variables: Vec<ResolvedVariable>,
 }
 
 impl Query {

@@ -13,17 +13,19 @@ use crate::{
     schema::{Schema, TypeId},
     type_qualifiers::GraphqlTypeQualifier,
     GraphQLClientCodegenOptions,
+    GeneralError,
 };
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::borrow::Cow;
+use syn::Path;
 
 pub(crate) fn render_response_data_fields<'a>(
     operation_id: OperationId,
     options: &'a GraphQLClientCodegenOptions,
     query: &'a BoundQuery<'a>,
-) -> ExpandedSelection<'a> {
+) -> Result<ExpandedSelection<'a>, GeneralError> {
     let operation = query.query.get_operation(operation_id);
     let mut expanded_selection = ExpandedSelection {
         query,
@@ -38,6 +40,18 @@ pub(crate) fn render_response_data_fields<'a>(
         name: Cow::Borrowed("ResponseData"),
     });
 
+    if let Some(custom_response_type) = options.custom_response_type() {
+        if operation.selection_set.len() == 1 {
+            let selection_id = operation.selection_set[0];
+            let selection_field = query.query.get_selection(selection_id).as_selected_field()
+                .ok_or_else(|| GeneralError(format!("Custom response type {custom_response_type} will only work on fields")))?;
+            calculate_custom_response_type_selection(&mut expanded_selection, response_data_type_id, custom_response_type, selection_id, selection_field);
+            return Ok(expanded_selection);
+        } else {
+            return Err(GeneralError(format!("Custom response type {custom_response_type} requires single selection field")));
+        }
+    }
+
     calculate_selection(
         &mut expanded_selection,
         &operation.selection_set,
@@ -46,7 +60,38 @@ pub(crate) fn render_response_data_fields<'a>(
         options,
     );
 
-    expanded_selection
+    Ok(expanded_selection)
+}
+
+fn calculate_custom_response_type_selection<'a>(
+    context: &mut ExpandedSelection<'a>,
+    struct_id: ResponseTypeId,
+    custom_response_type: &'a String,
+    selection_id: SelectionId,
+    field: &'a SelectedField)
+{
+    let (graphql_name, rust_name) = context.field_name(field);
+    let struct_name_string = full_path_prefix(selection_id, context.query);
+    let field = context.query.schema.get_field(field.field_id);
+    context.push_field(ExpandedField {
+        struct_id,
+        graphql_name: Some(graphql_name),
+        rust_name,
+        field_type_qualifiers: &field.r#type.qualifiers,
+        field_type: struct_name_string.clone().into(),
+        flatten: false,
+        boxed: false,
+        deprecation: field.deprecation(),
+    });
+
+    let struct_id = context.push_type(ExpandedType {
+        name: struct_name_string.into(),
+    });
+    context.push_type_alias(TypeAlias {
+        name: custom_response_type.as_str(),
+        struct_id,
+        boxed: false,
+    });
 }
 
 pub(super) fn render_fragment<'a>(
@@ -557,14 +602,14 @@ impl<'a> ExpandedSelection<'a> {
 
             // If the type is aliased, stop here.
             if let Some(alias) = self.aliases.iter().find(|alias| alias.struct_id == type_id) {
-                let fragment_name = Ident::new(alias.name, Span::call_site());
-                let fragment_name = if alias.boxed {
-                    quote!(Box<#fragment_name>)
+                let type_name = syn::parse_str::<Path>(alias.name).unwrap();
+                let type_name = if alias.boxed {
+                    quote!(Box<#type_name>)
                 } else {
-                    quote!(#fragment_name)
+                    quote!(#type_name)
                 };
                 let item = quote! {
-                    pub type #struct_name = #fragment_name;
+                    pub type #struct_name = #type_name;
                 };
                 items.push(item);
                 continue;

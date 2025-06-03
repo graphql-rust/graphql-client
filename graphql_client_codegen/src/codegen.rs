@@ -42,7 +42,7 @@ pub(crate) fn response_for_query(
         generate_variables_struct(operation_id, &variable_derives, options, &query);
 
     let definitions =
-        render_response_data_fields(operation_id, options, &query).render(&response_derives);
+        render_response_data_fields(operation_id, options, &query)?.render(&response_derives);
 
     let q = quote! {
         use #serde::{Serialize, Deserialize};

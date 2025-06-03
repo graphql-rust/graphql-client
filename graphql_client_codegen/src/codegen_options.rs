@@ -49,6 +49,10 @@ pub struct GraphQLClientCodegenOptions {
     skip_serializing_none: bool,
     /// Path to the serde crate.
     serde_path: syn::Path,
+    /// list of custom type paths to use for input variables
+    custom_variable_types: Option<Vec<String>>,
+    /// Custom response type path
+    custom_response_type: Option<String>,
 }
 
 impl GraphQLClientCodegenOptions {
@@ -71,6 +75,8 @@ impl GraphQLClientCodegenOptions {
             fragments_other_variant: Default::default(),
             skip_serializing_none: Default::default(),
             serde_path: syn::parse_quote!(::serde),
+            custom_variable_types: Default::default(),
+            custom_response_type: Default::default(),
         }
     }
 
@@ -136,6 +142,26 @@ impl GraphQLClientCodegenOptions {
     /// Comma-separated list of additional traits we want to derive for responses.
     pub fn set_response_derives(&mut self, response_derives: String) {
         self.response_derives = Some(response_derives);
+    }
+
+    /// Type use as the response type
+    pub fn custom_response_type(&self) -> Option<&String> {
+        self.custom_response_type.as_ref()
+    }
+
+    /// Type use as the response type
+    pub fn set_custom_response_type(&mut self, response_type: String) {
+        self.custom_response_type = Some(response_type);
+    }
+
+    /// list of custom type paths to use for input variables
+    pub fn custom_variable_types(&self) -> Vec<String> {
+        self.custom_variable_types.clone().unwrap_or_default()
+    }
+
+    /// list of custom type paths to use for input variables
+    pub fn set_custom_variable_types(&mut self, variables_types: Vec<String>) {
+        self.custom_variable_types = Some(variables_types);
     }
 
     /// The deprecation strategy to adopt.

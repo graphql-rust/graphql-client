@@ -23,6 +23,8 @@ pub(crate) struct CliCodegenParams {
     pub custom_scalars_module: Option<String>,
     pub fragments_other_variant: bool,
     pub external_enums: Option<Vec<String>>,
+    pub custom_variable_types: Option<String>,
+    pub custom_response_type: Option<String>,
 }
 
 const WARNING_SUPPRESSION: &str = "#![allow(clippy::all, warnings)]";
@@ -41,6 +43,8 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
         custom_scalars_module,
         fragments_other_variant,
         external_enums,
+        custom_variable_types,
+        custom_response_type,
     } = params;
 
     let deprecation_strategy = deprecation_strategy.as_ref().and_then(|s| s.parse().ok());
@@ -88,6 +92,14 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
             .map_err(|_| Error::message("Invalid custom scalar module path".to_owned()))?;
 
         options.set_custom_scalars_module(custom_scalars_module);
+    }
+    
+    if let Some(custom_variable_types) = custom_variable_types {
+        options.set_custom_variable_types(custom_variable_types.split(",").map(String::from).collect());
+    }
+    
+    if let Some(custom_response_type) = custom_response_type {
+        options.set_custom_response_type(custom_response_type);
     }
 
     let gen = generate_module_token_stream(query_path.clone(), &schema_path, options)
