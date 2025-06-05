@@ -56,8 +56,8 @@ impl std::str::FromStr for Normalization {
 
     fn from_str(s: &str) -> Result<Self, ()> {
         match s.trim() {
-            "none" => Ok(Normalization::None),
-            "rust" => Ok(Normalization::Rust),
+            "none" => Ok(Self::None),
+            "rust" => Ok(Self::Rust),
             _ => Err(()),
         }
     }

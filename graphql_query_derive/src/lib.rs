@@ -29,13 +29,10 @@ fn graphql_query_derive_inner(
     let (query_path, schema_path) = build_query_and_schema_path(&ast)?;
     let options = build_graphql_client_derive_options(&ast, query_path.clone())?;
 
-    generate_module_token_stream(query_path, &schema_path, options)
+    generate_module_token_stream(&query_path, &schema_path, &options)
         .map(Into::into)
         .map_err(|err| {
-            syn::Error::new_spanned(
-                ast,
-                format!("Failed to generate GraphQLQuery impl: {}", err),
-            )
+            syn::Error::new_spanned(ast, format!("Failed to generate GraphQLQuery impl: {err}"))
         })
 }
 
@@ -48,7 +45,7 @@ fn build_query_and_schema_path(input: &syn::DeriveInput) -> Result<(PathBuf, Pat
     })?;
 
     let query_path = attributes::extract_attr(input, "query_path")?;
-    let query_path = format!("{}/{}", cargo_manifest_dir, query_path);
+    let query_path = format!("{cargo_manifest_dir}/{query_path}");
     let query_path = Path::new(&query_path).to_path_buf();
     let schema_path = attributes::extract_attr(input, "schema_path")?;
     let schema_path = Path::new(&cargo_manifest_dir).join(schema_path);
@@ -75,21 +72,21 @@ fn build_graphql_client_derive_options(
 
     if let Some(variables_derives) = variables_derives {
         options.set_variables_derives(variables_derives);
-    };
+    }
 
     if let Some(response_derives) = response_derives {
         options.set_response_derives(response_derives);
-    };
+    }
 
     // The user can determine what to do about deprecations.
     if let Ok(deprecation_strategy) = attributes::extract_deprecation_strategy(input) {
         options.set_deprecation_strategy(deprecation_strategy);
-    };
+    }
 
     // The user can specify the normalization strategy.
     if let Ok(normalization) = attributes::extract_normalization(input) {
         options.set_normalization(normalization);
-    };
+    }
 
     // The user can give a path to a module that provides definitions for the custom scalars.
     if let Some(custom_scalars_module) = custom_scalars_module {

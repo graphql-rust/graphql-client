@@ -28,25 +28,25 @@ pub enum __DirectiveLocation {
 impl Serialize for __DirectiveLocation {
     fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.serialize_str(match *self {
-            __DirectiveLocation::QUERY => "QUERY",
-            __DirectiveLocation::MUTATION => "MUTATION",
-            __DirectiveLocation::SUBSCRIPTION => "SUBSCRIPTION",
-            __DirectiveLocation::FIELD => "FIELD",
-            __DirectiveLocation::FRAGMENT_DEFINITION => "FRAGMENT_DEFINITION",
-            __DirectiveLocation::FRAGMENT_SPREAD => "FRAGMENT_SPREAD",
-            __DirectiveLocation::INLINE_FRAGMENT => "INLINE_FRAGMENT",
-            __DirectiveLocation::SCHEMA => "SCHEMA",
-            __DirectiveLocation::SCALAR => "SCALAR",
-            __DirectiveLocation::OBJECT => "OBJECT",
-            __DirectiveLocation::FIELD_DEFINITION => "FIELD_DEFINITION",
-            __DirectiveLocation::ARGUMENT_DEFINITION => "ARGUMENT_DEFINITION",
-            __DirectiveLocation::INTERFACE => "INTERFACE",
-            __DirectiveLocation::UNION => "UNION",
-            __DirectiveLocation::ENUM => "ENUM",
-            __DirectiveLocation::ENUM_VALUE => "ENUM_VALUE",
-            __DirectiveLocation::INPUT_OBJECT => "INPUT_OBJECT",
-            __DirectiveLocation::INPUT_FIELD_DEFINITION => "INPUT_FIELD_DEFINITION",
-            __DirectiveLocation::Other(ref s) => s.as_str(),
+            Self::QUERY => "QUERY",
+            Self::MUTATION => "MUTATION",
+            Self::SUBSCRIPTION => "SUBSCRIPTION",
+            Self::FIELD => "FIELD",
+            Self::FRAGMENT_DEFINITION => "FRAGMENT_DEFINITION",
+            Self::FRAGMENT_SPREAD => "FRAGMENT_SPREAD",
+            Self::INLINE_FRAGMENT => "INLINE_FRAGMENT",
+            Self::SCHEMA => "SCHEMA",
+            Self::SCALAR => "SCALAR",
+            Self::OBJECT => "OBJECT",
+            Self::FIELD_DEFINITION => "FIELD_DEFINITION",
+            Self::ARGUMENT_DEFINITION => "ARGUMENT_DEFINITION",
+            Self::INTERFACE => "INTERFACE",
+            Self::UNION => "UNION",
+            Self::ENUM => "ENUM",
+            Self::ENUM_VALUE => "ENUM_VALUE",
+            Self::INPUT_OBJECT => "INPUT_OBJECT",
+            Self::INPUT_FIELD_DEFINITION => "INPUT_FIELD_DEFINITION",
+            Self::Other(ref s) => s.as_str(),
         })
     }
 }
@@ -55,25 +55,25 @@ impl<'de> Deserialize<'de> for __DirectiveLocation {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = <&'de str>::deserialize(deserializer)?;
         match s {
-            "QUERY" => Ok(__DirectiveLocation::QUERY),
-            "MUTATION" => Ok(__DirectiveLocation::MUTATION),
-            "SUBSCRIPTION" => Ok(__DirectiveLocation::SUBSCRIPTION),
-            "FIELD" => Ok(__DirectiveLocation::FIELD),
-            "FRAGMENT_DEFINITION" => Ok(__DirectiveLocation::FRAGMENT_DEFINITION),
-            "FRAGMENT_SPREAD" => Ok(__DirectiveLocation::FRAGMENT_SPREAD),
-            "INLINE_FRAGMENT" => Ok(__DirectiveLocation::INLINE_FRAGMENT),
-            "SCHEMA" => Ok(__DirectiveLocation::SCHEMA),
-            "SCALAR" => Ok(__DirectiveLocation::SCALAR),
-            "OBJECT" => Ok(__DirectiveLocation::OBJECT),
-            "FIELD_DEFINITION" => Ok(__DirectiveLocation::FIELD_DEFINITION),
-            "ARGUMENT_DEFINITION" => Ok(__DirectiveLocation::ARGUMENT_DEFINITION),
-            "INTERFACE" => Ok(__DirectiveLocation::INTERFACE),
-            "UNION" => Ok(__DirectiveLocation::UNION),
-            "ENUM" => Ok(__DirectiveLocation::ENUM),
-            "ENUM_VALUE" => Ok(__DirectiveLocation::ENUM_VALUE),
-            "INPUT_OBJECT" => Ok(__DirectiveLocation::INPUT_OBJECT),
-            "INPUT_FIELD_DEFINITION" => Ok(__DirectiveLocation::INPUT_FIELD_DEFINITION),
-            _ => Ok(__DirectiveLocation::Other(s.to_string())),
+            "QUERY" => Ok(Self::QUERY),
+            "MUTATION" => Ok(Self::MUTATION),
+            "SUBSCRIPTION" => Ok(Self::SUBSCRIPTION),
+            "FIELD" => Ok(Self::FIELD),
+            "FRAGMENT_DEFINITION" => Ok(Self::FRAGMENT_DEFINITION),
+            "FRAGMENT_SPREAD" => Ok(Self::FRAGMENT_SPREAD),
+            "INLINE_FRAGMENT" => Ok(Self::INLINE_FRAGMENT),
+            "SCHEMA" => Ok(Self::SCHEMA),
+            "SCALAR" => Ok(Self::SCALAR),
+            "OBJECT" => Ok(Self::OBJECT),
+            "FIELD_DEFINITION" => Ok(Self::FIELD_DEFINITION),
+            "ARGUMENT_DEFINITION" => Ok(Self::ARGUMENT_DEFINITION),
+            "INTERFACE" => Ok(Self::INTERFACE),
+            "UNION" => Ok(Self::UNION),
+            "ENUM" => Ok(Self::ENUM),
+            "ENUM_VALUE" => Ok(Self::ENUM_VALUE),
+            "INPUT_OBJECT" => Ok(Self::INPUT_OBJECT),
+            "INPUT_FIELD_DEFINITION" => Ok(Self::INPUT_FIELD_DEFINITION),
+            _ => Ok(Self::Other(s.to_string())),
         }
     }
 }
@@ -94,15 +94,15 @@ pub enum __TypeKind {
 impl Serialize for __TypeKind {
     fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.serialize_str(match *self {
-            __TypeKind::SCALAR => "SCALAR",
-            __TypeKind::OBJECT => "OBJECT",
-            __TypeKind::INTERFACE => "INTERFACE",
-            __TypeKind::UNION => "UNION",
-            __TypeKind::ENUM => "ENUM",
-            __TypeKind::INPUT_OBJECT => "INPUT_OBJECT",
-            __TypeKind::LIST => "LIST",
-            __TypeKind::NON_NULL => "NON_NULL",
-            __TypeKind::Other(ref s) => s.as_str(),
+            Self::SCALAR => "SCALAR",
+            Self::OBJECT => "OBJECT",
+            Self::INTERFACE => "INTERFACE",
+            Self::UNION => "UNION",
+            Self::ENUM => "ENUM",
+            Self::INPUT_OBJECT => "INPUT_OBJECT",
+            Self::LIST => "LIST",
+            Self::NON_NULL => "NON_NULL",
+            Self::Other(ref s) => s.as_str(),
         })
     }
 }
@@ -111,15 +111,15 @@ impl<'de> Deserialize<'de> for __TypeKind {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = <&'de str>::deserialize(deserializer)?;
         match s {
-            "SCALAR" => Ok(__TypeKind::SCALAR),
-            "OBJECT" => Ok(__TypeKind::OBJECT),
-            "INTERFACE" => Ok(__TypeKind::INTERFACE),
-            "UNION" => Ok(__TypeKind::UNION),
-            "ENUM" => Ok(__TypeKind::ENUM),
-            "INPUT_OBJECT" => Ok(__TypeKind::INPUT_OBJECT),
-            "LIST" => Ok(__TypeKind::LIST),
-            "NON_NULL" => Ok(__TypeKind::NON_NULL),
-            _ => Ok(__TypeKind::Other(s.to_string())),
+            "SCALAR" => Ok(Self::SCALAR),
+            "OBJECT" => Ok(Self::OBJECT),
+            "INTERFACE" => Ok(Self::INTERFACE),
+            "UNION" => Ok(Self::UNION),
+            "ENUM" => Ok(Self::ENUM),
+            "INPUT_OBJECT" => Ok(Self::INPUT_OBJECT),
+            "LIST" => Ok(Self::LIST),
+            "NON_NULL" => Ok(Self::NON_NULL),
+            _ => Ok(Self::Other(s.to_string())),
         }
     }
 }
@@ -288,15 +288,15 @@ pub enum IntrospectionResponse {
 impl IntrospectionResponse {
     pub fn as_schema(&self) -> &SchemaContainer {
         match self {
-            IntrospectionResponse::FullResponse(full_response) => &full_response.data,
-            IntrospectionResponse::Schema(schema) => schema,
+            Self::FullResponse(full_response) => &full_response.data,
+            Self::Schema(schema) => schema,
         }
     }
 
     pub fn into_schema(self) -> SchemaContainer {
         match self {
-            IntrospectionResponse::FullResponse(full_response) => full_response.data,
-            IntrospectionResponse::Schema(schema) => schema,
+            Self::FullResponse(full_response) => full_response.data,
+            Self::Schema(schema) => schema,
         }
     }
 }

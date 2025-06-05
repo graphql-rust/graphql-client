@@ -496,7 +496,6 @@ dependencies = [
  "graphql-introspection-query",
  "graphql-parser",
  "heck",
- "lazy_static",
  "proc-macro2",
  "quote",
  "serde",
@@ -1899,7 +1898,6 @@ version = "0.1.0"
 dependencies = [
  "graphql_client",
  "js-sys",
- "lazy_static",
  "reqwest",
  "wasm-bindgen",
  "wasm-bindgen-futures",
