@@ -26,7 +26,19 @@ pub trait GraphQLVisitor<'de>: Sized {
             &Self::type_name(),
         ))
     }
-    /// Convert a string ID to the target type.
+
+    /// Visit an integer
+    fn visit_u64<E>(v: u64) -> Result<Self, E>
+    where
+        E: de::Error,
+    {
+        Err(de::Error::invalid_type(
+            de::Unexpected::Unsigned(v),
+            &Self::type_name(),
+        ))
+    }
+
+    /// Visit a borrowed string
     fn visit_str<E>(v: &str) -> Result<Self, E>
     where
         E: de::Error,
@@ -36,7 +48,19 @@ pub trait GraphQLVisitor<'de>: Sized {
             &Self::type_name(),
         ))
     }
-    /// Produce a default value for a null ID.
+
+    /// Visit a string
+    fn visit_string<E>(v: String) -> Result<Self, E>
+    where
+        E: de::Error,
+    {
+        Err(de::Error::invalid_type(
+            de::Unexpected::Str(&v),
+            &Self::type_name(),
+        ))
+    }
+
+    /// Visit a missing optional value
     fn visit_none<E>() -> Result<Self, E>
     where
         E: de::Error,
@@ -47,7 +71,7 @@ pub trait GraphQLVisitor<'de>: Sized {
         ))
     }
 
-    /// Produce a default value for a unit.
+    /// Visit a null value
     fn visit_unit<E>() -> Result<Self, E>
     where
         E: de::Error,
@@ -58,7 +82,7 @@ pub trait GraphQLVisitor<'de>: Sized {
         ))
     }
 
-    /// Convert a sequence of IDs to the target type.
+    /// Visit a sequence
     fn visit_seq<A>(seq: A) -> Result<Self, A::Error>
     where
         A: SeqAccess<'de>,
@@ -83,11 +107,25 @@ impl GraphQLVisitor<'_> for String {
         Ok(v.to_string())
     }
 
+    fn visit_u64<E>(v: u64) -> Result<Self, E>
+    where
+        E: de::Error,
+    {
+        Ok(v.to_string())
+    }
+
     fn visit_str<E>(v: &str) -> Result<Self, E>
     where
         E: de::Error,
     {
         Ok(v.to_string())
+    }
+
+    fn visit_string<E>(v: String) -> Result<Self, E>
+    where
+        E: de::Error,
+    {
+        Ok(v)
     }
 }
 
@@ -103,11 +141,25 @@ impl<'de, T: GraphQLVisitor<'de>> GraphQLVisitor<'de> for Option<T> {
         T::visit_i64(v).map(Some)
     }
 
+    fn visit_u64<E>(v: u64) -> Result<Self, E>
+    where
+        E: de::Error,
+    {
+        T::visit_u64(v).map(Some)
+    }
+
     fn visit_str<E>(v: &str) -> Result<Self, E>
     where
         E: de::Error,
     {
         T::visit_str(v).map(Some)
+    }
+
+    fn visit_string<E>(v: String) -> Result<Self, E>
+    where
+        E: de::Error,
+    {
+        T::visit_string(v).map(Some)
     }
 
     fn visit_none<E>() -> Result<Self, E>
@@ -188,7 +240,7 @@ where
     where
         E: de::Error,
     {
-        T::visit_i64(value as i64)
+        T::visit_u64(value)
     }
 
     fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
