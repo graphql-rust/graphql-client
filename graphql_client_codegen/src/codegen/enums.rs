@@ -60,18 +60,38 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
 
         let name = name_ident;
 
+        let other_variant = if *options.enums_other_variant() {
+            Some(quote!(Other(String),))
+        } else {
+            None
+        };
+
+        let other_serialize = if *options.enums_other_variant() {
+            Some(quote!(#name::Other(ref s) => &s,))
+        } else {
+            None
+        };
+
+        let other_deserialize = if *options.enums_other_variant() {
+            Some(quote!(_ => Ok(#name::Other(s)),))
+        } else {
+            // If no Other variant, we need to handle unknown values
+            // Return an error for unknown variants when Other is not enabled
+            Some(quote!(_ => Err(#serde::de::Error::unknown_variant(&s, &[#(#variant_str),*])),))
+        };
+
         quote! {
             #derives
             pub enum #name {
                 #(#variant_names,)*
-                Other(String),
+                #other_variant
             }
 
             impl #serde::Serialize for #name {
                 fn serialize<S: #serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
                     ser.serialize_str(match *self {
                         #(#constructors => #variant_str,)*
-                        #name::Other(ref s) => &s,
+                        #other_serialize
                     })
                 }
             }
@@ -82,7 +102,7 @@ pub(super) fn generate_enum_definitions<'a, 'schema: 'a>(
 
                     match s.as_str() {
                         #(#variant_str => Ok(#constructors),)*
-                        _ => Ok(#name::Other(s)),
+                        #other_deserialize
                     }
                 }
             }

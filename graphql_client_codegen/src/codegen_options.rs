@@ -45,6 +45,8 @@ pub struct GraphQLClientCodegenOptions {
     extern_enums: Vec<String>,
     /// Flag to trigger generation of Other variant for fragments Enum
     fragments_other_variant: bool,
+    /// Flag to trigger generation of Other variant for enums
+    enums_other_variant: bool,
     /// Skip Serialization of None values.
     skip_serializing_none: bool,
     /// Path to the serde crate.
@@ -73,6 +75,7 @@ impl GraphQLClientCodegenOptions {
             custom_scalars_module: Default::default(),
             extern_enums: Default::default(),
             fragments_other_variant: Default::default(),
+            enums_other_variant: true, // Default to true for backward compatibility
             skip_serializing_none: Default::default(),
             serde_path: syn::parse_quote!(::serde),
             custom_variable_types: Default::default(),
@@ -245,6 +248,16 @@ impl GraphQLClientCodegenOptions {
     /// Get a reference to the graphql client codegen options's fragments other variant.
     pub fn fragments_other_variant(&self) -> &bool {
         &self.fragments_other_variant
+    }
+
+    /// Set the graphql client codegen options's enums other variant.
+    pub fn set_enums_other_variant(&mut self, enums_other_variant: bool) {
+        self.enums_other_variant = enums_other_variant;
+    }
+
+    /// Get a reference to the graphql client codegen options's enums other variant.
+    pub fn enums_other_variant(&self) -> &bool {
+        &self.enums_other_variant
     }
 
     /// Set the graphql client codegen option's skip none value.
