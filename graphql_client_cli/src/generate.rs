@@ -22,6 +22,7 @@ pub(crate) struct CliCodegenParams {
     pub output_directory: Option<PathBuf>,
     pub custom_scalars_module: Option<String>,
     pub fragments_other_variant: bool,
+    pub enums_other_variant: bool,
     pub external_enums: Option<Vec<String>>,
     pub custom_variable_types: Option<String>,
     pub custom_response_type: Option<String>,
@@ -42,6 +43,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
         selected_operation,
         custom_scalars_module,
         fragments_other_variant,
+        enums_other_variant,
         external_enums,
         custom_variable_types,
         custom_response_type,
@@ -66,6 +68,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
     });
 
     options.set_fragments_other_variant(fragments_other_variant);
+    options.set_enums_other_variant(enums_other_variant);
 
     if let Some(selected_operation) = selected_operation {
         options.set_operation_name(selected_operation);
@@ -93,11 +96,11 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
 
         options.set_custom_scalars_module(custom_scalars_module);
     }
-    
+
     if let Some(custom_variable_types) = custom_variable_types {
         options.set_custom_variable_types(custom_variable_types.split(",").map(String::from).collect());
     }
-    
+
     if let Some(custom_response_type) = custom_response_type {
         options.set_custom_response_type(custom_response_type);
     }

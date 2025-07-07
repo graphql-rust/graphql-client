@@ -91,6 +91,10 @@ enum Cli {
         /// --fragments-other-variant
         #[clap(long = "fragments-other-variant")]
         fragments_other_variant: bool,
+        /// A flag indicating if the enums should have an "Other" variant for unknown values
+        /// --enums-other-variant
+        #[clap(long = "enums-other-variant")]
+        enums_other_variant: bool,
         /// List of externally defined enum types. Type names must match those used in the schema exactly
         #[clap(long = "external-enums", num_args(0..), action(clap::ArgAction::Append))]
         external_enums: Option<Vec<String>>,
@@ -139,8 +143,9 @@ fn main() -> CliResult<()> {
             selected_operation,
             custom_scalars_module,
             fragments_other_variant,
-            external_enums, 
-            custom_variable_types, 
+            enums_other_variant,
+            external_enums,
+            custom_variable_types,
             custom_response_type,
         } => generate::generate_code(generate::CliCodegenParams {
             query_path,
@@ -154,6 +159,7 @@ fn main() -> CliResult<()> {
             output_directory,
             custom_scalars_module,
             fragments_other_variant,
+            enums_other_variant,
             external_enums,
             custom_variable_types,
             custom_response_type,
