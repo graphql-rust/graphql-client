@@ -1,4 +1,4 @@
-use super::shared::{field_rename_annotation, keyword_replace};
+use super::shared::{field_rename_annotation, keyword_replace, to_snake_case_preserve_leading_underscores};
 use crate::{
     codegen_options::GraphQLClientCodegenOptions,
     query::{BoundQuery, UsedTypes},
@@ -8,19 +8,6 @@ use crate::{
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
-
-/// Convert to snake_case while preserving leading underscores.
-/// This is important for GraphQL fields like `_id` which should become `_id` not `id`.
-fn to_snake_case_preserve_leading_underscores(s: &str) -> String {
-    let leading_underscores = s.chars().take_while(|&c| c == '_').count();
-    if leading_underscores == 0 {
-        s.to_snake_case()
-    } else {
-        let prefix = "_".repeat(leading_underscores);
-        let rest = &s[leading_underscores..];
-        format!("{}{}", prefix, rest.to_snake_case())
-    }
-}
 
 pub(super) fn generate_input_object_definitions(
     all_used_types: &UsedTypes,

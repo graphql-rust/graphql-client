@@ -1,6 +1,20 @@
+use heck::ToSnakeCase;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::borrow::Cow;
+
+/// Convert to snake_case while preserving leading underscores.
+/// This is important for GraphQL fields like `_id` which should become `_id` not `id`.
+pub(crate) fn to_snake_case_preserve_leading_underscores(s: &str) -> String {
+    let leading_underscores = s.chars().take_while(|&c| c == '_').count();
+    if leading_underscores == 0 {
+        s.to_snake_case()
+    } else {
+        let prefix = "_".repeat(leading_underscores);
+        let rest = &s[leading_underscores..];
+        format!("{}{}", prefix, rest.to_snake_case())
+    }
+}
 
 // List of keywords based on https://doc.rust-lang.org/reference/keywords.html
 // code snippet: `[...new Set($$("code.hljs").map(x => x.textContent).filter(x => x.match(/^[_a-z0-9]+$/i)))].sort()`

@@ -1,4 +1,5 @@
 use crate::{
+    codegen::shared::to_snake_case_preserve_leading_underscores,
     codegen_options::*,
     query::{BoundQuery, OperationId},
     BoxError,
@@ -7,19 +8,6 @@ use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::{error::Error, fmt::Display};
-
-/// Convert to snake_case while preserving leading underscores.
-/// This is important for GraphQL fields like `_id` which should become `_id` not `id`.
-fn to_snake_case_preserve_leading_underscores(s: &str) -> String {
-    let leading_underscores = s.chars().take_while(|&c| c == '_').count();
-    if leading_underscores == 0 {
-        s.to_snake_case()
-    } else {
-        let prefix = "_".repeat(leading_underscores);
-        let rest = &s[leading_underscores..];
-        format!("{}{}", prefix, rest.to_snake_case())
-    }
-}
 
 #[derive(Debug)]
 struct OperationNotFound {

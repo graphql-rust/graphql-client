@@ -1,7 +1,7 @@
 mod enums;
 mod inputs;
 mod selection;
-mod shared;
+pub(crate) mod shared;
 
 use crate::{
     query::*,
@@ -13,20 +13,8 @@ use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use selection::*;
+use shared::to_snake_case_preserve_leading_underscores;
 use std::collections::BTreeMap;
-
-/// Convert to snake_case while preserving leading underscores.
-/// This is important for GraphQL fields like `_id` which should become `_id` not `id`.
-fn to_snake_case_preserve_leading_underscores(s: &str) -> String {
-    let leading_underscores = s.chars().take_while(|&c| c == '_').count();
-    if leading_underscores == 0 {
-        s.to_snake_case()
-    } else {
-        let prefix = "_".repeat(leading_underscores);
-        let rest = &s[leading_underscores..];
-        format!("{}{}", prefix, rest.to_snake_case())
-    }
-}
 
 /// The main code generation function.
 pub(crate) fn response_for_query(
