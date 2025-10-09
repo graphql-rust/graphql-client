@@ -15,7 +15,6 @@ use crate::{
     GraphQLClientCodegenOptions,
     GeneralError,
 };
-use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::borrow::Cow;

@@ -5,7 +5,7 @@ use crate::{
     schema::{input_is_recursive_without_indirection, StoredInputType},
     type_qualifiers::GraphqlTypeQualifier,
 };
-use heck::{ToSnakeCase, ToUpperCamelCase};
+use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 
