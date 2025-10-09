@@ -1,4 +1,6 @@
-use super::shared::{field_rename_annotation, keyword_replace, to_snake_case_preserve_leading_underscores};
+use super::shared::{
+    field_rename_annotation, keyword_replace, to_snake_case_preserve_leading_underscores,
+};
 use crate::{
     codegen_options::GraphQLClientCodegenOptions,
     query::{BoundQuery, UsedTypes},
@@ -19,9 +21,12 @@ pub(super) fn generate_input_object_definitions(
     all_used_types
         .inputs(query.schema)
         .map(|(input_id, input)| {
-            let custom_variable_type = query.query.variables.iter()
+            let custom_variable_type = query
+                .query
+                .variables
+                .iter()
                 .enumerate()
-                .find(|(_, v) | v.r#type.id.as_input_id().is_some_and(|i| i == input_id))
+                .find(|(_, v)| v.r#type.id.as_input_id().is_some_and(|i| i == input_id))
                 .map(|(index, _)| custom_variable_types.get(index))
                 .flatten();
             if let Some(custom_type) = custom_variable_type {
@@ -61,7 +66,8 @@ fn generate_struct(
     let struct_name = Ident::new(safe_name.as_ref(), Span::call_site());
 
     let fields = input.fields.iter().map(|(field_name, field_type)| {
-        let safe_field_name = keyword_replace(to_snake_case_preserve_leading_underscores(field_name));
+        let safe_field_name =
+            keyword_replace(to_snake_case_preserve_leading_underscores(field_name));
         let annotation = field_rename_annotation(field_name, safe_field_name.as_ref());
         let name_ident = Ident::new(safe_field_name.as_ref(), Span::call_site());
         let normalized_field_type_name = options

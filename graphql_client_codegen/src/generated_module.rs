@@ -57,7 +57,10 @@ impl GeneratedModule<'_> {
 
     /// Generate the module and all the code inside.
     pub(crate) fn to_token_stream(&self) -> Result<TokenStream, BoxError> {
-        let module_name = Ident::new(&to_snake_case_preserve_leading_underscores(self.operation), Span::call_site());
+        let module_name = Ident::new(
+            &to_snake_case_preserve_leading_underscores(self.operation),
+            Span::call_site(),
+        );
         let module_visibility = &self.options.module_visibility();
         let operation_name = self.operation;
         let operation_name_ident = self.options.normalization().operation(self.operation);

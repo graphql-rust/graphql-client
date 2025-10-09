@@ -3,7 +3,9 @@
 use crate::{
     codegen::{
         decorate_type,
-        shared::{field_rename_annotation, keyword_replace, to_snake_case_preserve_leading_underscores},
+        shared::{
+            field_rename_annotation, keyword_replace, to_snake_case_preserve_leading_underscores,
+        },
     },
     deprecation::DeprecationStrategy,
     query::{
@@ -12,8 +14,7 @@ use crate::{
     },
     schema::{Schema, TypeId},
     type_qualifiers::GraphqlTypeQualifier,
-    GraphQLClientCodegenOptions,
-    GeneralError,
+    GeneralError, GraphQLClientCodegenOptions,
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
@@ -42,12 +43,27 @@ pub(crate) fn render_response_data_fields<'a>(
     if let Some(custom_response_type) = options.custom_response_type() {
         if operation.selection_set.len() == 1 {
             let selection_id = operation.selection_set[0];
-            let selection_field = query.query.get_selection(selection_id).as_selected_field()
-                .ok_or_else(|| GeneralError(format!("Custom response type {custom_response_type} will only work on fields")))?;
-            calculate_custom_response_type_selection(&mut expanded_selection, response_data_type_id, custom_response_type, selection_id, selection_field);
+            let selection_field = query
+                .query
+                .get_selection(selection_id)
+                .as_selected_field()
+                .ok_or_else(|| {
+                    GeneralError(format!(
+                        "Custom response type {custom_response_type} will only work on fields"
+                    ))
+                })?;
+            calculate_custom_response_type_selection(
+                &mut expanded_selection,
+                response_data_type_id,
+                custom_response_type,
+                selection_id,
+                selection_field,
+            );
             return Ok(expanded_selection);
         } else {
-            return Err(GeneralError(format!("Custom response type {custom_response_type} requires single selection field")));
+            return Err(GeneralError(format!(
+                "Custom response type {custom_response_type} requires single selection field"
+            )));
         }
     }
 
@@ -67,8 +83,8 @@ fn calculate_custom_response_type_selection<'a>(
     struct_id: ResponseTypeId,
     custom_response_type: &'a String,
     selection_id: SelectionId,
-    field: &'a SelectedField)
-{
+    field: &'a SelectedField,
+) {
     let (graphql_name, rust_name) = context.field_name(field);
     let struct_name_string = full_path_prefix(selection_id, context.query);
     let field = context.query.schema.get_field(field.field_id);
@@ -280,7 +296,10 @@ fn calculate_selection<'a>(
                                     field_type_qualifiers: &[GraphqlTypeQualifier::Required],
                                     flatten: true,
                                     graphql_name: None,
-                                    rust_name: to_snake_case_preserve_leading_underscores(&fragment.name).into(),
+                                    rust_name: to_snake_case_preserve_leading_underscores(
+                                        &fragment.name,
+                                    )
+                                    .into(),
                                     struct_id,
                                     deprecation: None,
                                     boxed: fragment_is_recursive(*fragment_id, context.query.query),
@@ -394,7 +413,8 @@ fn calculate_selection<'a>(
                     continue;
                 }
 
-                let original_field_name = to_snake_case_preserve_leading_underscores(&fragment.name);
+                let original_field_name =
+                    to_snake_case_preserve_leading_underscores(&fragment.name);
                 let final_field_name = keyword_replace(original_field_name);
 
                 context.push_field(ExpandedField {
