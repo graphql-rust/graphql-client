@@ -15,6 +15,19 @@ use quote::{quote, ToTokens};
 use selection::*;
 use std::collections::BTreeMap;
 
+/// Convert to snake_case while preserving leading underscores.
+/// This is important for GraphQL fields like `_id` which should become `_id` not `id`.
+fn to_snake_case_preserve_leading_underscores(s: &str) -> String {
+    let leading_underscores = s.chars().take_while(|&c| c == '_').count();
+    if leading_underscores == 0 {
+        s.to_snake_case()
+    } else {
+        let prefix = "_".repeat(leading_underscores);
+        let rest = &s[leading_underscores..];
+        format!("{}{}", prefix, rest.to_snake_case())
+    }
+}
+
 /// The main code generation function.
 pub(crate) fn response_for_query(
     operation_id: OperationId,
@@ -139,7 +152,7 @@ fn generate_variable_struct_field(
     options: &GraphQLClientCodegenOptions,
     query: &BoundQuery<'_>,
 ) -> TokenStream {
-    let snake_case_name = variable.name.to_snake_case();
+    let snake_case_name = to_snake_case_preserve_leading_underscores(&variable.name);
     let safe_name = shared::keyword_replace(&snake_case_name);
     let ident = Ident::new(&safe_name, Span::call_site());
     let rename_annotation = shared::field_rename_annotation(&variable.name, &safe_name);

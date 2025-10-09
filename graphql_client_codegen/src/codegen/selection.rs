@@ -21,6 +21,19 @@ use quote::{quote, ToTokens};
 use std::borrow::Cow;
 use syn::Path;
 
+/// Convert to snake_case while preserving leading underscores.
+/// This is important for GraphQL fields like `_id` which should become `_id` not `id`.
+fn to_snake_case_preserve_leading_underscores(s: &str) -> String {
+    let leading_underscores = s.chars().take_while(|&c| c == '_').count();
+    if leading_underscores == 0 {
+        s.to_snake_case()
+    } else {
+        let prefix = "_".repeat(leading_underscores);
+        let rest = &s[leading_underscores..];
+        format!("{}{}", prefix, rest.to_snake_case())
+    }
+}
+
 pub(crate) fn render_response_data_fields<'a>(
     operation_id: OperationId,
     options: &'a GraphQLClientCodegenOptions,
@@ -281,7 +294,7 @@ fn calculate_selection<'a>(
                                     field_type_qualifiers: &[GraphqlTypeQualifier::Required],
                                     flatten: true,
                                     graphql_name: None,
-                                    rust_name: fragment.name.to_snake_case().into(),
+                                    rust_name: to_snake_case_preserve_leading_underscores(&fragment.name).into(),
                                     struct_id,
                                     deprecation: None,
                                     boxed: fragment_is_recursive(*fragment_id, context.query.query),
@@ -395,7 +408,7 @@ fn calculate_selection<'a>(
                     continue;
                 }
 
-                let original_field_name = fragment.name.to_snake_case();
+                let original_field_name = to_snake_case_preserve_leading_underscores(&fragment.name);
                 let final_field_name = keyword_replace(original_field_name);
 
                 context.push_field(ExpandedField {
@@ -578,7 +591,7 @@ impl<'a> ExpandedSelection<'a> {
         let name = field
             .alias()
             .unwrap_or_else(|| &field.schema_field(self.query.schema).name);
-        let snake_case_name = name.to_snake_case();
+        let snake_case_name = to_snake_case_preserve_leading_underscores(name);
         let final_name = keyword_replace(snake_case_name);
 
         (name, final_name)

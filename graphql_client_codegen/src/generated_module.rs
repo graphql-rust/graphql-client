@@ -8,6 +8,19 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::{error::Error, fmt::Display};
 
+/// Convert to snake_case while preserving leading underscores.
+/// This is important for GraphQL fields like `_id` which should become `_id` not `id`.
+fn to_snake_case_preserve_leading_underscores(s: &str) -> String {
+    let leading_underscores = s.chars().take_while(|&c| c == '_').count();
+    if leading_underscores == 0 {
+        s.to_snake_case()
+    } else {
+        let prefix = "_".repeat(leading_underscores);
+        let rest = &s[leading_underscores..];
+        format!("{}{}", prefix, rest.to_snake_case())
+    }
+}
+
 #[derive(Debug)]
 struct OperationNotFound {
     operation_name: String,
@@ -57,7 +70,7 @@ impl GeneratedModule<'_> {
 
     /// Generate the module and all the code inside.
     pub(crate) fn to_token_stream(&self) -> Result<TokenStream, BoxError> {
-        let module_name = Ident::new(&self.operation.to_snake_case(), Span::call_site());
+        let module_name = Ident::new(&to_snake_case_preserve_leading_underscores(self.operation), Span::call_site());
         let module_visibility = &self.options.module_visibility();
         let operation_name = self.operation;
         let operation_name_ident = self.options.normalization().operation(self.operation);
