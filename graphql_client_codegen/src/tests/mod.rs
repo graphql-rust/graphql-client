@@ -62,7 +62,8 @@ fn blended_custom_types_works() {
     match r {
         Ok(_) => {
             // Variables and returns should be replaced with custom types
-            assert!(generated_code.contains("pub type SearchQuerySearch = external_crate :: Transaction"));
+            assert!(generated_code
+                .contains("pub type SearchQuerySearch = external_crate :: Transaction"));
             assert!(generated_code.contains("pub type extern_ = external_crate :: ID"));
         }
         Err(e) => {

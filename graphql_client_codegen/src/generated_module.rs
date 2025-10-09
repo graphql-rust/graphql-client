@@ -1,9 +1,9 @@
 use crate::{
+    codegen::shared::to_snake_case_preserve_leading_underscores,
     codegen_options::*,
     query::{BoundQuery, OperationId},
     BoxError,
 };
-use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::{error::Error, fmt::Display};
@@ -57,7 +57,10 @@ impl GeneratedModule<'_> {
 
     /// Generate the module and all the code inside.
     pub(crate) fn to_token_stream(&self) -> Result<TokenStream, BoxError> {
-        let module_name = Ident::new(&self.operation.to_snake_case(), Span::call_site());
+        let module_name = Ident::new(
+            &to_snake_case_preserve_leading_underscores(self.operation),
+            Span::call_site(),
+        );
         let module_visibility = &self.options.module_visibility();
         let operation_name = self.operation;
         let operation_name_ident = self.options.normalization().operation(self.operation);
