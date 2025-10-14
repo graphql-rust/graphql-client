@@ -9,6 +9,18 @@ use heck::{ToSnakeCase, ToUpperCamelCase};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 
+fn to_snake_case_preserve_trailing_underscores(s: &str) -> String {
+    let trailing_underscores = s.chars().rev().take_while(|&c| c == '_').count();
+    if trailing_underscores == 0 {
+        s.to_snake_case()
+    } else {
+        let without_trailing = &s[..s.len() - trailing_underscores];
+        let suffix = "_".repeat(trailing_underscores);
+        format!("{}{}", without_trailing.to_snake_case(), suffix)
+    }
+}
+
+
 pub(super) fn generate_input_object_definitions(
     all_used_types: &UsedTypes,
     options: &GraphQLClientCodegenOptions,
@@ -61,7 +73,7 @@ fn generate_struct(
     let struct_name = Ident::new(safe_name.as_ref(), Span::call_site());
 
     let fields = input.fields.iter().map(|(field_name, field_type)| {
-        let safe_field_name = keyword_replace(field_name.to_snake_case());
+        let safe_field_name = keyword_replace(to_snake_case_preserve_trailing_underscores(field_name));
         let annotation = field_rename_annotation(field_name, safe_field_name.as_ref());
         let name_ident = Ident::new(safe_field_name.as_ref(), Span::call_site());
         let normalized_field_type_name = options
