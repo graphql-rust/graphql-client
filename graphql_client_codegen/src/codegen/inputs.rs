@@ -24,7 +24,10 @@ pub(super) fn generate_input_object_definitions(
                 .variables
                 .iter()
                 .enumerate()
-                .find(|(_, v)| v.r#type.id.as_input_id().is_some_and(|i| i == input_id))
+                .find(|(_, v)| match v.r#type.id.as_input_id() {
+                    Some(i) => i == input_id,
+                    None => false,
+                })
                 .and_then(|(index, _)| custom_variable_types.get(index));
             if let Some(custom_type) = custom_variable_type {
                 generate_type_def(input, options, custom_type)
