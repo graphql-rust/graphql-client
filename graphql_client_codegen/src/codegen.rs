@@ -350,3 +350,26 @@ where
         #(#fields,)*
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decorate_type_emits_optional_when_skip_or_include() {
+        let ident = Ident::new("Test", Span::call_site());
+        let qualifiers = [GraphqlTypeQualifier::Required, GraphqlTypeQualifier::List];
+        let rendered_type = decorate_type(&ident, &qualifiers, true).to_string();
+
+        assert_eq!(rendered_type, "Option < Vec < Option < Test >> >");
+    }
+
+    #[test]
+    fn decorate_type_emits_required_when_no_skip_or_include() {
+        let ident = Ident::new("Test", Span::call_site());
+        let qualifiers = [GraphqlTypeQualifier::Required, GraphqlTypeQualifier::List];
+        let rendered_type = decorate_type(&ident, &qualifiers, false).to_string();
+
+        assert_eq!(rendered_type, "Vec < Option < Test >>");
+    }
+}
