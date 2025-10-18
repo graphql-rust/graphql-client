@@ -14,7 +14,7 @@ pub(super) fn validate_type_conditions(
     let selection = query.query.get_selection(selection_id);
 
     let selected_type = match selection {
-        Selection::FragmentSpread(fragment_id) => query.query.get_fragment(*fragment_id).on,
+        Selection::FragmentSpread(fragment_id, _) => query.query.get_fragment(*fragment_id).on,
         Selection::InlineFragment(inline_fragment) => inline_fragment.type_id,
         _ => return Ok(()),
     };
@@ -146,7 +146,7 @@ impl SelectionParent {
 pub(crate) enum Selection {
     Field(SelectedField),
     InlineFragment(InlineFragment),
-    FragmentSpread(ResolvedFragmentId),
+    FragmentSpread(ResolvedFragmentId, bool),
     Typename,
 }
 
@@ -184,7 +184,7 @@ impl Selection {
                     selection.collect_used_types(used_types, query);
                 }
             }
-            Selection::FragmentSpread(fragment_id) => {
+            Selection::FragmentSpread(fragment_id, _) => {
                 // This is necessary to avoid infinite recursion.
                 if used_types.fragments.contains(fragment_id) {
                     return;
@@ -204,7 +204,7 @@ impl Selection {
 
     pub(crate) fn contains_fragment(&self, fragment_id: ResolvedFragmentId, query: &Query) -> bool {
         match self {
-            Selection::FragmentSpread(id) => *id == fragment_id,
+            Selection::FragmentSpread(id, _) => *id == fragment_id,
             _ => self.subselection().iter().any(|selection_id| {
                 query
                     .get_selection(*selection_id)

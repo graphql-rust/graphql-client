@@ -92,6 +92,7 @@ fn calculate_custom_response_type_selection<'a>(
         name: custom_response_type.as_str(),
         struct_id,
         boxed: false,
+        has_skip_or_include: false
     });
 }
 
@@ -128,7 +129,7 @@ pub(super) fn render_fragment<'a>(
 /// A sub-selection set (spread) on one of the variants of a union or interface.
 enum VariantSelection<'a> {
     InlineFragment(&'a InlineFragment),
-    FragmentSpread((ResolvedFragmentId, &'a ResolvedFragment)),
+    FragmentSpread((ResolvedFragmentId, &'a ResolvedFragment), bool),
 }
 
 impl<'a> VariantSelection<'a> {
@@ -142,7 +143,7 @@ impl<'a> VariantSelection<'a> {
             Selection::InlineFragment(inline_fragment) => {
                 Some(VariantSelection::InlineFragment(inline_fragment))
             }
-            Selection::FragmentSpread(fragment_id) => {
+            Selection::FragmentSpread(fragment_id, has_skip_or_include) => {
                 let fragment = query.query.get_fragment(*fragment_id);
 
                 if fragment.on == type_id {
@@ -150,7 +151,7 @@ impl<'a> VariantSelection<'a> {
                     None
                 } else {
                     // The selection is on one of the variants of the type.
-                    Some(VariantSelection::FragmentSpread((*fragment_id, fragment)))
+                    Some(VariantSelection::FragmentSpread((*fragment_id, fragment), *has_skip_or_include))
                 }
             }
             Selection::Field(_) | Selection::Typename => None,
@@ -160,7 +161,7 @@ impl<'a> VariantSelection<'a> {
     fn variant_type_id(&self) -> TypeId {
         match self {
             VariantSelection::InlineFragment(f) => f.type_id,
-            VariantSelection::FragmentSpread((_id, f)) => f.on,
+            VariantSelection::FragmentSpread((_id, f), _) => f.on,
         }
     }
 }
@@ -175,7 +176,7 @@ fn calculate_selection<'a>(
     // If the selection only contains a fragment, replace the selection with
     // that fragment.
     if selection_set.len() == 1 {
-        if let Selection::FragmentSpread(fragment_id) =
+        if let Selection::FragmentSpread(fragment_id, has_skip_or_include) =
             context.query.query.get_selection(selection_set[0])
         {
             let fragment = context.query.query.get_fragment(*fragment_id);
@@ -183,6 +184,7 @@ fn calculate_selection<'a>(
                 name: &fragment.name,
                 struct_id,
                 boxed: fragment_is_recursive(*fragment_id, context.query.query),
+                has_skip_or_include: *has_skip_or_include
             });
             return;
         }
@@ -253,13 +255,14 @@ fn calculate_selection<'a>(
                     let struct_id = context.push_type(expanded_type);
 
                     if variant_selections.len() == 1 {
-                        if let VariantSelection::FragmentSpread((fragment_id, fragment)) =
+                        if let VariantSelection::FragmentSpread((fragment_id, fragment), has_skip_or_include) =
                             variant_selections[0].2
                         {
                             context.push_type_alias(TypeAlias {
                                 boxed: fragment_is_recursive(fragment_id, context.query.query),
                                 name: &fragment.name,
                                 struct_id,
+                                has_skip_or_include
                             });
                             continue;
                         }
@@ -276,7 +279,7 @@ fn calculate_selection<'a>(
                                     options,
                                 );
                             }
-                            VariantSelection::FragmentSpread((fragment_id, fragment)) => context
+                            VariantSelection::FragmentSpread((fragment_id, fragment), has_skip_or_include) => context
                                 .push_field(ExpandedField {
                                     field_type: fragment.name.as_str().into(),
                                     field_type_qualifiers: &[GraphqlTypeQualifier::Required],
@@ -286,8 +289,7 @@ fn calculate_selection<'a>(
                                     struct_id,
                                     deprecation: None,
                                     boxed: fragment_is_recursive(*fragment_id, context.query.query),
-                                    // TODO
-                                    skip_or_include: false
+                                    skip_or_include: *has_skip_or_include
                                 }),
                         }
                     }
@@ -387,7 +389,7 @@ fn calculate_selection<'a>(
             }
             Selection::Typename => (),
             Selection::InlineFragment(_inline) => (),
-            Selection::FragmentSpread(fragment_id) => {
+            Selection::FragmentSpread(fragment_id, has_skip_or_include) => {
                 // Here we only render fragments that are directly on the type
                 // itself, and not on one of its variants.
 
@@ -413,7 +415,7 @@ fn calculate_selection<'a>(
                     flatten: true,
                     deprecation: None,
                     boxed: fragment_is_recursive(*fragment_id, context.query.query),
-                    skip_or_include: false
+                    skip_or_include: *has_skip_or_include
                 });
 
                 // We stop here, because the structs for the fragments are generated separately, to
@@ -430,6 +432,7 @@ struct TypeAlias<'a> {
     name: &'a str,
     struct_id: ResponseTypeId,
     boxed: bool,
+    has_skip_or_include: bool
 }
 
 struct ExpandedField<'a> {
