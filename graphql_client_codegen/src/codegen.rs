@@ -202,7 +202,11 @@ fn render_variable_field_type(
     decorate_type(&full_name, &variable.r#type.qualifiers, false)
 }
 
-fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier], skip_or_include: bool) -> TokenStream {
+fn decorate_type(
+    ident: &Ident,
+    qualifiers: &[GraphqlTypeQualifier],
+    skip_or_include: bool,
+) -> TokenStream {
     let mut qualified = quote!(#ident);
 
     let mut non_null = false;
