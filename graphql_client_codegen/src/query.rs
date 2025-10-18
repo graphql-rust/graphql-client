@@ -318,11 +318,17 @@ where
                         ))
                     })?;
 
+                let has_skip_or_include = field
+                    .directives
+                    .iter()
+                    .any(|directive| ["skip", "include"].contains(&directive.name.as_ref()));
+
                 let id = query.push_selection(
                     Selection::Field(SelectedField {
                         alias: field.alias.as_ref().map(|alias| alias.as_ref().into()),
                         field_id,
                         selection_set: Vec::with_capacity(selection_set.items.len()),
+                        skip_or_include: has_skip_or_include
                     }),
                     parent,
                 );

@@ -45,6 +45,7 @@ fn main() -> Result<(), anyhow::Error> {
     let variables = repo_view::Variables {
         owner: owner.to_string(),
         name: name.to_string(),
+        with_issues: true
     };
 
     let client = Client::builder()
@@ -81,6 +82,7 @@ fn main() -> Result<(), anyhow::Error> {
         .repository
         .expect("missing repository")
         .issues
+        .unwrap()
         .nodes
         .expect("issue nodes is null")
         .iter()

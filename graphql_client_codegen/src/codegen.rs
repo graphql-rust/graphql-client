@@ -199,10 +199,10 @@ fn render_variable_field_type(
     let safe_name = shared::keyword_replace(normalized_name.clone());
     let full_name = Ident::new(safe_name.as_ref(), Span::call_site());
 
-    decorate_type(&full_name, &variable.r#type.qualifiers)
+    decorate_type(&full_name, &variable.r#type.qualifiers, false)
 }
 
-fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStream {
+fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier], skip_or_include: bool) -> TokenStream {
     let mut qualified = quote!(#ident);
 
     let mut non_null = false;
@@ -233,7 +233,8 @@ fn decorate_type(ident: &Ident, qualifiers: &[GraphqlTypeQualifier]) -> TokenStr
 
     // If we are in nullable context at the end of the iteration, we wrap the whole
     // type with an Option.
-    if !non_null {
+    // This can also happen if the field has a @skip or @include directive
+    if !non_null || skip_or_include {
         qualified = quote!(Option<#qualified>);
     }
 

@@ -183,7 +183,7 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
                 Some(field.deprecation_reason.clone())
             } else {
                 None
-            },
+            }
         };
 
         field_ids.push(schema.push_field(field));
@@ -218,7 +218,7 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
                 Some(field.deprecation_reason.clone())
             } else {
                 None
-            },
+            }
         };
 
         field_ids.push(schema.push_field(field));

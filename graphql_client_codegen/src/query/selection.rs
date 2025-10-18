@@ -257,6 +257,7 @@ pub(crate) struct SelectedField {
     pub(crate) alias: Option<String>,
     pub(crate) field_id: StoredFieldId,
     pub(crate) selection_set: Vec<SelectionId>,
+    pub(crate) skip_or_include: bool
 }
 
 impl SelectedField {

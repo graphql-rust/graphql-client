@@ -82,6 +82,7 @@ fn calculate_custom_response_type_selection<'a>(
         flatten: false,
         boxed: false,
         deprecation: field.deprecation(),
+        skip_or_include: false
     });
 
     let struct_id = context.push_type(ExpandedType {
@@ -285,6 +286,8 @@ fn calculate_selection<'a>(
                                     struct_id,
                                     deprecation: None,
                                     boxed: fragment_is_recursive(*fragment_id, context.query.query),
+                                    // TODO
+                                    skip_or_include: false
                                 }),
                         }
                     }
@@ -331,6 +334,7 @@ fn calculate_selection<'a>(
                             flatten: false,
                             deprecation: schema_field.deprecation(),
                             boxed: false,
+                            skip_or_include: field.skip_or_include
                         });
                     }
                     TypeId::Scalar(scalar) => {
@@ -348,6 +352,7 @@ fn calculate_selection<'a>(
                             flatten: false,
                             deprecation: schema_field.deprecation(),
                             boxed: false,
+                            skip_or_include: field.skip_or_include
                         });
                     }
                     TypeId::Object(_) | TypeId::Interface(_) | TypeId::Union(_) => {
@@ -362,6 +367,7 @@ fn calculate_selection<'a>(
                             flatten: false,
                             boxed: false,
                             deprecation: schema_field.deprecation(),
+                            skip_or_include: field.skip_or_include
                         });
 
                         let type_id = context.push_type(ExpandedType {
@@ -407,6 +413,7 @@ fn calculate_selection<'a>(
                     flatten: true,
                     deprecation: None,
                     boxed: fragment_is_recursive(*fragment_id, context.query.query),
+                    skip_or_include: false
                 });
 
                 // We stop here, because the structs for the fragments are generated separately, to
@@ -434,6 +441,7 @@ struct ExpandedField<'a> {
     flatten: bool,
     deprecation: Option<Option<&'a str>>,
     boxed: bool,
+    skip_or_include: bool
 }
 
 impl ExpandedField<'_> {
@@ -442,6 +450,7 @@ impl ExpandedField<'_> {
         let qualified_type = decorate_type(
             &Ident::new(&self.field_type, Span::call_site()),
             self.field_type_qualifiers,
+            self.skip_or_include
         );
 
         let qualified_type = if self.boxed {

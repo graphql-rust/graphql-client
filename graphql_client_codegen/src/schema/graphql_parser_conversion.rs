@@ -184,7 +184,7 @@ fn ingest_object<'doc, T>(
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),
             parent: super::StoredFieldParent::Object(object_id),
-            deprecation: find_deprecation(&field.directives),
+            deprecation: find_deprecation(&field.directives)
         };
 
         field_ids.push(schema.push_field(field));
@@ -221,7 +221,7 @@ fn ingest_object_type_extension<'doc, T>(
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),
             parent: super::StoredFieldParent::Object(object_id),
-            deprecation: find_deprecation(&field.directives),
+            deprecation: find_deprecation(&field.directives)
         };
 
         field_ids.push(schema.push_field(field));
@@ -290,7 +290,7 @@ fn ingest_interface<'doc, T>(
             name: field.name.as_ref().into(),
             r#type: resolve_field_type(schema, &field.field_type),
             parent: super::StoredFieldParent::Interface(interface_id),
-            deprecation: find_deprecation(&field.directives),
+            deprecation: find_deprecation(&field.directives)
         };
 
         field_ids.push(schema.push_field(field));
