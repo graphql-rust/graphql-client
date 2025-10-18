@@ -12,8 +12,7 @@ use crate::{
     },
     schema::{Schema, TypeId},
     type_qualifiers::GraphqlTypeQualifier,
-    GraphQLClientCodegenOptions,
-    GeneralError,
+    GeneralError, GraphQLClientCodegenOptions,
 };
 use heck::*;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -43,12 +42,27 @@ pub(crate) fn render_response_data_fields<'a>(
     if let Some(custom_response_type) = options.custom_response_type() {
         if operation.selection_set.len() == 1 {
             let selection_id = operation.selection_set[0];
-            let selection_field = query.query.get_selection(selection_id).as_selected_field()
-                .ok_or_else(|| GeneralError(format!("Custom response type {custom_response_type} will only work on fields")))?;
-            calculate_custom_response_type_selection(&mut expanded_selection, response_data_type_id, custom_response_type, selection_id, selection_field);
+            let selection_field = query
+                .query
+                .get_selection(selection_id)
+                .as_selected_field()
+                .ok_or_else(|| {
+                    GeneralError(format!(
+                        "Custom response type {custom_response_type} will only work on fields"
+                    ))
+                })?;
+            calculate_custom_response_type_selection(
+                &mut expanded_selection,
+                response_data_type_id,
+                custom_response_type,
+                selection_id,
+                selection_field,
+            );
             return Ok(expanded_selection);
         } else {
-            return Err(GeneralError(format!("Custom response type {custom_response_type} requires single selection field")));
+            return Err(GeneralError(format!(
+                "Custom response type {custom_response_type} requires single selection field"
+            )));
         }
     }
 
@@ -68,8 +82,8 @@ fn calculate_custom_response_type_selection<'a>(
     struct_id: ResponseTypeId,
     custom_response_type: &'a String,
     selection_id: SelectionId,
-    field: &'a SelectedField)
-{
+    field: &'a SelectedField,
+) {
     let (graphql_name, rust_name) = context.field_name(field);
     let struct_name_string = full_path_prefix(selection_id, context.query);
     let field = context.query.schema.get_field(field.field_id);
@@ -92,7 +106,6 @@ fn calculate_custom_response_type_selection<'a>(
         name: custom_response_type.as_str(),
         struct_id,
         boxed: false,
-        has_skip_or_include: false,
     });
 }
 
@@ -179,7 +192,7 @@ fn calculate_selection<'a>(
     // If the selection only contains a fragment, replace the selection with
     // that fragment.
     if selection_set.len() == 1 {
-        if let Selection::FragmentSpread(fragment_id, has_skip_or_include) =
+        if let Selection::FragmentSpread(fragment_id, _) =
             context.query.query.get_selection(selection_set[0])
         {
             let fragment = context.query.query.get_fragment(*fragment_id);
@@ -187,7 +200,6 @@ fn calculate_selection<'a>(
                 name: &fragment.name,
                 struct_id,
                 boxed: fragment_is_recursive(*fragment_id, context.query.query),
-                has_skip_or_include: *has_skip_or_include,
             });
             return;
         }
@@ -258,16 +270,13 @@ fn calculate_selection<'a>(
                     let struct_id = context.push_type(expanded_type);
 
                     if variant_selections.len() == 1 {
-                        if let VariantSelection::FragmentSpread(
-                            (fragment_id, fragment),
-                            has_skip_or_include,
-                        ) = variant_selections[0].2
+                        if let VariantSelection::FragmentSpread((fragment_id, fragment), _) =
+                            variant_selections[0].2
                         {
                             context.push_type_alias(TypeAlias {
                                 boxed: fragment_is_recursive(fragment_id, context.query.query),
                                 name: &fragment.name,
                                 struct_id,
-                                has_skip_or_include,
                             });
                             continue;
                         }
@@ -439,7 +448,6 @@ struct TypeAlias<'a> {
     name: &'a str,
     struct_id: ResponseTypeId,
     boxed: bool,
-    has_skip_or_include: bool,
 }
 
 struct ExpandedField<'a> {
