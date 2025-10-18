@@ -8,6 +8,9 @@ const KEYWORDS_SCHEMA_PATH: &str = "keywords_schema.graphql";
 const FOOBARS_QUERY: &str = include_str!("foobars_query.graphql");
 const FOOBARS_SCHEMA_PATH: &str = "foobars_schema.graphql";
 
+const POSTS_QUERY: &str = include_str!("posts_query.graphql");
+const POSTS_SCHEMA_PATH: &str = "posts_schema.graphql";
+
 fn build_schema_path(path: &str) -> PathBuf {
     std::env::current_dir()
         .unwrap()
@@ -62,7 +65,8 @@ fn blended_custom_types_works() {
     match r {
         Ok(_) => {
             // Variables and returns should be replaced with custom types
-            assert!(generated_code.contains("pub type SearchQuerySearch = external_crate :: Transaction"));
+            assert!(generated_code
+                .contains("pub type SearchQuerySearch = external_crate :: Transaction"));
             assert!(generated_code.contains("pub type extern_ = external_crate :: ID"));
         }
         Err(e) => {
@@ -153,4 +157,31 @@ fn skip_serializing_none_should_generate_serde_skip_serializing() {
             panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
         }
     };
+}
+
+#[test]
+fn generate_option_for_skip_and_include() {
+    let query_string = POSTS_QUERY;
+    let schema_path = build_schema_path(POSTS_SCHEMA_PATH);
+
+    let options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
+
+    let generated_tokens =
+        generate_module_token_stream_from_string(query_string, &schema_path, options)
+            .expect("Generate posts module");
+
+    let generated_code = generated_tokens.to_string();
+
+    let r: syn::parse::Result<proc_macro2::TokenStream> = syn::parse2(generated_tokens);
+
+    match r {
+        Ok(_) => {
+            println!("{}", generated_code);
+            let expected_type = "pub struct UserQueryUser { pub name : String , pub email : Option < String > , pub friends : Option < Vec < UserQueryUserFriends > > , # [serde (flatten)] pub with_post_fragment : Option < WithPostFragment > , }";
+            assert!(generated_code.contains(expected_type));
+        }
+        Err(e) => {
+            panic!("Error: {}\n Generated content: {}\n", e, &generated_code);
+        }
+    }
 }
