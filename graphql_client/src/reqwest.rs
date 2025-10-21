@@ -22,7 +22,7 @@ pub async fn post_graphql_batch<Q: GraphQLQuery, U: reqwest::IntoUrl>(
     client: &reqwest::Client,
     url: U,
     variables: Vec<Q::Variables>,
-) -> Result<crate::Response<Q::ResponseData>, reqwest::Error> {
+) -> Result<Vec<crate::Response<Q::ResponseData>>, reqwest::Error> {
     let body = Q::build_batch_query(variables);
     let reqwest_response = client.post(url).json(&body).send().await?;
 
@@ -48,7 +48,7 @@ pub fn post_graphql_blocking_batch<Q: GraphQLQuery, U: reqwest::IntoUrl>(
     client: &reqwest::blocking::Client,
     url: U,
     variables: Vec<Q::Variables>,
-) -> Result<crate::Response<Q::ResponseData>, reqwest::Error> {
+) -> Result<Vec<crate::Response<Q::ResponseData>>, reqwest::Error> {
     let body = Q::build_batch_query(variables);
     let reqwest_response = client.post(url).json(&body).send()?;
 
