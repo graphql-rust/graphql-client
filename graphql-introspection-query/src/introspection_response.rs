@@ -202,6 +202,8 @@ pub struct InputValue {
     #[serde(rename = "type")]
     pub type_: InputValueType,
     pub default_value: Option<String>,
+    pub is_deprecated: Option<bool>,
+    pub deprecation_reason: Option<String>,
 }
 
 type InputValueType = TypeRef;
