@@ -202,7 +202,9 @@ pub struct InputValue {
     #[serde(rename = "type")]
     pub type_: InputValueType,
     pub default_value: Option<String>,
+    #[serde(default)]
     pub is_deprecated: Option<bool>,
+    #[serde(default)]
     pub deprecation_reason: Option<String>,
 }
 
