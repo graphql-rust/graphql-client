@@ -139,8 +139,8 @@ fn main() -> CliResult<()> {
             selected_operation,
             custom_scalars_module,
             fragments_other_variant,
-            external_enums, 
-            custom_variable_types, 
+            external_enums,
+            custom_variable_types,
             custom_response_type,
         } => generate::generate_code(generate::CliCodegenParams {
             query_path,

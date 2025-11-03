@@ -112,6 +112,16 @@ impl GeneratedModule<'_> {
                     }
 
                 }
+                fn build_batch_query(variables: Vec<Self::Variables>) -> Vec<graphql_client::QueryBody<Self::Variables>> {
+                    variables.into_iter().map(|variable|
+                        graphql_client::QueryBody {
+                            variables: variable,
+                            query: #module_name::QUERY,
+                            operation_name: #module_name::OPERATION_NAME,
+                        }
+                    ).collect()
+
+                }
             }
         ))
     }

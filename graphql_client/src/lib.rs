@@ -86,6 +86,8 @@ pub trait GraphQLQuery {
 
     /// Produce a GraphQL query struct that can be JSON serialized and sent to a GraphQL API.
     fn build_query(variables: Self::Variables) -> QueryBody<Self::Variables>;
+    /// Produce a GraphQL batch query struct that can be JSON serialized and sent to a GraphQL API.
+    fn build_batch_query(variables: Vec<Self::Variables>) -> Vec<QueryBody<Self::Variables>>;
 }
 
 /// The form in which queries are sent over HTTP in most implementations. This will be built using the [`GraphQLQuery`] trait normally.
