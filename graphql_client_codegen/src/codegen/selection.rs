@@ -15,7 +15,7 @@ use crate::{
     GraphQLClientCodegenOptions,
     GeneralError,
 };
-use heck::*;
+use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::borrow::Cow;
@@ -136,7 +136,7 @@ impl<'a> VariantSelection<'a> {
         selection: &'a Selection,
         type_id: TypeId,
         query: &BoundQuery<'a>,
-    ) -> Option<VariantSelection<'a>> {
+    ) -> Option<Self> {
         match selection {
             Selection::InlineFragment(inline_fragment) => {
                 Some(VariantSelection::InlineFragment(inline_fragment))
@@ -377,7 +377,7 @@ fn calculate_selection<'a>(
                         );
                     }
                     TypeId::Input(_) => unreachable!("field selection on input type"),
-                };
+                }
             }
             Selection::Typename => (),
             Selection::InlineFragment(_inline) => (),
@@ -566,7 +566,7 @@ impl<'a> ExpandedSelection<'a> {
     }
 
     fn push_type_alias(&mut self, alias: TypeAlias<'a>) {
-        self.aliases.push(alias)
+        self.aliases.push(alias);
     }
 
     fn push_variant(&mut self, variant: ExpandedVariant<'a>) {
@@ -643,7 +643,9 @@ impl<'a> ExpandedSelection<'a> {
                 continue;
             }
 
-            let (on_field, on_enum) = if !on_variants.is_empty() {
+            let (on_field, on_enum) = if on_variants.is_empty() {
+                (None, None)
+            } else {
                 let enum_name = Ident::new(&format!("{}On", ty.name), Span::call_site());
 
                 let on_field = quote!(#[serde(flatten)] pub on: #enum_name);
@@ -657,8 +659,6 @@ impl<'a> ExpandedSelection<'a> {
                 );
 
                 (Some(on_field), Some(on_enum))
-            } else {
-                (None, None)
             };
 
             let tokens = quote! {

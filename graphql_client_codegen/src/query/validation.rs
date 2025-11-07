@@ -4,10 +4,9 @@ use crate::schema::TypeId;
 pub(super) fn validate_typename_presence(
     query: &BoundQuery<'_>,
 ) -> Result<(), QueryValidationError> {
-    for fragment in query.query.fragments.iter() {
-        let type_id = match fragment.on {
-            id @ TypeId::Interface(_) | id @ TypeId::Union(_) => id,
-            _ => continue,
+    for fragment in &query.query.fragments {
+        let type_id @ (TypeId::Interface(_) | TypeId::Union(_)) = fragment.on else {
+            continue;
         };
 
         if !selection_set_contains_type_name(fragment.on, &fragment.selection_set, query.query) {
@@ -23,14 +22,15 @@ pub(super) fn validate_typename_presence(
         query
             .query
             .selections()
-            .filter_map(|(selection_id, selection)| match selection {
-                Selection::Field(field) => match query.schema.get_field(field.field_id).r#type.id {
-                    id @ TypeId::Interface(_) | id @ TypeId::Union(_) => {
-                        Some((selection_id, id, &field.selection_set))
+            .filter_map(|(selection_id, selection)| {
+                if let Selection::Field(field) = selection {
+                    let field_type_id = query.schema.get_field(field.field_id).r#type.id;
+
+                    if matches!(field_type_id, TypeId::Interface(_) | TypeId::Union(_)) {
+                        return Some((selection_id, field_type_id, &field.selection_set));
                     }
-                    _ => None,
-                },
-                _ => None,
+                }
+                None
             });
 
     for selection in union_and_interface_field_selections {

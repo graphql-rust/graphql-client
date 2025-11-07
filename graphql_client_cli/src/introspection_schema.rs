@@ -67,7 +67,7 @@ pub fn introspect_schema(
 
     if let Some(token) = authorization {
         req_builder = req_builder.bearer_auth(token.as_str());
-    };
+    }
 
     let res = req_builder.json(&request_body).send()?;
 
@@ -80,9 +80,9 @@ pub fn introspect_schema(
         let error_message = match res.text() {
             Ok(msg) => match serde_json::from_str::<serde_json::Value>(&msg) {
                 Ok(json) => format!("HTTP {}\n{}", status, serde_json::to_string_pretty(&json)?),
-                Err(_) => format!("HTTP {}: {}", status, msg),
+                Err(_) => format!("HTTP {status}: {msg}"),
             },
-            Err(_) => format!("HTTP {}", status),
+            Err(_) => format!("HTTP {status}"),
         };
         return Err(Error::message(error_message));
     }
@@ -113,8 +113,7 @@ impl FromStr for Header {
         // error: colon required for name/value pair
         if !input.contains(':') {
             return Err(format!(
-                "Invalid header input. A colon is required to separate the name and value. [{}]",
-                input
+                "Invalid header input. A colon is required to separate the name and value. [{input}]"
             ));
         }
 
@@ -126,16 +125,14 @@ impl FromStr for Header {
         // error: field name must be
         if name.is_empty() {
             return Err(format!(
-                "Invalid header input. Field name is required before colon. [{}]",
-                input
+                "Invalid header input. Field name is required before colon. [{input}]"
             ));
         }
 
         // error: no whitespace in field name
         if name.split_whitespace().count() > 1 {
             return Err(format!(
-                "Invalid header input. Whitespace not allowed in field name. [{}]",
-                input
+                "Invalid header input. Whitespace not allowed in field name. [{input}]"
             ));
         }
 
@@ -154,14 +151,12 @@ mod tests {
     fn it_errors_invalid_headers() {
         // https://tools.ietf.org/html/rfc7230#section-3.2
 
-        for input in [
+        for input in &[
             "X-Name Value",   // error: colon required for name/value pair
             ": Value",        // error: field name must be
             "X Name: Value",  // error: no whitespace in field name
             "X\tName: Value", // error: no whitespace in field name (tab)
-        ]
-        .iter()
-        {
+        ] {
             let header = Header::from_str(input);
 
             assert!(header.is_err(), "Expected error: [{}]", input);
@@ -181,7 +176,7 @@ mod tests {
             value: "Value:".to_string(),
         };
 
-        for (input, expected) in [
+        for (input, expected) in &[
             ("X-Name: Value", &expected1),  // ideal
             ("X-Name:Value", &expected1),   // no optional whitespace
             ("X-Name: Value ", &expected1), // with optional whitespace
@@ -190,18 +185,11 @@ mod tests {
             // not allowed per RFC, but we'll forgive
             ("X-Name : Value", &expected1),
             (" X-Name: Value", &expected1),
-        ]
-        .iter()
-        {
+        ] {
             let header = Header::from_str(input);
 
             assert!(header.is_ok(), "Expected ok: [{}]", input);
-            assert_eq!(
-                header.unwrap(),
-                **expected,
-                "Expected equality: [{}]",
-                input
-            );
+            assert_eq!(header.unwrap(), **expected, "Expected equality: [{input}]");
         }
     }
 }

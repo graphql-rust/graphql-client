@@ -24,9 +24,9 @@ impl std::str::FromStr for DeprecationStrategy {
 
     fn from_str(s: &str) -> Result<Self, ()> {
         match s.trim() {
-            "allow" => Ok(DeprecationStrategy::Allow),
-            "deny" => Ok(DeprecationStrategy::Deny),
-            "warn" => Ok(DeprecationStrategy::Warn),
+            "allow" => Ok(Self::Allow),
+            "deny" => Ok(Self::Deny),
+            "warn" => Ok(Self::Warn),
             _ => Err(()),
         }
     }

@@ -122,8 +122,8 @@ pub enum PathFragment {
 impl Display for PathFragment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            PathFragment::Key(ref key) => write!(f, "{}", key),
-            PathFragment::Index(ref idx) => write!(f, "{}", idx),
+            Self::Key(ref key) => write!(f, "{key}"),
+            Self::Index(ref idx) => write!(f, "{idx}"),
         }
     }
 }
@@ -217,7 +217,7 @@ impl Display for Error {
                 fragments
                     .iter()
                     .fold(String::new(), |mut acc, item| {
-                        let _ = write!(acc, "{}/", item);
+                        let _ = write!(acc, "{item}/");
                         acc
                     })
                     .trim_end_matches('/')
@@ -230,7 +230,7 @@ impl Display for Error {
             .locations
             .as_ref()
             .and_then(|locations| locations.iter().next())
-            .cloned()
+            .copied()
             .unwrap_or_default();
 
         write!(f, "{}:{}:{}: {}", path, loc.line, loc.column, self.message)
@@ -328,7 +328,7 @@ mod tests {
                 path: None,
                 extensions: None,
             }
-        )
+        );
     }
 
     #[test]
@@ -363,7 +363,7 @@ mod tests {
                 ]),
                 extensions: None,
             }
-        )
+        );
     }
 
     #[test]
@@ -407,6 +407,6 @@ mod tests {
                 ]),
                 extensions: expected_extensions,
             }
-        )
+        );
     }
 }

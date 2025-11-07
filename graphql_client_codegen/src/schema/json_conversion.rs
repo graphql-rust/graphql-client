@@ -50,7 +50,7 @@ fn convert(src: &mut JsonSchema, schema: &mut Schema) {
     }
 
     for enm in enums_mut(src) {
-        ingest_enum(schema, enm)
+        ingest_enum(schema, enm);
     }
 
     for interface in interfaces_mut(src) {
@@ -62,7 +62,7 @@ fn convert(src: &mut JsonSchema, schema: &mut Schema) {
     }
 
     for unn in unions_mut(src) {
-        ingest_union(schema, unn)
+        ingest_union(schema, unn);
     }
 
     for input in inputs_mut(src) {
@@ -146,14 +146,7 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
         .as_mut()
         .expect("enm.enum_values.as_mut()")
         .iter_mut()
-        .map(|v| {
-            std::mem::take(
-                v.name
-                    .as_mut()
-                    .take()
-                    .expect("variant.name.as_mut().take()"),
-            )
-        })
+        .map(|v| std::mem::take(v.name.as_mut().expect("variant.name.as_mut().take()")))
         .collect();
 
     let enm = super::StoredEnum { name, variants };
@@ -179,7 +172,7 @@ fn ingest_interface(schema: &mut Schema, iface: &mut FullType) {
                 schema,
                 &mut field.type_.as_mut().expect("take field type").type_ref,
             ),
-            deprecation: if let Some(true) = field.is_deprecated {
+            deprecation: if field.is_deprecated == Some(true) {
                 Some(field.deprecation_reason.clone())
             } else {
                 None
@@ -214,7 +207,7 @@ fn ingest_object(schema: &mut Schema, object: &mut FullType) {
                 schema,
                 &mut field.type_.as_mut().expect("take field type").type_ref,
             ),
-            deprecation: if let Some(true) = field.is_deprecated {
+            deprecation: if field.is_deprecated == Some(true) {
                 Some(field.deprecation_reason.clone())
             } else {
                 None
@@ -304,14 +297,11 @@ fn ingest_input(schema: &mut Schema, input: &mut FullType) {
     schema.stored_inputs.push(input);
 }
 
-fn resolve_field_type(schema: &mut Schema, typeref: &mut TypeRef) -> super::StoredFieldType {
+fn resolve_field_type(schema: &Schema, typeref: &mut TypeRef) -> super::StoredFieldType {
     from_json_type_inner(schema, typeref)
 }
 
-fn resolve_input_field_type(
-    schema: &mut Schema,
-    typeref: &mut TypeRef,
-) -> super::StoredInputFieldType {
+fn resolve_input_field_type(schema: &Schema, typeref: &mut TypeRef) -> super::StoredInputFieldType {
     let field_type = from_json_type_inner(schema, typeref);
 
     super::StoredInputFieldType {
@@ -321,7 +311,7 @@ fn resolve_input_field_type(
 }
 
 fn json_type_qualifiers_depth(typeref: &mut TypeRef) -> usize {
-    use graphql_introspection_query::introspection_response::*;
+    use graphql_introspection_query::introspection_response::__TypeKind;
 
     match (typeref.kind.as_mut(), typeref.of_type.as_mut()) {
         (Some(__TypeKind::NON_NULL), Some(inner)) => 1 + json_type_qualifiers_depth(inner),
@@ -331,9 +321,9 @@ fn json_type_qualifiers_depth(typeref: &mut TypeRef) -> usize {
     }
 }
 
-fn from_json_type_inner(schema: &mut Schema, inner: &mut TypeRef) -> super::StoredFieldType {
+fn from_json_type_inner(schema: &Schema, inner: &mut TypeRef) -> super::StoredFieldType {
     use crate::type_qualifiers::GraphqlTypeQualifier;
-    use graphql_introspection_query::introspection_response::*;
+    use graphql_introspection_query::introspection_response::__TypeKind;
 
     let qualifiers_depth = json_type_qualifiers_depth(inner);
     let mut qualifiers = Vec::with_capacity(qualifiers_depth);

@@ -38,7 +38,7 @@ impl std::error::Error for QueryValidationError {}
 
 impl QueryValidationError {
     pub(crate) fn new(message: String) -> Self {
-        QueryValidationError { message }
+        Self { message }
     }
 }
 
@@ -49,7 +49,7 @@ pub(crate) struct OperationId(u32);
 
 impl OperationId {
     pub(crate) fn new(idx: usize) -> Self {
-        OperationId(idx as u32)
+        Self(idx as u32)
     }
 }
 
@@ -75,10 +75,10 @@ where
     for definition in &query.definitions {
         match definition {
             graphql_parser::query::Definition::Fragment(fragment) => {
-                resolve_fragment(&mut resolved_query, schema, fragment)?
+                resolve_fragment(&mut resolved_query, schema, fragment)?;
             }
             graphql_parser::query::Definition::Operation(operation) => {
-                resolve_operation(&mut resolved_query, schema, operation)?
+                resolve_operation(&mut resolved_query, schema, operation)?;
             }
         }
     }
@@ -96,7 +96,7 @@ where
                 query: &resolved_query,
                 schema,
             },
-        )?
+        )?;
     }
 
     Ok(resolved_query)
@@ -252,7 +252,7 @@ fn resolve_union_selection<'doc, T>(
 where
     T: graphql_parser::query::Text<'doc>,
 {
-    for item in selection_set.items.iter() {
+    for item in &selection_set.items {
         match item {
             graphql_parser::query::Selection::Field(field) => {
                 if field.name.as_ref() == TYPENAME_FIELD {
@@ -260,8 +260,7 @@ where
                     parent.add_to_selection_set(query, id);
                 } else {
                     return Err(QueryValidationError::new(format!(
-                        "Invalid field selection on union field ({:?})",
-                        parent
+                        "Invalid field selection on union field ({parent:?})"
                     )));
                 }
             }
@@ -299,7 +298,7 @@ fn resolve_object_selection<'a, 'doc, T>(
 where
     T: graphql_parser::query::Text<'doc>,
 {
-    for item in selection_set.items.iter() {
+    for item in &selection_set.items {
         match item {
             graphql_parser::query::Selection::Field(field) => {
                 if field.name.as_ref() == TYPENAME_FIELD {
@@ -387,12 +386,11 @@ where
         other => {
             if !selection_set.items.is_empty() {
                 return Err(QueryValidationError::new(format!(
-                    "Selection set on non-object, non-interface type. ({:?})",
-                    other
+                    "Selection set on non-object, non-interface type. ({other:?})"
                 )));
             }
         }
-    };
+    }
 
     Ok(())
 }
@@ -609,9 +607,9 @@ impl ResolvedVariable {
 
                 let input = schema.get_input(input_id);
 
-                input.used_input_ids_recursive(used_types, schema)
+                input.used_input_ids_recursive(used_types, schema);
             }
-            type_id @ TypeId::Scalar(_) | type_id @ TypeId::Enum(_) => {
+            type_id @ (TypeId::Scalar(_) | TypeId::Enum(_)) => {
                 used_types.types.insert(type_id);
             }
             _ => (),

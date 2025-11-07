@@ -50,7 +50,7 @@ pub struct MultipleExternEnumsQuery;
 fn single_extern_enum() {
     const RESPONSE: &str = include_str!("extern_enums/single_extern_enum_response.json");
 
-    println!("{:?}", RESPONSE);
+    println!("{RESPONSE:?}");
     let response_data: single_extern_enum_query::ResponseData =
         serde_json::from_str(RESPONSE).unwrap();
 
@@ -67,11 +67,11 @@ fn single_extern_enum() {
 fn multiple_extern_enums() {
     const RESPONSE: &str = include_str!("extern_enums/multiple_extern_enums_response.json");
 
-    println!("{:?}", RESPONSE);
+    println!("{RESPONSE:?}");
     let response_data: multiple_extern_enums_query::ResponseData =
         serde_json::from_str(RESPONSE).unwrap();
 
-    println!("{:?}", response_data);
+    println!("{response_data:?}");
 
     let expected = multiple_extern_enums_query::ResponseData {
         distance: 100,

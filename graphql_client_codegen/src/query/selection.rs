@@ -78,11 +78,11 @@ pub(super) enum SelectionParent {
 impl SelectionParent {
     fn schema_type_id(&self, query: &BoundQuery<'_>) -> TypeId {
         match self {
-            SelectionParent::Fragment(fragment_id) => query.query.get_fragment(*fragment_id).on,
-            SelectionParent::Operation(operation_id) => {
+            Self::Fragment(fragment_id) => query.query.get_fragment(*fragment_id).on,
+            Self::Operation(operation_id) => {
                 TypeId::Object(query.query.get_operation(*operation_id).object_id)
             }
-            SelectionParent::Field(id) => {
+            Self::Field(id) => {
                 let field_id = query
                     .query
                     .get_selection(*id)
@@ -91,7 +91,7 @@ impl SelectionParent {
                     .field_id;
                 query.schema.get_field(field_id).r#type.id
             }
-            SelectionParent::InlineFragment(id) => {
+            Self::InlineFragment(id) => {
                 { query.query.get_selection(*id).as_inline_fragment().unwrap() }.type_id
             }
         }
@@ -99,8 +99,7 @@ impl SelectionParent {
 
     pub(super) fn add_to_selection_set(&self, q: &mut Query, selection_id: SelectionId) {
         match self {
-            SelectionParent::Field(parent_selection_id)
-            | SelectionParent::InlineFragment(parent_selection_id) => {
+            Self::Field(parent_selection_id) | Self::InlineFragment(parent_selection_id) => {
                 let parent_selection = q
                     .selections
                     .get_mut(parent_selection_id.0 as usize)
@@ -112,7 +111,7 @@ impl SelectionParent {
                     other => unreachable!("impossible parent selection: {:?}", other),
                 }
             }
-            SelectionParent::Fragment(fragment_id) => {
+            Self::Fragment(fragment_id) => {
                 let fragment = q
                     .fragments
                     .get_mut(fragment_id.0 as usize)
@@ -120,7 +119,7 @@ impl SelectionParent {
 
                 fragment.selection_set.push(selection_id);
             }
-            SelectionParent::Operation(operation_id) => {
+            Self::Operation(operation_id) => {
                 let operation = q
                     .operations
                     .get_mut(operation_id.0 as usize)
@@ -133,11 +132,11 @@ impl SelectionParent {
 
     pub(crate) fn to_path_segment(self, query: &BoundQuery<'_>) -> String {
         match self {
-            SelectionParent::Field(id) | SelectionParent::InlineFragment(id) => {
+            Self::Field(id) | Self::InlineFragment(id) => {
                 query.query.get_selection(id).to_path_segment(query)
             }
-            SelectionParent::Operation(id) => query.query.get_operation(id).to_path_segment(),
-            SelectionParent::Fragment(id) => query.query.get_fragment(id).to_path_segment(),
+            Self::Operation(id) => query.query.get_operation(id).to_path_segment(),
+            Self::Fragment(id) => query.query.get_fragment(id).to_path_segment(),
         }
     }
 }
@@ -153,21 +152,21 @@ pub(crate) enum Selection {
 impl Selection {
     pub(crate) fn as_selected_field(&self) -> Option<&SelectedField> {
         match self {
-            Selection::Field(f) => Some(f),
+            Self::Field(f) => Some(f),
             _ => None,
         }
     }
 
     pub(crate) fn as_inline_fragment(&self) -> Option<&InlineFragment> {
         match self {
-            Selection::InlineFragment(f) => Some(f),
+            Self::InlineFragment(f) => Some(f),
             _ => None,
         }
     }
 
     pub(crate) fn collect_used_types(&self, used_types: &mut UsedTypes, query: &BoundQuery<'_>) {
         match self {
-            Selection::Field(field) => {
+            Self::Field(field) => {
                 let stored_field = query.schema.get_field(field.field_id);
                 used_types.types.insert(stored_field.r#type.id);
 
@@ -176,7 +175,7 @@ impl Selection {
                     selection.collect_used_types(used_types, query);
                 }
             }
-            Selection::InlineFragment(inline_fragment) => {
+            Self::InlineFragment(inline_fragment) => {
                 used_types.types.insert(inline_fragment.type_id);
 
                 for selection_id in self.subselection() {
@@ -184,7 +183,7 @@ impl Selection {
                     selection.collect_used_types(used_types, query);
                 }
             }
-            Selection::FragmentSpread(fragment_id) => {
+            Self::FragmentSpread(fragment_id) => {
                 // This is necessary to avoid infinite recursion.
                 if used_types.fragments.contains(fragment_id) {
                     return;
@@ -198,13 +197,13 @@ impl Selection {
                     selection.collect_used_types(used_types, query);
                 }
             }
-            Selection::Typename => (),
+            Self::Typename => (),
         }
     }
 
     pub(crate) fn contains_fragment(&self, fragment_id: ResolvedFragmentId, query: &Query) -> bool {
         match self {
-            Selection::FragmentSpread(id) => *id == fragment_id,
+            Self::FragmentSpread(id) => *id == fragment_id,
             _ => self.subselection().iter().any(|selection_id| {
                 query
                     .get_selection(*selection_id)
@@ -215,15 +214,15 @@ impl Selection {
 
     pub(crate) fn subselection(&self) -> &[SelectionId] {
         match self {
-            Selection::Field(field) => field.selection_set.as_slice(),
-            Selection::InlineFragment(inline_fragment) => &inline_fragment.selection_set,
+            Self::Field(field) => field.selection_set.as_slice(),
+            Self::InlineFragment(inline_fragment) => &inline_fragment.selection_set,
             _ => &[],
         }
     }
 
     pub(super) fn to_path_segment(&self, query: &BoundQuery<'_>) -> String {
         match self {
-            Selection::Field(field) => field
+            Self::Field(field) => field
                 .alias
                 .as_ref()
                 .map(|alias| alias.to_upper_camel_case())
@@ -234,7 +233,7 @@ impl Selection {
                         .name
                         .to_upper_camel_case()
                 }),
-            Selection::InlineFragment(inline_fragment) => format!(
+            Self::InlineFragment(inline_fragment) => format!(
                 "On{}",
                 inline_fragment
                     .type_id

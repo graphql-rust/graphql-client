@@ -4,15 +4,18 @@ mod selection;
 mod shared;
 
 use crate::{
-    query::*,
+    query::{
+        all_used_types, operation_has_no_variables, walk_operation_variables, BoundQuery,
+        OperationId, ResolvedVariable, UsedTypes,
+    },
     schema::{InputId, TypeId},
     type_qualifiers::GraphqlTypeQualifier,
-    GeneralError, GraphQLClientCodegenOptions,
+    GraphQLClientCodegenOptions,
 };
 use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
-use selection::*;
+use selection::render_response_data_fields;
 use std::collections::BTreeMap;
 
 /// The main code generation function.
@@ -20,7 +23,7 @@ pub(crate) fn response_for_query(
     operation_id: OperationId,
     options: &GraphQLClientCodegenOptions,
     query: BoundQuery<'_>,
-) -> Result<TokenStream, GeneralError> {
+) -> TokenStream {
     let serde = options.serde_path();
 
     let all_used_types = all_used_types(operation_id, &query);
@@ -44,7 +47,7 @@ pub(crate) fn response_for_query(
     let definitions =
         render_response_data_fields(operation_id, options, &query)?.render(&response_derives);
 
-    let q = quote! {
+    quote! {
         use #serde::{Serialize, Deserialize};
         use super::*;
 
@@ -68,9 +71,7 @@ pub(crate) fn response_for_query(
         #(#fragment_definitions)*
 
         #definitions
-    };
-
-    Ok(q)
+    }
 }
 
 fn generate_variables_struct(
@@ -144,10 +145,10 @@ fn generate_variable_struct_field(
     let ident = Ident::new(&safe_name, Span::call_site());
     let rename_annotation = shared::field_rename_annotation(&variable.name, &safe_name);
     let skip_serializing_annotation = if *options.skip_serializing_none() {
-        if variable.r#type.qualifiers.first() != Some(&GraphqlTypeQualifier::Required) {
-            Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
-        } else {
+        if variable.r#type.qualifiers.first() == Some(&GraphqlTypeQualifier::Required) {
             None
+        } else {
+            Some(quote!(#[serde(skip_serializing_if = "Option::is_none")]))
         }
     } else {
         None
@@ -181,7 +182,7 @@ fn generate_scalar_definitions<'a, 'schema: 'a>(
 fn render_derives<'a>(derives: impl Iterator<Item = &'a str>) -> impl quote::ToTokens {
     let idents = derives.map(|s| {
         syn::parse_str::<syn::Path>(s)
-            .map_err(|e| format!("couldn't parse {} as a derive Path: {}", s, e))
+            .map_err(|e| format!("couldn't parse {s} as a derive Path: {e}"))
             .unwrap()
     });
 
@@ -326,17 +327,16 @@ where
         .map(|(name, r#type)| {
             let field_name = Ident::new(name, Span::call_site());
             let provided_value = object_map.get(name);
-            match provided_value {
-                Some(default_value) => {
-                    let value = graphql_parser_value_to_literal(
-                        default_value,
-                        r#type.id,
-                        r#type.is_optional(),
-                        query,
-                    );
-                    quote!(#field_name: #value)
-                }
-                None => quote!(#field_name: None),
+            if let Some(default_value) = provided_value {
+                let value = graphql_parser_value_to_literal(
+                    default_value,
+                    r#type.id,
+                    r#type.is_optional(),
+                    query,
+                );
+                quote!(#field_name: #value)
+            } else {
+                quote!(#field_name: None)
             }
         })
         .collect();

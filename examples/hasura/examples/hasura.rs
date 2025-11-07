@@ -1,7 +1,7 @@
 use ::reqwest::blocking::Client;
 use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
-use log::*;
-use prettytable::*;
+use log::{error, info};
+use prettytable::row;
 
 type Bpchar = String;
 type Timestamptz = String;
@@ -16,7 +16,11 @@ type Timestamptz = String;
 struct UpsertIssue;
 
 fn main() -> Result<(), anyhow::Error> {
-    use upsert_issue::{IssuesUpdateColumn::*, *};
+    use upsert_issue::{
+        IssuesInsertInput,
+        IssuesUpdateColumn::{Name, SalesforceUpdatedAt, Status},
+        Variables,
+    };
     env_logger::init();
 
     let v = Variables {
