@@ -126,6 +126,13 @@ pub fn extract_fragments_other_variant(ast: &syn::DeriveInput) -> bool {
         .unwrap_or(false)
 }
 
+pub fn extract_enums_other_variant(ast: &syn::DeriveInput) -> bool {
+    extract_attr(ast, "enums_other_variant")
+        .ok()
+        .and_then(|s| FromStr::from_str(s.as_str()).ok())
+        .unwrap_or(true) // Default to true for backward compatibility
+}
+
 pub fn extract_skip_serializing_none(ast: &syn::DeriveInput) -> bool {
     ident_exists(ast, "skip_serializing_none").is_ok()
 }
@@ -245,6 +252,67 @@ mod test {
         ";
         let parsed = syn::parse_str(input).unwrap();
         assert!(!extract_fragments_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_enums_other_variant_set_to_true() {
+        let input = "
+        #[derive(GraphQLQuery)]
+        #[graphql(
+            schema_path = \"x\",
+            query_path = \"x\",
+            enums_other_variant = \"true\",
+        )]
+        struct MyQuery;
+        ";
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(extract_enums_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_enums_other_variant_set_to_false() {
+        let input = "
+        #[derive(GraphQLQuery)]
+        #[graphql(
+            schema_path = \"x\",
+            query_path = \"x\",
+            enums_other_variant = \"false\",
+        )]
+        struct MyQuery;
+        ";
+        let parsed = syn::parse_str(input).unwrap();
+        assert!(!extract_enums_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_enums_other_variant_set_to_invalid() {
+        let input = "
+        #[derive(GraphQLQuery)]
+        #[graphql(
+            schema_path = \"x\",
+            query_path = \"x\",
+            enums_other_variant = \"invalid\",
+        )]
+        struct MyQuery;
+        ";
+        let parsed = syn::parse_str(input).unwrap();
+        // Should default to true when invalid value is provided
+        assert!(extract_enums_other_variant(&parsed));
+    }
+
+    #[test]
+    fn test_enums_other_variant_unset() {
+        let input = "
+        #[derive(GraphQLQuery)]
+        #[graphql(
+            schema_path = \"x\",
+            query_path = \"x\",
+        )]
+        struct MyQuery;
+        ";
+        let parsed = syn::parse_str(input).unwrap();
+        // Should default to true for backward compatibility
+        assert!(extract_enums_other_variant(&parsed));
     }
 
     #[test]

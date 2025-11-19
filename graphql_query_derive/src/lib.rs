@@ -64,6 +64,7 @@ fn build_graphql_client_derive_options(
     let custom_scalars_module = attributes::extract_attr(input, "custom_scalars_module").ok();
     let extern_enums = attributes::extract_attr_list(input, "extern_enums").ok();
     let fragments_other_variant: bool = attributes::extract_fragments_other_variant(input);
+    let enums_other_variant: bool = attributes::extract_enums_other_variant(input);
     let skip_serializing_none: bool = attributes::extract_skip_serializing_none(input);
     let custom_variable_types = attributes::extract_attr_list(input, "variable_types").ok();
     let custom_response_type = attributes::extract_attr(input, "response_type").ok();
@@ -71,6 +72,7 @@ fn build_graphql_client_derive_options(
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Derive);
     options.set_query_file(query_path);
     options.set_fragments_other_variant(fragments_other_variant);
+    options.set_enums_other_variant(enums_other_variant);
     options.set_skip_serializing_none(skip_serializing_none);
 
     if let Some(variables_derives) = variables_derives {
@@ -106,7 +108,7 @@ fn build_graphql_client_derive_options(
     if let Some(custom_variable_types) = custom_variable_types {
         options.set_custom_variable_types(custom_variable_types);
     }
-    
+
     if let Some(custom_response_type) = custom_response_type {
         options.set_custom_response_type(custom_response_type);
     }
