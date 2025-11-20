@@ -1,7 +1,7 @@
 mod enums;
 mod inputs;
 mod selection;
-mod shared;
+pub(crate) mod shared;
 
 use crate::{
     query::*,
@@ -9,10 +9,10 @@ use crate::{
     type_qualifiers::GraphqlTypeQualifier,
     GeneralError, GraphQLClientCodegenOptions,
 };
-use heck::ToSnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use selection::*;
+use shared::to_snake_case_preserve_leading_underscores;
 use std::collections::BTreeMap;
 
 /// The main code generation function.
@@ -139,7 +139,7 @@ fn generate_variable_struct_field(
     options: &GraphQLClientCodegenOptions,
     query: &BoundQuery<'_>,
 ) -> TokenStream {
-    let snake_case_name = variable.name.to_snake_case();
+    let snake_case_name = to_snake_case_preserve_leading_underscores(&variable.name);
     let safe_name = shared::keyword_replace(&snake_case_name);
     let ident = Ident::new(&safe_name, Span::call_site());
     let rename_annotation = shared::field_rename_annotation(&variable.name, &safe_name);

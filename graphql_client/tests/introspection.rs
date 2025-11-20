@@ -18,5 +18,5 @@ fn leading_underscores_are_preserved() {
     let deserialized: graphql_client::Response<introspection_query::ResponseData> =
         serde_json::from_str(INTROSPECTION_RESPONSE).unwrap();
     assert!(deserialized.data.is_some());
-    assert!(deserialized.data.unwrap().schema.is_some());
+    assert!(deserialized.data.unwrap().__schema.is_some());
 }
