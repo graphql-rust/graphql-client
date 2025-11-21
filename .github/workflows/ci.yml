@@ -24,7 +24,7 @@ jobs:
     if: github.repository == 'graphql-rust/graphql-client'
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Install toolchain
       uses: dtolnay/rust-toolchain@master
       with:
@@ -37,7 +37,7 @@ jobs:
     if: github.repository == 'graphql-rust/graphql-client'
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Install toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
@@ -50,7 +50,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: dtolnay/rust-toolchain@stable
     - run: cargo fmt --all -- --check
 
@@ -58,7 +58,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.clippy_rust_version }}
