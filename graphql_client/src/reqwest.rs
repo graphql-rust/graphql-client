@@ -1,7 +1,8 @@
 //! A concrete client implementation over HTTP with reqwest.
 
 use crate::GraphQLQuery;
-use reqwest_crate as reqwest;
+#[cfg(feature = "reqwest")]
+pub use reqwest_crate as reqwest;
 
 /// Use the provided reqwest::Client to post a GraphQL request.
 #[cfg(any(feature = "reqwest", feature = "reqwest-rustls"))]
