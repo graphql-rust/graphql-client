@@ -448,7 +448,7 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
 name = "graphql-introspection-query"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "serde",
 ]
@@ -465,7 +465,7 @@ dependencies = [
 
 [[package]]
 name = "graphql_client"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "graphql_query_derive",
  "reqwest",
@@ -475,7 +475,7 @@ dependencies = [
 
 [[package]]
 name = "graphql_client_cli"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "anstyle",
  "clap",
@@ -491,7 +491,7 @@ dependencies = [
 
 [[package]]
 name = "graphql_client_codegen"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "graphql-introspection-query",
  "graphql-parser",
@@ -506,7 +506,7 @@ dependencies = [
 
 [[package]]
 name = "graphql_query_derive"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "graphql_client_codegen",
  "proc-macro2",

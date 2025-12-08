@@ -3,6 +3,7 @@ name = "graphql_query_hasura_example"
 version = "0.1.0"
 authors = ["Mark Catley <mark@catley.net.nz>"]
 edition = "2018"
+publish = false
 
 [dev-dependencies]
 anyhow = "1.0"

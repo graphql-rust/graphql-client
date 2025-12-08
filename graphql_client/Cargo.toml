@@ -1,6 +1,6 @@
 [package]
 name = "graphql_client"
-version = "0.14.0"
+version.workspace = true
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Typed GraphQL requests and responses"
 repository = "https://github.com/graphql-rust/graphql-client"
@@ -10,7 +10,7 @@ categories = ["network-programming", "web-programming", "wasm"]
 edition = "2018"
 homepage = "https://github.com/graphql-rust/graphql-client"
 readme = "../README.md"
-rust-version.workspace = true 
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 features = ["reqwest"]
@@ -20,7 +20,7 @@ serde = { version = "1.0.78", features = ["derive"] }
 serde_json = "1.0.50"
 
 # Optional dependencies
-graphql_query_derive = { path = "../graphql_query_derive", version = "0.14.0", optional = true }
+graphql_query_derive = { path = "../graphql_query_derive", version = "0.15.0", optional = true }
 reqwest-crate = { package = "reqwest", version = ">=0.11, <=0.12", features = ["json"], default-features = false, optional = true }
 
 [features]
