@@ -106,7 +106,7 @@ fn build_graphql_client_derive_options(
     if let Some(custom_variable_types) = custom_variable_types {
         options.set_custom_variable_types(custom_variable_types);
     }
-    
+
     if let Some(custom_response_type) = custom_response_type {
         options.set_custom_response_type(custom_response_type);
     }

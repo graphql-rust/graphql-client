@@ -34,11 +34,7 @@ pub(super) fn validate_type_conditions(
         TypeId::Union(union_id) => {
             let union = query.schema.get_union(union_id);
 
-            if !union
-                .variants
-                .iter()
-                .any(|variant| *variant == selected_type)
-            {
+            if !union.variants.contains(&selected_type) {
                 return Err(QueryValidationError::new(format!(
                     "The spread {}... on {} is not valid.",
                     union.name,

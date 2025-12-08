@@ -93,11 +93,13 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
 
         options.set_custom_scalars_module(custom_scalars_module);
     }
-    
+
     if let Some(custom_variable_types) = custom_variable_types {
-        options.set_custom_variable_types(custom_variable_types.split(",").map(String::from).collect());
+        options.set_custom_variable_types(
+            custom_variable_types.split(",").map(String::from).collect(),
+        );
     }
-    
+
     if let Some(custom_response_type) = custom_response_type {
         options.set_custom_response_type(custom_response_type);
     }
