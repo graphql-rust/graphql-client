@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Support for `deprecated` directive on InputValue fields (#553)
+- Support for custom variable and response types (#536)
+- Allow using `#[derive(GraphQLQuery)]` without depending on `serde` directly (#487)
+- CLI option for extern enums (#520)
+- Support deserializing IDs from integers or strings (#476)
+- Introspection schema now includes `oneOf` and `specifiedByUrl` (#501)
+- Update `reqwest` to 0.12 (#499)
+- Fix required ID deserialization (#523)
+- Fix `skip_serializing_none` for root level variables (#485)
+- Use consistent reference to `graphql_client` crate in codegen (#484)
+- Fix multiple operations example in README (#497)
+
 ## 0.14.0 - 2024-03-26
 
 - Add support for GraphQL’s `extend type` directive

@@ -146,14 +146,7 @@ fn ingest_enum(schema: &mut Schema, enm: &mut FullType) {
         .as_mut()
         .expect("enm.enum_values.as_mut()")
         .iter_mut()
-        .map(|v| {
-            std::mem::take(
-                v.name
-                    .as_mut()
-                    .take()
-                    .expect("variant.name.as_mut().take()"),
-            )
-        })
+        .map(|v| std::mem::take(v.name.as_mut().expect("variant.name.as_mut().take()")))
         .collect();
 
     let enm = super::StoredEnum { name, variants };
