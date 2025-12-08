@@ -1,6 +1,6 @@
 [package]
 name = "graphql_client_codegen"
-version = "0.14.0"
+version.workspace = true
 authors = ["Tom Houlé <tom@tomhoule.com>"]
 description = "Utility crate for graphql_client"
 license = "Apache-2.0 OR MIT"
@@ -8,7 +8,7 @@ repository = "https://github.com/graphql-rust/graphql-client"
 edition = "2018"
 
 [dependencies]
-graphql-introspection-query = { version = "0.2.0", path = "../graphql-introspection-query" }
+graphql-introspection-query = { version = "0.3.0", path = "../graphql-introspection-query" }
 graphql-parser = "0.4"
 heck = ">=0.4, <=0.5"
 lazy_static = "1.3"
