@@ -1,5 +1,4 @@
 use graphql_client::{reqwest::post_graphql, GraphQLQuery};
-use lazy_static::*;
 use std::cell::RefCell;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
@@ -18,9 +17,7 @@ fn log(s: &str) {
     web_sys::console::log_1(&JsValue::from_str(s))
 }
 
-lazy_static! {
-    static ref LAST_ENTRY: Mutex<RefCell<Option<String>>> = Mutex::new(RefCell::new(None));
-}
+static LAST_ENTRY: Mutex<RefCell<Option<String>>> = Mutex::new(RefCell::new(None));
 
 async fn load_more() -> Result<JsValue, JsValue> {
     let url = "https://www.graphqlhub.com/graphql";

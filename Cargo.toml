@@ -13,4 +13,4 @@ members = [
 
 [workspace.package]
 version = "0.15.0"
-rust-version = "1.64.0"
+rust-version = "1.66.0"
