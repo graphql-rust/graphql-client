@@ -15,13 +15,13 @@ path = "src/main.rs"
 reqwest = { version = "0.12", features = ["json", "blocking"] }
 graphql_client = { version = "0.15.0", path = "../graphql_client", default-features = false, features = ["graphql_query_derive", "reqwest-blocking"] }
 graphql_client_codegen = { path = "../graphql_client_codegen/", version = "0.15.0" }
-clap = { version = "^4.0", features = ["derive"] }
+clap = { version = "^4.5", features = ["derive"] }
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1.0"
 log = "^0.4"
 env_logger = { version = "0.10.2", features = ["color"] }
 syn = { version = "^2.0", features = ["full"] }
-anstyle = "1.0.10"
+anstyle = "1.0.13"
 
 [features]
 default = []
