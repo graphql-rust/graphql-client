@@ -24,7 +24,10 @@ graphql_query_derive = { path = "../graphql_query_derive", version = "0.15.0", o
 reqwest-crate = { package = "reqwest", version = ">=0.11, <=0.12", features = ["json"], default-features = false, optional = true }
 
 [features]
-default = ["graphql_query_derive"]
+default = ["derive-integer-id"]
 reqwest = ["reqwest-crate", "reqwest-crate/default-tls"]
 reqwest-rustls = ["reqwest-crate", "reqwest-crate/rustls-tls"]
 reqwest-blocking = ["reqwest-crate/blocking"]
+
+derive = ["graphql_query_derive"]
+derive-integer-id = ["derive","graphql_query_derive/integer-id"]
