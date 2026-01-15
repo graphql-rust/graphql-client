@@ -464,20 +464,6 @@ impl ExpandedField<'_> {
             qualified_type
         };
 
-        let is_id = self.field_type == "ID";
-        let is_required = self
-            .field_type_qualifiers
-            .contains(&GraphqlTypeQualifier::Required);
-        let id_deserialize_with = if is_id && is_required {
-            Some(quote!(#[serde(deserialize_with = "graphql_client::serde_with::deserialize_id")]))
-        } else if is_id {
-            Some(
-                quote!(#[serde(deserialize_with = "graphql_client::serde_with::deserialize_option_id")]),
-            )
-        } else {
-            None
-        };
-
         let optional_skip_serializing_none = if *options.skip_serializing_none()
             && self
                 .field_type_qualifiers
@@ -516,7 +502,6 @@ impl ExpandedField<'_> {
             #optional_flatten
             #optional_rename
             #optional_deprecation_annotation
-            #id_deserialize_with
             pub #ident: #qualified_type
         };
 
