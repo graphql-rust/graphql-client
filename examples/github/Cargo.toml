@@ -8,7 +8,7 @@ publish = false
 [dev-dependencies]
 anyhow = "1.0"
 graphql_client = { path = "../../graphql_client", features = ["reqwest-blocking"] }
-reqwest = { version = "0.12", features = ["json", "blocking"] }
+reqwest = { version = "0.13", features = ["json", "blocking"] }
 prettytable-rs = "^0.10.0"
 clap = { version = "^4.0", features = ["derive"] }
 log = "^0.4"
