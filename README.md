@@ -11,7 +11,7 @@ A typed GraphQL client library for Rust.
 - Precise types for query variables and responses.
 - Supports GraphQL fragments, objects, unions, inputs, enums, custom scalars and input objects.
 - Works in the browser (WebAssembly).
-- Subscriptions support (serialization-deserialization only at the moment).
+- Subscriptions support.
 - Copies documentation from the GraphQL schema to the generated Rust code.
 - Arbitrary derives on the generated responses.
 - Arbitrary custom scalars.
@@ -184,6 +184,12 @@ pub struct Heights;
 ```
 
 There is an example [in the tests](./graphql_client/tests/operation_selection).
+
+## Subscriptions
+
+The subscription variable and response shapes are handled by code generation the same way as for other operation types.
+
+For the runtime part of the story, we recommend the awesome [graphql-ws-client](https://crates.io/crates/graphql-ws-client) by @obmarg.
 
 ## Documentation for the generated modules
 
