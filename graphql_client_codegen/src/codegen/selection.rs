@@ -629,8 +629,9 @@ impl<'a> ExpandedSelection<'a> {
                 .collect();
 
             // If we only have an `on` field, turn the struct into the enum
-            // of the variants.
-            if fields.peek().is_none() {
+            // of the variants. With no variants either, this would produce an
+            // enum with no variants, which can never deserialize.
+            if fields.peek().is_none() && !on_variants.is_empty() {
                 let item = quote! {
                     #response_derives
                     #[serde(tag = "__typename")]
