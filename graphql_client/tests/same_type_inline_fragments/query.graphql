@@ -1,0 +1,16 @@
+query OnlyInlineFragment {
+  thing {
+    ... on Thing {
+      name
+    }
+  }
+}
+
+query InlineFragmentWithSibling {
+  thing {
+    id
+    ... on Thing {
+      name
+    }
+  }
+}

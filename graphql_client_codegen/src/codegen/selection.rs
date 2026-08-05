@@ -394,6 +394,17 @@ fn calculate_selection<'a>(
                 };
             }
             Selection::Typename => (),
+            // A type condition on the enclosing type itself is a no-op: the
+            // selections inside it belong to the parent struct.
+            Selection::InlineFragment(inline) if inline.type_id == type_id => {
+                calculate_selection(
+                    context,
+                    selection.subselection(),
+                    struct_id,
+                    type_id,
+                    options,
+                );
+            }
             Selection::InlineFragment(_inline) => (),
             Selection::FragmentSpread(fragment_id) => {
                 // Here we only render fragments that are directly on the type
