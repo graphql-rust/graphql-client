@@ -5,7 +5,7 @@ mod shared;
 
 use crate::{
     query::*,
-    schema::{InputId, TypeId},
+    schema::{EnumId, InputId, TypeId},
     type_qualifiers::GraphqlTypeQualifier,
     GeneralError, GraphQLClientCodegenOptions,
 };
@@ -108,6 +108,7 @@ fn generate_variables_struct(
                         .first()
                         .map(|qual| !qual.is_required())
                         .unwrap_or(true),
+                    options,
                     query,
                 );
 
@@ -256,6 +257,7 @@ fn graphql_parser_value_to_literal<'doc, T>(
     value: &graphql_parser::query::Value<'doc, T>,
     ty: TypeId,
     is_optional: bool,
+    options: &GraphQLClientCodegenOptions,
     query: &BoundQuery<'_>,
 ) -> TokenStream
 where
@@ -280,11 +282,14 @@ where
             let i = i.as_i64();
             quote!(#i)
         }
-        Value::Enum(en) => quote!(#en),
+        Value::Enum(en) => ty
+            .as_enum_id()
+            .map(|enum_id| render_enum_literal(en.as_ref(), enum_id, options, query))
+            .unwrap_or_else(|| quote!(compile_error!("Enum literal on a non-enum field."))),
         Value::List(inner) => {
             let elements = inner
                 .iter()
-                .map(|val| graphql_parser_value_to_literal(val, ty, false, query));
+                .map(|val| graphql_parser_value_to_literal(val, ty, false, options, query));
             quote! {
                 vec![
                     #(#elements,)*
@@ -293,7 +298,7 @@ where
         }
         Value::Object(obj) => ty
             .as_input_id()
-            .map(|input_id| render_object_literal(obj, input_id, query))
+            .map(|input_id| render_object_literal(obj, input_id, options, query))
             .unwrap_or_else(|| {
                 quote!(compile_error!(
                     "Object literal on a non-input-object field."
@@ -308,10 +313,29 @@ where
     }
 }
 
+/// For default value constructors. The enum and its variants must be spelled
+/// the way `codegen::enums` spells them when defining the enum.
+fn render_enum_literal(
+    variant: &str,
+    enum_id: EnumId,
+    options: &GraphQLClientCodegenOptions,
+    query: &BoundQuery<'_>,
+) -> TokenStream {
+    let normalization = options.normalization();
+    let enum_name = normalization.enum_name(&query.schema.get_enum(enum_id).name);
+    let enum_ident = Ident::new(&enum_name, Span::call_site());
+    let safe_variant = shared::keyword_replace(variant);
+    let variant_name = normalization.enum_variant(safe_variant.as_ref());
+    let variant_ident = Ident::new(&variant_name, Span::call_site());
+
+    quote!(#enum_ident::#variant_ident)
+}
+
 /// For default value constructors.
 fn render_object_literal<'doc, T>(
     object_map: &BTreeMap<T::Value, graphql_parser::query::Value<'doc, T>>,
     input_id: InputId,
+    options: &GraphQLClientCodegenOptions,
     query: &BoundQuery<'_>,
 ) -> TokenStream
 where
@@ -332,6 +356,7 @@ where
                         default_value,
                         r#type.id,
                         r#type.is_optional(),
+                        options,
                         query,
                     );
                     quote!(#field_name: #value)

@@ -1,0 +1,21 @@
+schema {
+  query: Query
+}
+
+type Query {
+  things(kind: Kind!, kinds: [Kind!]!, filter: Filter!): [Thing!]!
+}
+
+enum Kind {
+  ACTIVE
+  ARCHIVED
+}
+
+input Filter {
+  kind: Kind
+  label: String
+}
+
+type Thing {
+  id: ID!
+}
