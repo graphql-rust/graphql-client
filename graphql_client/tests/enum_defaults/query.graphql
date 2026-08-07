@@ -1,0 +1,9 @@
+query EnumDefaults(
+  $kind: Kind! = ACTIVE
+  $kinds: [Kind!]! = [ACTIVE, ARCHIVED]
+  $filter: Filter! = { kind: ARCHIVED }
+) {
+  things(kind: $kind, kinds: $kinds, filter: $filter) {
+    id
+  }
+}
