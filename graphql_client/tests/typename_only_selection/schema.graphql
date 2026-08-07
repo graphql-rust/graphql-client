@@ -1,0 +1,22 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  things: [String!]!
+}
+
+type Mutation {
+  doThing: DoThingResult!
+}
+
+union DoThingResult = DoThingSuccess | DoThingFailure
+
+type DoThingSuccess {
+  thingId: ID!
+}
+
+type DoThingFailure {
+  reason: String!
+}

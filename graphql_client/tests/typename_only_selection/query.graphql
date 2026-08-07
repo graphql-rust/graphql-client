@@ -1,0 +1,8 @@
+mutation TypenameOnlyOnUnionMember {
+  doThing {
+    __typename
+    ... on DoThingSuccess {
+      __typename
+    }
+  }
+}
