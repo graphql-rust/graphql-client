@@ -366,7 +366,7 @@ impl Schema {
             Some(id) => *id,
             None => {
                 panic!(
-                    "graphql-client-codegen internal error: failed to resolve TypeId for `{}°.",
+                    "graphql-client-codegen internal error: failed to resolve TypeId for `{}`.",
                     type_name
                 );
             }
