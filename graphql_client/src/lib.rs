@@ -76,6 +76,140 @@ use std::fmt::{self, Display, Write};
 ///     Ok(())
 /// }
 /// ```
+///
+/// # `#[graphql(...)]` attributes
+///
+/// The `GraphQLQuery` derive is configured with a `#[graphql(...)]`
+/// attribute on the struct being derived.
+///
+/// Paths are relative to the directory containing the package's
+/// `Cargo.toml`.
+///
+/// ```
+/// use graphql_client::GraphQLQuery;
+///
+/// #[derive(GraphQLQuery)]
+/// #[graphql(
+///     query_path = "../graphql_client_codegen/src/tests/star_wars_query.graphql",
+///     schema_path = "../graphql_client_codegen/src/tests/star_wars_schema.graphql",
+///     variables_derives = "Debug, PartialEq",
+///     response_derives = "Debug, PartialEq",
+///     deprecated = "warn",
+///     skip_serializing_none,
+/// )]
+/// struct StarWarsQuery;
+/// ```
+///
+/// ## Required attributes
+///
+/// ### `query_path`
+///
+/// `query_path = "path/to/query.graphql"` specifies the GraphQL query
+/// document. The document can contain multiple operations. The name of the
+/// struct being derived selects the operation with the same name.
+///
+/// ### `schema_path`
+///
+/// `schema_path = "path/to/schema.graphql"` specifies the GraphQL schema.
+/// Both GraphQL schema language files and JSON introspection responses are
+/// supported.
+///
+/// ## Optional attributes
+///
+/// ### `variables_derives`
+///
+/// `variables_derives = "Debug, Clone"` adds comma-separated derive paths
+/// to the generated `Variables` struct and generated input types. Generated
+/// variable types always derive `serde::Serialize`.
+///
+/// ### `response_derives`
+///
+/// `response_derives = "Debug, PartialEq"` adds comma-separated derive paths
+/// to the generated response structs and enums. Generated response types
+/// always derive `serde::Deserialize`.
+///
+/// Paths can be used in both derive lists, for example
+/// `response_derives = "Debug, std::cmp::PartialOrd"`.
+///
+/// ### `deprecated`
+///
+/// `deprecated` controls how fields marked with GraphQL's `@deprecated`
+/// directive are generated. It accepts:
+///
+/// - `"allow"`: generate deprecated fields without a Rust deprecation
+///   annotation.
+/// - `"warn"`: generate deprecated fields with `#[deprecated]`.
+/// - `"deny"`: omit deprecated fields from the generated response types.
+///
+/// The default is `"warn"`.
+///
+/// ### `normalization`
+///
+/// `normalization` controls the naming convention used for generated type,
+/// operation, scalar, input, and enum-variant identifiers. It accepts:
+///
+/// - `"none"`: preserve names from the GraphQL document and schema.
+/// - `"rust"`: convert generated identifiers to Rust-style `UpperCamelCase`.
+///
+/// The default is `"none"`. Rust field names are generated in `snake_case`
+/// under either setting.
+///
+/// ### `custom_scalars_module`
+///
+/// `custom_scalars_module = "crate::scalars"` specifies a module containing
+/// the Rust types for custom GraphQL scalars. The module must define a type
+/// with the same generated name as each custom scalar used by the operation.
+///
+/// Without this attribute, custom scalar types are resolved from the scope
+/// containing the struct being derived.
+///
+/// ### `extern_enums`
+///
+/// `extern_enums("Direction", "DistanceUnit")` prevents generation of the
+/// listed GraphQL enums and uses existing Rust types instead. Each name must
+/// exactly match an enum name in the GraphQL schema, and the corresponding
+/// Rust type must be accessible from the scope containing the derived struct.
+///
+/// External enums must implement the serialization or deserialization traits
+/// required by how they are used in the operation.
+///
+/// ### `fragments_other_variant`
+///
+/// `fragments_other_variant = "true"` adds an `Unknown` variant marked with
+/// `#[serde(other)]` to enums generated for union and interface selections.
+/// This permits deserializing a `__typename` value not covered by the query's
+/// known variants.
+///
+/// The default is `"false"`.
+///
+/// ### `skip_serializing_none`
+///
+/// `skip_serializing_none` is a flag with no value. It adds
+/// `#[serde(skip_serializing_if = "Option::is_none")]` to optional fields
+/// on generated variable, input-object, and response types. The annotation
+/// affects serialization only: absent request values are omitted instead of
+/// being serialized as JSON `null`. On response types, it has an effect only
+/// when `Serialize` is added through `response_derives`.
+///
+/// ### `variable_types`
+///
+/// `variable_types("crate::FirstInput", "crate::SecondInput")` uses existing
+/// Rust types for GraphQL input-object variables instead of generating their
+/// definitions.
+///
+/// The paths correspond positionally to the variables declared by the
+/// operation. The supplied types must have the shape and serialization
+/// behavior required by the GraphQL input types.
+///
+/// ### `response_type`
+///
+/// `response_type = "crate::ExistingResponse"` uses an existing Rust type for
+/// the value returned by the operation's top-level field instead of generating
+/// that field's response type.
+///
+/// This option requires the operation to select exactly one top-level field.
+/// The supplied type must match the selected fields and implement
+/// `serde::Deserialize`.
 pub trait GraphQLQuery {
     /// The shape of the variables expected by the query. This should be a generated struct most of the time.
     type Variables: serde::Serialize;
