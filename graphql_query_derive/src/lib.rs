@@ -13,6 +13,39 @@ use std::{
 
 use proc_macro2::TokenStream;
 
+#[proc_macro]
+pub fn graphql_queries(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    match graphql_queries_inner(input) {
+        Ok(ts) => ts,
+        Err(err) => err.to_compile_error().into(),
+    }
+}
+
+fn graphql_queries_inner(
+    input: proc_macro::TokenStream,
+) -> Result<proc_macro::TokenStream, syn::Error> {
+    let tokens = TokenStream::from(input);
+    let (query_path, schema_path) = build_query_and_schema_path(&tokens)?;
+    let mut options = build_graphql_client_derive_options(
+        CodegenMode::FunctionLike,
+        &tokens,
+        query_path.clone(),
+    )?;
+
+    if let Ok(module_visibility) = attributes::extract_attr(&tokens, "module_visibility") {
+        options.set_module_visibility_from_str(&module_visibility);
+    }
+
+    generate_module_token_stream(query_path, &schema_path, options)
+        .map(Into::into)
+        .map_err(|err| {
+            syn::Error::new_spanned(
+                tokens,
+                format!("Failed to generate GraphQLQuery impl: {}", err),
+            )
+        })
+}
+
 #[proc_macro_derive(GraphQLQuery, attributes(graphql))]
 pub fn derive_graphql_query(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     match graphql_query_derive_inner(input) {
@@ -25,9 +58,14 @@ fn graphql_query_derive_inner(
     input: proc_macro::TokenStream,
 ) -> Result<proc_macro::TokenStream, syn::Error> {
     let input = TokenStream::from(input);
-    let ast = syn::parse2(input)?;
-    let (query_path, schema_path) = build_query_and_schema_path(&ast)?;
-    let options = build_graphql_client_derive_options(&ast, query_path.clone())?;
+    let ast: syn::DeriveInput = syn::parse2(input)?;
+    let tokens = attributes::extract_tokens(&ast)?;
+    let (query_path, schema_path) = build_query_and_schema_path(&tokens)?;
+    let mut options =
+        build_graphql_client_derive_options(CodegenMode::Derive, &tokens, query_path.clone())?;
+    options.set_struct_ident(ast.ident.clone());
+    options.set_module_visibility(ast.vis.clone());
+    options.set_operation_name(ast.ident.to_string());
 
     generate_module_token_stream(query_path, &schema_path, options)
         .map(Into::into)
@@ -39,7 +77,7 @@ fn graphql_query_derive_inner(
         })
 }
 
-fn build_query_and_schema_path(input: &syn::DeriveInput) -> Result<(PathBuf, PathBuf), syn::Error> {
+fn build_query_and_schema_path(input: &TokenStream) -> Result<(PathBuf, PathBuf), syn::Error> {
     let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").map_err(|_err| {
         syn::Error::new_spanned(
             input,
@@ -56,7 +94,8 @@ fn build_query_and_schema_path(input: &syn::DeriveInput) -> Result<(PathBuf, Pat
 }
 
 fn build_graphql_client_derive_options(
-    input: &syn::DeriveInput,
+    mode: CodegenMode,
+    input: &TokenStream,
     query_path: PathBuf,
 ) -> Result<GraphQLClientCodegenOptions, syn::Error> {
     let variables_derives = attributes::extract_attr(input, "variables_derives").ok();
@@ -68,7 +107,7 @@ fn build_graphql_client_derive_options(
     let custom_variable_types = attributes::extract_attr_list(input, "variable_types").ok();
     let custom_response_type = attributes::extract_attr(input, "response_type").ok();
 
-    let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Derive);
+    let mut options = GraphQLClientCodegenOptions::new(mode);
     options.set_query_file(query_path);
     options.set_fragments_other_variant(fragments_other_variant);
     options.set_skip_serializing_none(skip_serializing_none);
@@ -111,9 +150,6 @@ fn build_graphql_client_derive_options(
         options.set_custom_response_type(custom_response_type);
     }
 
-    options.set_struct_ident(input.ident.clone());
-    options.set_module_visibility(input.vis.clone());
-    options.set_operation_name(input.ident.to_string());
     options.set_serde_path(syn::parse_quote!(graphql_client::_private::serde));
 
     Ok(options)

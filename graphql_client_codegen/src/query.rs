@@ -707,17 +707,19 @@ pub(crate) fn walk_operation_variables(
         .filter(move |(_id, var)| var.operation_id == operation_id)
 }
 
-pub(crate) fn all_used_types(operation_id: OperationId, query: &BoundQuery<'_>) -> UsedTypes {
+pub(crate) fn all_used_types(all_operations: &[OperationId], query: &BoundQuery<'_>) -> UsedTypes {
     let mut used_types = UsedTypes::default();
 
-    let operation = query.query.get_operation(operation_id);
+    for operation_id in all_operations {
+        let operation = query.query.get_operation(*operation_id);
 
-    for (_id, selection) in query.query.walk_selection_set(&operation.selection_set) {
-        selection.collect_used_types(&mut used_types, query);
-    }
+        for (_id, selection) in query.query.walk_selection_set(&operation.selection_set) {
+            selection.collect_used_types(&mut used_types, query);
+        }
 
-    for (_id, variable) in walk_operation_variables(operation_id, query.query) {
-        variable.collect_used_types(&mut used_types, query.schema);
+        for (_id, variable) in walk_operation_variables(*operation_id, query.query) {
+            variable.collect_used_types(&mut used_types, query.schema);
+        }
     }
 
     used_types

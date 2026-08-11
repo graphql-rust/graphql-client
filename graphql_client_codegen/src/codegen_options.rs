@@ -2,7 +2,11 @@ use crate::deprecation::DeprecationStrategy;
 use crate::normalization::Normalization;
 use proc_macro2::Ident;
 use std::path::{Path, PathBuf};
-use syn::{self, Visibility};
+use syn::{
+    self,
+    token::{Paren, Pub},
+    VisRestricted, Visibility,
+};
 
 /// Which context is this code generation effort taking place.
 #[derive(Debug)]
@@ -11,6 +15,8 @@ pub enum CodegenMode {
     Cli,
     /// The derive macro defined in graphql_query_derive.
     Derive,
+    /// The function-like macro defined in graphql_queries.
+    FunctionLike,
 }
 
 /// Used to configure code generation.
@@ -171,6 +177,22 @@ impl GraphQLClientCodegenOptions {
 
     /// Target module visibility.
     pub fn set_module_visibility(&mut self, visibility: Visibility) {
+        self.module_visibility = Some(visibility);
+    }
+
+    /// Parse target module visibility from a string.
+    pub fn set_module_visibility_from_str(&mut self, visibility: &str) {
+        let visibility = match visibility.to_lowercase().as_str() {
+            "pub" => Visibility::Public(Pub::default()),
+            "inherited" => Visibility::Inherited,
+            _ => Visibility::Restricted(VisRestricted {
+                pub_token: Pub::default(),
+                in_token: None,
+                paren_token: Paren::default(),
+                path: syn::parse_str(visibility).unwrap(),
+            }),
+        };
+
         self.module_visibility = Some(visibility);
     }
 

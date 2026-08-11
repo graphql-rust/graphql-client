@@ -1,6 +1,6 @@
 use super::{Schema, TypeId};
 use graphql_introspection_query::introspection_response::{
-    FullType, IntrospectionResponse, Schema as JsonSchema, TypeRef, __TypeKind,
+    __TypeKind, FullType, IntrospectionResponse, Schema as JsonSchema, TypeRef,
 };
 
 pub(super) fn build_schema(src: IntrospectionResponse) -> Schema {

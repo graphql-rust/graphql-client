@@ -26,6 +26,7 @@ mod type_qualifiers;
 mod tests;
 
 pub use crate::codegen_options::{CodegenMode, GraphQLClientCodegenOptions};
+use crate::query::BoundQuery;
 
 use std::{collections::BTreeMap, fmt::Display, io};
 
@@ -136,7 +137,7 @@ fn generate_module_token_stream_inner(
 
     let operations = match (operations, &options.mode) {
         (Some(ops), _) => ops,
-        (None, &CodegenMode::Cli) => query.operations().collect(),
+        (None, &CodegenMode::Cli | &CodegenMode::FunctionLike) => query.operations().collect(),
         (None, &CodegenMode::Derive) => {
             return Err(GeneralError(derive_operation_not_found_error(
                 options.struct_ident(),
@@ -146,22 +147,60 @@ fn generate_module_token_stream_inner(
         }
     };
 
-    // The generated modules.
-    let mut modules = Vec::with_capacity(operations.len());
+    let common = crate::codegen::common_for_queries(
+        &operations.iter().map(|o| o.0).collect::<Vec<_>>(),
+        &options,
+        BoundQuery {
+            query: &query,
+            schema,
+        },
+    )?;
 
-    for operation in &operations {
-        let generated = generated_module::GeneratedModule {
+    // The generated modules.
+    let modules = if operations.len() == 1 {
+        let module = generated_module::GeneratedModule {
             query_string: query_string.as_str(),
             schema,
             resolved_query: &query,
-            operation: &operation.1.name,
+            operation: &operations[0].1.name,
             options: &options,
+            common: &common,
         }
         .to_token_stream()?;
-        modules.push(generated);
-    }
 
-    let modules = quote! { #(#modules)* };
+        quote! { #module }
+    } else {
+        let use_common = quote! { use super::common::*; };
+
+        let mut modules = Vec::with_capacity(operations.len());
+
+        for operation in &operations {
+            let generated = generated_module::GeneratedModule {
+                query_string: query_string.as_str(),
+                schema,
+                resolved_query: &query,
+                operation: &operation.1.name,
+                options: &options,
+                common: &use_common,
+            }
+            .to_token_stream()?;
+            modules.push(generated);
+        }
+
+        let module_visibility = &options.module_visibility();
+        let serde = options.serde_path();
+
+        quote! {
+            #module_visibility mod common {
+                use #serde::{Serialize, Deserialize};
+                use super::*;
+
+                #common
+            }
+
+            #(#modules)*
+        }
+    };
 
     Ok(modules)
 }

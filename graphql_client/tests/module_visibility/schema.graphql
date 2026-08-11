@@ -1,0 +1,7 @@
+schema {
+  query: QueryRoot
+}
+
+type QueryRoot {
+  value: String
+}

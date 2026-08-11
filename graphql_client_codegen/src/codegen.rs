@@ -15,7 +15,7 @@ use quote::{quote, ToTokens};
 use selection::*;
 use std::collections::BTreeMap;
 
-/// The main code generation function.
+/// The main code generation function for the inputs, variables, and response types.
 pub(crate) fn response_for_query(
     operation_id: OperationId,
     options: &GraphQLClientCodegenOptions,
@@ -23,14 +23,10 @@ pub(crate) fn response_for_query(
 ) -> Result<TokenStream, GeneralError> {
     let serde = options.serde_path();
 
-    let all_used_types = all_used_types(operation_id, &query);
+    let all_used_types = all_used_types(&[operation_id], &query);
     let response_derives = render_derives(options.all_response_derives());
     let variable_derives = render_derives(options.all_variable_derives());
 
-    let scalar_definitions = generate_scalar_definitions(&all_used_types, options, query);
-    let enum_definitions = enums::generate_enum_definitions(&all_used_types, options, query);
-    let fragment_definitions =
-        generate_fragment_definitions(&all_used_types, &response_derives, options, &query);
     let input_object_definitions = inputs::generate_input_object_definitions(
         &all_used_types,
         options,
@@ -48,26 +44,45 @@ pub(crate) fn response_for_query(
         use #serde::{Serialize, Deserialize};
         use super::*;
 
+        #(#input_object_definitions)*
+
+        #variables_struct
+
+        #definitions
+    };
+
+    Ok(q)
+}
+
+/// The main code generation function for scalars, enums, and fragments.
+pub(crate) fn common_for_queries(
+    all_operations: &[OperationId],
+    options: &GraphQLClientCodegenOptions,
+    query: BoundQuery<'_>,
+) -> Result<TokenStream, GeneralError> {
+    let all_used_types = all_used_types(all_operations, &query);
+    let response_derives = render_derives(options.all_response_derives());
+
+    let scalar_definitions = generate_scalar_definitions(&all_used_types, options, query);
+    let enum_definitions = enums::generate_enum_definitions(&all_used_types, options, query);
+    let fragment_definitions =
+        generate_fragment_definitions(&all_used_types, &response_derives, options, &query);
+
+    let q = quote! {
         #[allow(dead_code)]
-        type Boolean = bool;
+        pub type Boolean = bool;
         #[allow(dead_code)]
-        type Float = f64;
+        pub type Float = f64;
         #[allow(dead_code)]
-        type Int = i64;
+        pub type Int = i64;
         #[allow(dead_code)]
-        type ID = String;
+        pub type ID = String;
 
         #(#scalar_definitions)*
 
         #(#enum_definitions)*
 
-        #(#input_object_definitions)*
-
-        #variables_struct
-
         #(#fragment_definitions)*
-
-        #definitions
     };
 
     Ok(q)
@@ -172,9 +187,9 @@ fn generate_scalar_definitions<'a, 'schema: 'a>(
             );
 
             if let Some(custom_scalars_module) = options.custom_scalars_module() {
-                quote!(type #ident = #custom_scalars_module::#ident;)
+                quote!(pub type #ident = #custom_scalars_module::#ident;)
             } else {
-                quote!(type #ident = super::#ident;)
+                quote!(pub type #ident = super::#ident;)
             }
         })
 }

@@ -8,7 +8,6 @@ use std::fs::File;
 use std::io::Write as _;
 use std::path::PathBuf;
 use std::process::Stdio;
-use syn::{token::Paren, token::Pub, VisRestricted, Visibility};
 
 pub(crate) struct CliCodegenParams {
     pub query_path: PathBuf,
@@ -36,7 +35,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
         deprecation_strategy,
         no_formatting,
         output_directory,
-        module_visibility: _module_visibility,
+        module_visibility,
         query_path,
         schema_path,
         selected_operation,
@@ -51,19 +50,7 @@ pub(crate) fn generate_code(params: CliCodegenParams) -> CliResult<()> {
 
     let mut options = GraphQLClientCodegenOptions::new(CodegenMode::Cli);
 
-    options.set_module_visibility(match _module_visibility {
-        Some(v) => match v.to_lowercase().as_str() {
-            "pub" => Visibility::Public(Pub::default()),
-            "inherited" => Visibility::Inherited,
-            _ => Visibility::Restricted(VisRestricted {
-                pub_token: Pub::default(),
-                in_token: None,
-                paren_token: Paren::default(),
-                path: syn::parse_str(&v).unwrap(),
-            }),
-        },
-        None => Visibility::Public(Pub::default()),
-    });
+    options.set_module_visibility_from_str(module_visibility.as_deref().unwrap_or("pub"));
 
     options.set_fragments_other_variant(fragments_other_variant);
 
