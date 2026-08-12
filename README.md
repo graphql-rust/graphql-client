@@ -25,6 +25,17 @@ A typed GraphQL client library for Rust.
 
 - If you are not familiar with GraphQL, the [official website](https://graphql.org/) provides a very good and comprehensive introduction.
 
+- Add `graphql_client` to your `Cargo.toml`. You also need `serde` (the generated code derives `serde::Deserialize` and `serde::Serialize` on the response/variable types) and a JSON library like `serde_json`:
+
+  ```toml
+  [dependencies]
+  graphql_client = "0.16"
+  serde = { version = "1", features = ["derive"] }
+  serde_json = "1"
+  # Optional: for making HTTP requests
+  reqwest = { version = "0.12", features = ["json"] }
+  ```
+
 - Once you have written your query (most likely in something like [graphiql](https://github.com/graphql/graphiql)), save it in a `.graphql` file in your project.
 
 - In order to provide precise types for a response, graphql_client needs to read the query and the schema at compile-time.
