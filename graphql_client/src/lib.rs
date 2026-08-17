@@ -87,7 +87,7 @@ pub trait GraphQLQuery {
 }
 
 /// The form in which queries are sent over HTTP in most implementations. This will be built using the [`GraphQLQuery`] trait normally.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct QueryBody<Variables> {
     /// The values for the variables. They must match those declared in the queries. This should be the `Variables` struct from the generated module corresponding to the query.
     pub variables: Variables,
@@ -98,6 +98,28 @@ pub struct QueryBody<Variables> {
     pub operation_name: &'static str,
 }
 
+struct PrettyStr<'a>(&'a str);
+
+impl<'a> fmt::Debug for PrettyStr<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Use `{}` (Display) instead of `{:?}` (Debug) to avoid escaping newlines.
+        write!(f, "\"{}\"", self.0)
+    }
+}
+
+impl<Variables: fmt::Debug> fmt::Debug for QueryBody<Variables> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("QueryBody")
+            .field("variables", &self.variables)
+            // Replace the escaped literal "\n" with actual newline characters.
+            // This is necessary because when using code-generation,
+            // multi-line strings in macros are escaped and become a single
+            // line string in the generated code
+            .field("query", &PrettyStr(self.query))
+            .field("operation_name", &self.operation_name)
+            .finish()
+    }
+}
 /// Represents a location inside a query string. Used in errors. See [`Error`].
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Location {
