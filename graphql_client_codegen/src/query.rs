@@ -18,6 +18,7 @@ use crate::{
         StoredInputType, StoredScalar, TypeId, UnionId,
     },
 };
+use graphql_parser::query::Directive;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Display,
@@ -279,7 +280,13 @@ where
                         ))
                     })?;
 
-                let id = query.push_selection(Selection::FragmentSpread(fragment_id), parent);
+                let id = query.push_selection(
+                    Selection::FragmentSpread(
+                        fragment_id,
+                        has_skip_or_include(fragment_spread.directives.as_slice()),
+                    ),
+                    parent,
+                );
 
                 parent.add_to_selection_set(query, id);
             }
@@ -323,6 +330,7 @@ where
                         alias: field.alias.as_ref().map(|alias| alias.as_ref().into()),
                         field_id,
                         selection_set: Vec::with_capacity(selection_set.items.len()),
+                        skip_or_include: has_skip_or_include(field.directives.as_slice()),
                     }),
                     parent,
                 );
@@ -352,7 +360,13 @@ where
                         ))
                     })?;
 
-                let id = query.push_selection(Selection::FragmentSpread(fragment_id), parent);
+                let id = query.push_selection(
+                    Selection::FragmentSpread(
+                        fragment_id,
+                        has_skip_or_include(fragment_spread.directives.as_slice()),
+                    ),
+                    parent,
+                );
 
                 parent.add_to_selection_set(query, id);
             }
@@ -360,6 +374,15 @@ where
     }
 
     Ok(())
+}
+
+fn has_skip_or_include<'doc, T>(directives: &[Directive<'doc, T>]) -> bool
+where
+    T: graphql_parser::query::Text<'doc>,
+{
+    directives
+        .iter()
+        .any(|directive| ["skip", "include"].contains(&directive.name.as_ref()))
 }
 
 fn resolve_selection<'doc, T>(
@@ -725,7 +748,7 @@ pub(crate) fn all_used_types(operation_id: OperationId, query: &BoundQuery<'_>) 
 
 pub(crate) fn full_path_prefix(selection_id: SelectionId, query: &BoundQuery<'_>) -> String {
     let mut path = match query.query.get_selection(selection_id) {
-        Selection::FragmentSpread(_) | Selection::InlineFragment(_) => Vec::new(),
+        Selection::FragmentSpread(..) | Selection::InlineFragment(_) => Vec::new(),
         selection => vec![selection.to_path_segment(query)],
     };
 

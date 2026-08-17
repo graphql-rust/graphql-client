@@ -1,0 +1,22 @@
+query UserQuery(
+  $id: ID!,
+  $includeEmail: Boolean!,
+  $skipFriends: Boolean!,
+  $skipPosts: Boolean!
+) {
+  user(id: $id) {
+    name
+    email @include(if: $includeEmail)
+    friends @skip(if: $skipFriends) {
+      name
+    }
+    ...WithPostFragment @skip(if: $skipPosts)
+  }
+}
+
+fragment WithPostFragment on User {
+  posts {
+    title
+    body
+  }
+}

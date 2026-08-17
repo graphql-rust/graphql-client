@@ -56,7 +56,7 @@ fn selection_set_contains_type_name(
 
         match selection {
             Selection::Typename => return true,
-            Selection::FragmentSpread(fragment_id) => {
+            Selection::FragmentSpread(fragment_id, _) => {
                 let fragment = query.get_fragment(*fragment_id);
                 if fragment.on == parent_type_id
                     && selection_set_contains_type_name(fragment.on, &fragment.selection_set, query)

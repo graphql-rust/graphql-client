@@ -1,10 +1,10 @@
-query RepoView($owner: String!, $name: String!) {
+query RepoView($owner: String!, $name: String!, $withIssues: Boolean!) {
   repository(owner: $owner, name: $name) {
     homepageUrl
     stargazers {
       totalCount
     }
-    issues(first: 20, states: OPEN) {
+    issues(first: 20, states: OPEN) @include(if: $withIssues) {
       nodes {
         title
         comments {

@@ -82,7 +82,7 @@ fn generate_struct(
                 None
             };
         let type_name = Ident::new(normalized_field_type_name.as_ref(), Span::call_site());
-        let field_type_tokens = super::decorate_type(&type_name, &field_type.qualifiers);
+        let field_type_tokens = super::decorate_type(&type_name, &field_type.qualifiers, false);
         let field_type = if field_type
             .id
             .as_input_id()
@@ -135,7 +135,7 @@ fn generate_enum(
         let mut qualifiers = vec![GraphqlTypeQualifier::Required];
         qualifiers.extend(field_type.qualifiers.iter().cloned());
 
-        let field_type_tokens = super::decorate_type(&type_name, &qualifiers);
+        let field_type_tokens = super::decorate_type(&type_name, &qualifiers, false);
         let field_type = if field_type
             .id
             .as_input_id()
